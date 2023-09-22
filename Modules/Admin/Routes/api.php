@@ -1,0 +1,43 @@
+<?php
+
+use App\Http\Middleware\JwtMiddleware;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
+// 需要登陆验证但不需要权限验证的路由
+Route::middleware([
+    'api',
+    JwtMiddleware::class
+])->group(function() {
+    Route::post('admin-common/info','CommonController@info');// 账号信息
+    Route::post('admin-common/menus','CommonController@menus');// 菜单栏
+
+});
+
+// 需要登陆并且需要验证权限的路由
+Route::middleware([
+    'api',
+    JwtMiddleware::class // JWT验证中间件
+])->group(function() {
+    // User控制器
+    Route::post('admin-user/add','UserController@add');
+    Route::get('admin-user/destroy','UserController@destroy');
+    Route::post('admin-user/delete','UserController@delete');
+
+    // Rule控制器
+    Route::post('admin-rule/store','RuleController@store');
+    Route::post('admin-rule/update','RuleController@update');
+    Route::post('admin-rule/one','RuleController@one');
+    Route::post('admin-rule/destroy','RuleController@destroy');
+    Route::post('admin-rule/list','RuleController@list');
+    // 临时用的
+    Route::get('admin-rule/index','RuleController@index');
+});

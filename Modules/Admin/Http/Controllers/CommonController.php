@@ -1,0 +1,75 @@
+<?php
+
+namespace Modules\Admin\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Modules\Admin\Http\Models\Role;
+use Modules\Admin\Http\Models\Rule;
+
+class CommonController extends Controller
+{
+    /**
+     * 左侧菜单栏
+     */
+    public function info(Request $request)
+    {
+        $data = [
+            'code' => 200,
+            'message' => '登陆成功',
+            'data' => [
+                'created_at' => "2023-09-19",
+                'email' => "1192063282@qq.com",
+                'id' => 1209,
+                'is_on_job' => 1,
+                'name' => "chongdianbao",
+                'position' => "管理组织",
+                'positionId' => 20,
+                'status' => 1,
+                'updated_at' => "2023-09-19",
+                'roles' => [
+                    'role' => "普通用户",
+                    'menus' => [
+                        "Permission",
+                        "RightsManagePermission",
+                        "RoleModifyPermission",
+                        "RolePermission",
+                        "UserPermission",
+                    ],
+                    'operation' => [
+                        "edit_catalog",
+                        "search_data",
+                        "del_catalog",
+                        "import",
+                        "import_record",
+                        "record",
+                        "download_export ",
+                        "screen"
+                    ]
+                ]
+            ]
+        ];
+        return response()->json($data);
+    }
+
+    /**
+     * 菜单栏
+     * @param $request->user->rolo_id // 角色ID
+     */
+    public function menus(Request $request){
+        // 角色ID
+        $role_id = $request->user->role_id;
+        // 查询角色信息
+        $role = Role::where('id',$role_id)->first();
+        // 当前角色的归属权限ID
+        $rule_ids = $role->rule_id;
+        $rule_ids = explode(",",$rule_ids);
+        // 查询type=1的菜单类型的权限信息
+        $model = new Rule();
+        $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
+        // 递归分类权限
+        $rules = $model->buildTree($rules);
+        // 返回菜单栏
+        ReturnJson(TRUE,'',$rules);
+    }
+}
