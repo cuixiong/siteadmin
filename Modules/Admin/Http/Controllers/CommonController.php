@@ -37,14 +37,19 @@ class CommonController extends Controller
                         "UserPermission",
                     ],
                     'operation' => [
-                        "edit_catalog",
-                        "search_data",
-                        "del_catalog",
-                        "import",
-                        "import_record",
-                        "record",
-                        "download_export ",
-                        "screen"
+                        "add_permission",
+                        "edit_permission",
+                        "del_permission",
+                        "del_all_permission",
+                        "add_role",
+                        "edit_role",
+                        "del_role ",
+                        "del_all_role",
+                        "add_user",
+                        "edit_user",
+                        "del_user",
+                        "del_all_user",
+                        "del_all_user"
                     ]
                 ]
             ]
