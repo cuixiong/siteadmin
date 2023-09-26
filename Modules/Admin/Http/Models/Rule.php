@@ -5,33 +5,10 @@ namespace Modules\Admin\Http\Models;
 use Illuminate\Database\Eloquent\Model;
 class Rule extends Model
 {
-
-    public $FieldRule = [
-        'store' => [
-            'name'          => 'required',
-            'vue_route'     => 'required',
-            'type'          => 'required',
-            'status'        => 'required'
-        ],
-        'destroy' => [
-            'id'   =>  'required'
-        ]
-    ];
-
-    public $FieldMessage = [
-        'store' => [
-            'name.required'         =>  '权限名称不能为空',
-            'vue_route.required'    =>  '前端路由不能为空',
-            'type.required'         =>  '请选择类型',
-            'status.required'       =>  '请选择状态',
-        ],
-        'destroy' => [
-            'id.required'   =>  'ID不能为空'
-        ]
-    ];
-
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['parent_id','name','vue_route','controller','action','route','icon','type','status','sort'];
+    //将虚拟字段追加到数据对象列表里去
+    protected $appends = ['parent_name','status_txt','menus_txt'];
 
     /**
      * 设置route字段拦截器和填充controller、action字段
@@ -66,5 +43,75 @@ class Rule extends Model
             }
         }
         return $tree;
+    }
+
+    /**
+     * 父级名字获取器
+     */
+    public function getParentNameAttribute()
+    {
+        if(isset($this->attributes['parent_id']) && $this->attributes['parent_id'] > 0)
+        {
+            $name = $this->where('id',$this->attributes['parent_id'])->value('name');
+        } else {
+            $name = '';
+        }
+        return $name;
+    }
+
+    /**
+     * 状态文本获取器
+     */
+    public function getStatusTxtAttribute()
+    {
+        if(isset($this->attributes['status']))
+        {
+            $lists = $this->StatusList();
+            foreach ($lists as $list) {
+                if($list['id'] == $this->attributes['status']){
+                    $name = $list['state'];
+                    break;
+                }
+            }
+        } else {
+            $name = '';
+        }
+        return $name;
+    }
+
+    /**
+     * 菜单文本获取器
+     */
+    public function getMenusTxtAttribute()
+    {
+        if(isset($this->attributes['type']))
+        {
+            $lists = $this->MuenList();
+            foreach ($lists as $list) {
+                if($list['id'] == $this->attributes['type']){
+                    $name = $list['name'];
+                    break;
+                }
+            }
+        } else {
+            $name = '';
+        }
+        return $name;
+    }
+
+    /**
+     * 权限状态列表
+     */
+    public function StatusList()
+    {
+        return [['id'=>'','state'=>'状态'],['id'=>'0','state'=>'禁用'],['id'=>1,'state'=>'正常']];
+    }
+
+    /**
+     * 权限状态列表
+     */
+    public function MuenList()
+    {
+        return [['id'=>'','name'=>'权限类型'],['id'=>'1','name'=>'菜单'],['id'=>2,'name'=>'操作'],['id'=>3,'name'=>'外链']];
     }
 }

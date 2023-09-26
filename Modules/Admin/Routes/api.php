@@ -12,32 +12,41 @@ use App\Http\Middleware\JwtMiddleware;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-// 需要登陆验证但不需要权限验证的路由
+/** 需要登陆验证但不需要权限验证的路由 */
 Route::middleware([
     'api',
     JwtMiddleware::class
 ])->group(function() {
+    // Common控制器
     Route::post('admin-common/info','CommonController@info');// 账号信息
     Route::post('admin-common/menus','CommonController@menus');// 菜单栏
-
 });
 
-// 需要登陆并且需要验证权限的路由
+/** 需要登陆并且需要验证权限的路由 */
 Route::middleware([
     'api',
     JwtMiddleware::class // JWT验证中间件
 ])->group(function() {
     // User控制器
-    Route::post('admin-user/add','UserController@add');
-    Route::get('admin-user/destroy','UserController@destroy');
-    Route::post('admin-user/delete','UserController@delete');
+    Route::post('admin/user/store','UserController@store');// 新增
+    Route::post('admin/user/destroy','UserController@destroy');// 删除
+    Route::post('admin/user/update','UserController@update');// 编辑
+    Route::get('admin/user/list','UserController@list');// 列表
+    Route::get('admin/user/filters','UserController@filters');// 表头数据
 
     // Rule控制器
-    Route::post('admin-rule/store','RuleController@store');
+    Route::post('admin/rule/store','RuleController@store');// 新增
+    Route::get('admin/rule/list','RuleController@list');
+    Route::get('admin/rule/index','RuleController@index');
+    Route::get('admin/rule/filters','RuleController@filters');// 表头数据
+
+    Route::post('admin-rule/create','RuleController@create');
     Route::post('admin-rule/update','RuleController@update');
     Route::post('admin-rule/one','RuleController@one');
     Route::post('admin-rule/destroy','RuleController@destroy');
-    Route::post('admin-rule/list','RuleController@list');
     // 临时用的
-    Route::get('admin-rule/index','RuleController@index');
 });
+
+/** 不需要登陆也不需要验证权限的路由 */
+// Position控制器
+Route::get('admin/position/list','PositionController@list');

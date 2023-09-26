@@ -31,10 +31,8 @@ class CommonController extends Controller
                     'role' => "普通用户",
                     'menus' => [
                         "Permission",
-                        "RightsManagePermission",
-                        "RoleModifyPermission",
-                        "RolePermission",
-                        "UserPermission",
+                        "AdminUserList",// 用户管理
+                        "AdminRuleList",// 权限管理
                     ],
                     'operation' => [
                         "add_permission",

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -17,6 +18,17 @@ class LoginController extends Controller
         try {
             $email = $request->get('name');
             $password = $request->get('password');
+            $validator = Validator::make(['email' => $email,'password' => $password],[
+                'email' => 'required|email:rfc,dns',
+                'password' => 'required'
+            ],[
+                'email.required' => '邮箱不能为空',
+                'email.email' => '邮箱格式不正确，请填写正确的邮箱',
+                'password.required' => '密码不能为空'
+            ]);
+            if ($validator->fails()) {
+                ReturnJson(FALSE,$validator->errors()->first());
+            }
             $UserModel = User::where('email','=',$email)->first();
             if (!$UserModel) {
                 ReturnJson(false,'账号不存在');
@@ -24,8 +36,11 @@ class LoginController extends Controller
             if (!Hash::check($password, $UserModel->password)) {
                 ReturnJson(false,'账号密码不正确');
             }
-            if (!$UserModel->status == 1) {
+            if ($UserModel->status == 0) {
                 ReturnJson(false,'账号处于禁用状态，不允许登陆');
+            }
+            if ($UserModel->verify_status != 2) {
+                ReturnJson(false,'账号还处于审核未通过,暂时不允许登陆');
             }
             $token=JWTAuth::fromUser($UserModel);//生成token
             if (!$token) {
@@ -34,7 +49,7 @@ class LoginController extends Controller
             // 记录登陆时间
             $UserModel->login_time = date('Y-m-d H:i:s',);
             $UserModel->save();
-            ReturnJson(true,'登陆成功',['token' => $token,'status' => 1]);
+            ReturnJson(true,'登陆成功',['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() * 600]);
         } catch (\Exception $e){
             ReturnJson(false,$e->getMessage());
         }
@@ -47,9 +62,26 @@ class LoginController extends Controller
     public function register(Request $request)
     {
         try {
+            $validator = Validator::make($request->all(),[
+                'name' => 'required',
+                'email' => 'required|unique:users,email|email:rfc,dns',
+                'position_id' => 'required',
+                'password' => 'required',
+            ],[
+                'name.required' => '名字不能为空',
+                'email.required' => '邮箱不能为空',
+                'email.unique' => '邮箱已存在，请更换其他邮箱',
+                'email.email' => '邮箱格式不正确，请填写正确的邮箱',
+                'position_id.required' => '职位ID不能为空',
+                'password.required' => '密码不能为空'
+            ]);
+            if ($validator->fails()) {
+                ReturnJson(FALSE,$validator->errors()->first());
+            }
             $UserModel = new User();
             $UserModel->email = $request->get('email');
             $UserModel->name = $request->get('name');
+            $UserModel->position_id = $request->get('position_id');
             $UserModel->password = Hash::make($request->get('password'));// 密码使用hash值
             if(User::where('email','=',$UserModel->email)->first()){
                 ReturnJson(false,'邮箱已存在请更换其他邮箱');
@@ -60,7 +92,7 @@ class LoginController extends Controller
                 if(!$token){
                     ReturnJson(false,'注册成功,但是token生成失败');
                 }
-                ReturnJson(true,'注册成功',['token' => $token,'status' => 1]);
+                ReturnJson(true,'注册成功',['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() * 600]);
             } else {
                 ReturnJson(false,'注册失败');
             }
@@ -89,14 +121,5 @@ class LoginController extends Controller
     {
         $token = auth('api')->refresh();// 重新获取token
         return response()->json(['code' => 200,'message' => '刷新成功','data' => ['token' => $token]]);
-    }
- 
-    protected function respondWithToken($token)
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 600
-        ]);
     }
 }
