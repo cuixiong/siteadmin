@@ -48,6 +48,7 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            $input['create_by'] = $request->user->id;
             $record = $this->ModelInstance()->create($input);
             if(!$record){
                 ReturnJson(FALSE,'新增失败');
@@ -90,6 +91,7 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            $input['update_by'] = $request->user->id;
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
                 ReturnJson(FALSE,'更新失败');
