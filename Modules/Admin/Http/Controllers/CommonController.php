@@ -33,6 +33,7 @@ class CommonController extends Controller
                         "Permission",
                         "AdminUserList",// 用户管理
                         "AdminRuleList",// 权限管理
+                        "AdminRoleList",// 角色管理
                     ],
                     'operation' => [
                         "add_permission",

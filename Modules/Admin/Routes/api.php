@@ -37,8 +37,9 @@ Route::middleware([
     // Rule控制器
     Route::post('admin/rule/store','RuleController@store');// 新增
     Route::get('admin/rule/list','RuleController@list');
-    Route::get('admin/rule/index','RuleController@index');
+    Route::get('admin/rule/index','RuleController@index');// 列表
     Route::get('admin/rule/filters','RuleController@filters');// 表头数据
+    Route::post('admin/rule/destroy','RuleController@destroy');// 删除
 
     Route::post('admin-rule/create','RuleController@create');
     Route::post('admin-rule/update','RuleController@update');
