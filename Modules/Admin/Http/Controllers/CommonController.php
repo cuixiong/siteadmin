@@ -36,6 +36,7 @@ class CommonController extends Controller
                         "AdminRoleList",// 角色管理
                         "AdminRoleStore",// 新增角色
                         "RoleModifyPermission",// 编辑角色
+                        "AdminPositionList",// 职位管理
                     ],
                     'operation' => [
                         "add_permission",

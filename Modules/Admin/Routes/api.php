@@ -47,7 +47,12 @@ Route::middleware([
     Route::post('admin/role/update','RoleController@update');// 编辑
     Route::get('admin/role/filters','RoleController@filters');// 表头数据
     Route::post('admin/role/destroy','RoleController@destroy');// 删除
-    // 临时用的
+
+    // Position控制器
+    Route::post('admin/position/store','PositionController@store');// 新增
+    Route::post('admin/position/update','PositionController@update');// 编辑
+    Route::get('admin/position/filters','PositionController@filters');// 表头数据
+    Route::post('admin/position/destroy','PositionController@destroy');// 删除
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
