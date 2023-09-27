@@ -18,7 +18,7 @@ class Base extends Model
     // protected $guarded = [];
 
     /**
-     * 创建时间查询器
+     * 创建时间获取器
      * @param \Illuminate\Database\Eloquent\Casts\Attribute
      */
     public function createdAt(): Attribute
@@ -29,7 +29,7 @@ class Base extends Model
         );
     }
     /**
-     * 更新时间查询器
+     * 更新时间获取器
      * @param \Illuminate\Database\Eloquent\Casts\Attribute
      */
     public function updatedAt(): Attribute
@@ -37,5 +37,22 @@ class Base extends Model
         return Attribute::make(
             get: fn ($value) => date('Y-m-d H:i:s',strtotime($value)),
         );
+    }
+
+    /**
+     * 创建者获取器
+     */
+    public function getCreateByAttribute()
+    {
+        $res = User::where('id',$this->attributes['create_by'])->value('name');
+        return $res;
+    }
+    /**
+     * 更新者获取器
+     */
+    public function getUpdateByAttribute()
+    {
+        $res = User::where('id',$this->attributes['update_by'])->value('name');
+        return $res;
     }
 }

@@ -34,6 +34,8 @@ class CommonController extends Controller
                         "AdminUserList",// 用户管理
                         "AdminRuleList",// 权限管理
                         "AdminRoleList",// 角色管理
+                        "AdminRoleStore",// 新增角色
+                        "RoleModifyPermission",// 编辑角色
                     ],
                     'operation' => [
                         "add_permission",
@@ -48,7 +50,9 @@ class CommonController extends Controller
                         "edit_user",
                         "del_user",
                         "del_all_user",
-                        "del_all_user"
+                        "del_all_user",
+                        //
+                        "del_role"
                     ]
                 ]
             ]

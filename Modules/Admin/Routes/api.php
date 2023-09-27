@@ -41,10 +41,12 @@ Route::middleware([
     Route::get('admin/rule/filters','RuleController@filters');// 表头数据
     Route::post('admin/rule/destroy','RuleController@destroy');// 删除
 
-    Route::post('admin-rule/create','RuleController@create');
-    Route::post('admin-rule/update','RuleController@update');
-    Route::post('admin-rule/one','RuleController@one');
-    Route::post('admin-rule/destroy','RuleController@destroy');
+    // Role控制器
+    Route::get('admin/role/list','RoleController@list');// 列表
+    Route::post('admin/role/store','RoleController@store');// 新增
+    Route::post('admin/role/update','RoleController@update');// 编辑
+    Route::get('admin/role/filters','RoleController@filters');// 表头数据
+    Route::post('admin/role/destroy','RoleController@destroy');// 删除
     // 临时用的
 });
 

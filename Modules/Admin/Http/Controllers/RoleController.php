@@ -14,13 +14,11 @@ class RoleController extends CrudController
     public function filters()
     {
         $data = [];
-        $data['Creaters'] = User::get();
-        $data['MenuTypes'] = (new Rule())->MuenList();
-        $data['Operation'] = Role::get();
-        $data['Pids'] = (new Rule())->get();
-        $data['RoutesVue'] = (new Rule())->select(['vue_route as name','vue_route'])->get();
+        $data['Creaters'] = User::get()->toArray();
+        array_push($data['Creaters'],["id" =>'','name'=>'创建者']);
         $data['States'] = (new Rule())->StatusList();
-        $data['Updaters'] = User::get();
+        $data['Updaters'] = User::get()->toArray();;
+        array_push($data['Updaters'],["id" =>'','name'=>'更新者']);
         ReturnJson(TRUE,'请求成功',$data);
     }
 }
