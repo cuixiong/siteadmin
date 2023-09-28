@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\Position;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller
@@ -83,6 +84,8 @@ class LoginController extends Controller
             $UserModel->name = $request->get('name');
             $UserModel->position_id = $request->get('position_id');
             $UserModel->password = Hash::make($request->get('password'));// 密码使用hash值
+            // 注册时将职位选择默认的角色ID赋值到账号的role_id中
+            $UserModel->role_id = Position::where('id',$request->get('position_id'))->value('role_id');
             if(User::where('email','=',$UserModel->email)->first()){
                 ReturnJson(false,'邮箱已存在请更换其他邮箱');
             }
