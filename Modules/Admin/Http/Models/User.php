@@ -8,7 +8,7 @@ class User extends Base
     /** 隐藏不需要输出的字段 */
     protected $hidden = ["password"];
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['position','role','is_on_job_txt'];
+    protected $appends = ['position_txt','role','is_on_job_txt'];
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['name','email','password','status','login_time','role_id','position_id','is_on_job','verify_status','create_by','update_by'];
 
@@ -27,9 +27,13 @@ class User extends Base
     /**
      * 职位名称获取器
      */
-    public function getPositionAttribute()
+    public function getPositionTxtAttribute()
     {
-        $positionName = Position::where('id',$this->attributes['position_id'])->value('name');
+        if(isset($this->attributes['position_id'])){
+            $positionName = Position::where('id',$this->attributes['position_id'])->value('name');
+        } else {
+            $positionName = '';
+        }
         return $positionName;
     }
     /**
