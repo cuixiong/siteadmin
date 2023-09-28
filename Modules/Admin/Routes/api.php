@@ -40,6 +40,7 @@ Route::middleware([
     Route::get('admin/rule/index','RuleController@index');// 列表
     Route::get('admin/rule/filters','RuleController@filters');// 表头数据
     Route::post('admin/rule/destroy','RuleController@destroy');// 删除
+    Route::post('admin/rule/update','RuleController@update');// 编辑
 
     // Role控制器
     Route::get('admin/role/list','RoleController@list');// 列表
