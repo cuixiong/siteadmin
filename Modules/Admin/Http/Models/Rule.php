@@ -17,9 +17,11 @@ class Rule extends Base
      */
     public function setRouteAttribute($value)
     {
-        $this->attributes['route'] = $value;
-        // 切割路由获得控制器和方法名
-        list($this->attributes['controller'],$this->attributes['action']) = explode('@',$value);
+        if(!empty($value)){
+            $this->attributes['route'] = $value;
+            // 切割路由获得控制器和方法名
+            list($this->attributes['controller'],$this->attributes['action']) = explode('@',$value);
+        }
     }
 
     /**
