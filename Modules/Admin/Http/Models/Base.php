@@ -42,17 +42,17 @@ class Base extends Model
     /**
      * 创建者获取器
      */
-    public function getCreateByAttribute()
+    public function getCreatedByAttribute()
     {
-        $res = User::where('id',$this->attributes['create_by'])->value('name');
+        $res = User::where('id',$this->attributes['created_by'])->value('name');
         return $res;
     }
     /**
      * 更新者获取器
      */
-    public function getUpdateByAttribute()
+    public function getUpdatedByAttribute()
     {
-        $res = User::where('id',$this->attributes['update_by'])->value('name');
+        $res = User::where('id',$this->attributes['updated_by'])->value('name');
         return $res;
     }
 }

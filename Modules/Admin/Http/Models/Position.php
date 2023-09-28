@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Position extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name','role_id','description','update_by','create_by'];
+    protected $fillable = ['name','role_id','description','updated_by','created_by'];
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['role_name'];
 

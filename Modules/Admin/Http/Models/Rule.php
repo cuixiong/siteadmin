@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['parent_id','name','vue_route','controller','action','route','icon','type','status','sort','create_by','update_by'];
+    protected $fillable = ['parent_id','name','vue_route','controller','action','route','icon','type','status','sort','created_by','updated_by'];
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['parent_name','status_txt','menus_txt'];
 
