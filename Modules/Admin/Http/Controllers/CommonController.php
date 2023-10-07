@@ -4,65 +4,33 @@ namespace Modules\Admin\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Rule;
 
 class CommonController extends Controller
 {
     /**
-     * 左侧菜单栏
+     * 查询账号信息和账号权限
      */
     public function info(Request $request)
     {
-        $data = [
-            'code' => 200,
-            'message' => '登陆成功',
-            'data' => [
-                'created_at' => "2023-09-19",
-                'email' => "1192063282@qq.com",
-                'id' => 1209,
-                'is_on_job' => 1,
-                'name' => "chongdianbao",
-                'position' => "管理组织",
-                'positionId' => 20,
-                'status' => 1,
-                'updated_at' => "2023-09-19",
-                'roles' => [
-                    'role' => "普通用户",
-                    'menus' => [
-                        "Permission",
-                        "AdminUserList",// 用户管理
-                        "AdminRuleList",// 权限管理
-                        "AdminRoleList",// 角色管理
-                        "AdminRoleStore",// 新增角色
-                        "RoleModifyPermission",// 编辑角色
-                        "AdminPositionList",// 职位管理
-                        "PublisherList",//出版商管理
-                        "AddPublisher",
-                        "AdminPublisherList",
-                        'AdminSiteList',
-                    ],
-                    'operation' => [
-                        "add_permission",
-                        "edit_permission",
-                        "del_permission",
-                        "del_all_permission",
-                        "add_role",
-                        "edit_role",
-                        "del_role ",
-                        "del_all_role",
-                        "add_user",
-                        "edit_user",
-                        "del_user",
-                        "del_all_user",
-                        "del_all_user",
-                        //
-                        "del_role"
-                    ]
-                ]
-            ]
-        ];
-        return response()->json($data);
+        // 菜单权限
+        $roles['menus'] = Rule::where('type',1)->select('vue_route')->get()->toArray();
+        $roles['menus'] = array_keys(array_column($roles['menus'],null,'vue_route'));
+        // 操作权限
+        $roles['operation'] = Rule::where('type',2)->select('vue_route')->get()->toArray();
+        $roles['operation'] = array_keys(array_column($roles['operation'],null,'vue_route'));
+
+        // 角色名称
+        $roles['role'] = Role::where('id',$request->user->role_id)->value('name');
+        // 职位信息
+        $position = Position::where('id',$request->user->position_id)->first();
+        $data = $request->user;
+        $data['position'] = $position['name'];
+        $data['positionId'] = $position['id'];
+        $data['roles'] = $roles;
+        ReturnJson(true,'登陆成功',$data);
     }
 
     /**
