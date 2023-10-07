@@ -4,6 +4,7 @@ namespace Modules\Admin\Http\Controllers;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Modules\Admin\Http\Models\Publisher;
 
 class PublisherController extends CrudController
 {
@@ -21,10 +22,17 @@ class PublisherController extends CrudController
                 ReturnJson(FALSE,'更新失败');
             }
             ReturnJson(TRUE,'更新成功');
-        
+
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), []);
         }
         ReturnJson(TRUE,'修改成功！');
+    }
+
+    public function getPublisher(Request $request)
+    {
+        $data = Publisher::select('id','name')->get()->toArray();
+
+        ReturnJson(TRUE,'请求成功',$data);
     }
 }

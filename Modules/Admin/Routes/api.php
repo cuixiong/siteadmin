@@ -74,3 +74,6 @@ Route::middleware([
 Route::get('admin/position/list','PositionController@list');
 Route::get('admin/area/get-area','AreaController@getArea');// 列表
 Route::get('admin/country/get-country','CountryController@getCountry');// 国家列表
+Route::get('admin/publisher/get-publisher','PublisherController@getPublisher');// 出版商列表
+Route::get('admin/language/get-language','LanguageController@getLanguage');// 语言
+Route::get('admin/common/get-status','CommonController@getStatus');// 状态
