@@ -60,8 +60,17 @@ Route::middleware([
     Route::post('admin/site/list','SiteController@list');// 列表
     Route::post('admin/site/update','SiteController@update');// 更新
     Route::post('admin/site/destroy','SiteController@destroy');// 删除
+
+    // Publisher控制器
+    Route::get('admin/publisher/list','PublisherController@list');// 列表
+    Route::get('admin/publisher/store','PublisherController@store');// 新增
+    Route::post('admin/publisher/change-enable','PublisherController@changeEnable');// 修改状态
+    Route::post('admin/publisher/destroy','PublisherController@destroy');// 修改状态
+    Route::post('admin/publisher/update','PublisherController@update');// 修改数据
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
 // Position控制器
 Route::get('admin/position/list','PositionController@list');
+Route::get('admin/area/get-area','AreaController@getArea');// 列表
+Route::get('admin/country/get-country','CountryController@getCountry');// 国家列表
