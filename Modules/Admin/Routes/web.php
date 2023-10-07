@@ -10,12 +10,3 @@ use App\Http\Middleware\JwtMiddleware;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-Route::prefix('admin')->middleware([
-    'api',
-    JwtMiddleware::class
-])->group(function() {
-    Route::get('/', 'AdminController@index');
-    Route::post('site/create', 'SiteController@create'); // 站点新增
-    Route::get('site/git', 'SiteController@git'); // 站点GIT
-});

@@ -1,7 +1,6 @@
 <?php
 namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Routing\Controller;
 
 class CrudController extends Controller
@@ -35,7 +34,8 @@ class CrudController extends Controller
      * 获取表单验证规则
      */
     protected function ValidateInstance($request){
-        $validator = new $this->validate();// 实例表单验证类
+        $class = $this->validate;
+        $validator = new $class();// 实例表单验证类
         $validator = $validator->DoVlidate($request);
     }
 

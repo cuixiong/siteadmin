@@ -1,15 +1,9 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
-use Stancl\Tenancy\Contracts\SyncMaster;
-use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
-use Stancl\Tenancy\Database\Concerns\CentralConnection;
-class Site extends Model
+use Modules\Admin\Http\Models\Base;
+class Site extends Base
 {
-    // 注意，我们在这个模型上强制使用中央连接
-    use ResourceSyncing, CentralConnection;
-    public $table='site';//这样寻找的就是没s的表
+    // 设置可以入库的字段
+    protected $fillable = ['name','english_name','domain','country_id','publisher_id','language_id','status','db_host','db_port','db_database','db_username','db_password','updated_by','created_by']; 
 }
