@@ -2,7 +2,7 @@
 
 namespace Modules\Admin\Http\Models;
 use Modules\Admin\Http\Models\Base;
-class Rule extends Base
+class SiteRule extends Base
 {
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['parent_id','name','vue_route','controller','action','route','icon','type','status','sort','created_by','updated_by'];

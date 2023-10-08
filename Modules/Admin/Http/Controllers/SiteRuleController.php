@@ -4,15 +4,8 @@ namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Rule;
 
-class RuleController extends CrudController
+class SiteRuleController extends CrudController
 {
-    /**
-     * 左侧菜单栏
-     */
-    public function index(Request $request)
-    {
-        $this->list($request);
-    }
     /**
      * 查询列表页
      * @param $request 请求信息
@@ -20,7 +13,7 @@ class RuleController extends CrudController
      * @param int $pageSize 页数
      * @param Array $where 查询条件数组 默认空数组
      */
-    public function list ($request) {
+    public function list (Request $request) {
         try {
             // $this->ValidateInstance($request);
             $model = $this->ModelInstance()->query();
@@ -70,12 +63,9 @@ class RuleController extends CrudController
                 'pageCount' => $pageCount,
                 'page' => $page,
                 'pageSize' => $pageSize,
-                // 'list' => $record
                 'data' => $record
             ];
-            // ReturnJson(TRUE,'请求成功',$data);
             ReturnJson(TRUE,'请求成功',$record);
-            // return response()->json(['code' => 200,'message' => '请求成功','data' => $record ]);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

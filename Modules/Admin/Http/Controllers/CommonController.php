@@ -7,6 +7,8 @@ use Illuminate\Routing\Controller;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Rule;
+use Modules\Admin\Http\Models\SelectTxt;
+use Modules\Admin\Http\Models\User;
 
 class CommonController extends Controller
 {
@@ -52,5 +54,43 @@ class CommonController extends Controller
         $rules = $model->buildTree($rules);
         // 返回菜单栏
         ReturnJson(TRUE,'',$rules);
+    }
+
+    /**
+     * 临时用的列表表头
+     */
+    public function filters()
+    {
+        $data = [];
+        $users = User::select(['id','name'])->get()->toArray();
+        // 创建者
+        $data['Creaters'] = $users;
+        array_unshift($data['Creaters'],["id" =>'','name'=>'创建者']);
+        // 修改者
+        $data['Updaters'] = $users;
+        array_unshift($data['Updaters'],["id" =>'','name'=>'更新者']);
+        // 状态
+        $data['States'] = SelectTxt::GetStatusTxt();
+        // 权限类型
+        $data['MuenTypes'] = SelectTxt::GetRuleTypeTxt();
+        // 是否在职人员
+        $data['IsOnJobList']  = SelectTxt::GetOnJobTxt();
+        // 角色组
+        $roles = Role::select(['id','name'])->get()->toArray();
+        $data['Roles'] = $roles;
+        array_unshift($data['Roles'],["id" =>'','name'=>'全部角色']);
+        // 职位组
+        $positions = Position::select(['id','name'])->get()->toArray();
+        $data['Positions'] = $positions;
+        array_unshift($data['Positions'],["id" =>'','name'=>'全部职位']);
+        // 前端页面路由
+        $VueRoute = Rule::where('type',1)->select(['id','name'])->get()->toArray();
+        array_unshift($VueRoute,["id" =>'0','name'=>'顶级路由']);
+        $data['VueRoute'] = $VueRoute;
+        // 前端按钮路由
+        $Operation = Rule::where('type',2)->select(['id','name'])->get()->toArray();
+        array_unshift($Operation,["id" =>'','name'=>'按钮路由']);
+        $data['Operation'] = $Operation;
+        ReturnJson(TRUE,'请求成功',$data);
     }
 }

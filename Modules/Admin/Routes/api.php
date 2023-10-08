@@ -67,6 +67,12 @@ Route::middleware([
     Route::post('admin/publisher/change-enable','PublisherController@changeEnable');// 修改状态
     Route::post('admin/publisher/destroy','PublisherController@destroy');// 修改状态
     Route::post('admin/publisher/update','PublisherController@update');// 修改数据
+
+    // SiteRule控制器
+    Route::post('admin/site-rule/store','SiteRuleController@store');// 新增
+    Route::get('admin/site-rule/list','SiteRuleController@list');// 列表
+    Route::post('admin/site-rule/destroy','SiteRuleController@destroy');// 删除
+    Route::post('admin/site-rule/update','SiteRuleController@update');// 编辑
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
@@ -77,3 +83,4 @@ Route::get('admin/country/get-country','CountryController@getCountry');// 国家
 Route::get('admin/publisher/get-publisher','PublisherController@getPublisher');// 出版商列表
 Route::get('admin/language/get-language','LanguageController@getLanguage');// 语言
 Route::get('admin/common/get-status','CommonController@getStatus');// 状态
+Route::get('admin/common/filters','CommonController@filters');// 公共的列表表头和下拉数据

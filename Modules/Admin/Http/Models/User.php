@@ -41,7 +41,10 @@ class User extends Base
      */
     public function getRoleAttribute()
     {
-        $roleName = Role::where('id',$this->attributes['role_id'])->value('name');
+        $roleName = '';
+        if(isset($this->attributes['role_id'])){
+            $roleName = Role::where('id',$this->attributes['role_id'])->value('name');
+        }
         return $roleName;
     }
 
@@ -52,9 +55,12 @@ class User extends Base
     {
         $lists = $this->IsOnJobList();
         $text = '';
-        foreach ($lists as $list) {
-            if($list['id'] == $this->attributes['is_on_job']){
-                $text = $list['name'];
+        if(isset($this->attributes['is_on_job']))
+        {
+            foreach ($lists as $list) {
+                if($list['id'] == $this->attributes['is_on_job']){
+                    $text = $list['name'];
+                }
             }
         }
         return $text;
