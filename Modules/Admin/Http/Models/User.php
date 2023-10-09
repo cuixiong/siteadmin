@@ -1,7 +1,7 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
-
+use Illuminate\Support\Facades\Hash;
 use Modules\Admin\Http\Models\Base;
 class User extends Base
 {
@@ -20,7 +20,7 @@ class User extends Base
     {
         // 不为空的情况下才修改密码
         if (!empty($value)) {
-            $this->attributes['password'] = $value;
+            $this->attributes['password'] = Hash::make($value);
         }
     }
 

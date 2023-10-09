@@ -12,12 +12,10 @@ class Role extends Base
     /**
      * 权限ID获取器
      */
-
     public function getRuleIdAttribute($value)
     {
         if(!empty($value)){
-            $ids = explode(",",$value);// 切割成数组
-            $value = Rule::whereIn('id',$ids)->select(['id','name'])->get()->toArray();
+            $value = explode(",",$value);// 切割成数组
         }
         return $value;
     }

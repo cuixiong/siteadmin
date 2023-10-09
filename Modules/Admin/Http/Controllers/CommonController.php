@@ -17,15 +17,22 @@ class CommonController extends Controller
      */
     public function info(Request $request)
     {
+        $RuleModel = new Rule();
+        $menusQuery = $RuleModel->query();
+        $operationQuery = $RuleModel->query();
+        $role = Role::find($request->user->role_id);
+        if($role->is_super_administrator != 1){
+            $menusQuery->whereIn('id',$role->rule_id);
+            $operationQuery->whereIn('id',$role->rule_id);
+        }
         // 菜单权限
-        $roles['menus'] = Rule::where('type',1)->select('vue_route')->get()->toArray();
+        $roles['menus'] = $menusQuery->where('type',1)->select('vue_route')->get()->toArray();
         $roles['menus'] = array_keys(array_column($roles['menus'],null,'vue_route'));
         // 操作权限
-        $roles['operation'] = Rule::where('type',2)->select('vue_route')->get()->toArray();
+        $roles['operation'] = $operationQuery->where('type',2)->select('vue_route')->get()->toArray();
         $roles['operation'] = array_keys(array_column($roles['operation'],null,'vue_route'));
-
         // 角色名称
-        $roles['role'] = Role::where('id',$request->user->role_id)->value('name');
+        $roles['role'] = $role->name;
         // 职位信息
         $position = Position::where('id',$request->user->position_id)->first();
         $data = $request->user;
@@ -92,20 +99,5 @@ class CommonController extends Controller
         array_unshift($Operation,["id" =>'','name'=>'按钮路由']);
         $data['Operation'] = $Operation;
         ReturnJson(TRUE,'请求成功',$data);
-    }
-
-    public function getStatus()
-    {
-        $data = [
-            [
-                'id'=>0,
-                'name'=>'禁用'
-            ],
-            [
-                'id'=>1,
-                'name'=>'启用'
-            ]
-        ];
-        ReturnJson(true,'获取成功',$data);
     }
 }

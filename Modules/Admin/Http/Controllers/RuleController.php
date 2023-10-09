@@ -70,12 +70,9 @@ class RuleController extends CrudController
                 'pageCount' => $pageCount,
                 'page' => $page,
                 'pageSize' => $pageSize,
-                // 'list' => $record
                 'data' => $record
             ];
-            // ReturnJson(TRUE,'请求成功',$data);
             ReturnJson(TRUE,'请求成功',$record);
-            // return response()->json(['code' => 200,'message' => '请求成功','data' => $record ]);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
