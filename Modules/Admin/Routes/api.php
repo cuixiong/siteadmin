@@ -57,7 +57,7 @@ Route::middleware([
 
     // Site控制器
     Route::post('admin/site/store','SiteController@store');// 新增
-    Route::post('admin/site/list','SiteController@list');// 列表
+    Route::get('admin/site/list','SiteController@list');// 列表
     Route::post('admin/site/update','SiteController@update');// 更新
     Route::post('admin/site/destroy','SiteController@destroy');// 删除
 

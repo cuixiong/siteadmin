@@ -15,7 +15,7 @@ class SiteController extends CrudController
     {
 
         $input = $request->all();
-        /** 
+        /**
          * 这里不知道什么原因无法使用Validator类进行表单验证
          * 一旦使用Validator类进行表单验证就会报错Tenant could not be identified on domain
          * 只能在此处进行手动进行验证
@@ -51,12 +51,12 @@ class SiteController extends CrudController
             ReturnJson(FALSE,'is_create不能为空');
         }
         // 创建者ID
-        $input['created_by'] = $request->user->id; 
+        $input['created_by'] = $request->user->id;
         // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
         $is_create = $request->is_create;
         // is_create不是入库的字段变量所以删除
         unset($request->is_create);
-        
+
         // 开启事务
         DB::beginTransaction();
         try {
@@ -93,7 +93,7 @@ class SiteController extends CrudController
     {
 
         $input = $request->all();
-        /** 
+        /**
          * 这里不知道什么原因无法使用Validator类进行表单验证
          * 一旦使用Validator类进行表单验证就会报错Tenant could not be identified on domain
          * 只能在此处进行手动进行验证
@@ -129,8 +129,8 @@ class SiteController extends CrudController
             ReturnJson(FALSE,'is_create不能为空');
         }
         // 创建者ID
-        $input['created_by'] = $request->user->id; 
-        
+        $input['created_by'] = $request->user->id;
+
         // 开启事务
         DB::beginTransaction();
         try {

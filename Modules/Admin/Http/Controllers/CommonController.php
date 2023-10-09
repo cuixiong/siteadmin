@@ -93,4 +93,19 @@ class CommonController extends Controller
         $data['Operation'] = $Operation;
         ReturnJson(TRUE,'请求成功',$data);
     }
+
+    public function getStatus()
+    {
+        $data = [
+            [
+                'id'=>0,
+                'name'=>'禁用'
+            ],
+            [
+                'id'=>1,
+                'name'=>'启用'
+            ]
+        ];
+        ReturnJson(true,'获取成功',$data);
+    }
 }
