@@ -79,12 +79,17 @@ Route::middleware([
     Route::post('admin/language/store','LanguageController@store');// 新增
     Route::post('admin/language/destroy','LanguageController@destroy');// 删除
     Route::post('admin/language/update','LanguageController@update');// 新增
+
+    // Region控制器
+    Route::get('admin/region/list','RegionController@list');// 列表
+    Route::post('admin/region/store','RegionController@store');// 新增
+    Route::post('admin/region/destroy','RegionController@destroy');// 删除
+    Route::post('admin/region/update','RegionController@update');// 列表
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
 // Position控制器
 Route::get('admin/position/list','PositionController@list');
-Route::get('admin/area/get-area','AreaController@getArea');// 列表
 Route::get('admin/country/get-country','CountryController@getCountry');// 国家列表
 Route::get('admin/publisher/get-publisher','PublisherController@getPublisher');// 出版商列表
 Route::get('admin/common/get-status','CommonController@getStatus');// 状态
