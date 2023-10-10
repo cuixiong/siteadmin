@@ -7,10 +7,5 @@ use Modules\Admin\Http\Models\Language;
 
 class LanguageController extends CrudController
 {
-    public function getLanguage(Request $request)
-    {
-        $data = Language::select('id','language as name')->get()->toArray();
-
-        ReturnJson(TRUE,'请求成功',$data);
-    }
+    
 }
