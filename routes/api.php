@@ -13,10 +13,12 @@ use App\Http\Middleware\JwtMiddleware;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+// Login控制器
 Route::post('login', [\App\Http\Controllers\LoginController::class,'login']);// 账号登陆
 Route::post('register', [\App\Http\Controllers\LoginController::class,'register']);// 账号注册
 
-
+// SendEmail控制器
+Route::post('send-email/register', [\App\Http\Controllers\SendEmailController::class,'register']);// 注册发送邮箱接口
 Route::middleware([
     'api',
     JwtMiddleware::class

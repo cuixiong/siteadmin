@@ -85,6 +85,17 @@ Route::middleware([
     Route::post('admin/region/store','RegionController@store');// 新增
     Route::post('admin/region/destroy','RegionController@destroy');// 删除
     Route::post('admin/region/update','RegionController@update');// 列表
+
+    // Email控制器
+    Route::get('admin/email/list','EmailController@list');// 列表
+    Route::post('admin/email/store','EmailController@store');// 新增
+    Route::post('admin/email/destroy','EmailController@destroy');// 删除
+    Route::post('admin/email/update','EmailController@update');// 列表
+
+    // EmailScene控制器
+    Route::get('admin/email-sence/list','EmailSceneController@list');// 列表
+    Route::post('admin/email-sence/store','EmailSceneController@store');// 新增
+    Route::post('admin/email-sence/update','EmailSceneController@update');// 列表
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
