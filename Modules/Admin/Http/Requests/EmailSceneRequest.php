@@ -17,7 +17,7 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient' => 'required',
             'status' => 'required',
         ];
-        $meassge = [
+        $message = [
             'name.required' => '场景名称不能为空',
             'title.required' => '邮箱标题不能为空',
             'body.required' => '邮箱内容不能为空',
@@ -25,7 +25,7 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient.required' => '邮箱收件人不能为空',
             'status.required' => '状态不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
     /**
      * 更新数据验证
@@ -42,7 +42,7 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient' => 'required',
             'status' => 'required',
         ];
-        $meassge = [
+        $message = [
             'id.required' => 'ID不能为空',
             'name.required' => '场景名称不能为空',
             'title.required' => '邮箱标题不能为空',
@@ -51,6 +51,6 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient.required' => '邮箱收件人不能为空',
             'status.required' => '状态不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
 }

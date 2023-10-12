@@ -12,10 +12,10 @@ class LanguageRequest extends BaseRequest
         $rules = [
             'name' => 'required',
         ];
-        $meassge = [
+        $message = [
             'name.required' => '名称不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
     /**
      * 更新数据验证
@@ -27,10 +27,10 @@ class LanguageRequest extends BaseRequest
             'id' => 'required',
             'name' => 'required',
         ];
-        $meassge = [
+        $message = [
             'id.required' => 'ID不能为空',
             'name.required' => '名称不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
 }

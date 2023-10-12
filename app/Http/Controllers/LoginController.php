@@ -95,7 +95,7 @@ class LoginController extends Controller
                 if(!$token){
                     ReturnJson(false,'注册成功,但是token生成失败');
                 }
-                ReturnJson(true,'注册成功',['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() * 600]);
+                ReturnJson(true,'注册成功',['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() * 600,'id' => $UserModel->id]);
             } else {
                 ReturnJson(false,'注册失败');
             }

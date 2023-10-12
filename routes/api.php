@@ -16,12 +16,14 @@ use App\Http\Middleware\JwtMiddleware;
 // Login控制器
 Route::post('login', [\App\Http\Controllers\LoginController::class,'login']);// 账号登陆
 Route::post('register', [\App\Http\Controllers\LoginController::class,'register']);// 账号注册
-
 // SendEmail控制器
-Route::post('send-email/register', [\App\Http\Controllers\SendEmailController::class,'register']);// 注册发送邮箱接口
+Route::post('send-email/register', [\App\Http\Controllers\SendEmailController::class,'register']);// 注册账号邮箱接口
+
+/** 需要登陆权限路由 */
 Route::middleware([
     'api',
     JwtMiddleware::class
 ])->group(function () {
     Route::get('logout', [\App\Http\Controllers\LoginController::class,'logout']);// 退出登陆
+    Route::post('send-email/test', [\App\Http\Controllers\SendEmailController::class,'test']);// 邮箱测试
 });

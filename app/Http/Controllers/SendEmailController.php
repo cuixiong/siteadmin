@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Validator;
 use Modules\Admin\Http\Models\Email;
 use Modules\Admin\Http\Models\EmailScene;
 use Modules\Admin\Http\Models\User;
@@ -36,6 +37,54 @@ class SendEmailController extends Controller
     {
         // 发送邮件
         Mail::mailer('trends')->to($email)->send(new TrendsEmail($templet,$data,$subject,$EmailUser));
+    }
+
+    /**
+     * 邮件测试发送中转方法
+     * @param use Illuminate\Http\Request;
+     */
+    public function test(Request $request)
+    {
+        try {
+            // 验证表单数据
+            $this->validatorData($request->all());
+            $action = $request->action.'Test';
+            // 调用
+            $res = $this->$action($request);
+            $res ? ReturnJson(TRUE,'邮箱发送成功') : ReturnJson(FALSE,'邮箱发送失败');
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+
+    /**
+     * 邮箱测试发送表单数据验证
+     * @param array $data;
+     */
+    private function validatorData($data)
+    {
+        $rules = [
+            'name' => 'required',
+            'title' => 'required',
+            'body' => 'required',
+            'email_sender_id' => 'required',
+            'email_recipient' => 'required',
+            'action' => 'required',
+        ];
+        $message = [
+            'name.required' => '场景名称不能为空',
+            'title.required' => '邮箱标题不能为空',
+            'body.required' => '邮箱内容不能为空',
+            'email_sender_id.required' => '发送邮件的邮箱ID不能为空',
+            'email_recipient.required' => '邮箱收件人不能为空',
+            'action.required' => '测试邮箱的code方法不能为空',
+        ];
+        $validator = Validator::make($data, $rules,$message);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->messages();
+            $errors = array_shift($errors['action']);
+            ReturnJson(FALSE,$errors);
+        }
     }
 
     /**
@@ -78,5 +127,35 @@ class SendEmailController extends Controller
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * 注册场景的测试请求
+     * @param use Illuminate\Http\Request $request;
+     * @return response Code
+     */
+    private function registerTest($request)
+    {
+        $id = $request->user->id;
+        $user = User::find($id);
+        $user = $user ? $user->toArray() : [];
+
+        $scene = $request->all();
+        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        // 收件人的数组
+        $emails = explode(',',$scene['email_recipient']);
+        // 邮箱账号配置信息
+        $config = [
+            'host' =>  $senderEmail->host,
+            'port' =>  $senderEmail->port,
+            'encryption' =>  $senderEmail->encryption,
+            'username' =>  $senderEmail->email,
+            'password' =>  $senderEmail->password
+        ];
+        $this->SetConfig($config);
+        foreach ($emails as $email) {
+            $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        }
+        return true;
     }
 }

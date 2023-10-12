@@ -15,14 +15,14 @@ class UserRequest extends BaseRequest
             'position_id' => 'required',
             'role_id' => 'required',
         ];
-        $meassge = [
+        $message = [
             'name.required' => '用户名不能为空',
             'email.required' => '邮箱不能为空',
             'email.unique' => '邮箱已存在，请更换其他邮箱',
             'position_id.required' => '职位ID不能为空',
             'role_id.required' => '角色ID不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
     /**
      * 更新数据验证
@@ -37,13 +37,13 @@ class UserRequest extends BaseRequest
             'position_id' => 'required',
             'role_id' => 'required',
         ];
-        $meassge = [
+        $message = [
             'id.required' => '用户名不能为空',
             'name.required' => '用户名不能为空',
             'email.required' => '邮箱不能为空',
             'position_id.required' => '职位ID不能为空',
             'role_id.required' => '角色ID不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
 }

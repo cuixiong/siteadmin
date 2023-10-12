@@ -17,7 +17,7 @@ class EmailRequest extends BaseRequest
             'encryption' => 'required',
             'password' => 'required',
         ];
-        $meassge = [
+        $message = [
             'name.required' => '名称不能为空',
             'email.required' => '邮箱不能为空',
             'host.required' => 'SMTP主机地址不能为空',
@@ -25,7 +25,7 @@ class EmailRequest extends BaseRequest
             'encryption.required' => 'SMTP加密类型不能为空',
             'password.required' => '邮箱授权码不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
     /**
      * 更新数据验证
@@ -42,7 +42,7 @@ class EmailRequest extends BaseRequest
             'encryption' => 'required',
             'password' => 'required',
         ];
-        $meassge = [
+        $message = [
             'id.required' => 'ID不能为空',
             'name.required' => '名称不能为空',
             'email.required' => '邮箱不能为空',
@@ -51,6 +51,6 @@ class EmailRequest extends BaseRequest
             'encryption.required' => 'SMTP加密类型不能为空',
             'password.required' => '邮箱授权码不能为空',
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
 }

@@ -93,9 +93,9 @@ Route::middleware([
     Route::post('admin/email/update','EmailController@update');// 列表
 
     // EmailScene控制器
-    Route::get('admin/email-sence/list','EmailSceneController@list');// 列表
-    Route::post('admin/email-sence/store','EmailSceneController@store');// 新增
-    Route::post('admin/email-sence/update','EmailSceneController@update');// 列表
+    Route::get('admin/email-scene/list','EmailSceneController@list');// 列表
+    Route::post('admin/email-scene/store','EmailSceneController@store');// 新增
+    Route::post('admin/email-scene/update','EmailSceneController@update');// 列表
 });
 
 /** 不需要登陆也不需要验证权限的路由 */

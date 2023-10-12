@@ -14,12 +14,12 @@ class RoleRequest extends BaseRequest
             'status' => 'required',
             'rule_id' => 'required'
         ];
-        $meassge = [
+        $message = [
             'name.required' => '角色名称不能为空',
             'status.required' => '状态不能为空',
             'rule_id.required' => '权限不能为空'
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
 
     /**
@@ -33,11 +33,11 @@ class RoleRequest extends BaseRequest
             'status' => 'required',
             'rule_id' => 'required'
         ];
-        $meassge = [
+        $message = [
             'name.required' => '角色名称不能为空',
             'status.required' => '状态不能为空',
             'rule_id.required' => '权限不能为空'
         ];
-        return $this->validateRequest($request, $rules,$meassge);
+        return $this->validateRequest($request, $rules,$message);
     }
 }
