@@ -60,7 +60,8 @@ Route::middleware([
     Route::post('admin/site/list','SiteController@list');// 列表
     Route::post('admin/site/update','SiteController@update');// 更新
     Route::post('admin/site/destroy','SiteController@destroy');// 删除
-
+    Route::post('admin/site/move-up-site','SiteController@moveUpSite');//系统升级
+    Route::post('admin/site/message','SiteController@message');//测试
     // Publisher控制器
     Route::get('admin/publisher/list','PublisherController@list');// 列表
     Route::get('admin/publisher/store','PublisherController@store');// 新增

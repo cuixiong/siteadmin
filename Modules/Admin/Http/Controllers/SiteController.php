@@ -3,6 +3,7 @@
 namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\RabbitmqService;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
@@ -315,5 +316,49 @@ class SiteController extends CrudController
         // exec($exec,$res,$status);
         exec("git pull",$res,$status);
         var_dump($res,$status);
+    }
+
+    /**
+     * 推送消息到mq中
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function moveUpSite(Request $request){
+        try{
+            $className = get_class($this);
+
+            $id = $request->input('id');
+
+            if(!$id) ReturnJson(FALSE,'缺少站点id');
+
+            $info = Site::where('id',$id)->select('id','english_name')->first()->toArray();
+
+            $englishName = $info['english_name'];
+//var_dump($englishName);die;
+            $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'message', 'data'=>$info]);
+            RabbitmqService::push($englishName,$englishName,$englishName,'fanout' ,$data);
+
+            ReturnJson(TRUE,'操作成功');
+        }catch (\Exception $e){
+            var_dump($e->getMessage());die;
+            return $this->failed($e->getMessage().$e->getLine());
+            ReturnJson(false,'操作失败');
+        }
+    }
+
+    /**
+     * 异常扑获
+     * @param \Exception $exception
+     */
+    public function failed(\Exception $exception){
+        print_r($exception->getMessage());
+    }
+    public static function message($params = null)
+    {
+        if(!empty($params)){
+            echo ' 我有参数1 ';
+        }else{
+            echo ' 我没有参数1 ';
+        }
     }
 }
