@@ -53,11 +53,11 @@ class RabbitmqConsumerCommand extends Command
         $connection = new AMQPStreamConnection('127.0.0.1', 5672, 'guest', 'guest','/');
         $channel = $connection->channel();
 
-        $channel->exchange_declare('niuniu1232', 'fanout', false, true, false);
+        $channel->exchange_declare('168report', 'fanout', false, true, false);
 
-        list($queue_name, ,) = $channel->queue_declare("niuniu1232", false, true, false, false);
+        list($queue_name, ,) = $channel->queue_declare("168report", false, true, false, false);
 
-        $channel->queue_bind($queue_name, 'niuniu1232');
+        $channel->queue_bind($queue_name, '168report');
 
         echo " [*] Waiting for logs. To exit press CTRL+C\n";
 
@@ -79,7 +79,7 @@ class RabbitmqConsumerCommand extends Command
 
         // 订阅队列并处理消息
         $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
-
+        echo '123123';
         //跳转到对应的方法end
 //        $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
 
