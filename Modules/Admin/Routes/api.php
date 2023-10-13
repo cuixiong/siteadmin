@@ -109,6 +109,12 @@ Route::middleware([
     Route::post('admin/dictionary-value/store','DictionaryValueController@store');// 新增
     Route::post('admin/dictionary-value/update','DictionaryValueController@update');// 编辑
     Route::post('admin/dictionary-value/destroy','DictionaryValueController@destroy');// 删除
+
+    // Database控制器
+    Route::get('admin/database/list','DatabaseController@list');// 列表
+    Route::post('admin/database/store','DatabaseController@store');// 新增
+    Route::post('admin/database/update','DatabaseController@update');// 编辑
+    Route::post('admin/database/destroy','DatabaseController@destroy');// 删除
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
