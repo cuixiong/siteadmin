@@ -18,6 +18,8 @@ class CrudController extends Controller
             $validate = 'Modules\Admin\Http\Requests\\'.$name.'Request';// Validate(数据验证)
             $this->model = $model;
             $this->validate = $validate;
+            // 获取当前请求的方法名
+            list($class, $this->action) = explode('@', \Route::current()->getActionName());
         }
     }
     /**
