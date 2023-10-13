@@ -11,16 +11,14 @@ class CrudController extends Controller
     public function __construct()
     {
         // 模型类名:若没有指定模型，则根据控制器名找到对应的模型
-//        if(empty($this->model)){
-//            $Controller = (new \ReflectionClass($this))->getShortName();// 控制器名
-//            $name = str_replace('Controller','',$Controller);
-//            $model = 'Modules\Admin\Http\Models\\'.$name;// Model(模型)
-//            $validate = 'Modules\Admin\Http\Requests\\'.$name.'Request';// Validate(数据验证)
-//            $this->model = $model;
-//            $this->validate = $validate;
-//            // 获取当前请求的方法名
-//            list($class, $this->action) = explode('@', \Route::current()->getActionName());
-//        }
+        if(empty($this->model)){
+            $Controller = (new \ReflectionClass($this))->getShortName();// 控制器名
+            $name = str_replace('Controller','',$Controller);
+            $model = 'Modules\Admin\Http\Models\\'.$name;// Model(模型)
+            $validate = 'Modules\Admin\Http\Requests\\'.$name.'Request';// Validate(数据验证)
+            $this->model = $model;
+            $this->validate = $validate;
+        }
     }
     /**
      *  获取模型实例
