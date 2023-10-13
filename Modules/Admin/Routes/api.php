@@ -79,24 +79,36 @@ Route::middleware([
     Route::get('admin/language/list','LanguageController@list');// 列表
     Route::post('admin/language/store','LanguageController@store');// 新增
     Route::post('admin/language/destroy','LanguageController@destroy');// 删除
-    Route::post('admin/language/update','LanguageController@update');// 新增
+    Route::post('admin/language/update','LanguageController@update');// 编辑
 
     // Region控制器
     Route::get('admin/region/list','RegionController@list');// 列表
     Route::post('admin/region/store','RegionController@store');// 新增
     Route::post('admin/region/destroy','RegionController@destroy');// 删除
-    Route::post('admin/region/update','RegionController@update');// 列表
+    Route::post('admin/region/update','RegionController@update');// 编辑
 
     // Email控制器
     Route::get('admin/email/list','EmailController@list');// 列表
     Route::post('admin/email/store','EmailController@store');// 新增
     Route::post('admin/email/destroy','EmailController@destroy');// 删除
-    Route::post('admin/email/update','EmailController@update');// 列表
+    Route::post('admin/email/update','EmailController@update');// 编辑
 
     // EmailScene控制器
     Route::get('admin/email-scene/list','EmailSceneController@list');// 列表
     Route::post('admin/email-scene/store','EmailSceneController@store');// 新增
-    Route::post('admin/email-scene/update','EmailSceneController@update');// 列表
+    Route::post('admin/email-scene/update','EmailSceneController@update');// 编辑
+
+    // Dictionary控制器
+    Route::get('admin/dictionary/list','DictionaryController@list');// 列表
+    Route::post('admin/dictionary/store','DictionaryController@store');// 新增
+    Route::post('admin/dictionary/update','DictionaryController@update');// 编辑
+    Route::post('admin/dictionary/destroy','DictionaryController@destroy');// 删除
+    
+    // DictionaryValue控制器
+    Route::get('admin/dictionary-value/list','DictionaryValueController@list');// 列表
+    Route::post('admin/dictionary-value/store','DictionaryValueController@store');// 新增
+    Route::post('admin/dictionary-value/update','DictionaryValueController@update');// 编辑
+    Route::post('admin/dictionary-value/destroy','DictionaryValueController@destroy');// 删除
 });
 
 /** 不需要登陆也不需要验证权限的路由 */

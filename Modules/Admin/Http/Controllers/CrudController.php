@@ -59,7 +59,7 @@ class CrudController extends Controller
 
     /**
      * AJax单行删除
-     * @param $id 主键ID
+     * @param $ids 主键ID
      */
     protected function destroy(Request $request)
     {
