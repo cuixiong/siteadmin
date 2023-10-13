@@ -115,6 +115,12 @@ Route::middleware([
     Route::post('admin/database/store','DatabaseController@store');// 新增
     Route::post('admin/database/update','DatabaseController@update');// 编辑
     Route::post('admin/database/destroy','DatabaseController@destroy');// 删除
+
+    // Server控制器
+    Route::get('admin/server/list','ServerController@list');// 列表
+    Route::post('admin/server/store','ServerController@store');// 新增
+    Route::post('admin/server/update','ServerController@update');// 编辑
+    Route::post('admin/server/destroy','ServerController@destroy');// 删除
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
