@@ -396,4 +396,9 @@ class SiteController extends CrudController
             echo '保存失败';
         }
     }
+
+    public function setDetail()
+    {
+        echo '12312312';
+    }
 }
