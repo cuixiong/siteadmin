@@ -6,14 +6,14 @@ use Illuminate\Console\Command;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class RabbitmqConsumerCommand extends Command
+class RabbitmqConsumerResultCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'rabbitmq_consumer';//给消费者起个command名称
+    protected $signature = 'rabbitmq_consumer_result';//给消费者起个command名称
 
     /**
      * The console command description.
@@ -52,11 +52,11 @@ class RabbitmqConsumerCommand extends Command
         $connection = new AMQPStreamConnection('127.0.0.1', 5672, 'guest', 'guest','/');
         $channel = $connection->channel();
 
-        $channel->exchange_declare('168report', 'fanout', false, true, false);
+        $channel->exchange_declare('result', 'fanout', false, true, false);
 
-        list($queue_name, ,) = $channel->queue_declare("168report", false, true, false, false);
+        list($queue_name, ,) = $channel->queue_declare("result", false, true, false, false);
 
-        $channel->queue_bind($queue_name, '168report');
+        $channel->queue_bind($queue_name, 'result');
 
         echo " [*] Waiting for logs. To exit press CTRL+C\n";
 
@@ -70,10 +70,10 @@ class RabbitmqConsumerCommand extends Command
             $data = json_decode($message->body, true);
             $class = $data['class'];
             $method = $data['method'];
-
+            $result = $data['data'];
             // 根据类名和方法名调用相应的类和方法
             $instance = new $class();
-            call_user_func([$instance, $method],$data);
+            call_user_func([$instance, $method],$result);
         };
 
         // 订阅队列并处理消息

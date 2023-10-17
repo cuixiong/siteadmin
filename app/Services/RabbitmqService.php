@@ -70,7 +70,7 @@ class RabbitmqService
         //监听写入
         $channel->wait_for_pending_acks();
 
-        dump('生产者已操作');
+//        dump('生产者已操作');
         //关闭消息推送资源
         $channel->close();
 

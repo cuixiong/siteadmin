@@ -31,7 +31,7 @@ Route::middleware([
     Route::post('admin/user/store','UserController@store')->name('用户新增');
     Route::post('admin/user/destroy','UserController@destroy')->name('用户删除');
     Route::post('admin/user/update','UserController@update')->name('用户编辑');
-    Route::get('admin/user/list','UserController@list')->name('用户列表'); 
+    Route::get('admin/user/list','UserController@list')->name('用户列表');
     Route::get('admin/user/filters','UserController@filters')->name('用户表头');
 
     // Rule控制器
@@ -63,6 +63,7 @@ Route::middleware([
     Route::post('admin/site/destroy','SiteController@destroy')->name('站点删除');
     Route::post('admin/site/move-up-site','SiteController@moveUpSite')->name('站点升级');
     Route::post('admin/site/message','SiteController@message')->name('站点测试');
+    Route::post('admin/site/callback-results','SiteController@callbackResults')->name('站点更新结果');
     // Publisher控制器
     Route::get('admin/publisher/list','PublisherController@list')->name('出版商列表');
     Route::get('admin/publisher/store','PublisherController@store')->name('出版商新增');
@@ -97,7 +98,7 @@ Route::middleware([
     Route::post('admin/dictionary/store','DictionaryController@store')->name('字典新增');
     Route::post('admin/dictionary/update','DictionaryController@update')->name('字典编辑');
     Route::post('admin/dictionary/destroy','DictionaryController@destroy')->name('字典删除');
-    
+
     // DictionaryValue控制器
     Route::get('admin/dictionary-value/list','DictionaryValueController@list')->name('字典项列表');
     Route::post('admin/dictionary-value/store','DictionaryValueController@store')->name('字典项新增');
