@@ -6,11 +6,10 @@ use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 class Base extends Model
 {
-    // 注意：我们在这个模型上强制使用中央连接，继承这个模型的基类所有的查询都是使用中央连接
-    // use ResourceSyncing, CentralConnection;
+    use ResourceSyncing, CentralConnection;
     
     
-    // 把自动维护的时间字段修改为时间戳格式保存
+    // 时间戳
     protected $dateFormat = 'U';
     // 下面是设置数据表名，如果不设置，则使用类名的复数形式作为表名，如Users
 	// protected $table = "student";

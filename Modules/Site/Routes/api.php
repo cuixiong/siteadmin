@@ -1,6 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Middleware\JwtMiddleware;
+use Illuminate\Support\Facades\Route;
+use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,7 +14,14 @@ use Illuminate\Http\Request;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
-Route::middleware('auth:api')->get('/site', function (Request $request) {
-    return $request->user();
+InitializeTenancyByRequestData::$header = 'X-Site';
+InitializeTenancyByRequestData::$queryParameter = null;
+Route::middleware([
+    InitializeTenancyByRequestData::class,
+    JwtMiddleware::class,
+])->group(function(){
+    Route::get('site/select',[\Modules\Site\Http\Controllers\SiteController::class,'select']);
+    Route::get('site/update',[\Modules\Site\Http\Controllers\SiteController::class,'update']);
+    Route::get('site/insert',[\Modules\Site\Http\Controllers\SiteController::class,'insert']);
+    Route::get('site/delete',[\Modules\Site\Http\Controllers\SiteController::class,'delete']);
 });

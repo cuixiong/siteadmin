@@ -1,9 +1,7 @@
 <?php
 
 namespace Modules\Site\Http\Models;
-
 use Illuminate\Database\Eloquent\Model;
-class UsersModel extends Model
+class User extends Model
 {
-    public $table = 'users';
 }
