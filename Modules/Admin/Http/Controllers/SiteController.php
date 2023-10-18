@@ -7,6 +7,7 @@ use App\Services\RabbitmqService;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\SiteUpdateLog;
 
 class SiteController extends CrudController
 {
@@ -355,10 +356,49 @@ class SiteController extends CrudController
     }
     public static function message($params = null)
     {
-        if(!empty($params)){
-            echo ' 我有参数1 ';
-        }else{
+        if(empty($params)){
             echo ' 我没有参数1 ';
+        }else{
+            echo ' 我有参数2 ';
+            $RootPath = base_path();
+            var_dump($params);
+            $RootPath = 'D:\phpstudy\phpstudy_pro\WWW\site\siteadmin.qyrdata.com';
+            $exec = "cd ".$RootPath;
+            $exec .= " & git pull";
+            exec($exec,$res,$status);
+            var_dump($res,$status);
+            $result = [];
+            $result['message'] = $res;
+            $result['status'] = $status;
+            $result['data'] = $params['data'];
+            // 返回结果给生产者平台
+//            $result = '处理结果：';
+            $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'callbackResults', 'data'=>$result]);
+            RabbitmqService::push('result','result','result','fanout' ,$data);
         }
+    }
+
+    public static function callbackResults($params = null)
+    {
+        //将数据入库数据表
+        $res = SiteUpdateLog::insert(
+            [
+                'site_id' => $params['data']['id'],
+                'english_name' => $params['data']['english_name'],
+                'message'=>$params['message'][0],
+                'status'=>$params['status'],
+                'created_at'=>time(),
+                'updated_at'=>time()],
+        );
+        if($res){
+            echo '保存成功';
+        }else{
+            echo '保存失败';
+        }
+    }
+
+    public function setDetail()
+    {
+        echo '12312312';
     }
 }
