@@ -7,7 +7,6 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitmqConsumerCommand extends Command
 {
-    private $Config;
     public $Exchange = '';
     public $Queue = '';
     public $QueueBind = '';
@@ -32,13 +31,6 @@ class RabbitmqConsumerCommand extends Command
      */
     public function __construct()
     {
-        $this->Config = [
-            'host' => env('RABBITMQ_HOST'),
-            'port' => env('RABBITMQ_PORT'),
-            'user' => env('RABBITMQ_USER'),
-            'password' => env('RABBITMQ_PASSWORD'),
-            'vhost' => env('RABBITMQ_VHOST'),
-        ];
         parent::__construct();
     }
     /**
@@ -46,12 +38,19 @@ class RabbitmqConsumerCommand extends Command
      * @param use PhpAmqpLib\Connection\AMQPStreamConnection; 
      */
     private static function getConnect(){
+        $Config = [
+            'host' => env('RABBITMQ_HOST'),
+            'port' => env('RABBITMQ_PORT'),
+            'user' => env('RABBITMQ_USER'),
+            'password' => env('RABBITMQ_PASSWORD'),
+            'vhost' => env('RABBITMQ_VHOST'),
+        ];
         return new AMQPStreamConnection(
-            $this->Config['host'],
-            $this->Config['port'],
-            $this->Config['user'],
-            $this->Config['password'],
-            $this->Config['vhost']
+            $Config['host'],
+            $Config['port'],
+            $Config['user'],
+            $Config['password'],
+            $Config['vhost']
         );
     }
     /**
