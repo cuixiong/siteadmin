@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Services\RabbitmqService;
 use Modules\Admin\Http\Models\Position;
@@ -354,6 +355,13 @@ class SiteController extends CrudController
     public function failed(\Exception $exception){
         print_r($exception->getMessage());
     }
+
+    /**
+     * 分站点接收队列更新指令
+     * @param $params
+     * @return void
+     * @throws \Exception
+     */
     public static function message($params = null)
     {
         if(empty($params)){
@@ -378,6 +386,11 @@ class SiteController extends CrudController
         }
     }
 
+    /**
+     * git更新完成返回总平台的回调
+     * @param $params
+     * @return void
+     */
     public static function callbackResults($params = null)
     {
         //将数据入库数据表
@@ -392,6 +405,13 @@ class SiteController extends CrudController
         );
         if($res){
             echo '保存成功';
+            //将结果加到缓存
+            cache()->put($params['data']['english_name'], [
+                'site'=>$params['data']['id'],
+                'english_name'=>$params['data']['english_name'],
+                'message'=>$params['message'][0],
+                'status'=>$params['status'],
+            ], 600);
         }else{
             echo '保存失败';
         }
@@ -401,4 +421,18 @@ class SiteController extends CrudController
     {
         echo '12312312';
     }
+
+    /**
+     * 前端持续请求获取缓存更新回调
+     */
+    public function getCatchGitStatus(Request $request)
+    {
+        $english = $request->input('english');
+        $data = Cache::get($english);
+        if(empty($data)){
+            ReturnJson(False,'未获取到信息');
+        }
+        ReturnJson(TRUE,'请求成功',$data);
+    }
+
 }

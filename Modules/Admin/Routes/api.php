@@ -64,6 +64,7 @@ Route::middleware([
     Route::post('admin/site/move-up-site','SiteController@moveUpSite')->name('站点升级');
     Route::post('admin/site/message','SiteController@message')->name('站点测试');
     Route::post('admin/site/callback-results','SiteController@callbackResults')->name('站点更新结果');
+    Route::get('admin/site/get-catch-git-status','SiteController@getCatchGitStatus')->name('返回更新结果');
     // Publisher控制器
     Route::get('admin/publisher/list','PublisherController@list')->name('出版商列表');
     Route::get('admin/publisher/store','PublisherController@store')->name('出版商新增');
