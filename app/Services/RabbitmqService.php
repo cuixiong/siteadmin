@@ -7,41 +7,50 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitmqService
 {
-    private static function getConnect(){
-        $config = [
-            'host' => env('RABBITMQ_HOST', '127.0.0.1'),
-            'port' => env('RABBITMQ_PORT', 5672),
-            'user' => env('RABBITMQ_USER', 'guest'),
-            'password' => env('RABBITMQ_PASSWORD', 'guest'),
-            'vhost' => env('RABBITMQ_VHOST', '/'),
+    private $Config;
+    public function __construct()
+    {
+        $this->Config = [
+            'host' => env('RABBITMQ_HOST'),
+            'port' => env('RABBITMQ_PORT'),
+            'user' => env('RABBITMQ_USER'),
+            'password' => env('RABBITMQ_PASSWORD'),
+            'vhost' => env('RABBITMQ_VHOST'),
         ];
-        return new AMQPStreamConnection($config['host'],$config['port'],$config['user'],$config['password'],$config['vhost']);
-//        return new AMQPStreamConnection($config['host'],$config['port'],$config['user'],$config['password']);
     }
 
     /**
-     * 数据插入到mq队列中（生产者）
-     * @param $queue   .队列名称
-     * @param $messageBody .消息体
-     * @param string $exchange .交换机名称
-     * @param string $routing_key .设置路由
-     * @param string $type .队列类型
+     * 配置连接信息
+     * @param use PhpAmqpLib\Connection\AMQPStreamConnection; 
+     */
+    private static function getConnect(){
+        return new AMQPStreamConnection(
+            $this->Config['host'],
+            $this->Config['port'],
+            $this->Config['user'],
+            $this->Config['password'],
+            $this->Config['vhost']
+        );
+    }
+
+    /**
+     * RabbitMQ 生产者
+     * @param $queue 队列名称
+     * @param string $exchange 交换机名称
+     * @param string $routing_key 设置路由
+     * @param string $type 队列类型
+     * @param $messageBody 消息体
      * @throws \Exception
      */
     public static function push($queue,$exchange,$routing_key,$type='direct',$messageBody){
-        //获取连接
-//        $connection = self::getConnect();
-//
-//        //构建通道（mq的数据存储与获取是通过通道进行数据传输的）
-//        $channel = $connection->channel();
-        $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
+        // 建立连接
+        $connection = self::getConnect();
+        //构建通道（mq的数据存储与获取是通过通道进行数据传输的）
         $channel = $connection->channel();
-
         //监听数据,成功
         $channel->set_ack_handler(function (AMQPMessage $message){
             dump("数据写入成功");
         });
-
         //监听数据,失败
         $channel->set_nack_handler(function (AMQPMessage $message){
             dump("数据写入失败");
@@ -70,53 +79,11 @@ class RabbitmqService
         //监听写入
         $channel->wait_for_pending_acks();
 
-//        dump('生产者已操作');
         //关闭消息推送资源
         $channel->close();
 
         //关闭mq资源
         $connection->close();
-    }
-
-    /**
-     * 消费者：取出消息进行消费，并返回
-     * @param $queue
-     * @param $callback
-     * @return bool
-     * @throws \Exception
-     */
-    public static function pop($queue,$callback){
-
-        print_r('消费者中心'.PHP_EOL);
-
-        $connection = self::getConnect();
-
-        //构建消息通道
-        $channel = $connection->channel();
-
-        //从队列中取出消息，并且消费
-        $message = $channel->basic_get($queue);
-
-        if(!$message) return false;
-        if(!empty($message)){
-            $data = json_decode($message);
-            $aa = Site::where('id',18)->update(['country_id'=>'123']);
-        }
-        //消息主题返回给回调函数
-        $res = $callback($message->body);
-
-        if($res){
-            print_r('ack验证'.PHP_EOL);
-            //ack验证，如果消费失败了，从新获取一次数据再次消费
-            $channel->basic_ack($message->getDeliveryTag());
-        }
-
-        print_r('ack消费完成'.PHP_EOL);
-
-        $channel->close();
-        $connection->close();
-
-        return true;
     }
 }
 

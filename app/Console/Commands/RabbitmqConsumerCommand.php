@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -8,6 +7,10 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitmqConsumerCommand extends Command
 {
+    private $Config;
+    public $Exchange = '';
+    public $Queue = '';
+    public $QueueBind = '';
     /**
      * The name and signature of the console command.
      *
@@ -29,9 +32,28 @@ class RabbitmqConsumerCommand extends Command
      */
     public function __construct()
     {
+        $this->Config = [
+            'host' => env('RABBITMQ_HOST'),
+            'port' => env('RABBITMQ_PORT'),
+            'user' => env('RABBITMQ_USER'),
+            'password' => env('RABBITMQ_PASSWORD'),
+            'vhost' => env('RABBITMQ_VHOST'),
+        ];
         parent::__construct();
     }
-
+    /**
+     * 配置连接信息
+     * @param use PhpAmqpLib\Connection\AMQPStreamConnection; 
+     */
+    private static function getConnect(){
+        return new AMQPStreamConnection(
+            $this->Config['host'],
+            $this->Config['port'],
+            $this->Config['user'],
+            $this->Config['password'],
+            $this->Config['vhost']
+        );
+    }
     /**
      * Execute the console command.
      * @return int
@@ -43,49 +65,34 @@ class RabbitmqConsumerCommand extends Command
 
     /**
      * 发布订阅模式 -订阅
-     * publish-and- subscribe， 即发布订阅模型。在Pub/Sub模型中，生产者将消息发布到一个主题(Topic)中，订阅了该Topic的所有下游消费者，都可以接收到这条消息。
-     * Date: 2022/5/7
-     * Time: 11:03
+     * publish-and- subscribe， 即发布订阅模型。
+     * 在Pub/Sub模型中，生产者将消息发布到一个主题(Topic)中
+     * 订阅了该Topic的所有下游消费者，都可以接收到这条消息。
      */
     public function subscribe()
     {
-        $connection = new AMQPStreamConnection('127.0.0.1', 5672, 'guest', 'guest','/');
+        // 建立连接
+        $connection = self::getConnect();
+        //构建通道（mq的数据存储与获取是通过通道进行数据传输的）
         $channel = $connection->channel();
-
-        $channel->exchange_declare('168report', 'fanout', false, true, false);
-
-        list($queue_name, ,) = $channel->queue_declare("168report", false, true, false, false);
-
-        $channel->queue_bind($queue_name, '168report');
-
-        echo " [*] Waiting for logs. To exit press CTRL+C\n";
-
-//        $callback = function ($msg) {
-//            echo ' 我是订阅者开始进行消费[x] ', $msg->body, "\n";
-//        };
-        //跳转到对应的方法
+        $channel->exchange_declare($this->Exchange, 'fanout', false, true, false);
+        list($queue_name, ,) = $channel->queue_declare($this->Queue, false, true, false, false);
+        $channel->queue_bind($queue_name, $this->QueueBind);
         // 定义回调函数，处理接收到的消息
         $callback = function (AMQPMessage $message) {
             // 解析消息内容
             $data = json_decode($message->body, true);
             $class = $data['class'];
             $method = $data['method'];
-
             // 根据类名和方法名调用相应的类和方法
             $instance = new $class();
             call_user_func([$instance, $method],$data);
         };
-
         // 订阅队列并处理消息
         $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
-        echo '123123';
-        //跳转到对应的方法end
-//        $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
-
         while ($channel->is_open()) {
             $channel->wait();
         }
-
         $channel->close();
         $connection->close();
     }
