@@ -127,4 +127,6 @@ Route::get('admin/publisher/get-publisher','PublisherController@getPublisher')->
 Route::get('admin/common/get-status','CommonController@getStatus')->name('获取状态 未知');
 Route::get('admin/common/filters','CommonController@filters')->name('公共数据');// 公共的列表表头和下拉数据
 
-Route::get('admin/test/test01','TestController@TestPush')->name('测试接口');
+Route::get('admin/test/test','TestController@TestPush')->name('测试接口');
+Route::get('admin/test/test01','TestController@Test01')->name('测试接口');
+Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
