@@ -17,8 +17,7 @@ class RabbitmqService
             'port' => env('RABBITMQ_PORT'),
             'user' => env('RABBITMQ_USER'),
             'password' => env('RABBITMQ_PASSWORD'),
-            // 'vhost' => env('RABBITMQ_VHOST'),
-            'vhost' => '/test',
+            'vhost' => env('RABBITMQ_VHOST'),
         ];
         return new AMQPStreamConnection(
             $Config['host'],

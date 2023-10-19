@@ -16,7 +16,7 @@ class TestController extends CrudController
         $data['name'] = $request->name;
         $data['email'] = $request->email;
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop', 'data'=>$data]);
-        RabbitmqService::push('test','test','test','fanout' ,$data);
+        RabbitmqService::push('test_queue01','test_qq','test','fanout' ,$data);
     }
 
     public function TestPop($params = null) {
