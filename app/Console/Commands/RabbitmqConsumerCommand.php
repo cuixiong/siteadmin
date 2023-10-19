@@ -43,7 +43,7 @@ class RabbitmqConsumerCommand extends Command
             'port' => env('RABBITMQ_PORT'),
             'user' => env('RABBITMQ_USER'),
             'password' => env('RABBITMQ_PASSWORD'),
-            'vhost' => '/',
+            'vhost' => '/test',
         ];
         return new AMQPStreamConnection(
             $Config['host'],
