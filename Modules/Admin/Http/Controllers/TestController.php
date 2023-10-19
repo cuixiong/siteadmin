@@ -12,10 +12,9 @@ class TestController extends CrudController
 {
     public function TestPush(Request $request) {
         $id = $request->id;
-        var_dump($id);die;
         $data['tenant_id'] = $id;
-        $data['name'] = '123';
-        $data['email'] = '123';
+        $data['name'] = $request->name;
+        $data['email'] = $request->email;
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop', 'data'=>$data]);
         RabbitmqService::push('test','test','test','fanout' ,$data);
     }
