@@ -5,7 +5,7 @@ class RabbitmqConsumerSiteCommand extends RabbitmqConsumerCommand
 {
     // 消费者command名称
     protected $signature = 'rabbitmq_consumer_site';
-    public $Exchange = '168report';
-    public $Queue = '168report';
-    public $QueueBind = '168report';
+    public $Exchange = 'Test';
+    public $Queue = 'test';
+    public $QueueBind = 'test';
 }
