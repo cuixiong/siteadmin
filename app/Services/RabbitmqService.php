@@ -7,29 +7,24 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class RabbitmqService
 {
-    private $Config;
-    public function __construct()
-    {
-        $this->Config = [
+    /**
+     * 配置连接信息
+     * @param use PhpAmqpLib\Connection\AMQPStreamConnection; 
+     */
+    private static function getConnect(){
+        $Config = [
             'host' => env('RABBITMQ_HOST'),
             'port' => env('RABBITMQ_PORT'),
             'user' => env('RABBITMQ_USER'),
             'password' => env('RABBITMQ_PASSWORD'),
             'vhost' => env('RABBITMQ_VHOST'),
         ];
-    }
-
-    /**
-     * 配置连接信息
-     * @param use PhpAmqpLib\Connection\AMQPStreamConnection; 
-     */
-    private static function getConnect(){
         return new AMQPStreamConnection(
-            $this->Config['host'],
-            $this->Config['port'],
-            $this->Config['user'],
-            $this->Config['password'],
-            $this->Config['vhost']
+            $Config['host'],
+            $Config['port'],
+            $Config['user'],
+            $Config['password'],
+            $Config['vhost']
         );
     }
 
