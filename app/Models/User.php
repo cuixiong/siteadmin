@@ -5,11 +5,8 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
-use Stancl\Tenancy\Database\Concerns\CentralConnection;
 class User extends Authenticatable implements JWTSubject
 {
-    use ResourceSyncing, CentralConnection;
     // 把自动维护的时间字段修改为时间戳格式保存
     protected $dateFormat = 'U';
     /** 隐藏不需要输出的字段 */
