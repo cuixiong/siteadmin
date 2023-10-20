@@ -117,6 +117,16 @@ Route::middleware([
     Route::post('admin/server/store','ServerController@store')->name('服务器新增');
     Route::post('admin/server/update','ServerController@update')->name('服务器编辑');
     Route::post('admin/server/destroy','ServerController@destroy')->name('服务器删除');
+
+    // System控制器
+    Route::get('admin/system/list','SystemController@list')->name('设置Tab列表');
+    Route::post('admin/system/store','SystemController@store')->name('设置Tab新增');
+    Route::post('admin/system/update','SystemController@update')->name('设置Tab编辑');
+    Route::post('admin/system/destroy','SystemController@destroy')->name('设置Tab删除');
+    Route::get('admin/system/value_list','SystemController@list')->name('设置键值列表');
+    Route::post('admin/system/value_store','SystemController@systemValueStore')->name('设置键值新增');
+    Route::post('admin/system/value_update','SystemController@systemValueUpdate')->name('设置键值编辑');
+    Route::post('admin/system/value_destroy','SystemController@systemValueDestroy')->name('设置键值删除');
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
