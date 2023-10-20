@@ -336,9 +336,9 @@ class SiteController extends CrudController
             $info = Site::where('id',$id)->select('id','english_name')->first()->toArray();
 
             $englishName = $info['english_name'];
-//var_dump($englishName);die;
+
             $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'message', 'data'=>$info]);
-            RabbitmqService::push($englishName,$englishName,$englishName,'fanout' ,$data);
+            RabbitmqService::push('we123',$englishName,'we123','fanout' ,$data);
 
             ReturnJson(TRUE,'操作成功');
         }catch (\Exception $e){
@@ -379,8 +379,7 @@ class SiteController extends CrudController
             $result['message'] = $res;
             $result['status'] = $status;
             $result['data'] = $params['data'];
-            // 返回结果给生产者平台
-//            $result = '处理结果：';
+
             $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'callbackResults', 'data'=>$result]);
             RabbitmqService::push('result','result','result','fanout' ,$data);
         }
