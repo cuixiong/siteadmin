@@ -118,7 +118,7 @@ class LoginController extends Controller
     public function logout()
     {
         auth('api')->logout();
-        return response()->json(['message' => 'Successfully logged out']);
+        ReturnJson(true,'注销登录成功');
     }
  
     /**
