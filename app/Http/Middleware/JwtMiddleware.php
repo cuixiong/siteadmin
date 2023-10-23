@@ -20,7 +20,7 @@ class JwtMiddleware
         try {
             if (! $user = JWTAuth::parseToken()->authenticate()) {  //获取到用户数据，并赋值给$user
                 return response()->json([
-                    'code' => 1004,
+                    'code' => 'B001',
                     'message' => '账号不存在'
                 ], 404);
             }
@@ -29,19 +29,19 @@ class JwtMiddleware
             return $next($request);
         } catch (TokenExpiredException $e) {
             return response()->json([
-                'code' => 1003,
+                'code' => 'B001',
                 'message' => 'token 过期' , //token已过期
             ]);
  
         } catch (TokenInvalidException $e) {
             return response()->json([
-                'code' => 1002,
+                'code' => 'B001',
                 'message' => 'token 无效',  //token无效
             ]);
  
         } catch (JWTException $e) {
             return response()->json([
-                'code' => 1001,
+                'code' => 'B001',
                 'message' => '缺少token' , //token为空
             ]);
         }
