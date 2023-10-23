@@ -32,14 +32,28 @@ class Rule extends Base
     {
         $tree = [];
         foreach ($rules as $item) {
+            // 临时添加KEY S
+            $data = [];
+            $data['path'] = '/'.$item['vue_route'];
+            $data['component'] = 'Layout';
+            $data['meta'] = [
+                'title' => $item['name'],
+                'hidden' => false,
+                'icon' => 'system',
+                'keepAlive' =>  true,
+                'roloes' => ["ADMIN"]
+            ];
             if ($item['parent_id'] == $parentId) {
                 $children = $this->buildTree($rules, $item['id']);
                 if (!empty($children)) {
                     $item['children'] = $children;
+                    $data['children'] = $children;
                 } else {
                     $item['children'] = [];
+                    $data['children'] = [];
                 }
-                $tree[] = $item;
+                // $tree[] = $item;
+                $tree[] = $data;
             }
         }
         return $tree;

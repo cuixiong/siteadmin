@@ -20,6 +20,8 @@ Route::middleware([
     // Common控制器
     Route::post('admin-common/info','CommonController@info')->name('账号信息');
     Route::post('admin-common/menus','CommonController@menus')->name('菜单栏');
+    Route::get('admin/common/menus','CommonController@menus')->name('测试菜单栏');
+
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -127,6 +129,7 @@ Route::middleware([
     Route::post('admin/system/value_store','SystemController@systemValueStore')->name('设置键值新增');
     Route::post('admin/system/value_update','SystemController@systemValueUpdate')->name('设置键值编辑');
     Route::post('admin/system/value_destroy','SystemController@systemValueDestroy')->name('设置键值删除');
+
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
@@ -140,3 +143,4 @@ Route::get('admin/common/filters','CommonController@filters')->name('公共数�
 Route::get('admin/test/test','TestController@TestPush')->name('测试接口');
 Route::get('admin/test/test01','TestController@Test01')->name('测试接口');
 Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
+

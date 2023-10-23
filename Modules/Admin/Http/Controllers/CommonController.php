@@ -53,10 +53,10 @@ class CommonController extends Controller
         $role = Role::where('id',$role_id)->first();
         // 当前角色的归属权限ID
         $rule_ids = $role->rule_id;
-        $rule_ids = explode(",",$rule_ids);
         // 查询type=1的菜单类型的权限信息
         $model = new Rule();
-        $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
+        // $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
+        $rules = $model->where('type',1)->get()->toArray();
         // 递归分类权限
         $rules = $model->buildTree($rules);
         // 返回菜单栏
