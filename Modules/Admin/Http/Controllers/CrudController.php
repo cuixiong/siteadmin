@@ -124,7 +124,7 @@ class CrudController extends Controller
      * @param int $pageSize 页数
      * @param Array $where 查询条件数组 默认空数组
      */
-    public function list (Request $request) {
+    protected function list (Request $request) {
         try {
             $this->ValidateInstance($request);
             $model = $this->ModelInstance()->query();

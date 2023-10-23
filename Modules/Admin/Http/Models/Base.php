@@ -58,4 +58,41 @@ class Base extends Model
         $res = User::where('id',$this->attributes['updated_by'])->value('name');
         return $res;
     }
+
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function tree($list,$key,$parentId = 0) {
+        $tree = [];
+        foreach ($list as $item) {
+            if ($item[$key] == $parentId) {
+                $children = $this->tree($list,$key,$item['id']);
+                if (!empty($children)) {
+                    $item['children'] = $children;
+                }
+                $tree[] = $item;
+            }
+        }
+        return $tree;
+    }
+
+    /**
+     * 列表数据
+     * @param $filed 字段，全部则不传
+     * @param $isTree 是否返回递归类型
+     * @param $treeKey 递归类型的key
+     * @return array $res
+     */
+    public function GetList($filed = '*',$isTree = false,$treeKey = 'parentId')
+    {
+        $list = self::select($filed)->get();
+        if($isTree){
+            $list = $this->tree($list,$treeKey);
+        }
+        return $list;
+    }
 }

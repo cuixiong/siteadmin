@@ -129,6 +129,12 @@ Route::middleware([
     Route::post('admin/system/value_update','SystemController@systemValueUpdate')->name('设置键值编辑');
     Route::post('admin/system/value_destroy','SystemController@systemValueDestroy')->name('设置键值删除');
 
+    // Department控制器
+    Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
+    Route::post('admin/department/store','DepartmentController@store')->name('部门新增');
+    Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
+    Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
+
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
