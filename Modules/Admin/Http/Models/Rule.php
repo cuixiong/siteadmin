@@ -54,9 +54,6 @@ class Rule extends Base
                 if (!empty($children)) {
                     $item['children'] = $children;
                     $data['children'] = $children;
-                } else {
-                    $item['children'] = [];
-                    $data['children'] = [];
                 }
                 // $tree[] = $item;
                 $tree[] = $data;
