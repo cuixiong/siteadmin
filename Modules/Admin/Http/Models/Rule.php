@@ -43,6 +43,9 @@ class Rule extends Base
                 'keepAlive' =>  true,
                 'roloes' => ["ADMIN"]
             ];
+            if($item['parent_id'] > 0 && $item['type'] == 1){
+                $data['name'] = ucfirst($item['path']);
+            }
             if ($item['parent_id'] == $parentId) {
                 $children = $this->buildTree($rules, $item['id']);
                 if (!empty($children)) {
