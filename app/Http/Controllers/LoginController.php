@@ -53,6 +53,7 @@ class LoginController extends Controller
             ReturnJson(true,'登陆成功',[
                 'accessToken' => $token,
                 'expires' => auth('api')->factory()->getTTL() * 600,
+                'expires' => null,
                 'refreshToken' => null,
                 'tokenType' =>  'Bearer'
             ]);
