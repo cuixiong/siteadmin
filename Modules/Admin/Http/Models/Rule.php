@@ -46,6 +46,9 @@ class Rule extends Base
             if($item['parent_id'] > 0 && $item['type'] == 1){
                 $data['name'] = ucfirst($item['path']);
             }
+            if(!empty($item['redirect'])){
+                $data['redirect'] = $item['redirect'];
+            }
             if ($item['parent_id'] == $parentId) {
                 $children = $this->buildTree($rules, $item['id']);
                 if (!empty($children)) {
