@@ -7,11 +7,11 @@
  */
 function ReturnJson($code,$message = '请求成功',$data = []){
     $code = ($code == TRUE) ? 200 : $code;
-    $code = ($code == FALSE) ? -200 : $code;
+    $code = ($code == FALSE) ? 'B001' : $code;
     echo json_encode(
         [
             'code' => $code,
-            'message' => $message,
+            'msg' => $message,
             'data' => $data
         ]);
     exit;

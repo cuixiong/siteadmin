@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['parent_id','name','vue_route','controller','action','route','icon','type','status','sort','created_by','updated_by','category'];
+    protected $fillable = ['parent_id','title','vue_route','controller','action','route','icon','type','status','sort','created_by','updated_by','category'];
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['parent_name','status_txt','menus_txt'];
 
@@ -34,12 +34,12 @@ class Rule extends Base
         foreach ($rules as $item) {
             // 临时添加KEY S
             $data = [];
-            $data['path'] = '/'.$item['vue_route'];
-            $data['component'] = 'Layout';
+            $data['path'] = $item['path'];
+            $data['component'] = $item['component'];
             $data['meta'] = [
-                'title' => $item['name'],
+                'title' => $item['title'],
                 'hidden' => false,
-                'icon' => 'system',
+                'icon' => $item['icon'],
                 'keepAlive' =>  true,
                 'roloes' => ["ADMIN"]
             ];
@@ -66,7 +66,7 @@ class Rule extends Base
     {
         if(isset($this->attributes['parent_id']) && $this->attributes['parent_id'] > 0)
         {
-            $name = $this->where('id',$this->attributes['parent_id'])->value('name');
+            $name = $this->where('id',$this->attributes['parent_id'])->value('title');
         } else {
             $name = '';
         }

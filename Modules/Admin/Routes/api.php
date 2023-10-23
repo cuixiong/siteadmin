@@ -18,9 +18,8 @@ Route::middleware([
     JwtMiddleware::class
 ])->group(function() {
     // Common控制器
-    Route::post('admin-common/info','CommonController@info')->name('账号信息');
-    Route::post('admin-common/menus','CommonController@menus')->name('菜单栏');
-    Route::get('admin/common/menus','CommonController@menus')->name('测试菜单栏');
+    Route::get('admin/common/info','CommonController@info')->name('INFO接口');
+    Route::get('admin/common/menus','CommonController@menus')->name('菜单栏');
 
 });
 

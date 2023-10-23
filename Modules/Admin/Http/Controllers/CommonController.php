@@ -17,29 +17,43 @@ class CommonController extends Controller
      */
     public function info(Request $request)
     {
-        $RuleModel = new Rule();
-        $menusQuery = $RuleModel->query();
-        $operationQuery = $RuleModel->query();
+        // $RuleModel = new Rule();
+        // $menusQuery = $RuleModel->query();
+        // $operationQuery = $RuleModel->query();
+        // $role = Role::find($request->user->role_id);
+        // if($role->is_super_administrator != 1){
+        //     $menusQuery->whereIn('id',$role->rule_id);
+        //     $operationQuery->whereIn('id',$role->rule_id);
+        // }
+        // // 菜单权限
+        // $roles['menus'] = $menusQuery->where('type',1)->select('vue_route')->get()->toArray();
+        // $roles['menus'] = array_keys(array_column($roles['menus'],null,'vue_route'));
+        // // 操作权限
+        // $roles['operation'] = $operationQuery->where('type',2)->select('vue_route')->get()->toArray();
+        // $roles['operation'] = array_keys(array_column($roles['operation'],null,'vue_route'));
+        // // 角色名称
+        // $roles['role'] = $role->name;
+        // // 职位信息
+        // $position = Position::where('id',$request->user->position_id)->first();
+        // $data = $request->user;
+        // $data['position'] = $position['name'];
+        // $data['positionId'] = $position['id'];
+        // $data['roles'] = $roles;
+        // ReturnJson(true,'登陆成功',$data);
+
+        $data['userId'] = $request->user->id;
+        $data['username'] = $request->user->email;
         $role = Role::find($request->user->role_id);
+        $data['roles'] = [$role->code];
+        $data['nickname'] = $role->name;
+        $data['avatar'] = "https://oss.youlai.tech/youlai-boot/2023/05/16/811270ef31f548af9cffc026dfc3777b.gif";
+        $RuleModel = new Rule();
         if($role->is_super_administrator != 1){
-            $menusQuery->whereIn('id',$role->rule_id);
-            $operationQuery->whereIn('id',$role->rule_id);
+            $RuleModel->whereIn('id',$role->rule_id);
         }
-        // 菜单权限
-        $roles['menus'] = $menusQuery->where('type',1)->select('vue_route')->get()->toArray();
-        $roles['menus'] = array_keys(array_column($roles['menus'],null,'vue_route'));
-        // 操作权限
-        $roles['operation'] = $operationQuery->where('type',2)->select('vue_route')->get()->toArray();
-        $roles['operation'] = array_keys(array_column($roles['operation'],null,'vue_route'));
-        // 角色名称
-        $roles['role'] = $role->name;
-        // 职位信息
-        $position = Position::where('id',$request->user->position_id)->first();
-        $data = $request->user;
-        $data['position'] = $position['name'];
-        $data['positionId'] = $position['id'];
-        $data['roles'] = $roles;
-        ReturnJson(true,'登陆成功',$data);
+        $perms = $RuleModel->where('type',2)->select('identifying')->get()->toArray();
+        $data['perms'] = array_keys(array_column($perms,null,'identifying'));
+        ReturnJson(true,'请求成功',$data);
     }
 
     /**
@@ -52,11 +66,14 @@ class CommonController extends Controller
         // 查询角色信息
         $role = Role::where('id',$role_id)->first();
         // 当前角色的归属权限ID
-        $rule_ids = $role->rule_id;
+        $rule_ids = $role->rule_id ? $role->rule_id : [];
         // 查询type=1的菜单类型的权限信息
         $model = new Rule();
-        // $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
-        $rules = $model->where('type',1)->get()->toArray();
+        if($role->is_super_administrator == 1){
+            $rules = $model->where('type',1)->get()->toArray();
+        } else {
+            $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
+        }
         // 递归分类权限
         $rules = $model->buildTree($rules);
         // 返回菜单栏
