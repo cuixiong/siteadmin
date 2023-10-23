@@ -41,7 +41,7 @@ class Rule extends Base
                 'hidden' => false,
                 'icon' => $item['icon'],
                 'keepAlive' =>  true,
-                'roloes' => ["ADMIN"]
+                'roles' => ["ADMIN"]
             ];
             if($item['parent_id'] > 0 && $item['type'] == 1){
                 $data['name'] = ucfirst($item['path']);
