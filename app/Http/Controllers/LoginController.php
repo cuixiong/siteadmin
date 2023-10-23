@@ -50,7 +50,12 @@ class LoginController extends Controller
             // 记录登陆时间
             $UserModel->login_time = date('Y-m-d H:i:s',);
             $UserModel->save();
-            ReturnJson(true,'登陆成功',['accessToken' => $token,'expires' => auth('api')->factory()->getTTL() * 600]);
+            ReturnJson(true,'登陆成功',[
+                'accessToken' => $token,
+                'expires' => auth('api')->factory()->getTTL() * 600,
+                'refreshToken' => null,
+                'tokenType' =>  'Bearer'
+            ]);
         } catch (\Exception $e){
             ReturnJson(false,$e->getMessage());
         }
