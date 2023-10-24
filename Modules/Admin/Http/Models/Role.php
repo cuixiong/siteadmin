@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Role extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id'];
+    protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator'];
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['is_super_txt'];
 
@@ -46,5 +46,4 @@ class Role extends Base
             ['id' => '1','name'=>'是'],
         ];
     }
-
 }
