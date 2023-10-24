@@ -112,4 +112,13 @@ class RuleController extends CrudController
         $routes = $this->RoutesList('admin');
         ReturnJson(TRUE,'请求成功',$routes);
     }
+
+    /**
+     * 返回权限value-label格式行数据
+     */
+    public function option()
+    {
+        $list = (new Rule)->GetList(['id','id as value','title as label','parent_id as parentId'],true,'parentId');
+        ReturnJson(TRUE,'请求成功',$list);
+    }
 }

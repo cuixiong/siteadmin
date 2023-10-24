@@ -20,4 +20,15 @@ class DepartmentController extends CrudController
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+    /**
+     * 递归树状value-label格式
+     */
+    public function option () {
+        try {
+            $list = (new Department)->GetList(['id','id as value','parent_id as parentId','name as label'],true,'parentId');
+            ReturnJson(TRUE,'请求成功',$list);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

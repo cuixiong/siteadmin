@@ -89,7 +89,7 @@ class Base extends Model
      */
     public function GetList($filed = '*',$isTree = false,$treeKey = 'parentId')
     {
-        $list = self::select($filed)->get();
+        $list = self::select($filed)->get()->toArray();
         if($isTree){
             $list = $this->tree($list,$treeKey);
         }

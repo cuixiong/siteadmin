@@ -20,7 +20,8 @@ Route::middleware([
     // Common控制器
     Route::get('admin/common/info','CommonController@info')->name('INFO接口');
     Route::get('admin/common/menus','CommonController@menus')->name('菜单栏');
-
+    Route::get('admin/rule/option','RuleController@option')->name('权限option接口');
+    Route::post('admin/role/adminId','RoleController@adminId')->name('Admin权限IDS');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -43,6 +44,7 @@ Route::middleware([
     Route::post('admin/rule/destroy','RuleController@destroy')->name('权限删除');
     Route::post('admin/rule/update','RuleController@update')->name('权限编辑');
     Route::get('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
+
 
     // Role控制器
     Route::get('admin/role/list','RoleController@list')->name('角色列表');
@@ -134,6 +136,7 @@ Route::middleware([
     Route::post('admin/department/store','DepartmentController@store')->name('部门新增');
     Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
     Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
+    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
 
 });
 
