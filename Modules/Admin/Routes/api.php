@@ -137,6 +137,7 @@ Route::middleware([
     Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
     Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
     Route::get('admin/department/option','DepartmentController@option')->name('部门option');
+    Route::get('admin/department/form','DepartmentController@form')->name('部门单查');
 
 });
 

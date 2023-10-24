@@ -106,7 +106,7 @@ class CrudController extends Controller
      * AJax单个查询
      * @param $request 请求信息
      */
-    protected function one(Request $request)
+    protected function form(Request $request)
     {
         try {
             $this->ValidateInstance($request);

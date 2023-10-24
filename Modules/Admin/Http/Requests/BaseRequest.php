@@ -62,7 +62,7 @@ class BaseRequest extends FormRequest
      * 查询数据验证
      * @param  \Illuminate\Http\Request  $request
      */
-    public function one($request)
+    public function form($request)
     {
         return $this->validateRequest($request, []);
     }
