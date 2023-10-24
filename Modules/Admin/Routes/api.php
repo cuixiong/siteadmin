@@ -34,7 +34,7 @@ Route::middleware([
     Route::post('admin/user/destroy','UserController@destroy')->name('用户删除');
     Route::post('admin/user/update','UserController@update')->name('用户编辑');
     Route::get('admin/user/list','UserController@list')->name('用户列表');
-    Route::post('admin/user/form','UserController@form')->name('用户单查');
+    Route::get('admin/user/form/{id}','UserController@form')->name('用户单查');
 
     // Rule控制器
     Route::post('admin/rule/store','RuleController@store')->name('权限新增');
@@ -52,7 +52,7 @@ Route::middleware([
     Route::post('admin/role/update','RoleController@update')->name('角色编辑');
     Route::get('admin/role/filters','RoleController@filters')->name('角色表头');
     Route::post('admin/role/destroy','RoleController@destroy')->name('角色删除');
-    Route::post('admin/role/form','RoleController@form')->name('用户单查');
+    Route::get('admin/role/form/{id}','RoleController@form')->name('角色单查');
 
     // Position控制器
     Route::post('admin/position/store','PositionController@store')->name('职位新增');
@@ -138,7 +138,7 @@ Route::middleware([
     Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
     Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
     Route::get('admin/department/option','DepartmentController@option')->name('部门option');
-    Route::post('admin/department/form','DepartmentController@form')->name('部门单查');
+    Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
 
 });
 
