@@ -125,7 +125,7 @@ class CrudController extends Controller
      * @param Array $where 查询条件数组 默认空数组
      */
     protected function list (Request $request) {
-        try {
+        // try {
             $this->ValidateInstance($request);
             $model = $this->ModelInstance()->query();
             if(!empty($request->search)){
@@ -147,16 +147,16 @@ class CrudController extends Controller
                 }
             }
             // 总数量
-            $count = $model->count();
+            $total = $model->count();
             // 总页数
-            $pageCount = $request->pageSize > 0 ? ceil($count/$request->pageSize) : 1;
+            $pageCount = $request->pageSize > 0 ? ceil($total/$request->pageSize) : 1;
             // 当前页码数
-            $page = $request->page ? $request->page : 1;
+            $pageNum = $request->pageNum ? $request->pageNum : 1;
             $pageSize = $request->pageSize ? $request->pageSize : 100;
 
             // 查询偏移量
-            if(!empty($request->page) && !empty($request->pageSize)){
-                $model->offset(($request->page - 1) * $request->pageSize);
+            if(!empty($request->pageNum) && !empty($request->pageSize)){
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
             }
             // 查询条数
             if(!empty($request->pageSize)){
@@ -166,18 +166,21 @@ class CrudController extends Controller
             $order = $request->order ? $request->order : 'id';
             // 升序/降序
             $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
-
             $record = $model->orderBy($order,$sort)->get();
+
             $data = [
-                'count' => $count,
+                'total' => $total,
                 'pageCount' => $pageCount,
-                'page' => $page,
+                'pageNum' => $pageNum,
                 'pageSize' => $pageSize,
                 'list' => $record
             ];
+            // var_dump($order,$sort);die;
+
             ReturnJson(TRUE,'请求成功',$data);
-        } catch (\Exception $e) {
-            ReturnJson(FALSE,$e->getMessage());
-        }
+
+        // } catch (\Exception $e) {
+        //     ReturnJson(FALSE,$e->getMessage());
+        // }
     }
 }

@@ -8,9 +8,9 @@ class User extends Base
     /** 隐藏不需要输出的字段 */
     protected $hidden = ["password"];
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['position_txt','role','is_on_job_txt'];
+    protected $appends = ['position_txt','roleNames','is_on_job_txt','deptName','genderLabel','avatar'];
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['name','email','password','status','login_time','role_id','position_id','is_on_job','verify_status','created_by','updated_by'];
+    protected $fillable = ['name','nickname','email','password','role_id','position_id','is_on_job','is_on_job','status','gender','mobile','department_id','created_by','updated_by'];
 
 
     /**
@@ -39,7 +39,7 @@ class User extends Base
     /**
      * 角色名称获取器
      */
-    public function getRoleAttribute()
+    public function getRoleNamesAttribute()
     {
         $roleName = '';
         if(isset($this->attributes['role_id'])){
@@ -53,7 +53,7 @@ class User extends Base
      */
     public function getIsOnJobTxtAttribute()
     {
-        $lists = $this->IsOnJobList();
+        $lists = SelectTxt::GetOnJobTxt();
         $text = '';
         if(isset($this->attributes['is_on_job']))
         {
@@ -65,23 +65,41 @@ class User extends Base
         }
         return $text;
     }
-    /** 在职状态列表 */
-    public function IsOnJobList(){
-        $list = [
-            ['id' => '','name' => '全部'],
-            ['id' => '0','name' => '离职'],
-            ['id' => '1','name' => '在职'],
-        ];
-        return $list;
+
+    /**
+     * 部门文本获取器
+     */
+    public function getDeptNameAttribute()
+    {
+        $text = '';
+        if(isset($this->attributes['department_id']))
+        {
+            $text = Department::where('id',$this->attributes['department_id'])->value('name');
+        }
+        return $text;
     }
 
-    /** 账号状态列表 */
-    public function StatusList(){
-        $list = [
-            ['id' => '','name' => '全部'],
-            ['id' => '0','name' => '禁用'],
-            ['id' => '1','name' => '正常'],
-        ];
-        return $list;
+    /**
+     * 性别获取器
+     */
+    public function getGenderLabelAttribute(){
+        $text = '';
+        if(isset($this->attributes['gender']))
+        {   
+            $lists = SelectTxt::GetGenderTxt();
+            foreach ($lists as $list) {
+                if($list['id'] == $this->attributes['gender']){
+                    $text = $list['name'];
+                }
+            }
+        }
+        return $text;
+    }
+
+    /**
+     * 头像获取器
+     */
+    public function getAvatarAttribute(){
+        return 'https://oss.youlai.tech/youlai-boot/2023/05/16/811270ef31f548af9cffc026dfc3777b.gif';
     }
 }

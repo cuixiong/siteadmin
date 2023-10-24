@@ -40,4 +40,16 @@ class SelectTxt extends Base
             ['id'=>3,'name'=>'外链']
         ];
     }
+
+    /**
+     * 权限类型文本
+     */
+    public static function GetGenderTxt()
+    {
+        return [
+            ['id'=>'','name'=>'性别'],
+            ['id'=>'0','name'=>'女'],
+            ['id'=>'1','name'=>'男'],
+        ];
+    }
 }
