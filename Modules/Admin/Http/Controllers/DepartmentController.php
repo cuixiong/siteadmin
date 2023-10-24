@@ -14,7 +14,7 @@ class DepartmentController extends CrudController
      */
     public function list (Request $request) {
         try {
-            $list = (new Department)->GetList(['id','parent_id as parentId','name','status','sort','created_at as createTime','updated_at as updateTime'],true,'parentId');
+            $list = (new Department)->GetList(['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'],true,'parent_id');
             ReturnJson(TRUE,'请求成功',$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
@@ -25,7 +25,7 @@ class DepartmentController extends CrudController
      */
     public function option () {
         try {
-            $list = (new Department)->GetList(['id','id as value','parent_id as parentId','name as label'],true,'parentId');
+            $list = (new Department)->GetList(['id','id as value','parent_id','name as label'],true,'parent_id');
             ReturnJson(TRUE,'请求成功',$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());

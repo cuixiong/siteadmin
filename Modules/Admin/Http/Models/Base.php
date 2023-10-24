@@ -67,6 +67,7 @@ class Base extends Model
      * @return array $res
      */
     public function tree($list,$key,$parentId = 0) {
+
         $tree = [];
         foreach ($list as $item) {
             if ($item[$key] == $parentId) {
@@ -87,7 +88,7 @@ class Base extends Model
      * @param $treeKey 递归类型的key
      * @return array $res
      */
-    public function GetList($filed = '*',$isTree = false,$treeKey = 'parentId')
+    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id')
     {
         $list = self::select($filed)->get()->toArray();
         if($isTree){
