@@ -125,7 +125,7 @@ class CrudController extends Controller
      * @param Array $where 查询条件数组 默认空数组
      */
     protected function list (Request $request) {
-        // try {
+        try {
             $this->ValidateInstance($request);
             $model = $this->ModelInstance()->query();
             if(!empty($request->search)){
@@ -175,12 +175,9 @@ class CrudController extends Controller
                 'pageSize' => $pageSize,
                 'list' => $record
             ];
-            // var_dump($order,$sort);die;
-
             ReturnJson(TRUE,'请求成功',$data);
-
-        // } catch (\Exception $e) {
-        //     ReturnJson(FALSE,$e->getMessage());
-        // }
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
     }
 }
