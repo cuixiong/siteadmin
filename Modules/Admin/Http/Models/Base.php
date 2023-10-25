@@ -83,14 +83,15 @@ class Base extends Model
 
     /**
      * 列表数据
-     * @param $filed 字段，全部则不传
+     * @param array/string $filed 字段，全部则不传
      * @param $isTree 是否返回递归类型
      * @param $treeKey 递归类型的key
+     * @param array $where 查询条件
      * @return array $res
      */
-    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id')
+    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
     {
-        $list = self::select($filed)->get()->toArray();
+        $list = self::select($filed)->where($where)->get()->toArray();
         if($isTree){
             $list = $this->tree($list,$treeKey);
         }
