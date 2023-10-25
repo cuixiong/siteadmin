@@ -74,7 +74,7 @@ class User extends Base
         if(isset($this->attributes['department_id']))
         {
             $text = Department::where('id',$this->attributes['department_id'])->value('name');
-            return $value;
+            return $text;
         }
         return null;
     }
@@ -130,11 +130,10 @@ class User extends Base
     }
 
     /**
-     * 密码修改器
+     * 角色ID修改器
      */
     protected function setRoleIdAttribute($value)
     {
-        // 不为空的情况下才修改密码
         if (!empty($value)) {
             if(is_array($value)){
                 $value = array_shift($value);
