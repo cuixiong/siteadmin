@@ -112,7 +112,7 @@ Route::middleware([
     Route::post('admin/dictionary-value/update','DictionaryValueController@update')->name('字典项编辑');
     Route::post('admin/dictionary-value/destroy','DictionaryValueController@destroy')->name('字典项删除');
     Route::get('admin/dictionary-value/form/{id}','DictionaryValueController@form')->name('字典项单查');
-    Route::get('admin/dictionary-value/get/{code}','DictionaryValueController@list')->name('字典项查询');
+    Route::get('admin/dictionary-value/get/{code}','DictionaryValueController@get')->name('字典项查询');
 
     // Database控制器
     Route::get('admin/database/list','DatabaseController@list')->name('数据库列表');
