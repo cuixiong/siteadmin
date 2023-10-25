@@ -20,4 +20,16 @@ class RoleController extends CrudController
         $rule_ids = array_map('intval',$rule_ids);
         ReturnJson(TRUE,'请求成功',$rule_ids);
     }
+
+    /**
+     * 递归树状value-label格式
+     */
+    public function option () {
+        try {
+            $list = (new Role)->GetList(['id','id as value','name as label']);
+            ReturnJson(TRUE,'请求成功',$list);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

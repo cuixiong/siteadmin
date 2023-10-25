@@ -75,8 +75,8 @@ class Base extends Model
                 if (!empty($children)) {
                     $item['children'] = $children;
                 }
-                $tree[] = $item;
             }
+            $tree[] = $item;
         }
         return $tree;
     }
@@ -91,7 +91,19 @@ class Base extends Model
      */
     public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
     {
-        $list = self::select($filed)->where($where)->get()->toArray();
+        $model = self::query();
+        foreach ($where as $key => $value) {
+            if(is_array($value)){
+                if($value[0] == 'like' && count($value) == 2){
+                    $model = $model->where($key,$value[0],$value[1]);
+                } else {
+                    $model = $model->whereIn($key,$value);
+                }
+            } else {
+                $model = $model->where($key,$value);
+            }
+        }
+        $list = $model->select($filed)->get()->toArray();
         if($isTree){
             $list = $this->tree($list,$treeKey);
         }
