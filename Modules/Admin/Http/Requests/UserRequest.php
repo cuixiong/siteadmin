@@ -14,9 +14,9 @@ class UserRequest extends BaseRequest
             'nickname' => 'required',
             'email' => 'required|unique:users',
             'position_id' => 'required',
-            'role_id' => 'required',
+            'roleIds' => 'required',
             'gender' => 'required',
-            'department_id' => 'required',
+            'deptId' => 'required',
         ];
         $message = [
             'username.required' => '用户名不能为空',
@@ -24,9 +24,9 @@ class UserRequest extends BaseRequest
             'email.required' => '邮箱不能为空',
             'email.unique' => '邮箱已存在，请更换其他邮箱',
             'position_id.required' => '职位ID不能为空',
-            'role_id.required' => '角色ID不能为空',
+            'roleIds.required' => '角色ID不能为空',
             'gender.required' => '性别不能为空',
-            'department_id.required' => '部门ID不能为空',
+            'deptId.required' => '部门ID不能为空',
 
         ];
         return $this->validateRequest($request, $rules,$message);
@@ -43,9 +43,9 @@ class UserRequest extends BaseRequest
             'nickname' => 'required',
             'email' => 'required',
             'position_id' => 'required',
-            'role_id' => 'required',
+            'roleIds' => 'required',
             'gender' => 'required',
-            'department_id' => 'required',
+            'deptId' => 'required',
         ];
         $message = [
             'id.required' => 'ID不能为空',
@@ -53,9 +53,9 @@ class UserRequest extends BaseRequest
             'nickname.required' => '用户昵称不能为空',
             'email.required' => '邮箱不能为空',
             'position_id.required' => '职位ID不能为空',
-            'role_id.required' => '角色ID不能为空',
+            'roleIds.required' => '角色ID不能为空',
             'gender.required' => '性别不能为空',
-            'department_id.required' => '部门ID不能为空',
+            'deptId.required' => '部门ID不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }

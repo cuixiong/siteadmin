@@ -128,4 +128,18 @@ class User extends Base
         }
         return null;
     }
+
+    /**
+     * 密码修改器
+     */
+    protected function setRoleIdAttribute($value)
+    {
+        // 不为空的情况下才修改密码
+        if (!empty($value)) {
+            if(is_array($value)){
+                $value = array_shift($value);
+            }
+        }
+        return $value;
+    }
 }
