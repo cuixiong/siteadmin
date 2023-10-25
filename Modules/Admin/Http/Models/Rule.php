@@ -35,7 +35,7 @@ class Rule extends Base
             $data['component'] = $item['component'];
             $data['meta'] = [
                 'title' => $item['name'],
-                'hidden' => $item['visible'] == 1 ? true : false,
+                'hidden' => $item['visible'] == 1 ? false : true,
                 'icon' => $item['icon'],
                 'keepAlive' => $item['keepAlive'] == 1 ? true : false,
                 'roles' => ["ADMIN"]
