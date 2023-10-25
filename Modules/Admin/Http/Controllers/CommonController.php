@@ -51,8 +51,8 @@ class CommonController extends Controller
         if($role->is_super_administrator != 1){
             $RuleModel->whereIn('id',$role->rule_id);
         }
-        $perms = $RuleModel->where('type',2)->select('identifying')->get()->toArray();
-        $data['perms'] = array_keys(array_column($perms,null,'identifying'));
+        $perms = $RuleModel->where('type',2)->select('perm')->get()->toArray();
+        $data['perms'] = array_keys(array_column($perms,null,'perm'));
         ReturnJson(true,'请求成功',$data);
     }
 
