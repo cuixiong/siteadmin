@@ -18,7 +18,7 @@ class DepartmentController extends CrudController
             if(!empty($request->keywords)){
                 $where['name'] = ['like','%'.$request->keywords.'%'];
             }
-            if(!empty($request->status)){
+            if(isset($request->status)){
                 $where['status'] = $request->status;
             }
             $filed = ['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'];

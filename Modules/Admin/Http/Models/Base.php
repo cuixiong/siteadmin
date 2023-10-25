@@ -2,6 +2,7 @@
 namespace Modules\Admin\Http\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Http\Request;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
 class Base extends Model
@@ -19,6 +20,8 @@ class Base extends Model
     // public $timestamps = false;
     // 下面用于设置不允许入库字段，一般和$fillable存在一个即可
     // protected $guarded = [];
+    // 列表输出字段
+    public $ListSelect = ['*'];
 
     /**
      * 创建时间获取器
@@ -108,5 +111,16 @@ class Base extends Model
             $list = $this->tree($list,$treeKey);
         }
         return $list;
+    }
+
+    /**
+     * 处理查询列表条件数组
+     * @param use Illuminate\Http\Request;
+     */
+    public function HandleWhere($model,$request){
+        if(!empty($request->keywords)){
+            $model = $model->where('name','like','%'.$request->keywords.'%');
+        }
+        return $model;
     }
 }

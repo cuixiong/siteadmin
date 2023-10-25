@@ -8,7 +8,7 @@ class User extends Base
     /** 隐藏不需要输出的字段 */
     protected $hidden = ["password"];
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['position_txt','roleNames','is_on_job_txt','deptName','genderLabel','avatar'];
+    protected $appends = ['position_txt','roleNames','is_on_job_txt','deptName','genderLabel','avatar','deptId','roleIds'];
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['name','nickname','email','password','role_id','position_id','is_on_job','is_on_job','status','gender','mobile','department_id','created_by','updated_by'];
 
@@ -69,14 +69,14 @@ class User extends Base
     /**
      * 部门文本获取器
      */
-    public function getDeptNameAttribute()
+    public function getDeptNameAttribute($value)
     {
-        $text = '';
         if(isset($this->attributes['department_id']))
         {
             $text = Department::where('id',$this->attributes['department_id'])->value('name');
+            return $value;
         }
-        return $text;
+        return null;
     }
 
     /**
@@ -101,5 +101,31 @@ class User extends Base
      */
     public function getAvatarAttribute(){
         return 'https://oss.youlai.tech/youlai-boot/2023/05/16/811270ef31f548af9cffc026dfc3777b.gif';
+    }
+
+    /**
+     * 部门ID获取器
+     */
+    public function getDeptIdAttribute($value)
+    {
+        if(isset($this->attributes['department_id']))
+        {
+            $value = $this->attributes['department_id'];
+            return $value;
+        }
+        return null;
+    }
+
+    /**
+     * 角色ID获取器
+     */
+    public function getRoleIdsAttribute($value)
+    {
+        if(isset($this->attributes['role_id']))
+        {
+            $value = [$this->attributes['role_id']];
+            return $value;
+        }
+        return null;
     }
 }

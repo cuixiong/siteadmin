@@ -127,33 +127,11 @@ class CrudController extends Controller
     protected function list (Request $request) {
         try {
             $this->ValidateInstance($request);
-            $model = $this->ModelInstance()->query();
-            if(!empty($request->search)){
-                $request->search = json_decode($request->search,TRUE);
-                // 过滤条件数组，将空值的KEY过滤掉
-                $search = array_filter($request->search,function($map){
-                    if($map != ''){
-                        return true;
-                    }
-                });
-                // 使用Eloquent ORM来进行数据库查询
-                foreach ($search as $field => $value) {
-                    // 如果值是数组，则使用whereIn方法
-                    if (is_array($value)) {
-                        $model->whereIn($field, $value);
-                    } else {
-                        $model->where($field, $value);
-                    }
-                }
-            }
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model,$request);
             // 总数量
             $total = $model->count();
-            // 总页数
-            $pageCount = $request->pageSize > 0 ? ceil($total/$request->pageSize) : 1;
-            // 当前页码数
-            $pageNum = $request->pageNum ? $request->pageNum : 1;
-            $pageSize = $request->pageSize ? $request->pageSize : 100;
-
             // 查询偏移量
             if(!empty($request->pageNum) && !empty($request->pageSize)){
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -166,13 +144,10 @@ class CrudController extends Controller
             $order = $request->order ? $request->order : 'id';
             // 升序/降序
             $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
-            $record = $model->orderBy($order,$sort)->get();
-
+            $record = $model->select($ModelInstance->ListSelect)->orderBy($order,$sort)->get();
+            
             $data = [
                 'total' => $total,
-                'pageCount' => $pageCount,
-                'pageNum' => $pageNum,
-                'pageSize' => $pageSize,
                 'list' => $record
             ];
             ReturnJson(TRUE,'请求成功',$data);

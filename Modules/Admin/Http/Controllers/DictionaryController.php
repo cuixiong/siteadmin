@@ -12,7 +12,7 @@ class DictionaryController extends CrudController
      * 删除字典
      * @param $ids 主键ID
      */
-    public function store(Request $request)
+    public function destroy(Request $request)
     {
         try {
             $this->ValidateInstance($request);
