@@ -40,9 +40,7 @@ class Rule extends Base
                 'keepAlive' => $item['keepAlive'] == 1 ? true : false,
                 'roles' => ["ADMIN"]
             ];
-            if($item['parent_id'] > 0 && $item['type'] == 1){
-                $data['name'] = ucfirst($item['path']);
-            }
+            $data['name'] = ($item['parent_id'] > 0 && $item['type'] == 1) ? ucfirst($item['path']) : $item['path'];
             if(!empty($item['redirect'])){
                 $data['redirect'] = $item['redirect'];
             }
