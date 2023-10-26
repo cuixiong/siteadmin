@@ -83,7 +83,7 @@ class User extends Base
         {
             $value = explode(',',$this->attributes['role_id']);
             foreach ($value as &$map) {
-                $map = ()
+                $map = intval($map);
             }
             return $value;
         }
