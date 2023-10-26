@@ -78,8 +78,8 @@ class Base extends Model
                 if (!empty($children)) {
                     $item['children'] = $children;
                 }
+                $tree[] = $item;
             }
-            $tree[] = $item;
         }
         return $tree;
     }
@@ -122,5 +122,65 @@ class Base extends Model
             $model = $model->where('name','like','%'.$request->keywords.'%');
         }
         return $model;
+    }
+
+        /**
+     * 列表数据
+     * @param array/string $filed 字段，全部则不传
+     * @param $isTree 是否返回递归类型
+     * @param $treeKey 递归类型的key
+     * @param array $where 查询条件
+     * @return array $res
+     */
+    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
+    {
+        $model = self::query();
+        foreach ($where as $key => $value) {
+            if(is_array($value)){
+                if($value[0] == 'like' && count($value) == 2){
+                    $model = $model->where($key,$value[0],$value[1]);
+                } else {
+                    $model = $model->whereIn($key,$value);
+                }
+            } else {
+                $model = $model->where($key,$value);
+            }
+        }
+        $list = $model->select($filed)->get()->toArray();
+        if($isTree){
+            $list = $this->treeLabel($list,$treeKey);
+        } else {
+            $res = [];
+            foreach ($list as $map) {
+                $res[] = ['value' => $map['value'],'label' => $map['label']];
+            }
+            $list = $res;
+        }
+        return $list;
+    }
+
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function treeLabel($list,$key,$parentId = 0) {
+
+        $tree = [];
+        foreach ($list as $item) {
+            $res = [];
+            if ($item[$key] == $parentId) {
+                $children = $this->treeLabel($list,$key,$item['id']);
+                if (!empty($children)) {
+                    $res['children'] = $children;
+                }
+                $res['value'] = $item['value'];
+                $res['label'] = $item['label'];
+                $tree[] = $res;
+            }
+        }
+        return $tree;
     }
 }

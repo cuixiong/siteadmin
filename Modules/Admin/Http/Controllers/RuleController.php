@@ -60,7 +60,7 @@ class RuleController extends CrudController
      */
     public function option()
     {
-        $list = (new Rule)->GetList(['id','id as value','title as label','parent_id'],true,'parent_id');
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id');
         ReturnJson(TRUE,'请求成功',$list);
     }
 }
