@@ -36,4 +36,36 @@ class Role extends Base
         }
         $this->attributes['rule_id'] = $value;
     }
+
+    /**
+     * 获取角色所有权限ID
+     * @param string/array $roles 角色ID
+     * @param array $data
+     */
+    public function GetRules($ids,$key = 'all'){
+        if(!is_array($ids)){
+            $ids = explode(',',$ids);
+        }
+        // 查询角色信息
+        $roles = self::whereIn('id',$ids)->get();
+        $rule_ids = [];// 当前账号的权限id
+        $role_code = [];// 当前账号的归属角色code
+        foreach ($roles as $role) {
+            $rule_ids = array_merge($rule_ids,$role->rule_id);
+            $role_code[] = $role->code;
+        }
+        $rule_ids = empty($rule_ids) ? [] : array_unique($rule_ids);
+        $role_code = empty($role_code) ? [] : array_unique($role_code);
+        if($key == 'rule'){
+            return $rule_ids;
+        }
+        if($key == 'code'){
+            return $role_code;
+        }
+        $data = [
+            'rule' => $rule_ids,
+            'code' => $role_code,
+        ];
+        return $data;
+    }
 }

@@ -43,15 +43,13 @@ class CommonController extends Controller
 
         $data['userId'] = $request->user->id;
         $data['username'] = $request->user->email;
-        $role = Role::find($request->user->role_id);
-        $data['roles'] = [$role->code];
-        $data['nickname'] = $role->name;
+        $data['nickname'] = $request->user->nickname;
         $data['avatar'] = "https://oss.youlai.tech/youlai-boot/2023/05/16/811270ef31f548af9cffc026dfc3777b.gif";
+        $res = (new Role)->GetRules(explode(',',$request->user->role_id));
+        $data['roles'] = $res['code'];
+        $rule_ids = $res['rule'];
         $RuleModel = new Rule();
-        if($role->is_super_administrator != 1){
-            $RuleModel->whereIn('id',$role->rule_id);
-        }
-        $perms = $RuleModel->where('type',2)->select('perm')->get()->toArray();
+        $perms = $RuleModel->where('type',2)->whereIn('id',$rule_ids)->select('perm')->get()->toArray();
         $data['perms'] = array_keys(array_column($perms,null,'perm'));
         ReturnJson(true,'请求成功',$data);
     }
@@ -62,59 +60,16 @@ class CommonController extends Controller
      */
     public function menus(Request $request){
         // 角色ID
-        $role_id = $request->user->role_id;
-        // 查询角色信息
-        $role = Role::where('id',$role_id)->first();
-        // 当前角色的归属权限ID
-        $rule_ids = $role->rule_id ? $role->rule_id : [];
+        $role_id = explode(',',$request->user->role_id);
+        $data = (new Role)->GetRules($role_id);
+        $rule_ids = $data['rule'];
+        $roleCodes = $data['code'];
         // 查询type=1的菜单类型的权限信息
         $model = new Rule();
-        if($role->is_super_administrator == 1){
-            $rules = $model->where('type',1)->get()->toArray();
-        } else {
-            $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
-        }
+        $rules = $model->whereIn('id',$rule_ids)->where('type',1)->get()->toArray();
         // 递归分类权限
-        $rules = $model->buildTree($rules);
+        $rules = $model->buildTree($rules,$roleCodes);
         // 返回菜单栏
         ReturnJson(TRUE,'',$rules);
-    }
-
-    /**
-     * 临时用的列表表头
-     */
-    public function filters()
-    {
-        $data = [];
-        $users = User::select(['id','name'])->get()->toArray();
-        // 创建者
-        $data['Creaters'] = $users;
-        array_unshift($data['Creaters'],["id" =>'','name'=>'创建者']);
-        // 修改者
-        $data['Updaters'] = $users;
-        array_unshift($data['Updaters'],["id" =>'','name'=>'更新者']);
-        // 状态
-        $data['States'] = SelectTxt::GetStatusTxt();
-        // 权限类型
-        $data['MuenTypes'] = SelectTxt::GetRuleTypeTxt();
-        // 是否在职人员
-        $data['IsOnJobList']  = SelectTxt::GetOnJobTxt();
-        // 角色组
-        $roles = Role::select(['id','name'])->get()->toArray();
-        $data['Roles'] = $roles;
-        array_unshift($data['Roles'],["id" =>'','name'=>'全部角色']);
-        // 职位组
-        $positions = Position::select(['id','name'])->get()->toArray();
-        $data['Positions'] = $positions;
-        array_unshift($data['Positions'],["id" =>'','name'=>'全部职位']);
-        // 前端页面路由
-        $VueRoute = Rule::where('type',1)->select(['id','name'])->get()->toArray();
-        array_unshift($VueRoute,["id" =>'0','name'=>'顶级路由']);
-        $data['VueRoute'] = $VueRoute;
-        // 前端按钮路由
-        $Operation = Rule::where('type',2)->select(['id','name'])->get()->toArray();
-        array_unshift($Operation,["id" =>'','name'=>'按钮路由']);
-        $data['Operation'] = $Operation;
-        ReturnJson(TRUE,'请求成功',$data);
     }
 }
