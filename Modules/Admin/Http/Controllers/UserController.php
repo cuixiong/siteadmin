@@ -29,4 +29,26 @@ class UserController extends CrudController
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    /**
+     * AJax单个更新
+     * @param $request 请求信息
+     */
+    protected function update(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $input['updated_by'] = $request->user->id;
+            $input['department_id'] = $input['deptId'];
+            $input['role_id'] = $input['roleIds'];
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if(!$record->update($input)){
+                ReturnJson(FALSE,'更新失败');
+            }
+            ReturnJson(TRUE,'更新成功');
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

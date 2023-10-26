@@ -81,7 +81,10 @@ class User extends Base
     {
         if(isset($this->attributes['role_id']))
         {
-            $value = [$this->attributes['role_id']];
+            $value = explode(',',$this->attributes['role_id']);
+            foreach ($value as &$map) {
+                $map = ()
+            }
             return $value;
         }
         return null;
