@@ -40,9 +40,6 @@ class LoginController extends Controller
             if ($UserModel->status == 0) {
                 ReturnJson(false,'账号处于禁用状态，不允许登陆');
             }
-            if ($UserModel->is_on_job == 0) {
-                ReturnJson(false,'账号处于离职状态，不允许登陆');
-            }
             $token=JWTAuth::fromUser($UserModel);//生成token
             if (!$token) {
                 ReturnJson(false,'生成TOKEN失败');
