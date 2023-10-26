@@ -49,8 +49,8 @@ class RoleController extends CrudController
                 ReturnJson(FALSE,'id is empty');
             }
             $input = $request->all();
-            $input['rule_id'] = [1,2,3];
-
+            $input['rule_id'] = $input['roleId'];
+            unset($input['roleId']);
             $input['updated_by'] = $request->user->id;
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
