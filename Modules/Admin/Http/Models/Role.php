@@ -25,4 +25,15 @@ class Role extends Base
             ['id' => '1','name'=>'是'],
         ];
     }
+
+    /**
+     * 权限ID修改器
+     */
+    public function setRuleIdAttribute($value)
+    {
+        if(!empty($value)){
+            $value = implode(",",$value);// 转换成字符串
+        }
+        $this->attributes['rule_id'] = $value;
+    }
 }

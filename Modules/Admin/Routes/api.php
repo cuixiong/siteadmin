@@ -54,6 +54,7 @@ Route::middleware([
     Route::post('admin/role/destroy','RoleController@destroy')->name('角色删除');
     Route::get('admin/role/form/{id}','RoleController@form')->name('角色单查');
     Route::get('admin/role/option','RoleController@option')->name('角色option');
+    Route::post('admin/role/adminRule','RoleController@adminRule')->name('分配权限');
 
     // Position控制器
     Route::post('admin/position/store','PositionController@store')->name('职位新增');

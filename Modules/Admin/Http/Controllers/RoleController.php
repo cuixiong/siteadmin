@@ -40,7 +40,25 @@ class RoleController extends CrudController
     /**
      * Admin模块新增权限
      */
-    public function SetAdminRule(Request $request) {
-        $rule_ids = $request->rule_id;
+    public function adminRule(Request $request) {
+        try {
+            if(empty($request->rule_id)){
+                ReturnJson(FALSE,'reule_id is empty');
+            }
+            if(empty($request->id)){
+                ReturnJson(FALSE,'id is empty');
+            }
+            $input = $request->all();
+            $input['rule_id'] = [1,2,3];
+
+            $input['updated_by'] = $request->user->id;
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if(!$record->update($input)){
+                ReturnJson(FALSE,'更新失败');
+            }
+            ReturnJson(TRUE,'更新成功');
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
     }
 }
