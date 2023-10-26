@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Role extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator'];
+    protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator','sort'];
 
     /**
      * 权限ID获取器
