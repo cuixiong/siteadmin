@@ -19,6 +19,8 @@ class RoleController extends CrudController
         if(!empty($rule_ids)){
             // 使用array_map()和intval()将数组中的值转换为整数
             $rule_ids = array_map('intval',$rule_ids);
+        } else {
+            $rule_ids = [];
         }
         ReturnJson(TRUE,'请求成功',$rule_ids);
     }
@@ -33,5 +35,12 @@ class RoleController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * Admin模块新增权限
+     */
+    public function SetAdminRule(Request $request) {
+        $rule_ids = $request->rule_id;
     }
 }

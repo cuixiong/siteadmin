@@ -21,7 +21,7 @@ Route::middleware([
     Route::get('admin/common/info','CommonController@info')->name('INFO接口');
     Route::get('admin/common/menus','CommonController@menus')->name('菜单栏');
     Route::get('admin/rule/option','RuleController@option')->name('权限option接口');
-    Route::post('admin/role/adminId','RoleController@adminId')->name('Admin权限IDS');
+    Route::get('admin/role/adminId/{id}','RoleController@adminId')->name('Admin权限IDS');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
