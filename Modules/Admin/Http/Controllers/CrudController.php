@@ -88,7 +88,6 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            $input['updated_by'] = $request->user->id;
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
                 ReturnJson(FALSE,'更新失败');

@@ -26,7 +26,7 @@ class Base extends Model
 
     /**
      * 模型的“引导”方法。
-     * 使用闭包的方式进行使用模型
+     * 使用闭包的方式进行使用模型事件
      * @return void
      */
     protected static function booted()
@@ -34,7 +34,9 @@ class Base extends Model
         static::creating(function ($model) {
             $user = Auth::user();
             if(isset($user->id)){
-                $model->create_by = $user->id;
+                $model->created_by = $user->id;
+            } else {
+                $model->created_by = 0;
             }
         });
 
