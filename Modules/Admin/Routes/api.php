@@ -20,7 +20,8 @@ Route::middleware([
     // Common控制器
     Route::get('admin/common/info','CommonController@info')->name('INFO接口');
     Route::get('admin/common/menus','CommonController@menus')->name('菜单栏');
-    Route::get('admin/rule/option','RuleController@option')->name('权限option接口');
+    Route::get('admin/rule/option','RuleController@option')->name('权限Admin模块option接口');
+    Route::get('admin/rule/option-site','RuleController@optionSite')->name('权限Site模块option接口');
     Route::get('admin/role/adminId/{id}','RoleController@adminId')->name('Admin权限IDS');
     Route::get('admin/role/siteId/{id}','RoleController@siteId')->name('Site权限IDS');
     Route::get('admin/site/option','SiteController@option')->name('站点列表option');

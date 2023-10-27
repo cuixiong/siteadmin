@@ -56,11 +56,20 @@ class RuleController extends CrudController
     }
 
     /**
-     * 返回权限value-label格式行数据
+     * 返回Admin模块权限value-label格式行数据
      */
     public function option(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id');
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1]);
+        ReturnJson(TRUE,'请求成功',$list);
+    }
+
+    /**
+     * 返回Site模块的权限value-label格式行数据
+     */
+    public function optionSite(Request $request)
+    {
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2]);
         ReturnJson(TRUE,'请求成功',$list);
     }
 }

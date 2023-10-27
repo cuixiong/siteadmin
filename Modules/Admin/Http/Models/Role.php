@@ -75,7 +75,6 @@ class Role extends Base
      */
     public function setSiteIdAttribute($value)
     {
-        $value = [1,2,3,4];
         if(!empty($value)){
             $value = implode(",",$value);// 转换成字符串
         }
@@ -99,7 +98,6 @@ class Role extends Base
      */
     public function setSiteRuleIdAttribute($value)
     {
-        $value = [1,2,3,4];
         if(!empty($value)){
             $value = implode(",",$value);// 转换成字符串
         }
