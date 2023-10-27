@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
 use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
 use Stancl\Tenancy\Database\Concerns\CentralConnection;
+use Illuminate\Support\Facades\Auth;
 class Base extends Model
 {
     // use ResourceSyncing, CentralConnection;
@@ -23,6 +24,27 @@ class Base extends Model
     // 列表输出字段
     public $ListSelect = ['*'];
 
+    /**
+     * 模型的“引导”方法。
+     * 使用闭包的方式进行使用模型
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $user = Auth::user();
+            if(isset($user->id)){
+                $model->create_by = $user->id;
+            }
+        });
+
+        static::updating(function ($model) {
+            $user = Auth::user();
+            if(isset($user->id)){
+                $model->updated_by = $user->id;
+            }
+        });
+    }
     /**
      * 创建时间获取器
      * @param \Illuminate\Database\Eloquent\Casts\Attribute

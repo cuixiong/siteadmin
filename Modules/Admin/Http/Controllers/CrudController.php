@@ -46,7 +46,6 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            $input['created_by'] = $request->user->id;
             $record = $this->ModelInstance()->create($input);
             if(!$record){
                 ReturnJson(FALSE,'新增失败');
