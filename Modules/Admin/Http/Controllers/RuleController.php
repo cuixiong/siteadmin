@@ -58,7 +58,7 @@ class RuleController extends CrudController
     /**
      * 返回权限value-label格式行数据
      */
-    public function option()
+    public function option(Request $request)
     {
         $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id');
         ReturnJson(TRUE,'请求成功',$list);

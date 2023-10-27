@@ -13,11 +13,14 @@ class RoleRequest extends BaseRequest
             'name' => 'required',
             'status' => 'required',
             'data_scope' => 'required',
-            'code' => 'required',
+            'code' => 'required|unique:roles',
             'sort' => 'required',
-            'status' => 'required',
+            'is_super' => 'required', 
         ];
-        return $this->validateRequest($request, $rules);
+        $message = [
+            'code.unique' => '编码已存在，请更换其他编码',
+        ];
+        return $this->validateRequest($request, $rules,$message);
     }
 
     /**
@@ -33,7 +36,7 @@ class RoleRequest extends BaseRequest
             'data_scope' => 'required',
             'code' => 'required',
             'sort' => 'required',
-            'status' => 'required',
+            'is_super' => 'required',
         ];
         return $this->validateRequest($request, $rules);
     }

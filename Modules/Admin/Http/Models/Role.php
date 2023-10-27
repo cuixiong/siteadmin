@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Role extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator','sort'];
+    protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator','sort','site_id','is_super'];
 
     /**
      * 权限ID获取器
@@ -14,6 +14,7 @@ class Role extends Base
     {
         if(!empty($value)){
             $value = explode(",",$value);// 切割成数组
+            $value = array_map('intval',$value);
         }
         return $value;
     }
@@ -67,5 +68,53 @@ class Role extends Base
             'code' => $role_code,
         ];
         return $data;
+    }
+
+    /**
+     * 站点ID修改器
+     */
+    public function setSiteIdAttribute($value)
+    {
+        $value = [1,2,3,4];
+        if(!empty($value)){
+            $value = implode(",",$value);// 转换成字符串
+        }
+        $this->attributes['site_id'] = $value;
+    }
+
+    /**
+     * 站点ID获取器
+     */
+    public function getSiteIdAttribute($value)
+    {
+        if(!empty($value)){
+            $value = explode(",",$value);// 切割成数组
+            $value = array_map('intval',$value);
+        }
+        return $value;
+    }
+
+    /**
+     * 站点权限ID修改器
+     */
+    public function setSiteRuleIdAttribute($value)
+    {
+        $value = [1,2,3,4];
+        if(!empty($value)){
+            $value = implode(",",$value);// 转换成字符串
+        }
+        $this->attributes['site_rule_id'] = $value;
+    }
+
+    /**
+     * 站点权限ID获取器
+     */
+    public function getSiteRuleIdAttribute($value)
+    {
+        if(!empty($value)){
+            $value = explode(",",$value);// 切割成数组
+            $value = array_map('intval',$value);
+        }
+        return $value;
     }
 }

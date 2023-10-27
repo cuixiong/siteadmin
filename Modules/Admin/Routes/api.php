@@ -22,6 +22,8 @@ Route::middleware([
     Route::get('admin/common/menus','CommonController@menus')->name('菜单栏');
     Route::get('admin/rule/option','RuleController@option')->name('权限option接口');
     Route::get('admin/role/adminId/{id}','RoleController@adminId')->name('Admin权限IDS');
+    Route::get('admin/role/siteId/{id}','RoleController@siteId')->name('Site权限IDS');
+    Route::get('admin/site/option','SiteController@option')->name('站点列表option');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -50,11 +52,11 @@ Route::middleware([
     Route::get('admin/role/list','RoleController@list')->name('角色列表');
     Route::post('admin/role/store','RoleController@store')->name('角色新增');
     Route::post('admin/role/update','RoleController@update')->name('角色编辑');
-    Route::get('admin/role/filters','RoleController@filters')->name('角色表头');
     Route::post('admin/role/destroy','RoleController@destroy')->name('角色删除');
     Route::get('admin/role/form/{id}','RoleController@form')->name('角色单查');
     Route::get('admin/role/option','RoleController@option')->name('角色option');
-    Route::post('admin/role/adminRule','RoleController@adminRule')->name('分配权限');
+    Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
+    Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
 
     // Position控制器
     Route::post('admin/position/store','PositionController@store')->name('职位新增');

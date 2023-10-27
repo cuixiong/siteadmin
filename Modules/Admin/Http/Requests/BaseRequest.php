@@ -74,4 +74,13 @@ class BaseRequest extends FormRequest
     {
         return $this->validateRequest($request, []);
     }
+
+    /**
+     * 查询value-label格式列表数据验证
+     * @param  \Illuminate\Http\Request  $request
+     */
+    public function option($request)
+    {
+        return $this->validateRequest($request, []);
+    }
 }

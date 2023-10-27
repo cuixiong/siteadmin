@@ -31,7 +31,7 @@ class DepartmentController extends CrudController
     /**
      * 递归树状value-label格式
      */
-    public function option () {
+    public function option (Request $request) {
         try {
             $list = (new Department)->GetList(['id','id as value','parent_id','name as label'],true,'parent_id');
             ReturnJson(TRUE,'请求成功',$list);
