@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['parent_id','name','path','component','redirect','perm','module','controller','action','route','icon','type','status','sort','category','','created_by','updated_by','category'];
+    protected $fillable = ['parent_id','name','path','component','redirect','perm','module','controller','action','route','icon','type','status','sort','category','visible','created_by','updated_by','category'];
 
     /**
      * 设置route字段拦截器和填充module、controller、action字段
