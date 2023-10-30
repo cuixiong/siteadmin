@@ -46,11 +46,17 @@ class CommonController extends Controller
         $roleCodes = $data['code'];
         // 查询type=1的菜单类型的权限信息
         $model = new Rule();
+        $fields = ['id','parent_id','path','component','redirect','perm','icon','type','status','sort','category','visible','keepAlive','updated_by','updated_at','created_at','created_by'];
+        if($request->HeaderLanguage == 'en'){
+            $fields = array_merge($fields,['english_name as name']);
+        } else {
+            $fields = array_merge($fields,['name']);
+        }
         $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
         if($is_super > 0){
-            $rules = $model->whereIn('type',['CATALOG','MENU'])->where('status',1)->get()->toArray();
+            $rules = $model->select($fields)->whereIn('type',['CATALOG','MENU'])->where('status',1)->get()->toArray();
         } else {
-            $rules = $model->whereIn('id',$rule_ids)->whereIn('type',['CATALOG','MENU'])->where('status',1)->get()->toArray();
+            $rules = $model->select($fields)->whereIn('id',$rule_ids)->whereIn('type',['CATALOG','MENU'])->where('status',1)->get()->toArray();
         }
         // 递归分类权限
         $rules = $model->buildTree($rules,$roleCodes);

@@ -26,6 +26,10 @@ class JwtMiddleware
             }
             // 将用户信息存储在请求中，以便后续使用
             $request->user = $user;
+            // 当前语言
+            $langauge = $request->header('langaue');
+            // 语言全局变量
+            $request->HeaderLanguage = $langauge ? $langauge : 'zh';
             return $next($request);
         } catch (TokenExpiredException $e) {
             return response()->json([

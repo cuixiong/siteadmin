@@ -14,6 +14,8 @@ class RuleRequest extends BaseRequest
             'type' => 'required',
             'category' => 'required',
             'visible' => 'required',
+            'status' => 'required',
+            'english_name' => 'required',
         ];
         return $this->validateRequest($request, $rules,[]);
     }
@@ -29,6 +31,8 @@ class RuleRequest extends BaseRequest
             'type' => 'required',
             'category' => 'required',
             'visible' => 'required',
+            'status' => 'required',
+            'english_name' => 'required',
         ];
         return $this->validateRequest($request, $rules,[]);
     }
