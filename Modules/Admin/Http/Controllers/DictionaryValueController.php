@@ -19,9 +19,9 @@ class DictionaryValueController extends CrudController{
                 $where['code'] = $request->code;
             }
             if($request->HeaderLanguage == 'en'){
-                $filed = ['name as label','value'];
-            } else {
                 $filed = ['english_name as label','value'];
+            } else {
+                $filed = ['name as label','value'];
             }
             $list = (new DictionaryValue())->GetList($filed,false,'',$where);
             ReturnJson(TRUE,'请求成功',$list);

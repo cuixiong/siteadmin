@@ -15,6 +15,7 @@ class DictionaryValueRequest extends BaseRequest
             'parent_id' => 'required',
             'status' => 'required',
             'code' => 'required',
+            'english_name' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
@@ -22,6 +23,7 @@ class DictionaryValueRequest extends BaseRequest
             'parent_id.required' => '父级ID不能为空',
             'status.required' => '状态不能为空',
             'code.required' => '编码不能为空',
+            'english_name.required' => '英文名称不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -37,6 +39,7 @@ class DictionaryValueRequest extends BaseRequest
             'parent_id' => 'required',
             'status' => 'required',
             'code' => 'required',
+            'english_name' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
@@ -44,6 +47,7 @@ class DictionaryValueRequest extends BaseRequest
             'parent_id.required' => '父级ID不能为空',
             'status.required' => '状态不能为空',
             'code.required' => '编码不能为空',
+            'english_name.required' => '英文名称不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
