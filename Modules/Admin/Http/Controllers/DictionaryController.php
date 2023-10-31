@@ -22,15 +22,15 @@ class DictionaryController extends CrudController
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
                 DB::rollback();
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
             $res = DictionaryValue::where('parent_id' ,$input['id'])->update(['code' => $input['code']]);
             if(!$res){
                 DB::rollback();
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
             DB::commit();
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             DB::rollback();
             ReturnJson(FALSE,$e->getMessage());
@@ -54,10 +54,10 @@ class DictionaryController extends CrudController
             DictionaryValue::whereIn('parent_id',$ids)->delete();
             if(!$record->delete()){
                 DB::rollBack();
-                ReturnJson(FALSE,'删除失败');
+                ReturnJson(FALSE,trans('lang.delete_error'));
             }
             DB::commit();
-            ReturnJson(TRUE,'删除成功');
+            ReturnJson(TRUE,trans('lang.delete_success'));
         } catch (\Exception $e) {
             DB::rollBack();
             ReturnJson(FALSE,$e->getMessage());

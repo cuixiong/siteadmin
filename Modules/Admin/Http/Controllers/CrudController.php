@@ -48,9 +48,9 @@ class CrudController extends Controller
             $input = $request->all();
             $record = $this->ModelInstance()->create($input);
             if(!$record){
-                ReturnJson(FALSE,'新增失败');
+                ReturnJson(FALSE,trans('lang.add_error'));
             }
-            ReturnJson(TRUE,'新增成功',['id' => $record->id]);
+            ReturnJson(TRUE,trans('lang.add_success'),['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -71,9 +71,9 @@ class CrudController extends Controller
             }
             $record->whereIn('id',$ids);
             if(!$record->delete()){
-                ReturnJson(FALSE,'删除失败');
+                ReturnJson(FALSE,trans('lang.delete_error'));
             }
-            ReturnJson(TRUE,'删除成功');
+            ReturnJson(TRUE,trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -90,9 +90,9 @@ class CrudController extends Controller
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -109,7 +109,7 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
-            ReturnJson(TRUE,'请求成功',$record);
+            ReturnJson(TRUE,trans('lang.request_success'),$record);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -148,7 +148,7 @@ class CrudController extends Controller
                 'total' => $total,
                 'list' => $record
             ];
-            ReturnJson(TRUE,'请求成功',$data);
+            ReturnJson(TRUE,trans('lang.request_success'),$data);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -164,7 +164,7 @@ class CrudController extends Controller
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $record = $ModelInstance->GetListLabel(['id as value','name as label']);
-            ReturnJson(TRUE,'请求成功',$record);
+            ReturnJson(TRUE,trans('lang.request_success'),$record);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

@@ -19,9 +19,9 @@ class SystemController extends CrudController
             $input['created_by'] = $request->user->id;
             $record = SystemValue::create($input);
             if(!$record){
-                ReturnJson(FALSE,'新增失败');
+                ReturnJson(FALSE,trans('lang.add_error'));
             }
-            ReturnJson(TRUE,'新增成功',['id' => $record->id]);
+            ReturnJson(TRUE,trans('lang.add_success'),['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -39,9 +39,9 @@ class SystemController extends CrudController
             $input['updated_by'] = $request->user->id;
             $record = SystemValue::findOrFail($request->id);
             if(!$record->update($input)){
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -62,9 +62,9 @@ class SystemController extends CrudController
             }
             $record->whereIn('id',$ids);
             if(!$record->delete()){
-                ReturnJson(FALSE,'删除失败');
+                ReturnJson(FALSE,trans('lang.delete_error'));
             }
-            ReturnJson(TRUE,'删除成功');
+            ReturnJson(TRUE,trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

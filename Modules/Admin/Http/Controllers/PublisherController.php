@@ -19,9 +19,9 @@ class PublisherController extends CrudController
             $record = $this->ModelInstance()->findOrFail($params['id']);
             $input['status'] = $params['status'];
             if(!$record->update($input)){
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
 
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), []);
@@ -33,6 +33,6 @@ class PublisherController extends CrudController
     {
         $data = Publisher::select('id','name')->get()->toArray();
 
-        ReturnJson(TRUE,'请求成功',$data);
+        ReturnJson(TRUE,trans('lang.request_success'),$data);
     }
 }

@@ -15,7 +15,8 @@ use App\Http\Middleware\JwtMiddleware;
 /** 需要登陆验证但不需要权限验证的路由 */
 Route::middleware([
     'api',
-    JwtMiddleware::class
+    JwtMiddleware::class, // JWT验证中间件
+    'language' // 语言中间件
 ])->group(function() {
     // Common控制器
     Route::get('admin/common/info','CommonController@info')->name('INFO接口');
@@ -30,7 +31,8 @@ Route::middleware([
 /** 需要登陆并且需要验证权限的路由 */
 Route::middleware([
     'api',
-    JwtMiddleware::class // JWT验证中间件
+    JwtMiddleware::class, // JWT验证中间件
+    'language' // 语言中间件
 ])->group(function() {
     // User控制器
     Route::post('admin/user/store','UserController@store')->name('用户新增');
@@ -151,14 +153,18 @@ Route::middleware([
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
-// Position控制器
-Route::get('admin/position/list','PositionController@list')->name('职位列表');
-Route::get('admin/country/get-country','CountryController@getCountry')->name('国家列表');
-Route::get('admin/publisher/get-publisher','PublisherController@getPublisher')->name('出版商列表');
-Route::get('admin/common/get-status','CommonController@getStatus')->name('获取状态 未知');
-Route::get('admin/common/filters','CommonController@filters')->name('公共数据');// 公共的列表表头和下拉数据
+Route::middleware([
+    'api',
+    'language' // 语言中间件
+])->group(function() {
+    // Position控制器
+    Route::get('admin/position/list','PositionController@list')->name('职位列表');
+    Route::get('admin/country/get-country','CountryController@getCountry')->name('国家列表');
+    Route::get('admin/publisher/get-publisher','PublisherController@getPublisher')->name('出版商列表');
+    Route::get('admin/common/get-status','CommonController@getStatus')->name('获取状态 未知');
+    Route::get('admin/common/filters','CommonController@filters')->name('公共数据');// 公共的列表表头和下拉数据
 
-Route::get('admin/test/test','TestController@TestPush')->name('测试接口');
-Route::get('admin/test/test01','TestController@Test01')->name('测试接口');
-Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
-
+    Route::get('admin/test/test','TestController@TestPush')->name('测试接口');
+    Route::get('admin/test/test01','TestController@Test01')->name('测试接口');
+    Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
+});

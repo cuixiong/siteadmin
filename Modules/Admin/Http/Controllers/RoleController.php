@@ -22,7 +22,7 @@ class RoleController extends CrudController
         } else {
             $rule_ids = [];
         }
-        ReturnJson(TRUE,'请求成功',$rule_ids);
+        ReturnJson(TRUE,trans('lang.request_success'),$rule_ids);
     }
 
     /**
@@ -31,7 +31,7 @@ class RoleController extends CrudController
     public function option (Request $request) {
         try {
             $list = (new Role)->GetList(['id','id as value','name as label']);
-            ReturnJson(TRUE,'请求成功',$list);
+            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -54,9 +54,9 @@ class RoleController extends CrudController
             $input['updated_by'] = $request->user->id;
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -76,9 +76,9 @@ class RoleController extends CrudController
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -100,6 +100,6 @@ class RoleController extends CrudController
         } else {
             $rule_ids = [];
         }
-        ReturnJson(TRUE,'请求成功',$rule_ids);
+        ReturnJson(TRUE,trans('lang.request_success'),$rule_ids);
     }
 }

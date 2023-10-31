@@ -24,7 +24,7 @@ class DictionaryValueController extends CrudController{
                 $filed = ['name as label','value'];
             }
             $list = (new DictionaryValue())->GetList($filed,false,'',$where);
-            ReturnJson(TRUE,'请求成功',$list);
+            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

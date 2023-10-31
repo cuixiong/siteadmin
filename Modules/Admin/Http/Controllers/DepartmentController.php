@@ -23,7 +23,7 @@ class DepartmentController extends CrudController
             }
             $filed = ['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'];
             $list = (new Department)->GetList($filed,true,'parent_id',$where);
-            ReturnJson(TRUE,'请求成功',$list);
+            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -34,7 +34,7 @@ class DepartmentController extends CrudController
     public function option (Request $request) {
         try {
             $list = (new Department)->GetList(['id','id as value','parent_id','name as label'],true,'parent_id');
-            ReturnJson(TRUE,'请求成功',$list);
+            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

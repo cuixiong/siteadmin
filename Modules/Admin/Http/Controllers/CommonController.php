@@ -31,7 +31,7 @@ class CommonController extends Controller
             $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where('status',1)->pluck('perm');
         }
         $data['perms'] = $perms;
-        ReturnJson(true,'请求成功',$data);
+        ReturnJson(true,trans('lang.request_success'),$data);
     }
 
     /**

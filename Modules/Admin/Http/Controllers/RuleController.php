@@ -15,7 +15,7 @@ class RuleController extends CrudController
     public function list(Request $request) {
         try {
             $list = (new Rule)->GetList('*',true,'parent_id');
-            ReturnJson(TRUE,'请求成功',$list);
+            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -52,7 +52,7 @@ class RuleController extends CrudController
     public function GetAdminRoute(Request $request)
     {
         $routes = $this->RoutesList('admin');
-        ReturnJson(TRUE,'请求成功',$routes);
+        ReturnJson(TRUE,trans('lang.request_success'),$routes);
     }
 
     /**
@@ -61,7 +61,7 @@ class RuleController extends CrudController
     public function option(Request $request)
     {
         $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1]);
-        ReturnJson(TRUE,'请求成功',$list);
+        ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 
     /**
@@ -70,6 +70,6 @@ class RuleController extends CrudController
     public function optionSite(Request $request)
     {
         $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2]);
-        ReturnJson(TRUE,'请求成功',$list);
+        ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 }

@@ -22,6 +22,6 @@ class CountryController extends CrudController
                 $list[$key]['name'] = $name->$language;
             }
         }
-        ReturnJson(TRUE,'请求成功',$list);
+        ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 }

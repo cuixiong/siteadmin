@@ -71,7 +71,7 @@ class SiteController extends CrudController
             if(!$res){
                 // 回滚事务
                 DB::rollBack();
-                ReturnJson(FALSE,'新增失败');
+                ReturnJson(FALSE,trans('lang.add_error'));
             }
             // 创建租户
             $Tenant = new TenantController();
@@ -146,7 +146,7 @@ class SiteController extends CrudController
             if(!$res){
                 // 回滚事务
                 DB::rollBack();
-                ReturnJson(FALSE,'更新失败');
+                ReturnJson(FALSE,trans('lang.update_error'));
             }
             // 创建租户
             $Tenant = new TenantController();
@@ -157,7 +157,7 @@ class SiteController extends CrudController
                 ReturnJson(FALSE,$res);
             }
             DB::commit();
-            ReturnJson(TRUE,'更新成功');
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
             DB::rollBack();
@@ -183,7 +183,7 @@ class SiteController extends CrudController
             if(!$record->delete()){
                 // 回滚事务
                 DB::rollBack();
-                ReturnJson(FALSE,'删除失败');
+                ReturnJson(FALSE,trans('lang.delete_error'));
             }
             $Tenant = new TenantController();
             foreach ($ids as $id) {
@@ -195,7 +195,7 @@ class SiteController extends CrudController
                 }
             }
             DB::commit();
-            ReturnJson(TRUE,'删除成功');
+            ReturnJson(TRUE,trans('lang.delete_success'));
         } catch (\Exception $e) {
             // 回滚事务
             DB::rollBack();
@@ -266,7 +266,7 @@ class SiteController extends CrudController
                 'pageSize' => $pageSize,
                 'list' => $record
             ];
-            ReturnJson(TRUE,'请求成功',$data);
+            ReturnJson(TRUE,trans('lang.request_success'),$data);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -431,7 +431,7 @@ class SiteController extends CrudController
         if(empty($data)){
             ReturnJson(False,'未获取到信息');
         }
-        ReturnJson(TRUE,'请求成功',$data);
+        ReturnJson(TRUE,trans('lang.request_success'),$data);
     }
 
 }
