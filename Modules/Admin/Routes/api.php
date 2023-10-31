@@ -69,7 +69,7 @@ Route::middleware([
 
     // Site控制器
     Route::post('admin/site/store','SiteController@store')->name('站点新增');
-    Route::post('admin/site/list','SiteController@list')->name('站点列表');
+    Route::get('admin/site/list','SiteController@list')->name('站点列表');
     Route::post('admin/site/update','SiteController@update')->name('站点更新');
     Route::post('admin/site/destroy','SiteController@destroy')->name('站点删除');
     Route::post('admin/site/move-up-site','SiteController@moveUpSite')->name('站点升级');
@@ -167,4 +167,6 @@ Route::middleware([
     Route::get('admin/test/test','TestController@TestPush')->name('测试接口');
     Route::get('admin/test/test01','TestController@Test01')->name('测试接口');
     Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
+
+    Route::get('baba',[\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class,'test'])->name('测试接口');
 });
