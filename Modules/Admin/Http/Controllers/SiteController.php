@@ -231,11 +231,18 @@ class SiteController extends CrudController
                     }
                 }
             }
-            $role = Role::find($request->user->role_id);
-            if($role->is_super_administrator != 1){
-                $site_id = Position::where('id',$request->user->position_id)->value('site_id');
-                $site_id = explode(',',$site_id);
-                $model->whereIn('id',$site_id);
+            $is_super = Role::whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
+
+            if($is_super == 0){
+                $roles = Role::whereIn('id',explode(',',$request->user->role_id))->pluck('site_id')->toArray();
+                $site_ids = [];
+                foreach ($roles as $role) {
+                    if(!empty($role)){
+                        $site_ids = array_merge($site_ids,$role);
+                    }
+                }
+                $site_ids = array_unique($site_ids);
+                $model->whereIn('id',$site_ids);
             }
             // 总数量
             $count = $model->count();
