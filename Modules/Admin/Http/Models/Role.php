@@ -127,7 +127,7 @@ class Role extends Base
         }
         // 超级管理员
         if(isset($request->is_super)){
-            $model = $model->where('is_super',1);
+            $model = $model->where('is_super',$request->is_super);
         }
         return $model;
     }
