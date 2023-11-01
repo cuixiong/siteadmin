@@ -112,7 +112,7 @@ class User extends Base
         if(!empty($request->deptId)){
             $model = $model->where('department_id',$request->deptId);
         }
-        if(!isset($request->status)){
+        if(isset($request->status)){
             $model = $model->where('status',$request->status);
         }
         if(!empty($request->startTime)){
