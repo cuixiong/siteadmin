@@ -104,6 +104,7 @@ class Base extends Model
                 }
                 $tree[] = $item;
             }
+
         }
         return $tree;
     }
@@ -119,6 +120,7 @@ class Base extends Model
     public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
     {
         $model = self::query();
+
         foreach ($where as $key => $value) {
             if(is_array($value)){
                 if($value[0] == 'like' && count($value) == 2){
@@ -131,9 +133,12 @@ class Base extends Model
             }
         }
         $list = $model->select($filed)->get()->toArray();
+        $minPid = array_column($list,$treeKey);
+        $minPid = min($minPid);
         if($isTree){
-            $list = $this->tree($list,$treeKey);
+            $list = $this->tree($list,$treeKey,$minPid);
         }
+
         return $list;
     }
 
