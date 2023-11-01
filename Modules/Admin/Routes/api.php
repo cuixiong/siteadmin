@@ -48,7 +48,7 @@ Route::middleware([
     Route::get('admin/rule/filters','RuleController@filters')->name('权限表头');
     Route::post('admin/rule/destroy','RuleController@destroy')->name('权限删除');
     Route::post('admin/rule/update','RuleController@update')->name('权限编辑');
-    Route::get('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
+    Route::post('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
     Route::get('admin/rule/form/{id}','RuleController@form')->name('权限单查');
 
 
