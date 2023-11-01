@@ -97,4 +97,32 @@ class User extends Base
     {
         $this->attributes['role_id'] = implode(',',$value);
     }
+
+    /**
+     * 处理查询列表条件数组
+     * @param use Illuminate\Http\Request;
+     */
+    public function HandleWhere($model,$request){
+        if(!empty($request->keywords)){
+            $model = $model->where('nickname','like','%'.$request->keywords.'%')
+                            ->orWhere('name',$request->keywords)
+                            ->orWhere('id',$request->keywords)
+                            ->orWhere('phone',$request->keywords);
+        }
+        if(!empty($request->deptId)){
+            $model = $model->where('department_id',$request->deptId);
+        }
+        if(!isset($request->status)){
+            $model = $model->where('status',$request->status);
+        }
+        if(!empty($request->startTime)){
+            $startTime = strtotime($request->startTime);
+            $model = $model->where('created_at','>=',$request->startTime);
+        }
+        if(!empty($request->endTime)){
+            $endTime = strtotime($request->endTime);
+            $model = $model->where('created_at','=<',$request->endTime);
+        }
+        return $model;
+    }
 }

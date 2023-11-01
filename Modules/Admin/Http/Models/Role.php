@@ -115,4 +115,20 @@ class Role extends Base
         }
         return $value;
     }
+
+    /**
+     * 处理查询列表条件数组
+     * @param use Illuminate\Http\Request;
+     */
+    public function HandleWhere($model,$request){
+        if(!empty($request->keywords)){
+            $model = $model->where('name','like','%'.$request->keywords.'%')
+                            ->orWhere('id',$request->keywords);
+        }
+        // 超级管理员
+        if(!empty($request->is_super)){
+            $model = $model->where('is_super',1);
+        }
+        return $model;
+    }
 }

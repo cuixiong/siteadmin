@@ -12,12 +12,9 @@ class DepartmentRequest extends BaseRequest
         $rules = [
             'parent_id' => 'required',
             'name' => 'required',
+            'default_role' => 'required',
         ];
-        $message = [
-            'parent_id.required' => '父级ID不能为空',
-            'name.required' => '名称不能为空',
-        ];
-        return $this->validateRequest($request, $rules,$message);
+        return $this->validateRequest($request, $rules);
     }
     /**
      * 更新数据验证
@@ -29,12 +26,8 @@ class DepartmentRequest extends BaseRequest
             'id' => 'required',
             'parent_id' => 'required',
             'name' => 'required',
+            'default_role' => 'required',
         ];
-        $message = [
-            'id.required' => 'ID不能为空',
-            'parent_id.required' => '父级ID不能为空',
-            'name.required' => '名称不能为空',
-        ];
-        return $this->validateRequest($request, $rules,$message);
+        return $this->validateRequest($request, $rules);
     }
 }
