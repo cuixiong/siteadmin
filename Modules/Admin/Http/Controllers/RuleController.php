@@ -24,8 +24,8 @@ class RuleController extends CrudController
                 $where['type'] = $request->type;
             }
             // 状态
-            if(isset($request->status)){
-                $where['status'] = $request->status;
+            if(isset($request->visible)){
+                $where['visible'] = $request->visible;
             }
             // 总控/站点权限
             if(isset($request->category)){
@@ -45,16 +45,18 @@ class RuleController extends CrudController
      */
     private function RoutesList($module = '')
     {
-        $routes = Route::getRoutes()->get();
+        // $routes = Route::getRoutes()->get();
+        $routes = Route::getRoutes();
         $result = [];
         foreach ($routes as $route) {
             $name = $route->getName();
-            $uri = $route->uri;
+            $action = $route->getAction();
+            $uri = $action;
             if(!empty($name)){
                 if(!empty($module)){
-                    if(strpos($uri,$module.'/') !== false){
+                    // if(strpos($uri,$module.'/') !== false){
                         array_push($result,['name' => $name,'route' => $uri]);
-                    }
+                    // }
                 } else {
                     array_push($result,['name' => $name,'route' => $uri]);
                 }
