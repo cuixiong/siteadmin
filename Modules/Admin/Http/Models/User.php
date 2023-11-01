@@ -107,7 +107,7 @@ class User extends Base
             $model = $model->where('nickname','like','%'.$request->keywords.'%')
                             ->orWhere('name',$request->keywords)
                             ->orWhere('id',$request->keywords)
-                            ->orWhere('phone',$request->keywords);
+                            ->orWhere('mobile',$request->keywords);
         }
         if(!empty($request->deptId)){
             $model = $model->where('department_id',$request->deptId);
@@ -117,11 +117,11 @@ class User extends Base
         }
         if(!empty($request->startTime)){
             $startTime = strtotime($request->startTime);
-            $model = $model->where('created_at','>=',$request->startTime);
+            $model = $model->where('created_at','>=',$startTime);
         }
         if(!empty($request->endTime)){
             $endTime = strtotime($request->endTime);
-            $model = $model->where('created_at','=<',$request->endTime);
+            $model = $model->where('created_at','<=',$endTime);
         }
         return $model;
     }
