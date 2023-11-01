@@ -24,8 +24,8 @@ class RuleController extends CrudController
                 $where['type'] = $request->type;
             }
             // 状态
-            if(isset($request->visible)){
-                $where['visible'] = $request->visible;
+            if(isset($request->status)){
+                $where['status'] = $request->status;
             }
             // 总控/站点权限
             if(isset($request->category)){
@@ -45,20 +45,24 @@ class RuleController extends CrudController
      */
     private function RoutesList($module = '')
     {
-        // $routes = Route::getRoutes()->get();
-        $routes = Route::getRoutes();
+        if($module)
+        {
+            $module = ($module == "1") ? "Admin" : "Site";
+        }
+        $routes = Route::getRoutes()->get();
         $result = [];
         foreach ($routes as $route) {
             $name = $route->getName();
-            $action = $route->getAction();
-            $uri = $action;
             if(!empty($name)){
+                $uri = $route->uri;
+                $action = $route->getAction();
+                $controller = $action['controller'];
                 if(!empty($module)){
-                    // if(strpos($uri,$module.'/') !== false){
-                        array_push($result,['name' => $name,'route' => $uri]);
-                    // }
+                    if(strpos($controller,$module) !== false){
+                        array_push($result,['name' => $name,'route' => $uri,'value' => $controller]);
+                    }
                 } else {
-                    array_push($result,['name' => $name,'route' => $uri]);
+                    array_push($result,['name' => $name,'route' => $uri,'value' => $controller]);
                 }
             }
         }
