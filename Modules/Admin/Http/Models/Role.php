@@ -126,7 +126,7 @@ class Role extends Base
                             ->orWhere('id',$request->keywords);
         }
         // 超级管理员
-        if(!empty($request->is_super)){
+        if(isset($request->is_super)){
             $model = $model->where('is_super',1);
         }
         return $model;

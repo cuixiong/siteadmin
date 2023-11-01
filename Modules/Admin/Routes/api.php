@@ -32,7 +32,8 @@ Route::middleware([
 Route::middleware([
     'api',
     JwtMiddleware::class, // JWT验证中间件
-    'language' // 语言中间件
+    'language', // 语言中间件
+    // 'rule' // 权限验证中间件
 ])->group(function() {
     // User控制器
     Route::post('admin/user/store','UserController@store')->name('用户新增');

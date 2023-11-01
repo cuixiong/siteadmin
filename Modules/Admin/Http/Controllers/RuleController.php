@@ -24,8 +24,8 @@ class RuleController extends CrudController
                 $where['type'] = $request->type;
             }
             // 状态
-            if(isset($request->status)){
-                $where['status'] = $request->status;
+            if(isset($request->visible)){
+                $where['visible'] = $request->visible;
             }
             // 总控/站点权限
             if(isset($request->category)){

@@ -5,7 +5,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
-
+use Modules\Admin\Http\Models\Role;
 class JwtMiddleware
 {
     /**
@@ -25,6 +25,8 @@ class JwtMiddleware
                 ], 404);
             }
             // 将用户信息存储在请求中，以便后续使用
+            $is_super = Role::whereIn('id',explode(',',$user->role_id))->where('is_super',1)->count();
+            $user->is_super = $is_super > 0 ? true : false;
             $request->user = $user;
             return $next($request);
         } catch (TokenExpiredException $e) {
