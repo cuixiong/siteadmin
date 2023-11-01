@@ -133,12 +133,13 @@ class Base extends Model
             }
         }
         $list = $model->select($filed)->get()->toArray();
-        $minPid = array_column($list,$treeKey);
-        $minPid = min($minPid);
-        if($isTree){
-            $list = $this->tree($list,$treeKey,$minPid);
+        if(!empty($list)){
+            $minPid = array_column($list,$treeKey);
+            $minPid = min($minPid);
+            if($isTree){
+                $list = $this->tree($list,$treeKey,$minPid);
+            }
         }
-
         return $list;
     }
 
