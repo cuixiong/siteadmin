@@ -5,7 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
-use Modules\Admin\Http\Models\Position;
+use Modules\Admin\Http\Models\Department;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller
@@ -23,28 +23,28 @@ class LoginController extends Controller
                 'email' => 'required|email:rfc,dns',
                 'password' => 'required'
             ],[
-                'email.required' => '邮箱不能为空',
-                'email.email' => '邮箱格式不正确，请填写正确的邮箱',
-                'password.required' => '密码不能为空'
+                'email.required' => trans('lang.eamail_empty'),
+                'email.email' => trans('lang.eamail_email'),
+                'password.required' => trans('lang.password_empty'),
             ]);
             if ($validator->fails()) {
                 ReturnJson(FALSE,$validator->errors()->first());
             }
-            $UserModel = User::where('email','=',$email)->first();
-            if (!$UserModel) {
-                ReturnJson(false,'账号不存在');
+            $model = User::where('email','=',$email)->first();
+            if (!$model) {
+                ReturnJson(false,trans('lang.eamail_undefined'));
             }
-            if (!Hash::check($password, $UserModel->password)) {
-                ReturnJson(false,'账号密码不正确');
+            if (!Hash::check($password, $model->password)) {
+                ReturnJson(false,trans('lang.password_no_pass'));
             }
-            if ($UserModel->status == 0) {
-                ReturnJson(false,'账号处于禁用状态，不允许登陆');
+            if ($model->status == 0) {
+                ReturnJson(false,trans('lang.accounts_disabled'));
             }
-            $token=JWTAuth::fromUser($UserModel);//生成token
+            $token=JWTAuth::fromUser($model);//生成token
             if (!$token) {
                 ReturnJson(false,'生成TOKEN失败');
             }
-            ReturnJson(true,'登陆成功',[
+            ReturnJson(true,trans('lang.request_success'),[
                 'accessToken' => $token,
                 'expires' => auth('api')->factory()->getTTL() + 66240,
                 'refreshToken' => null,
@@ -65,38 +65,45 @@ class LoginController extends Controller
             $validator = Validator::make($request->all(),[
                 'name' => 'required',
                 'email' => 'required|unique:users,email|email:rfc,dns',
-                'position_id' => 'required',
+                'department_id' => 'required',
                 'password' => 'required',
             ],[
-                'name.required' => '名字不能为空',
-                'email.required' => '邮箱不能为空',
-                'email.unique' => '邮箱已存在，请更换其他邮箱',
-                'email.email' => '邮箱格式不正确，请填写正确的邮箱',
-                'position_id.required' => '职位ID不能为空',
-                'password.required' => '密码不能为空'
+                'name.required' => trans('lang.name_empty'),
+                'email.required' => trans('lang.eamail_empty'),
+                'email.unique' => trans('lang.eamail_unique'),
+                'email.email' => trans('lang.eamail_email'),
+                'department_id.required' => trans('lang.department_empty'),
+                'password.required' => trans('lang.password_empty'),
             ]);
             if ($validator->fails()) {
                 ReturnJson(FALSE,$validator->errors()->first());
             }
-            $UserModel = new User();
-            $UserModel->email = $request->get('email');
-            $UserModel->name = $request->get('name');
-            $UserModel->position_id = $request->get('position_id');
-            $UserModel->password = Hash::make($request->get('password'));// 密码使用hash值
-            // 注册时将职位选择默认的角色ID赋值到账号的role_id中
-            $UserModel->role_id = Position::where('id',$request->get('position_id'))->value('role_id');
-            if(User::where('email','=',$UserModel->email)->first()){
-                ReturnJson(false,'邮箱已存在请更换其他邮箱');
+            $input = $request->all();
+            $model = new User();
+            $model->email = $input['email'];
+            $model->name = $input['name'];
+            $model->nickname = $input['name'];
+            $model->department_id = $input['department_id'];
+            $model->password = Hash::make($request->get('password'));// 密码使用hash值
+            // 注册时将部门选择默认的角色ID赋值到账号的role_id中
+            $role_ids = Department::where('id',$model->department_id)->value('default_role');
+            $model->role_id = implode(",",$role_ids);
+            $model->status = 0;
+            $model->gender = 0;
+            $model->created_by = 0;
+            $model->created_at = time();
+            if(User::where('email','=',$model->email)->first()){
+                ReturnJson(false,trans('lang.eamail_unique'));
             }
-            if($UserModel->save())
+            if($model->save())
             {
-                $token=JWTAuth::fromUser($UserModel);//生成token
+                $token=JWTAuth::fromUser($model);//生成token
                 if(!$token){
                     ReturnJson(false,'注册成功,但是token生成失败');
                 }
-                ReturnJson(true,'注册成功',['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() * 600,'id' => $UserModel->id]);
+                ReturnJson(true,trans('lang.request_success'),['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() + 66240,'id' => $model->id]);
             } else {
-                ReturnJson(false,'注册失败');
+                ReturnJson(false,trans('lang.request_error'));
             }
         } catch (\Exception $e) {
             ReturnJson(false,$e->getMessage());
@@ -111,7 +118,7 @@ class LoginController extends Controller
     public function logout()
     {
         auth('api')->logout();
-        ReturnJson(true,'注销登录成功');
+        ReturnJson(true,trans('lang.request_success'));
     }
  
     /**
@@ -122,6 +129,6 @@ class LoginController extends Controller
     public function refresh()
     {
         $token = auth('api')->refresh();// 重新获取token
-        return response()->json(['code' => 200,'message' => '刷新成功','data' => ['token' => $token]]);
+        return response()->json(['code' => 200,'message' => trans('lang.request_success'),'data' => ['token' => $token]]);
     }
 }
