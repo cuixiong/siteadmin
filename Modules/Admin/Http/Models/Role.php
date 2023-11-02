@@ -6,7 +6,6 @@ class Role extends Base
 {
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator','sort','site_id','is_super'];
-
     /**
      * 权限ID获取器
      */

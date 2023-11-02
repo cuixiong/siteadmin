@@ -8,7 +8,7 @@ class User extends Base
     /** 隐藏不需要输出的字段 */
     protected $hidden = ["password"];
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['deptName','genderLabel','avatar','deptId','roleIds'];
+    protected $appends = ['deptName','genderLabel','avatar','deptId','roleIds','ruleText'];
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['name','nickname','email','password','role_id','status','gender','mobile','department_id','created_by','updated_by'];
 
@@ -127,5 +127,17 @@ class User extends Base
             $model = $this->HandleSearch($model,$request->search);
         }
         return $model;
+    }
+
+    /**
+     * 角色文本获取器
+     */
+    public function getRuleTextAttribute($value)
+    {
+        if(!empty($this->attributes['role_id'])){
+            $value = Role::whereIn('id',explode(",",$this->attributes['role_id']))->pluck('name');
+            return $value;
+        }
+        return [];
     }
 }
