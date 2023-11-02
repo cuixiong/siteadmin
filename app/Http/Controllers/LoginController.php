@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Modules\Admin\Http\Models\Department;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -131,4 +132,42 @@ class LoginController extends Controller
         $token = auth('api')->refresh();// 重新获取token
         return response()->json(['code' => 200,'message' => trans('lang.request_success'),'data' => ['token' => $token]]);
     }
+
+    /**
+     * Reset Password Request
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    function resetPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email:rfc,dns',
+                'password' => 'required',
+                'code' => 'required',
+            ], [
+                'email.required' => trans('lang.eamail_empty'),
+                'email.email' => trans('lang.eamail_email'),
+                'password.required' => trans('lang.password_empty'),
+                'code.required' => trans('lang.code_empty'),
+            ]);
+            if ($validator->fails()) {
+                ReturnJson(FALSE,$validator->errors()->first());
+            }
+            $model = User::where('email',$request->get('email'))->first();
+            if (!$model) {
+                ReturnJson(false,trans('lang.eamail_undefined'));
+            }
+            $code = Cache::get($request->get('email'));
+            if($code!= $request->get('code')){
+                ReturnJson(true,trans('lang.code_no_pass'));
+            }
+            $model->password = Hash::make($request->get('password'));
+            $model->save();
+            ReturnJson(true,trans('lang.request_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false,$e->getMessage());
+        }
+    }
+
 }

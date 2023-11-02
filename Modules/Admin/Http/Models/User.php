@@ -123,6 +123,9 @@ class User extends Base
             $endTime = strtotime($request->endTime);
             $model = $model->where('created_at','<=',$endTime);
         }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
+        }
         return $model;
     }
 }

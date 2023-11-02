@@ -20,4 +20,6 @@ return [
     'eamail_undefined'  =>  '邮箱不存在',
     'password_no_pass' => '密码不正确',
     'accounts_disabled' => '账号已被禁用',
+    'code_empty' => '验证码为空',
+    'code_no_pass' => '验证码不正确',
 ];

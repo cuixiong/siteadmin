@@ -20,4 +20,6 @@ return [
     'eamail_undefined'  =>  'Eamail undefined',
     'password_no_pass' => 'Password no pass',
     'accounts_disabled' => 'Accounts disabled',
+    'code_empty' => 'Code is empty',
+    'code_no_pass' => 'Code no pass',
 ];

@@ -152,6 +152,35 @@ class Base extends Model
         if(!empty($request->keywords)){
             $model = $model->where('name','like','%'.$request->keywords.'%');
         }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
+        }
+        return $model;
+    }
+
+    /**
+     * 处理查询列表条件数组
+     * @param $model moxel
+     * @param $search 搜索条件
+     */
+    public function HandleSearch($model,$search){
+            $search = json_decode($search,true);
+            $search = array_filter($search,function($v){
+                if(!(empty($v) && $v != "0")){
+                    return true;
+                }
+            });
+            if(!empty($search)){
+                foreach ($search as $key => $value) {
+                    if(in_array($key,['name','english_name','title'])){
+                        $model = $model->where($key,'like','%'.trim($value).'%');
+                    } else if(is_array($value)){
+                        $model = $model->whereIn($key,$value);
+                    } else {
+                        $model = $model->where($key,$value);
+                    }
+                }
+            }
         return $model;
     }
 

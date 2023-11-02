@@ -15,6 +15,9 @@ class DictionaryValue extends Base
         if(!empty($request->code)){
             $model = $model->where('code',$request->code);
         }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
+        }
         return $model;
     }
 }

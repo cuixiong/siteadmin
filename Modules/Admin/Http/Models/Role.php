@@ -129,6 +129,9 @@ class Role extends Base
         if(isset($request->is_super)){
             $model = $model->where('is_super',$request->is_super);
         }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
+        }
         return $model;
     }
 }
