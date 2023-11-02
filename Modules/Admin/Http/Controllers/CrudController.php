@@ -169,4 +169,26 @@ class CrudController extends Controller
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    /**
+     * 修改状态
+     * @param $request 请求信息
+     * @param $id 主键ID
+     */
+    public function changeStatus(Request $request)
+    {
+        try {
+            if(empty($request->id)){
+                ReturnJson(FALSE,'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->status = $request->status;
+            if(!$record->save()){
+                ReturnJson(FALSE,trans('lang.update_error'));
+            }
+            ReturnJson(TRUE,trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

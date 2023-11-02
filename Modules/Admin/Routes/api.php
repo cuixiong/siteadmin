@@ -60,9 +60,12 @@ Route::middleware([
 
     // Email控制器
     Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
+    Route::post('admin/email/changeStatus','EmailController@changeStatus')->name('邮箱状态改变');
+
 
     // EmailScene控制器
     Route::get('admin/email-scene/list','EmailSceneController@list')->name('发邮列表');
+    Route::post('admin/email-scene/changeStatus','EmailSceneController@changeStatus')->name('发邮状态改变');
 
     // Dictionary控制器
     Route::get('admin/dictionary/list','DictionaryController@list')->name('字典列表');
