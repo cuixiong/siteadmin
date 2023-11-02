@@ -51,7 +51,7 @@ class SendEmailController extends Controller
             $action = $request->action.'Test';
             // 调用
             $res = $this->$action($request);
-            $res ? ReturnJson(TRUE,'邮箱发送成功') : ReturnJson(FALSE,'邮箱发送失败');
+            $res ? ReturnJson(true,trans()->get('email.eamail_success')) : ReturnJson(FALSE,trans()->get('email.eamail_error')); 
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -96,18 +96,18 @@ class SendEmailController extends Controller
     {
         try {
             if(!isset($request->user_id) || empty($request->user_id)){
-                ReturnJson(FALSE,'缺少账号ID');
+                ReturnJson(FALSE,trans()->get('email.eamail_error'));
             }
             $id = $request->user_id;
             $user = User::find($id);
             $user = $user ? $user->toArray() : [];
             $scene = EmailScene::select(['name','title','body','email_sender_id','email_recipient','status'])->find(1);
             if(empty($scene)){
-                ReturnJson(FALSE,'邮箱场景不存在，无法发送');
+                ReturnJson(FALSE,trans()->get('email.eamail_error'));
             }
             if($scene->status == 0)
             {
-                ReturnJson(FALSE,'邮箱场景已被禁用，无法发送');
+                ReturnJson(FALSE,trans()->get('email.eamail_error'));
             }
             $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
             // 收件人的数组
@@ -124,6 +124,7 @@ class SendEmailController extends Controller
             foreach ($emails as $email) {
                 $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
             }
+            ReturnJson(true,trans()->get('email.eamail_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

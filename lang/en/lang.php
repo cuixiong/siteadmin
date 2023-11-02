@@ -8,4 +8,6 @@ return [
     'delete_error'   =>  'Add failed',
     'update_success'   =>  'update success',
     'update_error'   =>  'Update failed',
+    'eamail_success'   =>  'Eamail Successfully added',
+    'eamail_error'   =>  'Eamail Update failed',
 ];
