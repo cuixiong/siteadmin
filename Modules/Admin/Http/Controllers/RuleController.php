@@ -14,24 +14,8 @@ class RuleController extends CrudController
      */
     public function list(Request $request) {
         try {
-            $where = [];
-            // 名称
-            if(!empty($request->keywords)){
-                $where['name'] = ['like',"%$request->keywords%"];
-            }
-            // 类型
-            if(!empty($request->type)){
-                $where['type'] = $request->type;
-            }
-            // 状态
-            if(isset($request->visible)){
-                $where['visible'] = $request->visible;
-            }
-            // 总控/站点权限
-            if(isset($request->category)){
-                $where['category'] = $request->category;
-            }
-            $list = (new Rule)->GetList('*',true,'parent_id',$where);
+            $search = $request->input('search');
+            $list = (new Rule)->GetList('*',true,'parent_id',$search);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());

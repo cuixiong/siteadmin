@@ -117,20 +117,11 @@ class Base extends Model
      * @param array $where 查询条件
      * @return array $res
      */
-    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
+    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$search = [])
     {
         $model = self::query();
-
-        foreach ($where as $key => $value) {
-            if(is_array($value)){
-                if($value[0] == 'like' && count($value) == 2){
-                    $model = $model->where($key,$value[0],$value[1]);
-                } else {
-                    $model = $model->whereIn($key,$value);
-                }
-            } else {
-                $model = $model->where($key,$value);
-            }
+        if(!empty($search)){
+            $model = $this->HandleSearch($model,$search);
         }
         $list = $model->select($filed)->get()->toArray();
         if(!empty($list)){
@@ -203,19 +194,11 @@ class Base extends Model
      * @param array $where 查询条件
      * @return array $res
      */
-    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
+    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$search = [])
     {
         $model = self::query();
-        foreach ($where as $key => $value) {
-            if(is_array($value)){
-                if($value[0] == 'like' && count($value) == 2){
-                    $model = $model->where($key,$value[0],$value[1]);
-                } else {
-                    $model = $model->whereIn($key,$value);
-                }
-            } else {
-                $model = $model->where($key,$value);
-            }
+        if(!empty($search)){
+            $model = $this->HandleSearch($model,$search);
         }
         $list = $model->select($filed)->get()->toArray();
 
