@@ -171,10 +171,20 @@ class Base extends Model
                 }
             });
             if(!empty($search)){
+                if(isset($search['created_by'])){
+                    unset($search['created_by']);
+                }
+                if(isset($search['updated_by'])){
+                    unset($search['updated_by']);
+                }
                 foreach ($search as $key => $value) {
                     if(in_array($key,['name','english_name','title'])){
                         $model = $model->where($key,'like','%'.trim($value).'%');
-                    } else if(is_array($value)){
+                    } else if (in_array($key,['created_at','updated_at'])){
+                        if(is_array($value)){
+                            $model = $model->whereBetween($key,$value);
+                        }
+                    } else if(is_array($value) && !in_array($key,['created_at','updated_at'])){
                         $model = $model->whereIn($key,$value);
                     } else {
                         $model = $model->where($key,$value);
