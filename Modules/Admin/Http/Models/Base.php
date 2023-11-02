@@ -177,14 +177,15 @@ class Base extends Model
                 if(isset($search['updated_by'])){
                     unset($search['updated_by']);
                 }
+                $timeArray = ['created_at','updated_at'];
                 foreach ($search as $key => $value) {
                     if(in_array($key,['name','english_name','title'])){
                         $model = $model->where($key,'like','%'.trim($value).'%');
-                    } else if (in_array($key,['created_at','updated_at'])){
+                    } else if (in_array($key,$timeArray)){
                         if(is_array($value)){
                             $model = $model->whereBetween($key,$value);
                         }
-                    } else if(is_array($value) && !in_array($key,['created_at','updated_at'])){
+                    } else if(is_array($value) && !in_array($key,$timeArray)){
                         $model = $model->whereIn($key,$value);
                     } else {
                         $model = $model->where($key,$value);
@@ -217,6 +218,7 @@ class Base extends Model
             }
         }
         $list = $model->select($filed)->get()->toArray();
+
         if($isTree){
             $list = $this->treeLabel($list,$treeKey);
         } else {
@@ -237,7 +239,6 @@ class Base extends Model
      * @return array $res
      */
     public function treeLabel($list,$key,$parentId = 0) {
-
         $tree = [];
         foreach ($list as $item) {
             $res = [];

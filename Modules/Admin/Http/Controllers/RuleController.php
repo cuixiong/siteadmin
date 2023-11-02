@@ -87,7 +87,7 @@ class RuleController extends CrudController
      */
     public function option(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1]);
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id');
         ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 
