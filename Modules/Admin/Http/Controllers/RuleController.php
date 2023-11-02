@@ -45,10 +45,6 @@ class RuleController extends CrudController
      */
     private function RoutesList($module = '')
     {
-        if($module)
-        {
-            $module = ($module == "1") ? "Admin" : "Site";
-        }
         $routes = Route::getRoutes()->get();
         $result = [];
         foreach ($routes as $route) {
@@ -74,7 +70,15 @@ class RuleController extends CrudController
      */
     public function GetAdminRoute(Request $request)
     {
-        $routes = $this->RoutesList('admin');
+        $category = $request->category;
+        if($category == "1"){
+            $module = 'Admin';
+        } else if($category == "2") {
+            $module = 'Site';
+        } else {
+            $module = '';
+        }
+        $routes = $this->RoutesList($module);
         ReturnJson(TRUE,trans('lang.request_success'),$routes);
     }
 

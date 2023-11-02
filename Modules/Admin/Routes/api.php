@@ -26,6 +26,64 @@ Route::middleware([
     Route::get('admin/role/adminId/{id}','RoleController@adminId')->name('Admin权限IDS');
     Route::get('admin/role/siteId/{id}','RoleController@siteId')->name('Site权限IDS');
     Route::get('admin/site/option','SiteController@option')->name('站点列表option');
+
+    // User控制器
+    Route::get('admin/user/form/{id}','UserController@form')->name('用户单查');
+    Route::get('admin/user/list','UserController@list')->name('用户列表');
+
+    // Rule控制器
+    Route::get('admin/rule/list','RuleController@list')->name('权限列表');
+    Route::post('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
+    Route::get('admin/rule/form/{id}','RuleController@form')->name('权限单查');
+
+    // Role控制器
+    Route::get('admin/role/list','RoleController@list')->name('角色列表');
+    Route::get('admin/role/form/{id}','RoleController@form')->name('角色单查');
+    Route::get('admin/role/option','RoleController@option')->name('角色option');
+    Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
+    Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
+
+    // Site控制器
+    Route::post('admin/site/message','SiteController@message')->name('站点测试');
+    Route::post('admin/site/callback-results','SiteController@callbackResults')->name('站点更新结果');
+    Route::get('admin/site/get-catch-git-status','SiteController@getCatchGitStatus')->name('返回更新结果');
+    Route::get('admin/site/list','SiteController@list')->name('站点列表');
+
+    // Publisher控制器
+    Route::get('admin/publisher/list','PublisherController@list')->name('出版商列表');
+
+    // Language控制器
+    Route::get('admin/language/list','LanguageController@list')->name('语言列表');
+
+    // Region控制器
+    Route::get('admin/region/list','RegionController@list')->name('地区列表');
+
+    // Email控制器
+    Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
+
+    // EmailScene控制器
+    Route::get('admin/email-scene/list','EmailSceneController@list')->name('发邮列表');
+
+    // Dictionary控制器
+    Route::get('admin/dictionary/list','DictionaryController@list')->name('字典列表');
+    Route::get('admin/dictionary/form/{id}','DictionaryController@form')->name('字典单查');
+
+    // DictionaryValue控制器
+    Route::get('admin/dictionary-value/list/','DictionaryValueController@list')->name('字典项列表');
+    Route::get('admin/dictionary-value/form/{id}','DictionaryValueController@form')->name('字典项单查');
+    Route::get('admin/dictionary-value/get/{code}','DictionaryValueController@get')->name('字典项查询');
+
+    // Server控制器
+    Route::get('admin/server/list','ServerController@list')->name('服务器列表');
+
+    // System控制器
+    Route::get('admin/system/list','SystemController@list')->name('设置Tab列表');
+    Route::get('admin/system/value_list','SystemController@list')->name('设置键值列表');
+
+    // Department控制器
+    Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
+    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
+    Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -39,87 +97,56 @@ Route::middleware([
     Route::post('admin/user/store','UserController@store')->name('用户新增');
     Route::post('admin/user/destroy','UserController@destroy')->name('用户删除');
     Route::post('admin/user/update','UserController@update')->name('用户编辑');
-    Route::get('admin/user/list','UserController@list')->name('用户列表');
-    Route::get('admin/user/form/{id}','UserController@form')->name('用户单查');
 
     // Rule控制器
     Route::post('admin/rule/store','RuleController@store')->name('权限新增');
-    Route::get('admin/rule/list','RuleController@list')->name('权限列表');
-    Route::get('admin/rule/filters','RuleController@filters')->name('权限表头');
     Route::post('admin/rule/destroy','RuleController@destroy')->name('权限删除');
     Route::post('admin/rule/update','RuleController@update')->name('权限编辑');
-    Route::post('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
-    Route::get('admin/rule/form/{id}','RuleController@form')->name('权限单查');
-
 
     // Role控制器
-    Route::get('admin/role/list','RoleController@list')->name('角色列表');
     Route::post('admin/role/store','RoleController@store')->name('角色新增');
     Route::post('admin/role/update','RoleController@update')->name('角色编辑');
     Route::post('admin/role/destroy','RoleController@destroy')->name('角色删除');
-    Route::get('admin/role/form/{id}','RoleController@form')->name('角色单查');
-    Route::get('admin/role/option','RoleController@option')->name('角色option');
-    Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
-    Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
-
-    // Position控制器
-    Route::post('admin/position/store','PositionController@store')->name('职位新增');
-    Route::post('admin/position/update','PositionController@update')->name('职位编辑');
-    Route::get('admin/position/filters','PositionController@filters')->name('职位表头');
-    Route::post('admin/position/destroy','PositionController@destroy')->name('职位删除');
 
     // Site控制器
     Route::post('admin/site/store','SiteController@store')->name('站点新增');
-    Route::get('admin/site/list','SiteController@list')->name('站点列表');
     Route::post('admin/site/update','SiteController@update')->name('站点更新');
     Route::post('admin/site/destroy','SiteController@destroy')->name('站点删除');
     Route::post('admin/site/move-up-site','SiteController@moveUpSite')->name('站点升级');
-    Route::post('admin/site/message','SiteController@message')->name('站点测试');
-    Route::post('admin/site/callback-results','SiteController@callbackResults')->name('站点更新结果');
-    Route::get('admin/site/get-catch-git-status','SiteController@getCatchGitStatus')->name('返回更新结果');
+
     // Publisher控制器
-    Route::get('admin/publisher/list','PublisherController@list')->name('出版商列表');
     Route::get('admin/publisher/store','PublisherController@store')->name('出版商新增');
     Route::post('admin/publisher/destroy','PublisherController@destroy')->name('出版商删除');
     Route::post('admin/publisher/update','PublisherController@update')->name('出版商修改');
 
     // Language控制器
-    Route::get('admin/language/list','LanguageController@list')->name('语言列表');
     Route::post('admin/language/store','LanguageController@store')->name('语言新增');
     Route::post('admin/language/destroy','LanguageController@destroy')->name('语言删除');
     Route::post('admin/language/update','LanguageController@update')->name('语言编辑');
 
     // Region控制器
-    Route::get('admin/region/list','RegionController@list')->name('地区列表');
     Route::post('admin/region/store','RegionController@store')->name('地区新增');
     Route::post('admin/region/destroy','RegionController@destroy')->name('地区删除');
     Route::post('admin/region/update','RegionController@update')->name('地区编辑');
 
     // Email控制器
-    Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
     Route::post('admin/email/store','EmailController@store')->name('邮箱新增');
     Route::post('admin/email/destroy','EmailController@destroy')->name('邮箱删除');
     Route::post('admin/email/update','EmailController@update')->name('邮箱编辑');
 
     // EmailScene控制器
-    Route::get('admin/email-scene/list','EmailSceneController@list')->name('发邮列表');
     Route::post('admin/email-scene/store','EmailSceneController@store')->name('发邮新增');
     Route::post('admin/email-scene/update','EmailSceneController@update')->name('发邮编辑');
 
     // Dictionary控制器
-    Route::get('admin/dictionary/list','DictionaryController@list')->name('字典列表');
     Route::post('admin/dictionary/store','DictionaryController@store')->name('字典新增');
     Route::post('admin/dictionary/update','DictionaryController@update')->name('字典编辑');
     Route::post('admin/dictionary/destroy','DictionaryController@destroy')->name('字典删除');
-    Route::get('admin/dictionary/form/{id}','DictionaryController@form')->name('字典单查');
 
     // DictionaryValue控制器
-    Route::get('admin/dictionary-value/list/','DictionaryValueController@list')->name('字典项列表');
     Route::post('admin/dictionary-value/store','DictionaryValueController@store')->name('字典项新增');
     Route::post('admin/dictionary-value/update','DictionaryValueController@update')->name('字典项编辑');
     Route::post('admin/dictionary-value/destroy','DictionaryValueController@destroy')->name('字典项删除');
-    Route::get('admin/dictionary-value/form/{id}','DictionaryValueController@form')->name('字典项单查');
-    Route::get('admin/dictionary-value/get/{code}','DictionaryValueController@get')->name('字典项查询');
 
     // Database控制器
     Route::get('admin/database/list','DatabaseController@list')->name('数据库列表');
@@ -128,28 +155,22 @@ Route::middleware([
     Route::post('admin/database/destroy','DatabaseController@destroy')->name('数据库删除');
 
     // Server控制器
-    Route::get('admin/server/list','ServerController@list')->name('服务器列表');
     Route::post('admin/server/store','ServerController@store')->name('服务器新增');
     Route::post('admin/server/update','ServerController@update')->name('服务器编辑');
     Route::post('admin/server/destroy','ServerController@destroy')->name('服务器删除');
 
     // System控制器
-    Route::get('admin/system/list','SystemController@list')->name('设置Tab列表');
     Route::post('admin/system/store','SystemController@store')->name('设置Tab新增');
     Route::post('admin/system/update','SystemController@update')->name('设置Tab编辑');
     Route::post('admin/system/destroy','SystemController@destroy')->name('设置Tab删除');
-    Route::get('admin/system/value_list','SystemController@list')->name('设置键值列表');
     Route::post('admin/system/value_store','SystemController@systemValueStore')->name('设置键值新增');
     Route::post('admin/system/value_update','SystemController@systemValueUpdate')->name('设置键值编辑');
     Route::post('admin/system/value_destroy','SystemController@systemValueDestroy')->name('设置键值删除');
 
     // Department控制器
-    Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
     Route::post('admin/department/store','DepartmentController@store')->name('部门新增');
     Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
     Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
-    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
-    Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
 
 });
 
