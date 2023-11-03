@@ -24,4 +24,8 @@ return [
     'code_no_pass' => '验证码不正确',
     'id_empty' => 'ID为空',
     'nickname_empty' => '昵称为空',
+    'token_empty' => 'Token 为空',
+    'action_empty' => '代码表单不能为空',
+    'action_unique' => '代码已存在，请更换其他代码',
+
 ];

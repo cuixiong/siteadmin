@@ -102,8 +102,7 @@ class SendEmailController extends Controller
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $user['detName'] = Department::find($user['department_id'])['name'];
-            $scene = EmailScene::select(['name','title','body','email_sender_id','email_recipient','status'])->find(1);
+            $scene = EmailScene::where('action','register')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('email.eamail_error'));
             }
@@ -156,9 +155,8 @@ class SendEmailController extends Controller
             'password' =>  $senderEmail->password
         ];
         $this->SetConfig($config);
-        foreach ($emails as $email) {
-            $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
-        }
+        $email = $request->test_email ? $request->test_email : $request->user->email;
+        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
         return true;
     }
 

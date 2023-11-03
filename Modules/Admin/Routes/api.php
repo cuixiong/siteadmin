@@ -141,6 +141,8 @@ Route::middleware([
     // EmailScene控制器
     Route::post('admin/email-scene/store','EmailSceneController@store')->name('发邮新增');
     Route::post('admin/email-scene/update','EmailSceneController@update')->name('发邮编辑');
+    Route::post('admin/email-scene/destroy','EmailSceneController@destroy')->name('字典删除');
+
 
     // Dictionary控制器
     Route::post('admin/dictionary/store','DictionaryController@store')->name('字典新增');

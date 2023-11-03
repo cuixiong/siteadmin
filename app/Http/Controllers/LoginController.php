@@ -82,7 +82,7 @@ class LoginController extends Controller
             $input = $request->all();
             $model = new User();
             $model->email = $input['email'];
-            $model->name = $input['name'];
+            $model->name = $input['email'];
             $model->nickname = $input['name'];
             $model->department_id = $input['department_id'];
             $model->password = Hash::make($request->get('password'));// 密码使用hash值
@@ -166,4 +166,23 @@ class LoginController extends Controller
         }
     }
 
+    /**
+     * activate accouunt email send
+     * @param use Illuminate\Http\Request $request;
+     * @return response Code
+     */
+    public function activate(Request $request){
+        try {
+            $token = $request->token;
+            if(!isset($token) || empty($token)){
+                ReturnJson(FALSE,trans('lang.token_empty'));
+            }
+            $token = base64_decode($request->token);
+            list($email,$id) = explode('&',$token);
+            $res = User::where('email',$email)->where('id',$id)->update(['status' => 1]);
+            $res ? ReturnJson(TRUE,trans('lang.request_success')) : ReturnJson(FALSE,trans('lang.request_error'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

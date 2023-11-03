@@ -24,4 +24,7 @@ return [
     'code_no_pass' => 'Code no pass',
     'id_empty' => 'ID is empty',
     'nickname_empty' => 'Nickname is empty',
+    'token_empty' => 'Token is empty',
+    'action_empty' => 'Action is empty',
+    'action_unique' => 'Code already exists',
 ];
