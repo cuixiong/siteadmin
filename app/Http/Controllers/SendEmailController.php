@@ -168,10 +168,11 @@ class SendEmailController extends Controller
                 ReturnJson(FALSE,trans()->get('email.eamail_empaty'));
             }   
             $email = $request->email;
-            $user = User::where('email',$email)->first()->toArray();
+            $user = User::where('email',$email)->first();
             if(empty($user)){
                 ReturnJson(FALSE,trans()->get('email.eamail_undefined'));
             }
+            $user = $user->toArray();
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = $_SERVER['SERVER_NAME'];
