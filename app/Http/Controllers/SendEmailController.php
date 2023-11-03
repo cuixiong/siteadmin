@@ -6,6 +6,7 @@ use App\Mail\TrendsEmail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
+use Modules\Admin\Http\Models\Department;
 use Modules\Admin\Http\Models\Email;
 use Modules\Admin\Http\Models\EmailScene;
 use Modules\Admin\Http\Models\User;
@@ -98,6 +99,10 @@ class SendEmailController extends Controller
         try {
             $user = User::find($id);
             $user = $user ? $user->toArray() : [];
+            $token = $user['email'].'&'.$user['id'];
+            $user['token'] = base64_encode($token);
+            $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $user['detName'] = Department::find($user['department_id'])['name'];
             $scene = EmailScene::select(['name','title','body','email_sender_id','email_recipient','status'])->find(1);
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('email.eamail_error'));
@@ -175,7 +180,7 @@ class SendEmailController extends Controller
             $user = $user->toArray();
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
-            $user['domain'] = $_SERVER['SERVER_NAME'];
+            $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $scene = EmailScene::where('action','password')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('email.eamail_error'));
