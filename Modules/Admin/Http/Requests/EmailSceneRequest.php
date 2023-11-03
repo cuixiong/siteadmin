@@ -44,7 +44,7 @@ class EmailSceneRequest extends BaseRequest
             'email_sender_id' => 'required',
             'email_recipient' => 'required',
             'status' => 'required',
-            'action' => 'required|unique:email_scenes',
+            'action' => 'required',
         ];
         $message = [
             'id.required' => 'ID不能为空',
@@ -55,7 +55,6 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient.required' => '邮箱收件人不能为空',
             'status.required' => '状态不能为空',
             'action.required' => trans('lang.action_empty'),
-            'action.unique' => trans('lang.action_unique'),
         ];
         return $this->validateRequest($request, $rules,$message);
     }
