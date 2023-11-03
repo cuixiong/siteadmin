@@ -13,6 +13,8 @@ use Modules\Admin\Http\Models\User;
 
 class SendEmailController extends Controller
 {
+    // 注册发邮method
+    private $EmailCodes = ['register' => '注册账号','password' => '重置密码'];
     /**
      * 动态配置邮箱参数
      * @param array $data 邮箱配置参数信息
@@ -198,5 +200,22 @@ class SendEmailController extends Controller
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * return email method
+     */
+    public function EmailCode(){
+        $list = [];
+        if(empty($this->EmailCodes)){
+            ReturnJson(true,'',$list);
+        }
+        foreach ($this->EmailCodes as $key => $value) {
+            $list[] = [
+                'value' => $key,
+                'label' => "$value($key)"
+            ];
+        }
+        ReturnJson(true,'',$list);
     }
 }
