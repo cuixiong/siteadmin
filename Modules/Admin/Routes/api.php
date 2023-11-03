@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\JwtMiddleware;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,21 +44,6 @@ Route::middleware([
     Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
     Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
 
-    // Site控制器
-    Route::post('admin/site/message','SiteController@message')->name('站点测试');
-    Route::post('admin/site/callback-results','SiteController@callbackResults')->name('站点更新结果');
-    Route::get('admin/site/get-catch-git-status','SiteController@getCatchGitStatus')->name('返回更新结果');
-    Route::get('admin/site/list','SiteController@list')->name('站点列表');
-
-    // Publisher控制器
-    Route::get('admin/publisher/list','PublisherController@list')->name('出版商列表');
-
-    // Language控制器
-    Route::get('admin/language/list','LanguageController@list')->name('语言列表');
-
-    // Region控制器
-    Route::get('admin/region/list','RegionController@list')->name('地区列表');
-
     // Email控制器
     Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
     Route::post('admin/email/changeStatus','EmailController@changeStatus')->name('邮箱状态改变');
@@ -87,6 +73,8 @@ Route::middleware([
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
     Route::get('admin/department/option','DepartmentController@option')->name('部门option');
     Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
+
+    require __DIR__ . '/api_temp/loginNoRule.php';
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -111,26 +99,6 @@ Route::middleware([
     Route::post('admin/role/update','RoleController@update')->name('角色编辑');
     Route::post('admin/role/destroy','RoleController@destroy')->name('角色删除');
 
-    // Site控制器
-    Route::post('admin/site/store','SiteController@store')->name('站点新增');
-    Route::post('admin/site/update','SiteController@update')->name('站点更新');
-    Route::post('admin/site/destroy','SiteController@destroy')->name('站点删除');
-    Route::post('admin/site/move-up-site','SiteController@moveUpSite')->name('站点升级');
-
-    // Publisher控制器
-    Route::get('admin/publisher/store','PublisherController@store')->name('出版商新增');
-    Route::post('admin/publisher/destroy','PublisherController@destroy')->name('出版商删除');
-    Route::post('admin/publisher/update','PublisherController@update')->name('出版商修改');
-
-    // Language控制器
-    Route::post('admin/language/store','LanguageController@store')->name('语言新增');
-    Route::post('admin/language/destroy','LanguageController@destroy')->name('语言删除');
-    Route::post('admin/language/update','LanguageController@update')->name('语言编辑');
-
-    // Region控制器
-    Route::post('admin/region/store','RegionController@store')->name('地区新增');
-    Route::post('admin/region/destroy','RegionController@destroy')->name('地区删除');
-    Route::post('admin/region/update','RegionController@update')->name('地区编辑');
 
     // Email控制器
     Route::post('admin/email/store','EmailController@store')->name('邮箱新增');
@@ -174,7 +142,9 @@ Route::middleware([
     Route::post('admin/department/store','DepartmentController@store')->name('部门新增');
     Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
     Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
-
+    
+    require __DIR__ . '/api_temp/loginAndRule.php';
+    
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
@@ -185,7 +155,6 @@ Route::middleware([
     // Position控制器
     Route::get('admin/position/list','PositionController@list')->name('职位列表');
     Route::get('admin/country/get-country','CountryController@getCountry')->name('国家列表');
-    Route::get('admin/publisher/get-publisher','PublisherController@getPublisher')->name('出版商列表');
     Route::get('admin/common/get-status','CommonController@getStatus')->name('获取状态 未知');
     Route::get('admin/common/filters','CommonController@filters')->name('公共数据');// 公共的列表表头和下拉数据
 
@@ -194,4 +163,6 @@ Route::middleware([
     Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
 
     Route::get('baba',[\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class,'test'])->name('测试接口');
+
+    require __DIR__ . '/api_temp/other.php';
 });

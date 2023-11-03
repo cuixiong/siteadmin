@@ -25,36 +25,36 @@ class SiteController extends CrudController
          * 一旦使用Validator类进行表单验证就会报错Tenant could not be identified on domain
          * 只能在此处进行手动进行验证
         */
-        if(empty($input['name'])){
-            ReturnJson(FALSE,'站点名称不能为空');
-        }
-        if(empty($input['english_name'])){
-            ReturnJson(FALSE,'英语名称不能为空');
-        }
-        if(Site::where('english_name',$input['english_name'])->first()){
-            ReturnJson(FALSE,'英语名称已存在，请更换其他的');
-        }
-        if(empty($input['domain'])){
-            ReturnJson(FALSE,'域名不能为空');
-        }
-        if(empty($input['country_id'])){
-            ReturnJson(FALSE,'国家ID不能为空');
-        }
-        if(empty($input['db_host'])){
-            ReturnJson(FALSE,'数据库端口不能为空');
-        }
-        if(empty($input['db_database'])){
-            ReturnJson(FALSE,'数据库名不能为空');
-        }
-        if(empty($input['db_username'])){
-            ReturnJson(FALSE,'数据库登陆名不能为空');
-        }
-        if(empty($input['db_password'])){
-            ReturnJson(FALSE,'数据库密码不能为空');
-        }
-        if(!isset($request->is_create)){
-            ReturnJson(FALSE,'is_create不能为空');
-        }
+        // if(empty($input['name'])){
+        //     ReturnJson(FALSE,'站点名称不能为空');
+        // }
+        // if(empty($input['english_name'])){
+        //     ReturnJson(FALSE,'英语名称不能为空');
+        // }
+        // if(Site::where('english_name',$input['english_name'])->first()){
+        //     ReturnJson(FALSE,'英语名称已存在，请更换其他的');
+        // }
+        // if(empty($input['domain'])){
+        //     ReturnJson(FALSE,'域名不能为空');
+        // }
+        // if(empty($input['country_id'])){
+        //     ReturnJson(FALSE,'国家ID不能为空');
+        // }
+        // if(empty($input['db_host'])){
+        //     ReturnJson(FALSE,'数据库端口不能为空');
+        // }
+        // if(empty($input['db_database'])){
+        //     ReturnJson(FALSE,'数据库名不能为空');
+        // }
+        // if(empty($input['db_username'])){
+        //     ReturnJson(FALSE,'数据库登陆名不能为空');
+        // }
+        // if(empty($input['db_password'])){
+        //     ReturnJson(FALSE,'数据库密码不能为空');
+        // }
+        // if(!isset($request->is_create)){
+        //     ReturnJson(FALSE,'is_create不能为空');
+        // }
         // 创建者ID
         $input['created_by'] = $request->user->id;
         // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
@@ -67,6 +67,7 @@ class SiteController extends CrudController
         try {
             // 入库site表
             $model = new Site();
+            $this->ValidateInstance($request);
             $res = $model->create($input);
             if(!$res){
                 // 回滚事务
@@ -103,36 +104,36 @@ class SiteController extends CrudController
          * 一旦使用Validator类进行表单验证就会报错Tenant could not be identified on domain
          * 只能在此处进行手动进行验证
         */
-        if(empty($input['id'])){
-            ReturnJson(FALSE,'站点ID不能为空');
-        }
-        if(empty($input['name'])){
-            ReturnJson(FALSE,'站点名称不能为空');
-        }
-        if(empty($input['english_name'])){
-            ReturnJson(FALSE,'英语名称不能为空');
-        }
-        if(empty($input['domain'])){
-            ReturnJson(FALSE,'域名不能为空');
-        }
-        if(empty($input['country_id'])){
-            ReturnJson(FALSE,'国家ID不能为空');
-        }
-        if(empty($input['db_host'])){
-            ReturnJson(FALSE,'数据库端口不能为空');
-        }
-        if(empty($input['db_database'])){
-            ReturnJson(FALSE,'数据库名不能为空');
-        }
-        if(empty($input['db_username'])){
-            ReturnJson(FALSE,'数据库登陆名不能为空');
-        }
-        if(empty($input['db_password'])){
-            ReturnJson(FALSE,'数据库密码不能为空');
-        }
-        if(!isset($request->is_create)){
-            ReturnJson(FALSE,'is_create不能为空');
-        }
+        // if(empty($input['id'])){
+        //     ReturnJson(FALSE,'站点ID不能为空');
+        // }
+        // if(empty($input['name'])){
+        //     ReturnJson(FALSE,'站点名称不能为空');
+        // }
+        // if(empty($input['english_name'])){
+        //     ReturnJson(FALSE,'英语名称不能为空');
+        // }
+        // if(empty($input['domain'])){
+        //     ReturnJson(FALSE,'域名不能为空');
+        // }
+        // if(empty($input['country_id'])){
+        //     ReturnJson(FALSE,'国家ID不能为空');
+        // }
+        // if(empty($input['db_host'])){
+        //     ReturnJson(FALSE,'数据库端口不能为空');
+        // }
+        // if(empty($input['db_database'])){
+        //     ReturnJson(FALSE,'数据库名不能为空');
+        // }
+        // if(empty($input['db_username'])){
+        //     ReturnJson(FALSE,'数据库登陆名不能为空');
+        // }
+        // if(empty($input['db_password'])){
+        //     ReturnJson(FALSE,'数据库密码不能为空');
+        // }
+        // if(!isset($request->is_create)){
+        //     ReturnJson(FALSE,'is_create不能为空');
+        // }
         // 创建者ID
         $input['created_by'] = $request->user->id;
 
