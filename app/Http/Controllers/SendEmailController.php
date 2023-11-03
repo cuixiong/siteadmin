@@ -55,7 +55,7 @@ class SendEmailController extends Controller
             $action = $request->action.'Test';
             // 调用
             $res = $this->$action($request);
-            $res ? ReturnJson(true,trans()->get('email.eamail_success')) : ReturnJson(FALSE,trans()->get('email.eamail_error')); 
+            $res ? ReturnJson(true,trans()->get('lang.eamail_success')) : ReturnJson(FALSE,trans()->get('lang.eamail_error')); 
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -106,11 +106,11 @@ class SendEmailController extends Controller
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $scene = EmailScene::where('action','register')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
             if(empty($scene)){
-                ReturnJson(FALSE,trans()->get('email.eamail_error'));
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
             if($scene->status == 0)
             {
-                ReturnJson(FALSE,trans()->get('email.eamail_error'));
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
             $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
             // 收件人的数组
@@ -127,7 +127,7 @@ class SendEmailController extends Controller
             foreach ($emails as $email) {
                 $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
             }
-            ReturnJson(true,trans()->get('email.eamail_success'));
+            ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
@@ -170,12 +170,12 @@ class SendEmailController extends Controller
     public function password(Request $request){
         try {
             if(!isset($request->email) || empty($request->email)){
-                ReturnJson(FALSE,trans()->get('email.eamail_empaty'));
+                ReturnJson(FALSE,trans()->get('lang.eamail_empaty'));
             }   
             $email = $request->email;
             $user = User::where('email',$email)->first();
             if(empty($user)){
-                ReturnJson(FALSE,trans()->get('email.eamail_undefined'));
+                ReturnJson(FALSE,trans()->get('lang.eamail_undefined'));
             }
             $user = $user->toArray();
             $token = $user['email'].'&'.$user['id'];
@@ -183,7 +183,7 @@ class SendEmailController extends Controller
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
             $scene = EmailScene::where('action','password')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
             if(empty($scene)){
-                ReturnJson(FALSE,trans()->get('email.eamail_error'));
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
             $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
             // 邮箱账号配置信息
@@ -196,7 +196,7 @@ class SendEmailController extends Controller
             ];
             $this->SetConfig($config);
             $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
-            ReturnJson(true,trans()->get('email.eamail_success'));
+            ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
