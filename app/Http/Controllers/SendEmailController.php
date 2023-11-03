@@ -93,13 +93,9 @@ class SendEmailController extends Controller
      * @param use Illuminate\Http\Request;
      * @return response Code
      */
-    public function register(Request $request)
+    public function register($id)
     {
         try {
-            if(!isset($request->user_id) || empty($request->user_id)){
-                ReturnJson(FALSE,trans()->get('email.eamail_error'));
-            }
-            $id = $request->user_id;
             $user = User::find($id);
             $user = $user ? $user->toArray() : [];
             $scene = EmailScene::select(['name','title','body','email_sender_id','email_recipient','status'])->find(1);
@@ -176,16 +172,14 @@ class SendEmailController extends Controller
             if(empty($user)){
                 ReturnJson(FALSE,trans()->get('email.eamail_undefined'));
             }
-            // create captcha
-            $user['code'] = rand(1000,9999);
-            Cache::put($email,$user['code'],60);
+            $token = $user['email'].'&'.$user['id'];
+            $user['token'] = base64_encode($token);
+            $user['domain'] = $_SERVER['SERVER_NAME'];
             $scene = EmailScene::where('action','password')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('email.eamail_error'));
             }
             $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
-            // 收件人的数组
-            $emails = explode(',',$scene->email_recipient);
             // 邮箱账号配置信息
             $config = [
                 'host' =>  $senderEmail->host,

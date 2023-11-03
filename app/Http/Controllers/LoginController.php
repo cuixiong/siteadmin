@@ -98,6 +98,7 @@ class LoginController extends Controller
             }
             if($model->save())
             {
+                (new SendEmailController)->register($model->id);
                 $token=JWTAuth::fromUser($model);//生成token
                 if(!$token){
                     ReturnJson(false,'注册成功,但是token生成失败');
@@ -142,25 +143,20 @@ class LoginController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'email' => 'required|email:rfc,dns',
                 'password' => 'required',
-                'code' => 'required',
+                'token' =>'required',
             ], [
-                'email.required' => trans('lang.eamail_empty'),
-                'email.email' => trans('lang.eamail_email'),
                 'password.required' => trans('lang.password_empty'),
-                'code.required' => trans('lang.code_empty'),
+                'token.required' => trans('lang.code_empty'),
             ]);
             if ($validator->fails()) {
                 ReturnJson(FALSE,$validator->errors()->first());
             }
-            $model = User::where('email',$request->get('email'))->first();
+            $token = base64_decode($request->token);
+            list($email,$id) = explode('&',$token);
+            $model = User::where('email',$email)->where('id',$id)->first();
             if (!$model) {
                 ReturnJson(false,trans('lang.eamail_undefined'));
-            }
-            $code = Cache::get($request->get('email'));
-            if($code!= $request->get('code')){
-                ReturnJson(true,trans('lang.code_no_pass'));
             }
             $model->password = Hash::make($request->get('password'));
             $model->save();
