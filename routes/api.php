@@ -29,5 +29,5 @@ Route::middleware([
     JwtMiddleware::class
 ])->group(function () {
     Route::get('logout', [\App\Http\Controllers\LoginController::class,'logout']);// 退出登陆
-    Route::post('send-email/test', [\App\Http\Controllers\SendEmailController::class,'test']);// 邮箱测试
+    Route::post('admin/send-email/test', [\App\Http\Controllers\SendEmailController::class,'test']);// 邮箱测试
 });
