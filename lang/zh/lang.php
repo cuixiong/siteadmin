@@ -22,4 +22,6 @@ return [
     'accounts_disabled' => '账号已被禁用',
     'code_empty' => '验证码为空',
     'code_no_pass' => '验证码不正确',
+    'id_empty' => 'ID为空',
+    'nickname_empty' => '昵称为空',
 ];

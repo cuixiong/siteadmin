@@ -16,7 +16,6 @@ class UserController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             $input['created_by'] = $request->user->id;
-            // 为什么写这下面的代码，问前端（要求必须这么传过来，谁家数据库字段命名用大写命名？）
             $input['department_id'] = $input['deptId'];
             $input['role_id'] = $input['roleIds'];
             unset($input['deptId'],$input['roleIds']);
@@ -45,6 +44,26 @@ class UserController extends CrudController
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
                 ReturnJson(FALSE,trans('lang.update_error'));
+            }
+            ReturnJson(TRUE,trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+
+    /**
+     * update user info
+     * @param $request 
+     */
+    public function updateInfo(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->user->id);
+            if(!$record->update($input)){
+                ReturnJson(FALSE,trans('lang.update_error'));
+                exit;
             }
             ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {

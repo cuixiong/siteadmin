@@ -22,4 +22,6 @@ return [
     'accounts_disabled' => 'Accounts disabled',
     'code_empty' => 'Code is empty',
     'code_no_pass' => 'Code no pass',
+    'id_empty' => 'ID is empty',
+    'nickname_empty' => 'Nickname is empty',
 ];
