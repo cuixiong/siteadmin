@@ -87,7 +87,6 @@ Route::middleware([
 
     // Department控制器
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
-    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
     Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
 });
 
@@ -184,6 +183,7 @@ Route::middleware([
     'api',
     'language' // 语言中间件
 ])->group(function() {
+    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
     // Position控制器
     Route::get('admin/position/list','PositionController@list')->name('职位列表');
     Route::get('admin/country/get-country','CountryController@getCountry')->name('国家列表');
