@@ -8,7 +8,7 @@ class EmailController extends CrudController{
      * @param $request 请求信息
      * @param Array $where 查询条件数组 默认空数组
      */
-    public function option (Request $request) {
+    public function optionEmail (Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();

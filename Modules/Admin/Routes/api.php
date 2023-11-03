@@ -62,7 +62,7 @@ Route::middleware([
     // Email控制器
     Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
     Route::post('admin/email/changeStatus','EmailController@changeStatus')->name('邮箱状态改变');
-    Route::get('admin/email/option','EmailController@option')->name('邮箱option列表');
+    Route::get('admin/email/option','EmailController@optionEmail')->name('邮箱option列表');
 
 
     // EmailScene控制器
