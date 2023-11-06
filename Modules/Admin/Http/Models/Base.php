@@ -152,7 +152,9 @@ class Base extends Model
      * @param $search 搜索条件
      */
     public function HandleSearch($model,$search){
+        if(!is_array($search)){
             $search = json_decode($search,true);
+        }
             $search = array_filter($search,function($v){
                 if(!(empty($v) && $v != "0")){
                     return true;
