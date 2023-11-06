@@ -77,6 +77,7 @@ class Role extends Base
         if(!empty($value)){
             $value = implode(",",$value);// 转换成字符串
         }
+        $value = empty($value)? "" : $value;
         $this->attributes['site_id'] = $value;
     }
 
