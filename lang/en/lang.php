@@ -27,4 +27,5 @@ return [
     'token_empty' => 'Token is empty',
     'action_empty' => 'Action is empty',
     'action_unique' => 'Code already exists',
+    'code_exists' => 'Code already exists',
 ];

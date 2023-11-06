@@ -11,13 +11,14 @@ class DictionaryRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
-            'code' => 'required',
+            'code' => 'required|unique:dictionaries',
             'status' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
             'code.required' => '编码不能为空',
             'status.required' => '状态不能为空',
+            'code.unique' => trans('lang.code_exists'),
         ];
         return $this->validateRequest($request, $rules,$message);
     }
