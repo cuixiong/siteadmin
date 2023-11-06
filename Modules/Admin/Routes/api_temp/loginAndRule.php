@@ -24,3 +24,10 @@ Route::post('admin/publisher/store', 'PublisherController@store')->name('出版�
 Route::post('admin/publisher/destroy', 'PublisherController@destroy')->name('出版商删除');
 Route::post('admin/publisher/update', 'PublisherController@update')->name('出版商修改');
 Route::post('admin/publisher/changeStatus', 'PublisherController@changeStatus')->name('出版商状态切换');
+
+
+// PriceEdition控制器
+Route::post('admin/price-edition/store', 'PriceEditionController@store')->name('价格版本新增');
+Route::post('admin/price-edition/update', 'PriceEditionController@update')->name('价格版本修改');
+Route::post('admin/price-edition/destroy', 'PriceEditionController@destroy')->name('价格版本删除');
+Route::post('admin/price-edition/changeStatus', 'PriceEditionController@changeStatus')->name('价格版本状态切换');

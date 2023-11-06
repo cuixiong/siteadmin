@@ -15,3 +15,6 @@ Route::get('admin/language/list', 'LanguageController@list')->name('语言列表
 
 // Publisher控制器
 Route::get('admin/publisher/list', 'PublisherController@list')->name('出版商列表');
+
+// PriceEdition控制器
+Route::get('admin/price-edition/list', 'PriceEditionController@list')->name('价格版本列表');
