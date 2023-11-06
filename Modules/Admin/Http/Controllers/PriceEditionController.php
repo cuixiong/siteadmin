@@ -40,7 +40,7 @@ class PriceEditionController extends CrudController
                     $item['edition_id'] = $editionId;
                     //子项验证
                     (new PriceEditionValueRequest())->store(new Request($item));
-                    
+
                     $itemModel = new PriceEditionValue();
                     $resItem = $itemModel->create($item);
                     if (!$resItem) {
@@ -148,7 +148,7 @@ class PriceEditionController extends CrudController
         }
     }
 
-    
+
     /**
      * 查询列表页
      * @param $request 请求信息
@@ -156,76 +156,45 @@ class PriceEditionController extends CrudController
      * @param int $pageSize 页数
      * @param Array $where 查询条件数组 默认空数组
      */
-    public function list(Request $request) {
+    public function list(Request $request)
+    {
         try {
-            $model = $this->ModelInstance()->query();
-            if(!empty($request->search)){
-                $request->search = json_decode($request->search,TRUE);
-                // 过滤条件数组，将空值的KEY过滤掉
-                $search = array_filter($request->search,function($map){
-                    if($map != ''){
-                        return true;
-                    }
-                });
-                // 使用Eloquent ORM来进行数据库查询
-                foreach ($search as $field => $value) {
-                    if($field == 'publisher_id'){
-                        $model->whereRaw("FIND_IN_SET(?, publisher_id) > 0", [$value]);
-                        continue;
-                    }
-
-
-                    // 如果值是数组，则使用whereIn方法
-                    if (is_array($value)) {
-                        $model->whereIn($field, $value);
-                    } else {
-                        $model->where($field, $value);
-                    }
-                }
-            }
-
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request->search);
+            return $model;
             // 总数量
-            $count = $model->count();
-            // 总页数
-            $pageCount = $request->pageSize > 0 ? ceil($count/$request->pageSize) : 1;
-            // 当前页码数
-            $page = $request->page ? $request->page : 1;
-            $pageSize = $request->pageSize ? $request->pageSize : 100;
-
+            $total = $model->count();
             // 查询偏移量
-            if(!empty($request->page) && !empty($request->pageSize)){
-                $model->offset(($request->page - 1) * $request->pageSize);
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
             }
             // 查询条数
-            if(!empty($request->pageSize)){
+            if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
             // 数据排序
             $order = $request->order ? $request->order : 'id';
             // 升序/降序
             $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
-
-            $record = $model->orderBy($order,$sort)->get();
+            $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get();
 
             //查询后的数据处理
-            if($record && count($record)>0){
+            if ($record && count($record) > 0) {
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('name','language_id','rules','notice','is_logistics')->where('id',$item['id'])->get();
+                    $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics')->where('id', $item['id'])->get();
                 }
             }
-
             $data = [
-                'count' => $count,
-                'pageCount' => $pageCount,
-                'page' => $page,
-                'pageSize' => $pageSize,
+                'total' => $total,
                 'list' => $record
             ];
-            ReturnJson(TRUE,trans('lang.request_success'),$data);
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE,$e->getMessage());
+            ReturnJson(FALSE, $e->getMessage());
         }
     }
 }
