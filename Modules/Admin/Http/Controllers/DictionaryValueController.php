@@ -16,10 +16,9 @@ class DictionaryValueController extends CrudController{
     protected function get (Request $request) {
         try {
             $search = $request->input('search');
-            $code = $request->input('code');
             $search = $search ? json_decode($search,true) : [];
-            if($code){
-                $search['code'] = $code;
+            if($request->code){
+                $search['code'] = $request->code;
             }
             if($request->HeaderLanguage == 'en'){
                 $filed = ['english_name as label','value'];
