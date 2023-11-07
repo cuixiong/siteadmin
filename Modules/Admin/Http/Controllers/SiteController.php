@@ -9,6 +9,9 @@ use App\Services\RabbitmqService;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\Language;
+use Modules\Admin\Http\Models\Publisher;
+use Modules\Admin\Http\Models\Region;
 use Modules\Admin\Http\Models\SiteUpdateLog;
 
 class SiteController extends CrudController
@@ -220,7 +223,7 @@ class SiteController extends CrudController
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
-            
+
             $is_super = Role::whereIn('id', explode(',', $request->user->role_id))->where('is_super', 1)->count();
 
             if ($is_super == 0) {
@@ -238,17 +241,17 @@ class SiteController extends CrudController
             // 总数量
             $count = $model->count();
             // 总页数
-            $pageCount = $request->pageSize > 0 ? ceil($count/$request->pageSize) : 1;
+            $pageCount = $request->pageSize > 0 ? ceil($count / $request->pageSize) : 1;
             // 当前页码数
             $page = $request->page ? $request->page : 1;
             $pageSize = $request->pageSize ? $request->pageSize : 100;
 
             // 查询偏移量
-            if(!empty($request->page) && !empty($request->pageSize)){
+            if (!empty($request->page) && !empty($request->pageSize)) {
                 $model->offset(($request->page - 1) * $request->pageSize);
             }
             // 查询条数
-            if(!empty($request->pageSize)){
+            if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
             // 数据排序
@@ -278,6 +281,29 @@ class SiteController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    /**
+     * 获取搜索下拉列表
+     * @param $request 请求信息
+     */
+    public function option(Request $request)
+    {
+        try {
+            $data = [];
+            // 语言
+            $data['languages'] = (new Language())->GetListLabel(['id as value', 'name as label']);
+            // 出版商
+            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label']);
+            // 国家
+            $data['countries'] = (new Region())->GetListLabel(['id as value', 'name as label']);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
 
     // git 命令
     public function git()
