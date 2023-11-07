@@ -14,15 +14,9 @@ class DepartmentController extends CrudController
      */
     public function list (Request $request) {
         try {
-            $where = [];
-            if(!empty($request->keywords)){
-                $where['name'] = ['like','%'.$request->keywords.'%'];
-            }
-            if(isset($request->status)){
-                $where['status'] = $request->status;
-            }
+            $search = $request->input('search');
             $filed = ['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'];
-            $list = (new Department)->GetList($filed,true,'parent_id',$where);
+            $list = (new Department)->GetList($filed,true,'parent_id',$search);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());

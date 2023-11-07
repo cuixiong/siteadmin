@@ -19,16 +19,17 @@ class DictionaryController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             DB::beginTransaction();
+            $count = $this->ModelInstance()->where('code',$input['code'])->where('id','<>',$input['id'])->count();
+            if($count > 0){
+                DB::rollback();
+                ReturnJson(FALSE,trans('lang.code_exists'));
+            }
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
                 DB::rollback();
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
-            $res = DictionaryValue::where('parent_id' ,$input['id'])->update(['code' => $input['code']]);
-            if(!$res){
-                DB::rollback();
-                ReturnJson(FALSE,trans('lang.update_error'));
-            }
+            DictionaryValue::where('parent_id' ,$input['id'])->update(['code' => $input['code']]);
             DB::commit();
             ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {

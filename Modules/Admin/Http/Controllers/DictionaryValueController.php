@@ -15,15 +15,13 @@ class DictionaryValueController extends CrudController{
      */
     protected function get (Request $request) {
         try {
-            if(!empty($request->code)){
-                $where['code'] = $request->code;
-            }
+            $search = $request->input('search');
             if($request->HeaderLanguage == 'en'){
                 $filed = ['english_name as label','value'];
             } else {
                 $filed = ['name as label','value'];
             }
-            $list = (new DictionaryValue())->GetList($filed,false,'',$where);
+            $list = (new DictionaryValue())->GetList($filed,false,'',$search);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
