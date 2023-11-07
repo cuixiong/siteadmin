@@ -1,7 +1,9 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
+
 use Modules\Admin\Http\Models\Base;
+
 class SelectTxt extends Base
 {
     /**
@@ -10,9 +12,9 @@ class SelectTxt extends Base
     public static function GetStatusTxt()
     {
         return [
-            ['id'=>'','state'=>'状态'],
-            ['id'=>'0','state'=>'禁用'],
-            ['id'=>1,'state'=>'正常']
+            ['id' => '', 'state' => '状态'],
+            ['id' => '0', 'state' => '禁用'],
+            ['id' => 1, 'state' => '正常']
         ];
     }
 
@@ -22,9 +24,9 @@ class SelectTxt extends Base
     public static function GetOnJobTxt()
     {
         return [
-            ['id' => '','name' => '全部职位'],
-            ['id' => '0','name' => '离职'],
-            ['id' => '1','name' => '在职'],
+            ['id' => '', 'name' => '全部职位'],
+            ['id' => '0', 'name' => '离职'],
+            ['id' => '1', 'name' => '在职'],
         ];
     }
 
@@ -34,10 +36,10 @@ class SelectTxt extends Base
     public static function GetRuleTypeTxt()
     {
         return [
-            ['id'=>'','name'=>'权限类型'],
-            ['id'=>'1','name'=>'菜单'],
-            ['id'=>2,'name'=>'操作'],
-            ['id'=>3,'name'=>'外链']
+            ['id' => '', 'name' => '权限类型'],
+            ['id' => '1', 'name' => '菜单'],
+            ['id' => 2, 'name' => '操作'],
+            ['id' => 3, 'name' => '外链']
         ];
     }
 
@@ -47,9 +49,22 @@ class SelectTxt extends Base
     public static function GetGenderTxt()
     {
         return [
-            ['id'=>'','name'=>'性别'],
-            ['id'=>'0','name'=>'女'],
-            ['id'=>'1','name'=>'男'],
+            ['id' => '', 'name' => '性别'],
+            ['id' => '0', 'name' => '女'],
+            ['id' => '1', 'name' => '男'],
+        ];
+    }
+
+
+    /**
+     * 是否送货/物流文本
+     */
+    public static function GetLogisticsTxt()
+    {
+        return [
+            ['id' => '', 'name' => '是否送货'],
+            ['id' => 0, 'name' => '否'],
+            ['id' => 1, 'name' => '是'],
         ];
     }
 }

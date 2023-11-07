@@ -6,7 +6,7 @@ return [
     'request_success'   =>  'Request successful',
     'request_error'   =>  'request failure',
     'delete_success'   =>  'Successfully added',
-    'delete_error'   =>  'Add failed',
+    'delete_error'   =>  'Delete failed',
     'update_success'   =>  'update success',
     'update_error'   =>  'Update failed',
     'eamail_success'   =>  'Eamail Successfully added',
