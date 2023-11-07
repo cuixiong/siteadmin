@@ -8,6 +8,7 @@ class Publisher extends Base
     // 下面即是允许入库的字段，数组形式
     protected $fillable = [
         'name',
+        'short_name',
         'email',
         'phone',
         'company',
@@ -21,7 +22,7 @@ class Publisher extends Base
         'created_at',
         'updated_at',
         'updated_by',
-        'created_by'
+        'created_by',
     ];
 
 }

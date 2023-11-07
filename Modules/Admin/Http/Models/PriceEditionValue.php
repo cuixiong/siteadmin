@@ -25,7 +25,7 @@ class PriceEditionValue extends Base
     }
 
     /**
-     * 语言获取器
+     * 物流获取器
      */
     public function getLogisticsAttribute()
     {

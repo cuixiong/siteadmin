@@ -163,7 +163,6 @@ class PriceEditionController extends CrudController
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request->search);
-            return $model;
             // 总数量
             $total = $model->count();
             // 查询偏移量
