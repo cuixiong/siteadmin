@@ -81,6 +81,7 @@ Route::middleware([
 
     // Server控制器
     Route::get('admin/server/list','ServerController@list')->name('服务器列表');
+    Route::post('admin/server/changeStatus','EmailController@changeStatus')->name('服务器状态修改');
 
     // System控制器
     Route::get('admin/system/list','SystemController@list')->name('设置Tab列表');
@@ -89,6 +90,9 @@ Route::middleware([
     // Department控制器
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
     Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
+
+    // Database控制器
+    Route::post('admin/database/changeStatus','EmailController@changeStatus')->name('数据库状态修改');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
