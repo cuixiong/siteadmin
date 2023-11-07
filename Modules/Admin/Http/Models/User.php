@@ -3,6 +3,7 @@
 namespace Modules\Admin\Http\Models;
 use Illuminate\Support\Facades\Hash;
 use Modules\Admin\Http\Models\Base;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class User extends Base
 {
     /** 隐藏不需要输出的字段 */
@@ -139,5 +140,16 @@ class User extends Base
             return $value;
         }
         return [];
+    }
+    
+    /**
+     * 登陆时间获取器
+     * @param \Illuminate\Database\Eloquent\Casts\Attribute
+     */
+    public function loginAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => date('Y-m-d H:i:s',strtotime($value)),
+        );
     }
 }
