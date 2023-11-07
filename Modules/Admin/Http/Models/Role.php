@@ -6,7 +6,6 @@ class Role extends Base
 {
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['name','rule_id','status','description','updated_by','created_by','site_rule_id','code','data_scope','is_super_administrator','sort','site_id','is_super'];
-
     /**
      * 权限ID获取器
      */
@@ -52,8 +51,10 @@ class Role extends Base
         $rule_ids = [];// 当前账号的权限id
         $role_code = [];// 当前账号的归属角色code
         foreach ($roles as $role) {
-            $rule_ids = array_merge($rule_ids,$role->rule_id);
-            $role_code[] = $role->code;
+            if(!empty($role->rule_id)){
+                $rule_ids = array_merge($rule_ids,$role->rule_id);
+                $role_code[] = $role->code;
+            }
         }
         $rule_ids = empty($rule_ids) ? [] : array_unique($rule_ids);
         $role_code = empty($role_code) ? [] : array_unique($role_code);
@@ -78,6 +79,7 @@ class Role extends Base
         if(!empty($value)){
             $value = implode(",",$value);// 转换成字符串
         }
+        $value = empty($value)? "" : $value;
         $this->attributes['site_id'] = $value;
     }
 
@@ -128,6 +130,9 @@ class Role extends Base
         // 超级管理员
         if(isset($request->is_super)){
             $model = $model->where('is_super',$request->is_super);
+        }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
         }
         return $model;
     }

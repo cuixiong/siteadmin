@@ -31,6 +31,8 @@ Route::middleware([
     // User控制器
     Route::get('admin/user/form/{id}','UserController@form')->name('用户单查');
     Route::get('admin/user/list','UserController@list')->name('用户列表');
+    Route::post('admin/update/info','UserController@updateInfo')->name('个人信息修改');
+    Route::get('admin/user/info','UserController@UserInfo')->name('个人信息');
 
     // Rule控制器
     Route::get('admin/rule/list','RuleController@list')->name('权限列表');
@@ -47,6 +49,7 @@ Route::middleware([
     // Email控制器
     Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
     Route::post('admin/email/changeStatus','EmailController@changeStatus')->name('邮箱状态改变');
+    Route::get('admin/email/option','EmailController@option')->name('邮箱option列表');
 
 
     // EmailScene控制器
@@ -64,6 +67,7 @@ Route::middleware([
 
     // Server控制器
     Route::get('admin/server/list','ServerController@list')->name('服务器列表');
+    Route::post('admin/server/changeStatus','EmailController@changeStatus')->name('服务器状态修改');
 
     // System控制器
     Route::get('admin/system/list','SystemController@list')->name('设置Tab列表');
@@ -71,10 +75,11 @@ Route::middleware([
 
     // Department控制器
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
-    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
     Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
 
     require __DIR__ . '/api_temp/loginNoRule.php';
+    // Database控制器
+    Route::post('admin/database/changeStatus','EmailController@changeStatus')->name('数据库状态修改');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -108,6 +113,8 @@ Route::middleware([
     // EmailScene控制器
     Route::post('admin/email-scene/store','EmailSceneController@store')->name('发邮新增');
     Route::post('admin/email-scene/update','EmailSceneController@update')->name('发邮编辑');
+    Route::post('admin/email-scene/destroy','EmailSceneController@destroy')->name('字典删除');
+
 
     // Dictionary控制器
     Route::post('admin/dictionary/store','DictionaryController@store')->name('字典新增');
@@ -152,6 +159,7 @@ Route::middleware([
     'api',
     'language' // 语言中间件
 ])->group(function() {
+    Route::get('admin/department/option','DepartmentController@option')->name('部门option');
     // Position控制器
     Route::get('admin/position/list','PositionController@list')->name('职位列表');
     Route::get('admin/country/get-country','CountryController@getCountry')->name('国家列表');

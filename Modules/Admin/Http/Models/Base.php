@@ -3,12 +3,9 @@ namespace Modules\Admin\Http\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
-use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
-use Stancl\Tenancy\Database\Concerns\CentralConnection;
 use Illuminate\Support\Facades\Auth;
 class Base extends Model
 {
-    // use ResourceSyncing, CentralConnection;
     // 时间戳
     protected $dateFormat = 'U';
     // 下面是设置数据表名，如果不设置，则使用类名的复数形式作为表名，如Users
@@ -117,20 +114,11 @@ class Base extends Model
      * @param array $where 查询条件
      * @return array $res
      */
-    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
+    public function GetList($filed = '*',$isTree = false,$treeKey = 'parent_id',$search = [])
     {
         $model = self::query();
-
-        foreach ($where as $key => $value) {
-            if(is_array($value)){
-                if($value[0] == 'like' && count($value) == 2){
-                    $model = $model->where($key,$value[0],$value[1]);
-                } else {
-                    $model = $model->whereIn($key,$value);
-                }
-            } else {
-                $model = $model->where($key,$value);
-            }
+        if(!empty($search)){
+            $model = $this->HandleSearch($model,$search);
         }
         $list = $model->select($filed)->get()->toArray();
         if(!empty($list)){
@@ -152,6 +140,48 @@ class Base extends Model
         if(!empty($request->keywords)){
             $model = $model->where('name','like','%'.$request->keywords.'%');
         }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
+        }
+        return $model;
+    }
+
+    /**
+     * 处理查询列表条件数组
+     * @param $model moxel
+     * @param $search 搜索条件
+     */
+    public function HandleSearch($model,$search){
+        if(!is_array($search)){
+            $search = json_decode($search,true);
+        }
+            $search = array_filter($search,function($v){
+                if(!(empty($v) && $v != "0")){
+                    return true;
+                }
+            });
+            if(!empty($search)){
+                if(isset($search['created_by'])){
+                    unset($search['created_by']);
+                }
+                if(isset($search['updated_by'])){
+                    unset($search['updated_by']);
+                }
+                $timeArray = ['created_at','updated_at'];
+                foreach ($search as $key => $value) {
+                    if(in_array($key,['name','english_name','title'])){
+                        $model = $model->where($key,'like','%'.trim($value).'%');
+                    } else if (in_array($key,$timeArray)){
+                        if(is_array($value)){
+                            $model = $model->whereBetween($key,$value);
+                        }
+                    } else if(is_array($value) && !in_array($key,$timeArray)){
+                        $model = $model->whereIn($key,$value);
+                    } else {
+                        $model = $model->where($key,$value);
+                    }
+                }
+            }
         return $model;
     }
 
@@ -163,21 +193,14 @@ class Base extends Model
      * @param array $where 查询条件
      * @return array $res
      */
-    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$where = [])
+    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$search = [])
     {
         $model = self::query();
-        foreach ($where as $key => $value) {
-            if(is_array($value)){
-                if($value[0] == 'like' && count($value) == 2){
-                    $model = $model->where($key,$value[0],$value[1]);
-                } else {
-                    $model = $model->whereIn($key,$value);
-                }
-            } else {
-                $model = $model->where($key,$value);
-            }
+        if(!empty($search)){
+            $model = $this->HandleSearch($model,$search);
         }
         $list = $model->select($filed)->get()->toArray();
+
         if($isTree){
             $list = $this->treeLabel($list,$treeKey);
         } else {
@@ -198,7 +221,6 @@ class Base extends Model
      * @return array $res
      */
     public function treeLabel($list,$key,$parentId = 0) {
-
         $tree = [];
         foreach ($list as $item) {
             $res = [];

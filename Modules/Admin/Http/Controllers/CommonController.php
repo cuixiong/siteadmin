@@ -26,9 +26,9 @@ class CommonController extends Controller
         $rule_ids = $res['rule'];
         $RuleModel = new Rule();
         if($is_super > 0){
-            $perms = $RuleModel->where('type','BUTTON')->where('visible',1)->pluck('perm');
+            $perms = $RuleModel->where('type','BUTTON')->where(['visible' => 1,'category' => 1])->pluck('perm');
         } else {
-            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where('visible',1)->pluck('perm');
+            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where(['visible' => 1,'category' => 1])->pluck('perm');
         }
         $data['perms'] = $perms;
         ReturnJson(true,trans('lang.request_success'),$data);
@@ -54,9 +54,9 @@ class CommonController extends Controller
         }
         $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
         if($is_super > 0){
-            $rules = $model->select($fields)->whereIn('type',['CATALOG','MENU'])->where('visible',1)->get()->toArray();
+            $rules = $model->select($fields)->whereIn('type',['CATALOG','MENU'])->where(['visible' => 1,'category' => 1])->get()->toArray();
         } else {
-            $rules = $model->select($fields)->whereIn('id',$rule_ids)->whereIn('type',['CATALOG','MENU'])->where('visible',1)->get()->toArray();
+            $rules = $model->select($fields)->whereIn('id',$rule_ids)->whereIn('type',['CATALOG','MENU'])->where(['visible' => 1,'category' => 1])->get()->toArray();
         }
         // 递归分类权限
         $rules = $model->buildTree($rules,$roleCodes);

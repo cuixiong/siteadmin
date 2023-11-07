@@ -55,4 +55,19 @@ class UserRequest extends BaseRequest
         ];
         return $this->validateRequest($request, $rules,$message);
     }
+
+    /**
+     * 个人信息修改验证
+     * @param  \Illuminate\Http\Request  $request
+     */
+    public function updateInfo($request)
+    {
+        $rules = [
+            'nickname' => 'required',
+        ];
+        $message = [
+            'nickname.required' => trans('lang.nickname_empty'),
+        ];
+        return $this->validateRequest($request, $rules,$message);
+    }
 }
