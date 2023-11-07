@@ -204,3 +204,8 @@ Route::middleware([
 
     Route::get('baba',[\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class,'test'])->name('测试接口');
 });
+
+// 暂时测试路由
+Route::get('/phpmyadmin', function () {
+    return view('phpmyadmin');
+});
