@@ -45,6 +45,8 @@ class LoginController extends Controller
             if (!$token) {
                 ReturnJson(false,'生成TOKEN失败');
             }
+            $model->login_at = time();
+            $model->save();
             ReturnJson(true,trans('lang.request_success'),[
                 'accessToken' => $token,
                 'expires' => auth('api')->factory()->getTTL() + 66240,
@@ -91,6 +93,7 @@ class LoginController extends Controller
             $model->role_id = implode(",",$role_ids);
             $model->status = 0;
             $model->gender = 0;
+            $model->login_at = time();
             $model->created_by = 0;
             $model->created_at = time();
             if(User::where('email','=',$model->email)->first()){
