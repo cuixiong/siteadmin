@@ -31,6 +31,7 @@ Route::middleware([
     Route::get('admin/user/form/{id}','UserController@form')->name('用户单查');
     Route::get('admin/user/list','UserController@list')->name('用户列表');
     Route::post('admin/update/info','UserController@updateInfo')->name('个人信息修改');
+    Route::get('admin/user/info','UserController@UserInfo')->name('个人信息');
 
     // Rule控制器
     Route::get('admin/rule/list','RuleController@list')->name('权限列表');

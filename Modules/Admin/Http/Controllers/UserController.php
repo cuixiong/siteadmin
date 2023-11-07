@@ -70,4 +70,16 @@ class UserController extends CrudController
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    /**
+     * get is login info
+     */
+    public function UserInfo(Request $request){
+        try {
+            $data = $this->ModelInstance()->findOrFail($request->user->id);
+            ReturnJson(TRUE,'',$data);
+        } catch (\Exception $e) {
+            ReturnJson(TRUE,$e->getMessage());
+        }
+    }
 }
