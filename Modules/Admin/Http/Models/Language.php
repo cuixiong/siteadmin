@@ -30,7 +30,7 @@ class Language extends Base
         }
 
         //status 状态
-        if (isset($search->status) && !empty($search->status)) {
+        if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
         }
 
