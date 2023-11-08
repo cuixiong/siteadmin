@@ -8,7 +8,23 @@ use PDO;
 class Site extends Base
 {
     // 设置可以入库的字段
-    protected $fillable = ['name', 'english_name', 'domain', 'country_id', 'publisher_id', 'language_id', 'status', 'db_host', 'db_port', 'db_database', 'db_username', 'db_password', 'updated_by', 'created_by'];
+    protected $fillable = [
+        'name', 
+        'english_name', 
+        'domain', 
+        'country_id', 
+        'publisher_id', 
+        'language_id', 
+        'status', 
+        'database_id',
+        // 'db_host', 
+        // 'db_port', 
+        // 'db_database', 
+        // 'db_username', 
+        // 'db_password', 
+        'updated_by', 
+        'created_by'
+    ];
 
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['publisher', 'country', 'language'];
