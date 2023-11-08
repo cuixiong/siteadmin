@@ -62,11 +62,13 @@ class SiteController extends CrudController
         //     ReturnJson(FALSE,'is_create不能为空');
         // }
         // 创建者ID
-        $input['created_by'] = $request->user->id;
-        // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
-        $is_create = $request->is_create;
-        // is_create不是入库的字段变量所以删除
-        unset($request->is_create);
+        // $input['created_by'] = $request->user->id;
+        // // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
+        // $is_create = $request->is_create;
+        // // is_create不是入库的字段变量所以删除
+        // unset($request->is_create);
+
+        $is_create = 0;
 
         // 开启事务
         DB::beginTransaction();
@@ -80,15 +82,18 @@ class SiteController extends CrudController
                 DB::rollBack();
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
+            // 
             
-            // 创建租户
-            $Tenant = new TenantController();
-            $res = $Tenant->initTenant($is_create, $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
-            if ($res !== true) {
-                // 回滚事务
-                DB::rollBack();
-                ReturnJson(FALSE, $res);
-            }
+            // $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'username as db_username','db_password')->first()->toArray();
+
+            // // 创建租户
+            // $Tenant = new TenantController();
+            // $res = $Tenant->initTenant($is_create, $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
+            // if ($res !== true) {
+            //     // 回滚事务
+            //     DB::rollBack();
+            //     ReturnJson(FALSE, $res);
+            // }
             DB::commit();
             ReturnJson(TRUE, '新增成功1');
         } catch (\Exception $e) {
@@ -156,14 +161,14 @@ class SiteController extends CrudController
                 DB::rollBack();
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-            // 创建租户
-            $Tenant = new TenantController();
-            $res = $Tenant->updateTenant($input['id'], $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
-            if ($res !== true) {
-                // 回滚事务
-                DB::rollBack();
-                ReturnJson(FALSE, $res);
-            }
+            // // 创建租户
+            // $Tenant = new TenantController();
+            // $res = $Tenant->updateTenant($input['id'], $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
+            // if ($res !== true) {
+            //     // 回滚事务
+            //     DB::rollBack();
+            //     ReturnJson(FALSE, $res);
+            // }
             DB::commit();
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
@@ -193,15 +198,15 @@ class SiteController extends CrudController
                 DB::rollBack();
                 ReturnJson(FALSE, trans('lang.delete_error'));
             }
-            $Tenant = new TenantController();
-            foreach ($ids as $id) {
-                $res = $Tenant->destroyTenant($id);
-                if ($res !== true) {
-                    // 回滚事务
-                    DB::rollBack();
-                    ReturnJson(FALSE, $res);
-                }
-            }
+            // $Tenant = new TenantController();
+            // foreach ($ids as $id) {
+            //     $res = $Tenant->destroyTenant($id);
+            //     if ($res !== true) {
+            //         // 回滚事务
+            //         DB::rollBack();
+            //         ReturnJson(FALSE, $res);
+            //     }
+            // }
             DB::commit();
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
@@ -309,11 +314,11 @@ class SiteController extends CrudController
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch State']);
 
             //是否创建数据库
-            $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
+            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
 
 
             // //数据库
-            // $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label']);
+            $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

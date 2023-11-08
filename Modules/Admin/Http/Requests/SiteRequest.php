@@ -14,12 +14,12 @@ class SiteRequest extends BaseRequest
             'english_name' => 'required',
             'domain' => 'required',
             'country_id' => 'required',
-            // 'database_id' => 'required',
-            'db_host' => 'required',
-            'db_database' => 'required',
-            'db_username' => 'required',
-            'db_password' => 'required',
-            'is_create' => 'required',
+            'database_id' => 'required',
+            // 'db_host' => 'required',
+            // 'db_database' => 'required',
+            // 'db_username' => 'required',
+            // 'db_password' => 'required',
+            // 'is_create' => 'required',
         ];
         return $this->validateRequest($request, $rules);
     }
@@ -35,12 +35,12 @@ class SiteRequest extends BaseRequest
             'english_name' => 'required',
             'domain' => 'required',
             'country_id' => 'required',
-            // 'database_id' => 'required',
-            'db_host' => 'required',
-            'db_database' => 'required',
-            'db_username' => 'required',
-            'db_password' => 'required',
-            'is_create' => 'required',
+            'database_id' => 'required',
+            // 'db_host' => 'required',
+            // 'db_database' => 'required',
+            // 'db_username' => 'required',
+            // 'db_password' => 'required',
+            // 'is_create' => 'required',
         ];
         return $this->validateRequest($request, $rules);
     }
