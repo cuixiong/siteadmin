@@ -6,12 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Services\RabbitmqService;
+use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\Language;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Region;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\SiteUpdateLog;
 
 class SiteController extends CrudController
@@ -78,6 +80,7 @@ class SiteController extends CrudController
                 DB::rollBack();
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
+            
             // 创建租户
             $Tenant = new TenantController();
             $res = $Tenant->initTenant($is_create, $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
@@ -297,6 +300,21 @@ class SiteController extends CrudController
             $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label']);
             // 国家
             $data['countries'] = (new Region())->GetListLabel(['id as value', 'name as label']);
+            // 状态开关
+            if ($request->HeaderLanguage == 'en') {
+                $filed = ['english_name as label', 'value'];
+            } else {
+                $filed = ['name as label', 'value'];
+            }
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch State']);
+
+            //是否创建数据库
+            $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
+
+
+            // //数据库
+            // $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label']);
+
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
