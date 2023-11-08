@@ -29,26 +29,49 @@ class PriceEdition extends Base
     }
 
 
+    
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
      */
-    public function HandleWhere($model, $search)
+    public function HandleWhere($model, $request)
     {
-        if (!empty($search->publisher_id)) {
+        $search = json_decode($request->input('search'));
+        //id 
+        if (isset($search->id) && !empty($search->id)) {
+            $model = $model->where('id', $search->id);
+        }
+
+        //publisher_id 出版商
+        if (isset($search->publisher_id) && !empty($search->publisher_id)) {
             $model = $model->whereRaw("FIND_IN_SET(?, publisher_id) > 0", [$search->publisher_id]);
         }
-        if (isset($search->status)) {
+        
+        //order
+        if (isset($search->order) && !empty($search->order)) {
+            $model = $model->where('order', $search->order);
+        }
+
+        //status 状态
+        if (isset($search->status) && !empty($search->status)) {
             $model = $model->where('status', $search->status);
         }
-        if (!empty($search->startTime)) {
-            $startTime = strtotime($search->startTime);
-            $model = $model->where('created_at', '>=', $startTime);
+
+        //时间为数组形式
+        //创建时间
+        if (isset($search->created_at) && !empty($search->created_at)) {
+            $createTime = $search->created_at;
+            $model = $model->where('created_at', '>=', $createTime[0]);
+            $model = $model->where('created_at', '<=', $createTime[1]);
         }
-        if (!empty($search->endTime)) {
-            $endTime = strtotime($search->endTime);
-            $model = $model->where('created_at', '<=', $endTime);
+
+        //更新时间
+        if (isset($search->updated_at) && !empty($search->updated_at)) {
+            $updateTime = $search->updated_at;
+            $model = $model->where('updated_at', '>=', $updateTime[0]);
+            $model = $model->where('updated_at', '<=', $updateTime[1]);
         }
+
         return $model;
     }
 }
