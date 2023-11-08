@@ -5,12 +5,14 @@ use Illuminate\Support\Facades\Route;
 Route::post('admin/site/store', 'SiteController@store')->name('站点新增');
 Route::post('admin/site/update', 'SiteController@update')->name('站点更新');
 Route::post('admin/site/destroy', 'SiteController@destroy')->name('站点删除');
+Route::post('admin/site/changeStatus', 'SiteController@changeStatus')->name('站点状态切换');
 Route::post('admin/site/move-up-site', 'SiteController@moveUpSite')->name('站点升级');
 
 // Region控制器
 Route::post('admin/region/store', 'RegionController@store')->name('地区新增');
 Route::post('admin/region/destroy', 'RegionController@destroy')->name('地区删除');
 Route::post('admin/region/update', 'RegionController@update')->name('地区编辑');
+Route::post('admin/region/changeStatus', 'RegionController@changeStatus')->name('地区状态切换');
 
 
 // Language控制器

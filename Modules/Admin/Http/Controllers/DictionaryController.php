@@ -1,6 +1,8 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
+use FFI;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -18,22 +20,23 @@ class DictionaryController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            DB::beginTransaction();
+            file_put_contents('Dictionary.txt','当前修改账号：'.$request->user->name.'数据为：'.json_encode($input)."\r\n",FILE_APPEND);// 日志记录
+            // DB::beginTransaction();
             $count = $this->ModelInstance()->where('code',$input['code'])->where('id','<>',$input['id'])->count();
             if($count > 0){
-                DB::rollback();
+                // DB::rollback();
                 ReturnJson(FALSE,trans('lang.code_exists'));
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             if(!$record->update($input)){
-                DB::rollback();
+                // DB::rollback();
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
             DictionaryValue::where('parent_id' ,$input['id'])->update(['code' => $input['code']]);
-            DB::commit();
+            // DB::commit();
             ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
-            DB::rollback();
+            // DB::rollback();
             ReturnJson(FALSE,$e->getMessage());
         }
     }

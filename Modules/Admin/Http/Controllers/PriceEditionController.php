@@ -5,6 +5,8 @@ namespace Modules\Admin\Http\Controllers;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\PriceEdition;
 use Modules\Admin\Http\Models\PriceEditionValue;
+use Modules\Admin\Http\Models\Publisher;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Requests\PriceEditionValueRequest;
@@ -191,6 +193,32 @@ class PriceEditionController extends CrudController
                 'total' => $total,
                 'list' => $record
             ];
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    
+    /**
+     * 获取搜索下拉列表
+     * @param $request 请求信息
+     */
+    public function option(Request $request)
+    {
+        try {
+            $data = [];
+            // 出版商
+            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label']);
+
+            // 状态开关
+            if ($request->HeaderLanguage == 'en') {
+                $filed = ['english_name as label', 'value'];
+            } else {
+                $filed = ['name as label', 'value'];
+            }
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch State']);
+
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
