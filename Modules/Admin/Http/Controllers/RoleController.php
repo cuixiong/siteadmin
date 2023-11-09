@@ -112,7 +112,7 @@ class RoleController extends CrudController
     public function options(Request $request)
     {
         $options = [];
-        $codes = ['Switch_State','Administrator'];
+        $codes = ['Switch_State','Administrator','Menu_Type'];
         $NameField = $request->Language == 'en' ? 'english_name as label' : 'name as label';
         $data = DictionaryValue::whereIn('code',$codes)->select('code','value',$NameField)->get()->toArray();
         if(!empty($data)){
