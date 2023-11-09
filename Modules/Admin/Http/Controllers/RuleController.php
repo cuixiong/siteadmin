@@ -3,6 +3,7 @@
 namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Rule;
 
 class RuleController extends CrudController
@@ -82,5 +83,23 @@ class RuleController extends CrudController
     {
         $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2]);
         ReturnJson(TRUE,trans('lang.request_success'),$list);
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function options(Request $request)
+    {
+        $options = [];
+        $codes = ['Switch_State','Route_Classification'];
+        $NameField = $request->Language == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->select('code','value',$NameField)->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        ReturnJson(TRUE,'', $options);
     }
 }

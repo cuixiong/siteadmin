@@ -33,11 +33,14 @@ Route::middleware([
     Route::get('admin/user/list','UserController@list')->name('用户列表');
     Route::post('admin/update/info','UserController@updateInfo')->name('个人信息修改');
     Route::get('admin/user/info','UserController@UserInfo')->name('个人信息');
+    Route::get('admin/user/options','UserController@options')->name('User字典数据');
 
     // Rule控制器
     Route::get('admin/rule/list','RuleController@list')->name('权限列表');
     Route::post('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
     Route::get('admin/rule/form/{id}','RuleController@form')->name('权限单查');
+    Route::get('admin/rule/options',[Modules\Admin\Http\Controllers\RuleController::class,'options'])->name('权限字典数据');
+
 
     // Role控制器
     Route::get('admin/role/list','RoleController@list')->name('角色列表');
@@ -45,6 +48,8 @@ Route::middleware([
     Route::get('admin/role/option','RoleController@option')->name('角色option');
     Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
     Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
+    Route::get('admin/role/options',[Modules\Admin\Http\Controllers\RoleController::class,'options'])->name('角色字典数据');
+
 
     // Email控制器
     Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
@@ -59,6 +64,7 @@ Route::middleware([
     // Dictionary控制器
     Route::get('admin/dictionary/list','DictionaryController@list')->name('字典列表');
     Route::get('admin/dictionary/form/{id}','DictionaryController@form')->name('字典单查');
+    Route::get('admin/dictionary/options',[Modules\Admin\Http\Controllers\DictionaryController::class,'options'])->name('字典数据');
 
     // DictionaryValue控制器
     Route::get('admin/dictionary-value/list/','DictionaryValueController@list')->name('字典项列表');
@@ -76,6 +82,8 @@ Route::middleware([
     // Department控制器
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
     Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
+    Route::get('admin/department/options',[Modules\Admin\Http\Controllers\DepartmentController::class,'options'])->name('部门字典数据');
+
 
     require __DIR__ . '/api_temp/loginNoRule.php';
     // Database控制器

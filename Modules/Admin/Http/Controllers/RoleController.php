@@ -2,6 +2,8 @@
 
 namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\Dictionary;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Role;
 
 class RoleController extends CrudController
@@ -101,5 +103,23 @@ class RoleController extends CrudController
             $rule_ids = [];
         }
         ReturnJson(TRUE,trans('lang.request_success'),$rule_ids);
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function options(Request $request)
+    {
+        $options = [];
+        $codes = ['Switch_State','Administrator'];
+        $NameField = $request->Language == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->select('code','value',$NameField)->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        ReturnJson(TRUE,'', $options);
     }
 }
