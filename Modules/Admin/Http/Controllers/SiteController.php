@@ -328,6 +328,8 @@ class SiteController extends CrudController
     }
 
 
+
+
     // git 命令
     public function git()
     {
@@ -401,7 +403,7 @@ class SiteController extends CrudController
         } catch (\Exception $e) {
             var_dump($e->getMessage());
             die;
-            return $this->failed($e->getMessage() . $e->getLine());
+            // return $this->failed($e->getMessage() . $e->getLine());
             ReturnJson(false, '操作失败');
         }
     }
