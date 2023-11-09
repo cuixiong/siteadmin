@@ -42,7 +42,7 @@ class PublisherController extends CrudController
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
-    public function option(Request $request)
+    public function searchDroplist(Request $request)
     {
         try {
             $data = [];

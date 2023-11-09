@@ -295,7 +295,7 @@ class SiteController extends CrudController
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
-    public function option(Request $request)
+    public function searchDroplist(Request $request)
     {
         try {
             $data = [];
@@ -311,7 +311,7 @@ class SiteController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch_State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'SwitchState']);
 
             //是否创建数据库
             // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
