@@ -36,7 +36,7 @@ class LanguageController extends CrudController
             }
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch_State']);
 
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            ReturnJson(TRUE, trans('lang.request_success'), $data );
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
