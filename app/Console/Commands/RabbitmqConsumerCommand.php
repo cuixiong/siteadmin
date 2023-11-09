@@ -80,7 +80,7 @@ class RabbitmqConsumerCommand extends Command
             call_user_func([$instance, $method],$data);
         };
         $channel->basic_consume($queue_name, '', false, true, false, false, $callback);
-        while ($channel->is_open()) {
+        while (1) {
             $channel->wait();
         }
         $channel->close();

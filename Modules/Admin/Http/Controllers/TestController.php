@@ -20,14 +20,8 @@ class TestController extends CrudController
     }
 
     public function TestPop($params = null) {
-        $params = $params['data'];
-        $id = $params['tenant_id'];
-        $tenant = Tenant::find($id);
-        tenancy()->initialize($tenant);
-        $res = User::find(1);
-        $res->name = $params['name'];
-        $res->email = $params['email'];
-        $res->save();
+        // file_put_contents('a.txt',json_encode($params),FILE_APPEND);
+        var_dump(123);die;
     }
 
     public function Test01(Request $request) {
@@ -39,34 +33,4 @@ class TestController extends CrudController
         RabbitmqService::push('test_queue01','test','test','fanout' ,$data);
     }
 
-    public function TestPop01($params = null) {
-        $params = $params['data'];
-        $id = $params['tenant_id'];
-        $tenant = Tenant::find($id);
-        tenancy()->initialize($tenant);
-        $res = User::find(1);
-        $res->name = $params['name'];
-        $res->email = $params['email'];
-        $res->save();
-    }
-
-    public function Test02(Request $request) {
-        $id = $request->id;
-        $data['tenant_id'] = $id;
-        $data['name'] = 'queue_2';
-        $data['email'] = 'queue_2';
-        $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop02', 'data'=>$data]);
-        RabbitmqService::push('test_queue02','test','test','fanout' ,$data);
-    }
-
-    public function TestPop02($params = null) {
-        $params = $params['data'];
-        $id = $params['tenant_id'];
-        $tenant = Tenant::find($id);
-        tenancy()->initialize($tenant);
-        $res = User::find(1);
-        $res->name = $params['name'];
-        $res->email = $params['email'];
-        $res->save();
-    }
 }
