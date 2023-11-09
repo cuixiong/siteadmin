@@ -45,9 +45,9 @@ class User extends Base
         $text = '';
         if(isset($this->attributes['gender']))
         {   
-            $lists = SelectTxt::GetGenderTxt();
+            $lists = DictionaryValue::where('code','gender')->select(['value','name'])->get()->toArray();
             foreach ($lists as $list) {
-                if($list['id'] == $this->attributes['gender']){
+                if($list['value'] == $this->attributes['gender']){
                     $text = $list['name'];
                 }
             }
