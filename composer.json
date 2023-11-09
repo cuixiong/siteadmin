@@ -11,6 +11,7 @@
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "nwidart/laravel-modules": "^9.0",
+        "php-amqplib/php-amqplib": "2.6.*",
         "stancl/tenancy": "^3.7",
         "tymon/jwt-auth": "^2.0"
     },
