@@ -16,17 +16,12 @@ class TestController extends CrudController
         $data['name'] = $request->name;
         $data['email'] = $request->email;
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop', 'data'=>$data]);
-        $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('test');// 设置队列名称
-        $RabbitMQ->setExchangeName('test');// 设置交换机名称
-        $RabbitMQ->setQueueMode('fanout');// 设置队列模式
-        $RabbitMQ->push($data);// 推送数据
-        echo '推送成功';
+        RabbitmqService::push('test_queue01','test_qq','test','fanout' ,$data);
     }
 
     public function TestPop($params = null) {
-        file_put_contents('a.txt',json_encode($params)."\r\n",FILE_APPEND);
-        // var_dump(123);die;
+        // file_put_contents('a.txt',json_encode($params),FILE_APPEND);
+        var_dump(123);die;
     }
 
     public function Test01(Request $request) {
@@ -37,4 +32,5 @@ class TestController extends CrudController
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop01', 'data'=>$data]);
         RabbitmqService::push('test_queue01','test','test','fanout' ,$data);
     }
+
 }
