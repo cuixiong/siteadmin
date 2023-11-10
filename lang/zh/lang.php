@@ -28,5 +28,6 @@ return [
     'action_empty' => '代码表单不能为空',
     'action_unique' => '代码已存在，请更换其他代码',
     'code_exists' => '编码已存在，请更换其他编码',
+    'param_empty' => '缺少必要参数',
 
 ];

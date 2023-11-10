@@ -25,6 +25,8 @@ Route::get('admin/publisher/list', 'PublisherController@list')->name('出版商�
 Route::get('admin/publisher/option','PublisherController@option')->name('出版商option');
 Route::get('admin/publisher/search-droplist','PublisherController@searchDroplist')->name('出版商搜索下拉列表数据');
 
+
+
 // PriceEdition控制器
 Route::get('admin/price-edition/list', 'PriceEditionController@list')->name('价格版本列表');
 Route::get('admin/price-edition/option','PriceEditionController@option')->name('价格版本option');

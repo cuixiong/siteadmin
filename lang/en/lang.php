@@ -28,4 +28,5 @@ return [
     'action_empty' => 'Action is empty',
     'action_unique' => 'Code already exists',
     'code_exists' => 'Code already exists',
+    'param_empty' => 'The parameter is empty',
 ];

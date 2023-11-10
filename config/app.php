@@ -185,6 +185,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Intervention\Image\ImageServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -194,8 +195,8 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\TenancyServiceProvider::class,// 注册租户扩展
-        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,// JWT扩展
+        App\Providers\TenancyServiceProvider::class, // 注册租户扩展
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class, // JWT扩展
 
     ],
 
@@ -212,6 +213,7 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'ExampleClass' => App\Example\ExampleClass::class,
+        'Image' => Intervention\Image\Facades\Image::class,
     ])->toArray(),
 
 ];

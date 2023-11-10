@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Requests;
 
+use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Requests\BaseRequest;
 
 class PublisherRequest extends BaseRequest
@@ -39,7 +40,10 @@ class PublisherRequest extends BaseRequest
     public function update($request)
     {
         $rules = [
-            'name' => 'required|unique:publishers,name',
+            'name' => [
+                'required',
+                \Illuminate\Validation\Rule::unique('publishers')->ignore($request->input('id')),
+            ],
             // 'email' => 'required',
             // 'phone' => 'required',
             // 'company' => 'required',
