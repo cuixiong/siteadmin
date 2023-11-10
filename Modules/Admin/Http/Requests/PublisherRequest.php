@@ -39,7 +39,7 @@ class PublisherRequest extends BaseRequest
     public function update($request)
     {
         $rules = [
-            'name' => 'required|unique:publisher,name',
+            'name' => 'required|unique:publishers,name',
             // 'email' => 'required',
             // 'phone' => 'required',
             // 'company' => 'required',

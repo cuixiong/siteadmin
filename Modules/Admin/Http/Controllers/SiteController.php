@@ -14,6 +14,7 @@ use Modules\Admin\Http\Models\Language;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Region;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\SiteUpdateLog;
 
 class SiteController extends CrudController
@@ -305,21 +306,24 @@ class SiteController extends CrudController
             $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label']);
             // 国家
             $data['countries'] = (new Region())->GetListLabel(['id as value', 'name as label']);
+
+            //数据库
+            $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label']);
+
+            //服务器
+            $data['servers'] = (new Server())->GetListLabel(['id as value', 'name as label']);
+            
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'SwitchState']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch_State']);
 
             //是否创建数据库
             // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
-
-
-            // //数据库
-            $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label']);
-
+            
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

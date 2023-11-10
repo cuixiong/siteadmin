@@ -17,6 +17,7 @@ class Site extends Base
         'language_id', 
         'status', 
         'database_id',
+        'server_id',
         // 'db_host', 
         // 'db_port', 
         // 'db_database', 
