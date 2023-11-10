@@ -74,6 +74,7 @@ class PublisherController extends CrudController
         if (!isset($file) || empty($file)) {
             ReturnJson(FALSE, trans('lang.param_empty'));
         }
-        return ImageHelper::SaveImage($file,'test.jpg','/uploads/publisher/');
+        $filename = $file->getClientOriginalName() . '_' . time();
+        return ImageHelper::SaveImage($file, $filename, '/uploads/publisher/');
     }
 }
