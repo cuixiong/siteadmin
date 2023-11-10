@@ -1,6 +1,8 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
+use App\Helper\ImageHelper;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,36 +15,35 @@ class PublisherController extends CrudController
     {
         try {
             $params = $request->input();;
-            if(!isset($params['id']) || !isset($params['status'])){
-                ReturnJson(FALSE,'修改失败！');
+            if (!isset($params['id']) || !isset($params['status'])) {
+                ReturnJson(FALSE, '修改失败！');
             }
 
             $record = $this->ModelInstance()->findOrFail($params['id']);
             $input['status'] = $params['status'];
-            if(!$record->update($input)){
-                ReturnJson(FALSE,trans('lang.update_error'));
+            if (!$record->update($input)) {
+                ReturnJson(FALSE, trans('lang.update_error'));
             }
-            ReturnJson(TRUE,trans('lang.update_success'));
-
+            ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), []);
         }
-        ReturnJson(TRUE,'修改成功！');
+        ReturnJson(TRUE, '修改成功！');
     }
 
     public function getPublisher(Request $request)
     {
-        $data = Publisher::select('id','name')->get()->toArray();
+        $data = Publisher::select('id', 'name')->get()->toArray();
 
-        ReturnJson(TRUE,trans('lang.request_success'),$data);
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 
-    
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
-    public function option(Request $request)
+    public function searchDroplist(Request $request)
     {
         try {
             $data = [];
@@ -52,11 +53,29 @@ class PublisherController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
+    }
+
+
+    /**
+     * 上传logo
+     * @param $request 请求信息
+     * 
+     */
+    public function uploadLogo(Request $request)
+    {
+
+        $file = $request->file('file');
+        if (!isset($file) || empty($file)) {
+            ReturnJson(FALSE, trans('lang.param_empty'));
+        }
+        $originalName = $file->getClientOriginalName();
+        $filename = pathinfo($originalName, PATHINFO_FILENAME) . '_' . time() . '.' . pathinfo($originalName, PATHINFO_EXTENSION);
+        ReturnJson(TRUE, trans('lang.request_success'), ImageHelper::SaveImage($file, $filename, '/uploads/publisher/'));
     }
 }

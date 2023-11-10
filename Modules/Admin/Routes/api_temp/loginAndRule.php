@@ -26,6 +26,7 @@ Route::post('admin/publisher/store', 'PublisherController@store')->name('出版�
 Route::post('admin/publisher/destroy', 'PublisherController@destroy')->name('出版商删除');
 Route::post('admin/publisher/update', 'PublisherController@update')->name('出版商修改');
 Route::post('admin/publisher/changeStatus', 'PublisherController@changeStatus')->name('出版商状态切换');
+Route::post('admin/publisher/upload-logo','PublisherController@uploadLogo')->name('上传出版商logo');
 
 
 // PriceEdition控制器
