@@ -93,8 +93,8 @@ class UserController extends CrudController
     {
         $options = [];
         $codes = ['Switch_State','Gender'];
-        $NameField = $request->Language == 'en' ? 'english_name as label' : 'name as label';
-        $data = DictionaryValue::whereIn('code',$codes)->select('code','value',$NameField)->get()->toArray();
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->get()->toArray();
         if(!empty($data)){
             foreach ($data as $map){
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
