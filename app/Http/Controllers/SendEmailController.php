@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Modules\Admin\Http\Models\Department;
 use Modules\Admin\Http\Models\Email;
+use Modules\Admin\Http\Models\EmailLog;
 use Modules\Admin\Http\Models\EmailScene;
 use Modules\Admin\Http\Models\User;
 
@@ -141,8 +142,10 @@ class SendEmailController extends Controller
                     $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
                 }
             }
+            EmailLog::AddLog(1,$scene->email_sender_id,$emails,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
+            EmailLog::AddLog(0,$scene->email_sender_id,$emails,$user);
             ReturnJson(FALSE,$e->getMessage());
         }
     }
@@ -224,8 +227,10 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
             }
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$user);
             ReturnJson(FALSE,$e->getMessage());
         }
     }
@@ -247,15 +252,28 @@ class SendEmailController extends Controller
         ReturnJson(true,'',$list);
     }
     /**
-     * send email log
+     * reset password eamil send Test
      * @param use Illuminate\Http\Request $request;
+     * @return response Code
      */
-    public function sendEmailLog(Request $request){
-        $list = EmailLog::where('email',$request->email)->orderBy('created_at','desc')->get();
-        if(empty($list)){
-            ReturnJson(true,'',[]);
-        }
-        $list = $list->toArray();
-        ReturnJson(true,'', $list);
+    public function passwordTest(Request $request){
+        $id = $request->user->id;
+        $user = User::find($id);
+        $user = $user ? $user->toArray() : [];
+
+        $scene = $request->all();
+        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        // 邮箱账号配置信息
+        $config = [
+            'host' =>  $senderEmail->host,
+            'port' =>  $senderEmail->port,
+            'encryption' =>  $senderEmail->encryption,
+            'username' =>  $senderEmail->email,
+            'password' =>  $senderEmail->password
+        ];
+        $this->SetConfig($config);
+        $email = $request->test_email ? $request->test_email : $request->user->email;
+        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        return true;
     }
 }
