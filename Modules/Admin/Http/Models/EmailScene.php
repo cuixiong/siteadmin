@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class EmailScene extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name','title','body','email_sender_id','email_recipient','status','sort','action','updated_by','created_by'];
+    protected $fillable = ['name','title','body','email_sender_id','email_recipient','status','sort','action','updated_by','created_by','alternate_email_id'];
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['email_sender_txt'];
     /**
