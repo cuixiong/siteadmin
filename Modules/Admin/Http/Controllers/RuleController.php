@@ -107,7 +107,7 @@ class RuleController extends CrudController
      * modify state
      * @param use Illuminate\Http\Request;
      */
-    public function valueChangeStatus(Request $request)
+    public function changeStatus(Request $request)
     {
         try {
             if(empty($request->id)){
