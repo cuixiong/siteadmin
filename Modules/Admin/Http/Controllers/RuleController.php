@@ -102,4 +102,25 @@ class RuleController extends CrudController
         }
         ReturnJson(TRUE,'', $options);
     }
+
+    /**
+     * modify state
+     * @param use Illuminate\Http\Request;
+     */
+    public function valueChangeStatus(Request $request)
+    {
+        try {
+            if(empty($request->id)){
+                ReturnJson(FALSE,'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->visible = $request->visible;
+            if(!$record->save()){
+                ReturnJson(FALSE,trans('lang.update_error'));
+            }
+            ReturnJson(TRUE,trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }
