@@ -164,7 +164,7 @@ class PriceEditionController extends CrudController
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request->search);
+            $model = $ModelInstance->HandleWhere($model, $request);
             // 总数量
             $total = $model->count();
             // 查询偏移量
