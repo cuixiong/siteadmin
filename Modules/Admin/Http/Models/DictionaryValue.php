@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
+use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Base;
 class DictionaryValue extends Base
 {
@@ -19,5 +20,17 @@ class DictionaryValue extends Base
             $model = $this->HandleSearch($model,$request->search);
         }
         return $model;
+    }
+
+    /**
+     * get name by code and value
+     * @param $code code
+     * @param $value value
+     * @return mixed
+     */
+    public static function GetNameAsCode($code,$value){
+        // $NameField = $request->HeaderLanguage == 'en' ? 'english_name' : 'name';
+        $name = DictionaryValue::where('code',$code)->where('value',$value)->value('name');
+        return $name;
     }
 }

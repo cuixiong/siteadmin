@@ -151,4 +151,21 @@ class SystemController extends CrudController
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    /**
+     * 查询value-label格式列表
+     * @param $request 请求信息
+     * @param Array $where 查询条件数组 默认空数组
+     */
+    public function option (Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $fileds = $request->HeaderLangague == 'en' ? ['id as value','name as label'] : ['id as value','english_name as label'];
+            $record = $ModelInstance->GetListLabel($fileds,false,'',['status' => 1]);
+            ReturnJson(TRUE,trans('lang.request_success'),$record);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

@@ -85,9 +85,10 @@ Route::middleware([
     Route::get('admin/system/form/{id}','SystemController@form')->name('Tab单查');
     Route::get('admin/system-value/form/{id}','SystemController@formValue')->name('Tab值单查');
     Route::get('admin/system-value/list',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('设置Tab列表');
-    Route::get('admin/system/value-list/{id}','SystemController@list')->name('设置Tab列表');
+    Route::get('admin/system/value-list/{id}','SystemController@valueList')->name('设置Tab列表');
     Route::post('admin/system/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'changeStatus'])->name('设置Tab修改状态');
     Route::post('admin/system-value/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('Tab键值修改状态');
+    Route::get('admin/system/option',[Modules\Admin\Http\Controllers\SystemController::class,'option'])->name('系统设置option');
 
 
     // Department控制器

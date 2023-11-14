@@ -31,4 +31,5 @@ return [
     'param_empty' => 'The parameter is empty',
     'alternate_email_empty' => 'The alternate_email is empty',
     'alias_name_empty' => 'The alias name is empty',
+    'english_name_empty' => 'The english name is empty',
 ];
