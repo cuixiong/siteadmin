@@ -236,4 +236,9 @@ class Base extends Model
         }
         return $tree;
     }
+
+    public function GetRequest(Request $request)
+    {
+        return $request;
+    }
 }

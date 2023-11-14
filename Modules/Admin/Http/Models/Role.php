@@ -40,9 +40,11 @@ class Role extends Base
     /**
      * 获取角色所有权限ID
      * @param string/array $roles 角色ID
+     * @param string $key all/rule/code
+     * @param int $siteId
      * @param array $data
      */
-    public function GetRules($ids,$key = 'all'){
+    public function GetRules($ids,$key = 'all',$siteId = 0){
         if(!is_array($ids)){
             $ids = explode(',',$ids);
         }
@@ -54,6 +56,9 @@ class Role extends Base
             if(!empty($role->rule_id)){
                 $rule_ids = array_merge($rule_ids,$role->rule_id);
                 $role_code[] = $role->code;
+            }
+            if($siteId > 0 && in_array($siteId,$role->site_id)){
+                $rule_ids = array_merge($rule_ids,$role->site_rule_id);
             }
         }
         $rule_ids = empty($rule_ids) ? [] : array_unique($rule_ids);

@@ -17,6 +17,9 @@ class SystemController extends CrudController
             $ModelInstance = new SystemValue();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model,$request);
+            if($request->parent_id){
+                $model->where('parent_id',$request->parent_id);
+            }
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -112,20 +115,6 @@ class SystemController extends CrudController
         try {
             $record = SystemValue::findOrFail($request->id);
             ReturnJson(TRUE,trans('lang.request_success'),$record);
-        } catch (\Exception $e) {
-            ReturnJson(FALSE,$e->getMessage());
-        }
-    }
-
-    /**
-     * Query child list based on parent ID
-     * @param use Illuminate\Http\Request;
-     */
-    public function valueList(Request $request)
-    {
-        try {
-            $list = SystemValue::where('parent_id',$request->id)->where('status',1)->get();
-            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
