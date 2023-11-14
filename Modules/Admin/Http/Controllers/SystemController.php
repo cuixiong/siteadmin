@@ -150,9 +150,22 @@ class SystemController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $fileds = $request->HeaderLangague == 'en' ? ['id as value','name as label'] : ['id as value','english_name as label'];
+            $fileds = $request->HeaderLangague == 'en' ? ['id as value','english_name as label'] : ['id as value','name as label'];
             $record = $ModelInstance->GetListLabel($fileds,false,'',['status' => 1]);
             ReturnJson(TRUE,trans('lang.request_success'),$record);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+    /**
+     * Query all children through parent
+     * @param use Illuminate\Http\Request;
+     */
+    public function valueList (Request $request) {
+        try {
+            $record = (new SystemValue)->where('status',1)->where('parent_id',$request->parent_id)->get();
+            ReturnJson(TRUE,trans('lang.request_success'),$record);
+            
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

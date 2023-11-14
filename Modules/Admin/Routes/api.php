@@ -88,6 +88,7 @@ Route::middleware([
     Route::post('admin/system/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'changeStatus'])->name('平台字段父级修改状态');
     Route::post('admin/system-value/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('平台字段子级修改状态');
     Route::get('admin/system/option',[Modules\Admin\Http\Controllers\SystemController::class,'option'])->name('平台字段option');
+    Route::get('admin/system/value-list/{parent_id}',[Modules\Admin\Http\Controllers\SystemController::class,'valueList'])->name('平台字段全部子级列表');
 
 
     // Department控制器
@@ -103,6 +104,9 @@ Route::middleware([
 
     // Site控制器
     Route::get('admin/site/user-option',[Modules\Admin\Http\Controllers\SiteController::class,'UserOption'])->name('用户的站点下拉数据');
+
+    // EmailLog控制器
+    Route::get('admin/email-log/list',[Modules\Admin\Http\Controllers\EmailLogController::class,'list'])->name('邮箱日志列表');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
