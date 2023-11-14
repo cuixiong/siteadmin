@@ -32,7 +32,7 @@ class RoleController extends CrudController
      */
     public function option (Request $request) {
         try {
-            $list = (new Role)->GetList(['id','id as value','name as label']);
+            $list = (new Role)->GetList(['id','id as value','name as label'],false,'',['status'=>1]);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
