@@ -6,6 +6,7 @@ use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\PriceEdition;
 use Modules\Admin\Http\Models\PriceEditionValue;
 use Modules\Admin\Http\Models\Publisher;
+use Modules\Admin\Http\Models\Language;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -199,7 +200,7 @@ class PriceEditionController extends CrudController
         }
     }
 
-    
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -209,7 +210,10 @@ class PriceEditionController extends CrudController
         try {
             $data = [];
             // 出版商
-            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label']);
+            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            
+            // 语言
+            $data['languages'] = (new Language())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
@@ -217,7 +221,10 @@ class PriceEditionController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch_State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
+            
+            //是否送货
+            $data['logistics'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Logistics_State']);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
