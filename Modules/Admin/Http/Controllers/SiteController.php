@@ -499,4 +499,20 @@ class SiteController extends CrudController
         }
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
+
+    /**
+     * Get the current user's site
+     * @param int $user_id user id
+     */
+    public function UserOption(Request $request){
+        $site_ids = Role::whereIn('id', explode(',',$request->user->role_id))->value('site_id');
+        $is_super = Role::whereIn('id',explode(',',$request->user->role_id))->where('is_super', 1)->count();
+        $filed = $request->HeaderLanguage == 'en' ? ['english_name as value','english_name as label'] : ['english_name as value','name as label'];
+        if($is_super > 0){
+            $res = (new Site)->GetListLabel($filed,false,'',['status' => 1]);
+        }else{
+            $res = (new Site)->GetListLabel($filed,false,'',['status' => 1,'id' => $site_ids]);
+        }
+        return $res ? $res : [];
+    }
 }

@@ -100,6 +100,9 @@ Route::middleware([
     require __DIR__ . '/api_temp/loginNoRule.php';
     // Database控制器
     Route::post('admin/database/changeStatus','EmailController@changeStatus')->name('数据库状态修改');
+
+    // Site控制器
+    Route::get('admin/site/user-option',[Modules\Admin\Http\Controllers\SiteController::class,'UserOption'])->name('用户的站点下拉数据');
 });
 
 /** 需要登陆并且需要验证权限的路由 */
