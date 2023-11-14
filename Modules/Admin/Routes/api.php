@@ -34,6 +34,7 @@ Route::middleware([
     Route::post('admin/update/info','UserController@updateInfo')->name('个人信息修改');
     Route::get('admin/user/info','UserController@UserInfo')->name('个人信息');
     Route::get('admin/user/options','UserController@options')->name('User字典数据');
+    Route::post('admin/user/change-status','UserController@changeStatus')->name('用户修改状态');
 
     // Rule控制器
     Route::get('admin/rule/list','RuleController@list')->name('权限列表');
@@ -77,7 +78,11 @@ Route::middleware([
 
     // System控制器
     Route::get('admin/system/list','SystemController@list')->name('设置Tab列表');
-    Route::get('admin/system/value_list','SystemController@list')->name('设置键值列表');
+    Route::get('admin/system/form/{id}','SystemController@form')->name('Tab单查');
+    Route::get('admin/system-value/form/{id}','SystemController@formValue')->name('Tab值单查');
+    Route::get('admin/system-value/list',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('设置Tab列表');
+    Route::get('admin/system/value-list/{id}','SystemController@list')->name('设置Tab列表');
+
 
     // Department控制器
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
@@ -149,9 +154,9 @@ Route::middleware([
     Route::post('admin/system/store','SystemController@store')->name('设置Tab新增');
     Route::post('admin/system/update','SystemController@update')->name('设置Tab编辑');
     Route::post('admin/system/destroy','SystemController@destroy')->name('设置Tab删除');
-    Route::post('admin/system/value_store','SystemController@systemValueStore')->name('设置键值新增');
-    Route::post('admin/system/value_update','SystemController@systemValueUpdate')->name('设置键值编辑');
-    Route::post('admin/system/value_destroy','SystemController@systemValueDestroy')->name('设置键值删除');
+    Route::post('admin/system-value/store',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueStore'])->name('设置键值新增');
+    Route::post('admin/system-value/update',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueUpdate'])->name('设置键值编辑');
+    Route::post('admin/system-value/destroy',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueDestroy'])->name('设置键值删除');
 
     // Department控制器
     Route::post('admin/department/store','DepartmentController@store')->name('部门新增');

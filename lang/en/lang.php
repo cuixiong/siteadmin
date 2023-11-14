@@ -30,4 +30,5 @@ return [
     'code_exists' => 'Code already exists',
     'param_empty' => 'The parameter is empty',
     'alternate_email_empty' => 'The alternate_email is empty',
+    'alias_name_empty' => 'The alias name is empty',
 ];

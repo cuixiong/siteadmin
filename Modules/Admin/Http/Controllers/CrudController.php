@@ -163,7 +163,7 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $record = $ModelInstance->GetListLabel(['id as value','name as label']);
+            $record = $ModelInstance->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
             ReturnJson(TRUE,trans('lang.request_success'),$record);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());

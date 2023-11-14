@@ -11,9 +11,11 @@ class SystemRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
+            'alias_name' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
+            'alias_name.required' => trans('lang.alias_name_empty'),
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -26,6 +28,7 @@ class SystemRequest extends BaseRequest
         $rules = [
             'id' => 'required',
             'name' => 'required',
+            'alias_name' => 'required',
         ];
         $message = [
             'id.required' => 'ID不能为空',
