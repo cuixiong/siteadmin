@@ -84,7 +84,7 @@ Route::middleware([
     Route::get('admin/system/list','SystemController@list')->name('平台字段父级列表');
     Route::get('admin/system/form/{id}','SystemController@form')->name('平台字段父级单查');
     Route::get('admin/system-value/form/{id}','SystemController@formValue')->name('平台字段子级单查');
-    Route::get('admin/system-value/list/{parent_id}',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('平台字段子级列表');
+    Route::get('admin/system-value/list',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('平台字段子级列表');
     Route::post('admin/system/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'changeStatus'])->name('平台字段父级修改状态');
     Route::post('admin/system-value/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('平台字段子级修改状态');
     Route::get('admin/system/option',[Modules\Admin\Http\Controllers\SystemController::class,'option'])->name('平台字段option');

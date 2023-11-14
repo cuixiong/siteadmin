@@ -17,8 +17,8 @@ class SystemController extends CrudController
             $ModelInstance = new SystemValue();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model,$request);
-            if($request->parent_id){
-                $model->where('parent_id',$request->parent_id);
+            if($request->id){
+                $model->where('parent_id',$request->id);
             }
             // 总数量
             $total = $model->count();
