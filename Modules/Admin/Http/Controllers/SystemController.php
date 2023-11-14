@@ -130,4 +130,25 @@ class SystemController extends CrudController
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    /**
+     * Child modification status
+     * @param use Illuminate\Http\Request;
+     */
+    public function changeStatus(Request $request)
+    {
+        try {
+            if(empty($request->id)){
+                ReturnJson(FALSE,'id is empty');
+            }
+            $record = SystemValue::findOrFail($request->id);
+            $record->status = $request->status;
+            if(!$record->save()){
+                ReturnJson(FALSE,trans('lang.update_error'));
+            }
+            ReturnJson(TRUE,trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
 }

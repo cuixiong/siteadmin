@@ -41,6 +41,7 @@ Route::middleware([
     Route::post('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
     Route::get('admin/rule/form/{id}','RuleController@form')->name('权限单查');
     Route::get('admin/rule/options',[Modules\Admin\Http\Controllers\RuleController::class,'options'])->name('权限字典数据');
+    Route::get('admin/rule/change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限修改状态');
 
 
     // Role控制器
@@ -50,6 +51,7 @@ Route::middleware([
     Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
     Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
     Route::get('admin/role/options',[Modules\Admin\Http\Controllers\RoleController::class,'options'])->name('角色字典数据');
+    Route::get('admin/rule/change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限修改状态');
 
 
     // Email控制器
@@ -66,11 +68,13 @@ Route::middleware([
     Route::get('admin/dictionary/list','DictionaryController@list')->name('字典列表');
     Route::get('admin/dictionary/form/{id}','DictionaryController@form')->name('字典单查');
     Route::get('admin/dictionary/options',[Modules\Admin\Http\Controllers\DictionaryController::class,'options'])->name('字典数据');
+    Route::get('admin/dictionary/change-status',[Modules\Admin\Http\Controllers\DictionaryController::class,'changeStatus'])->name('字典修改状态');
 
     // DictionaryValue控制器
     Route::get('admin/dictionary-value/list/','DictionaryValueController@list')->name('字典项列表');
     Route::get('admin/dictionary-value/form/{id}','DictionaryValueController@form')->name('字典项单查');
     Route::get('admin/dictionary-value/get/{code}','DictionaryValueController@get')->name('字典项查询');
+    Route::get('admin/dictionary-value/change-status',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'changeStatus'])->name('字典项修改状态');
 
     // Server控制器
     Route::get('admin/server/list','ServerController@list')->name('服务器列表');
@@ -82,12 +86,15 @@ Route::middleware([
     Route::get('admin/system-value/form/{id}','SystemController@formValue')->name('Tab值单查');
     Route::get('admin/system-value/list',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('设置Tab列表');
     Route::get('admin/system/value-list/{id}','SystemController@list')->name('设置Tab列表');
+    Route::get('admin/system/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'changeStatus'])->name('设置Tab修改状态');
+    Route::get('admin/system-value/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('Tab键值修改状态');
 
 
     // Department控制器
     Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
     Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
     Route::get('admin/department/options',[Modules\Admin\Http\Controllers\DepartmentController::class,'options'])->name('部门字典数据');
+    Route::get('admin/department/change-status',[Modules\Admin\Http\Controllers\DepartmentController::class,'changeStatus'])->name('部门修改状态');
 
 
     require __DIR__ . '/api_temp/loginNoRule.php';
