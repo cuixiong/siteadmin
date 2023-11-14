@@ -135,7 +135,7 @@ class SystemController extends CrudController
      * Child modification status
      * @param use Illuminate\Http\Request;
      */
-    public function changeStatus(Request $request)
+    public function valueChangeStatus(Request $request)
     {
         try {
             if(empty($request->id)){
