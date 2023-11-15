@@ -39,4 +39,16 @@ class Rule extends Base
         }
         return $tree;
     }
+
+    /**
+     * components 修改器
+     * @param $value
+     * @return string
+     */
+    public function setComponentAttribute($value)
+    {
+        if(empty($this->attributes['type'] == 'CATALOG')){
+            $this->attributes['component'] = 'Layout';
+        }
+    }
 }
