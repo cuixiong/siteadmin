@@ -73,7 +73,7 @@ class CommonController extends Controller
         // 递归分类权限
         $rules = $model->buildTree($rules,$roleCodes);
         // 返回菜单栏
-        ReturnJson(TRUE,'',$rules);
+        ReturnJson(TRUE,'',$siteId);
     }
 
     /**
