@@ -187,7 +187,7 @@ class PriceEditionController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics')->where('id', $item['id'])->get();
+                    $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'order')->where('edition_id', $item['id'])->get();
                 }
             }
             $data = [
@@ -211,7 +211,7 @@ class PriceEditionController extends CrudController
             $data = [];
             // 出版商
             $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
-            
+
             // 语言
             $data['languages'] = (new Language())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
@@ -222,7 +222,7 @@ class PriceEditionController extends CrudController
                 $filed = ['name as label', 'value'];
             }
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
-            
+
             //是否送货
             $data['logistics'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Logistics_State']);
 
