@@ -22,7 +22,7 @@ class CommonController extends Controller
             'avatar' => "https://oss.youlai.tech/youlai-boot/2023/05/16/811270ef31f548af9cffc026dfc3777b.gif",
         ];
         $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
-        $siteName = $request->header('X-Site');
+        $siteName = $request->header('X_site');
         $siteId = Site::where('english_name',$siteName)->value('id');
         $siteId = $siteId ? $siteId : 0;
         $res = (new Role)->GetRules(explode(',',$request->user->role_id),'all',$siteId);
@@ -45,7 +45,7 @@ class CommonController extends Controller
     public function menus(Request $request){
         // 角色ID
         $role_id = explode(',',$request->user->role_id);
-        $siteName = $request->header('X-Site');
+        $siteName = $request->header('X_site');
         $siteId = Site::where('english_name',$siteName)->value('id');
         $siteId = $siteId ? $siteId : 0;
         $data = (new Role)->GetRules($role_id,'all',$siteId);

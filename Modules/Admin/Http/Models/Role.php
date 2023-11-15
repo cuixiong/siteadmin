@@ -53,7 +53,7 @@ class Role extends Base
         $rule_ids = [];// 当前账号的权限id
         $role_code = [];// 当前账号的归属角色code
         foreach ($roles as $role) {
-            if(!empty($role->rule_id)){
+            if(!empty($role->rule_id) && $siteId == 0){
                 $rule_ids = array_merge($rule_ids,$role->rule_id);
                 $role_code[] = $role->code;
             }
