@@ -163,7 +163,7 @@ class SystemController extends CrudController
      */
     public function valueList (Request $request) {
         try {
-            $record = (new SystemValue)->where('status',1)->where('parent_id',$request->parent_id)->get();
+            $record = (new SystemValue)->where('hidden',1)->where('parent_id',$request->parent_id)->get();
             ReturnJson(TRUE,trans('lang.request_success'),$record);
             
         } catch (\Exception $e) {
