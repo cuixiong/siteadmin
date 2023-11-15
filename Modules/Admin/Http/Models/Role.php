@@ -57,8 +57,10 @@ class Role extends Base
                 $rule_ids = array_merge($rule_ids,$role->rule_id);
                 $role_code[] = $role->code;
             }
-            if($siteId > 0 && in_array($siteId,$role->site_id)){
-                $rule_ids = array_merge($rule_ids,$role->site_rule_id);
+            if(!empty($role->site_id)){
+                if($siteId > 0 && in_array($siteId,$role->site_id)){
+                    $rule_ids = array_merge($rule_ids,$role->site_rule_id);
+                }
             }
         }
         $rule_ids = empty($rule_ids) ? [] : array_unique($rule_ids);
