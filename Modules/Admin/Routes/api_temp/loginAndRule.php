@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('admin/site/store', 'SiteController@store')->name('站点新增');
 Route::post('admin/site/update', 'SiteController@update')->name('站点更新');
 Route::post('admin/site/destroy', 'SiteController@destroy')->name('站点删除');
+Route::post('admin/site/create-site-to-remote-server', 'SiteController@createSiteToRemoteServer')->name('服务器新建站点');
+Route::post('admin/site/init-database', 'SiteController@initDatabase')->name('初始化数据库');
+
 Route::post('admin/site/changeStatus', 'SiteController@changeStatus')->name('站点状态切换');
 Route::post('admin/site/move-up-site', 'SiteController@moveUpSite')->name('站点升级');
 

@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ use Modules\Admin\Http\Models\Region;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\SiteUpdateLog;
+use phpseclib3\Net\SSH2;
+use Stancl\Tenancy\Facades\Tenancy;
 
 class SiteController extends CrudController
 {
@@ -27,41 +30,6 @@ class SiteController extends CrudController
     {
 
         $input = $request->all();
-        /**
-         * 这里不知道什么原因无法使用Validator类进行表单验证
-         * 一旦使用Validator类进行表单验证就会报错Tenant could not be identified on domain
-         * 只能在此处进行手动进行验证
-         */
-        // if(empty($input['name'])){
-        //     ReturnJson(FALSE,'站点名称不能为空');
-        // }
-        // if(empty($input['english_name'])){
-        //     ReturnJson(FALSE,'英语名称不能为空');
-        // }
-        // if(Site::where('english_name',$input['english_name'])->first()){
-        //     ReturnJson(FALSE,'英语名称已存在，请更换其他的');
-        // }
-        // if(empty($input['domain'])){
-        //     ReturnJson(FALSE,'域名不能为空');
-        // }
-        // if(empty($input['country_id'])){
-        //     ReturnJson(FALSE,'国家ID不能为空');
-        // }
-        // if(empty($input['db_host'])){
-        //     ReturnJson(FALSE,'数据库端口不能为空');
-        // }
-        // if(empty($input['db_database'])){
-        //     ReturnJson(FALSE,'数据库名不能为空');
-        // }
-        // if(empty($input['db_username'])){
-        //     ReturnJson(FALSE,'数据库登陆名不能为空');
-        // }
-        // if(empty($input['db_password'])){
-        //     ReturnJson(FALSE,'数据库密码不能为空');
-        // }
-        // if(!isset($request->is_create)){
-        //     ReturnJson(FALSE,'is_create不能为空');
-        // }
         // 创建者ID
         // $input['created_by'] = $request->user->id;
         // // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
@@ -69,10 +37,10 @@ class SiteController extends CrudController
         // // is_create不是入库的字段变量所以删除
         // unset($request->is_create);
 
-        $is_create = 0;
+        $is_create = 1;
 
         // 开启事务
-        DB::beginTransaction();
+        // DB::beginTransaction();
         try {
             // 入库site表
             $model = new Site();
@@ -84,25 +52,206 @@ class SiteController extends CrudController
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
             // 
-            
-            // $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'username as db_username','db_password')->first()->toArray();
 
-            // // 创建租户
-            // $Tenant = new TenantController();
-            // $res = $Tenant->initTenant($is_create, $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
+            $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first()->toArray();
+
+            // 创建租户
+            $Tenant = new TenantController();
+            $res = $Tenant->initTenant(
+                $is_create,
+                $input['english_name'],
+                $input['domain'],
+                $database['db_host'],
+                $database['db_database'],
+                $database['db_username'],
+                $database['db_password'],
+                $database['db_port'] ?? 3306
+            );
             // if ($res !== true) {
             //     // 回滚事务
             //     DB::rollBack();
             //     ReturnJson(FALSE, $res);
             // }
-            DB::commit();
-            ReturnJson(TRUE, '新增成功1');
+            // //事务有点问题
+            // DB::commit();
+            ReturnJson(TRUE, trans('lang.add_success'));
         } catch (\Exception $e) {
             // 回滚事务
-            DB::rollBack();
+            // DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    /**
+     * 导入数据库基本的数据库结构/初始化数据库
+     * @param Request $request
+     */
+    public function initDatabase(Request $request)
+    {
+
+        // 查询当前的租户信息
+        $siteId = $request->input('site_id');
+        $site = Site::findOrFail($siteId);
+        $tenantId = DB::table('domains')->where('domain', $site->domain)->pluck('tenant_id');
+        $tenant = Tenancy::find($tenantId);
+        // 设置当前租户上下文
+        Tenancy::initialize($tenant);
+
+        // 读取 SQL 文件内容
+        $basePath = resource_path();
+        $sqlFilePath = $basePath . '/uploads/sql/init_database.sql';
+        $sqlContent = file_get_contents($sqlFilePath);
+
+        // 在租户数据库上运行 SQL
+        DB::unprepared($sqlContent);
+
+        // 结束当前租户上下文
+        Tenancy::end();
+
+        ReturnJson(TRUE, trans('lang.add_success'));
+    }
+
+    /**
+     * 远程连接服务器新建站点
+     * @param Request $request
+     */
+    public function createSiteToRemoteServer(Request $request)
+    {
+
+        $siteId = $request->input('site_id');
+
+        try {
+
+            //获取站点配置
+            $site = Site::findOrFail($siteId);
+
+            if (empty($site->english_name) || empty($site->api_repository) || empty($site->frontend_repository)) {
+                ReturnJson(TRUE, trans('lang.param_empty'), 'site');
+            }
+
+            //获取服务器配置
+            $server = Server::findOrFail($site->server_id);
+
+            if (empty($server->ip) || empty($server->username) || empty($server->password)) {
+                ReturnJson(TRUE, trans('lang.param_empty'), 'server');
+            }
+
+            //获取数据库配置
+            $database = Database::findOrFail($site->database_id);
+
+            if (empty($database->ip) || empty($database->username) || empty($database->password)) {
+                ReturnJson(TRUE, trans('lang.param_empty'), 'database');
+            }
+
+
+            //连接远程服务器
+            $ssh = new SSH2($server->ip);
+
+            if (!$ssh->login($server->username, $server->password)) {
+                ReturnJson(TRUE, trans('lang.request_error'), 'Login Failed');
+            }
+
+            // 项目所在外层路径
+            $siteBasePath = '/www/wwwroot/' . $site->english_name . '/';
+            // 接口/后台代码仓库地址
+            $apiRepository = $site->api_repository;
+            // 仓库别名
+            $apiDirName = 'admin.' . $site->english_name;
+            // 前台代码仓库地址
+            // $frontedRepository = $site->api_repository;
+            // 仓库别名
+            // $frontedDirName = 'nuxt.' . $site->english_name;
+
+            //数据库信息
+            $dbHost = $database->ip;
+            $dbName = $database->name;
+            $dbUsername = $database->username;
+            $dbPassword = $database->password;
+            $tablePrefix = empty($database->prefix) ? $database->prefix : '';
+
+            $output = [];
+            $commands = [
+                /** 
+                 * 一、第一次克隆代码
+                 * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
+                 * 原：git clone 仓库地址 [新建的目录名]
+                 * 例: git clone https://gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
+                 * 携带密码：git clone https://用户名:密码@仓库地址 [新建的目录名]
+                 * 例: git clone https://6953%40qq.com:1234567acde@gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
+                 * 用户名密码有@这些特殊符号需转义
+                 */
+                'cd ' . $siteBasePath . ' && git clone ' . $apiRepository . ' ' . $apiDirName,
+                /**
+                 * 二、下载依赖
+                 * 因为每一句命令独立运行，所以每次都要cd到指定目录
+                 * /www/server/php/74/bin/php 是因为项目基于7.4，而服务器默认的php版本为8.0
+                 * 使用时提示是否使用root用户，追加--no-interaction 参数默认应答
+                 */
+                'cd ' . $siteBasePath . $apiDirName . ' &&  /www/server/php/74/bin/php /usr/bin/composer install --no-interaction',
+                /**
+                 * 三、修改项目的权限
+                 * 因为每一句命令独立运行，所以每次都要指定目录
+                 */
+                'chown -R www:www ' . $siteBasePath . $apiDirName . ' && chmod -R 755 ' . $siteBasePath . $apiDirName,
+                /**
+                 * 四、配置初始化
+                 * 基于第三步的修改权限，不然提示没权限
+                 * --env=Development --overwrite=n 默认使用Development模式，选择不覆盖重名文件
+                 */
+                'cd ' . $siteBasePath . $apiDirName . ' && ./init --env=Development --overwrite=n',
+                /**
+                 * 五、配置文件连接数据库
+                 * 网站项目的console我新增了一个Controller,通过命令行传递数据库信息以填写数据库信息
+                 * config/index config是控制器名，index是函数方法
+                 */
+                'cd ' . $siteBasePath . $apiDirName . ' && ./yii config/index --dbHost=' . $dbHost . ' --dbUsername=' . $dbUsername . ' --dbPassword=' . $dbPassword . ' --dbName=' . $dbName . ' --tablePrefix=' . $tablePrefix,
+            ];
+
+            //执行命令
+            $output = $this->executeRemoteCommand($ssh, $commands);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $output);
+        } catch (\Throwable $th) {
+            ReturnJson(TRUE, trans('lang.request_error'), $th->getMessage());
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'));
+    }
+    /**
+     * 远程服务器 执行命令处理输出
+     * @param \phpseclib3\Net\SSH2 $ssh 
+     * @param Array|String $command
+     */
+    private function executeRemoteCommand($ssh, $commands)
+    {
+
+        if (is_array($commands)) {
+
+            foreach ($commands as $command) {
+                # code...
+                if (!empty($command)) {
+
+                    $output = $ssh->exec($command);
+                    if ($ssh->getExitStatus() !== 0) {
+                        // 执行失败
+                        return [
+                            'result' => false,
+                            'output' => $output,
+                            'command' => $command,
+                        ];
+                    }
+                }
+            }
+        } elseif (!empty($commands)) {
+
+            $output = $ssh->exec($commands);
+        }
+        return [
+            'result' => true,
+        ];
+    }
+
 
     /**
      * 编辑一个站点
@@ -112,41 +261,6 @@ class SiteController extends CrudController
     {
 
         $input = $request->all();
-        /**
-         * 这里不知道什么原因无法使用Validator类进行表单验证
-         * 一旦使用Validator类进行表单验证就会报错Tenant could not be identified on domain
-         * 只能在此处进行手动进行验证
-         */
-        // if(empty($input['id'])){
-        //     ReturnJson(FALSE,'站点ID不能为空');
-        // }
-        // if(empty($input['name'])){
-        //     ReturnJson(FALSE,'站点名称不能为空');
-        // }
-        // if(empty($input['english_name'])){
-        //     ReturnJson(FALSE,'英语名称不能为空');
-        // }
-        // if(empty($input['domain'])){
-        //     ReturnJson(FALSE,'域名不能为空');
-        // }
-        // if(empty($input['country_id'])){
-        //     ReturnJson(FALSE,'国家ID不能为空');
-        // }
-        // if(empty($input['db_host'])){
-        //     ReturnJson(FALSE,'数据库端口不能为空');
-        // }
-        // if(empty($input['db_database'])){
-        //     ReturnJson(FALSE,'数据库名不能为空');
-        // }
-        // if(empty($input['db_username'])){
-        //     ReturnJson(FALSE,'数据库登陆名不能为空');
-        // }
-        // if(empty($input['db_password'])){
-        //     ReturnJson(FALSE,'数据库密码不能为空');
-        // }
-        // if(!isset($request->is_create)){
-        //     ReturnJson(FALSE,'is_create不能为空');
-        // }
         // 创建者ID
         $input['created_by'] = $request->user->id;
 
@@ -178,6 +292,7 @@ class SiteController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
     /**
      * 删除一个站点
      */
@@ -301,29 +416,29 @@ class SiteController extends CrudController
         try {
             $data = [];
             // 语言
-            $data['languages'] = (new Language())->GetListLabel(['id as value', 'name as label']);
+            $data['languages'] = (new Language())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
             // 出版商
-            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label']);
+            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
             // 国家
-            $data['countries'] = (new Region())->GetListLabel(['id as value', 'name as label']);
+            $data['countries'] = (new Region())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             //数据库
-            $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label']);
+            $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             //服务器
-            $data['servers'] = (new Server())->GetListLabel(['id as value', 'name as label']);
-            
+            $data['servers'] = (new Server())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Switch_State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
 
             //是否创建数据库
             // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
-            
+
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
