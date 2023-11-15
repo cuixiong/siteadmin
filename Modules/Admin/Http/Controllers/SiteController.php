@@ -508,11 +508,12 @@ class SiteController extends CrudController
         $site_ids = Role::whereIn('id', explode(',',$request->user->role_id))->value('site_id');
         $is_super = Role::whereIn('id',explode(',',$request->user->role_id))->where('is_super', 1)->count();
         $filed = $request->HeaderLanguage == 'en' ? ['english_name as value','english_name as label'] : ['english_name as value','name as label'];
+        $res = [];
         if($is_super > 0){
             $res = (new Site)->GetListLabel($filed,false,'',['status' => 1]);
         }else{
             $res = (new Site)->GetListLabel($filed,false,'',['status' => 1,'id' => $site_ids]);
         }
-        return $res ? $res : [];
+        ReturnJson(TRUE, trans('lang.request_success'), $res);
     }
 }

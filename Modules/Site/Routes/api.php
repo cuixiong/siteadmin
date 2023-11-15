@@ -14,7 +14,7 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-InitializeTenancyByRequestData::$header = 'X_site';
+InitializeTenancyByRequestData::$header = 'Site';
 InitializeTenancyByRequestData::$queryParameter = null;
 Route::middleware([
     InitializeTenancyByRequestData::class,
