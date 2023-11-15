@@ -1,5 +1,6 @@
 <?php
 namespace Modules\Admin\Http\Models;
+use App\Observers\OperationLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
@@ -43,6 +44,7 @@ class Base extends Model
                 $model->updated_by = $user->id;
             }
         });
+        // static::observe(OperationLog::class);
     }
     /**
      * 创建时间获取器
