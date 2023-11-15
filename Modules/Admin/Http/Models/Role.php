@@ -55,13 +55,13 @@ class Role extends Base
         foreach ($roles as $role) {
             if(!empty($role->rule_id) && $siteId == 0){
                 $rule_ids = array_merge($rule_ids,$role->rule_id);
-                $role_code[] = $role->code;
             }
             if(!empty($role->site_id)){
                 if($siteId > 0 && in_array($siteId,$role->site_id)){
                     $rule_ids = array_merge($rule_ids,$role->site_rule_id);
                 }
             }
+            $role_code[] = $role->code;
         }
         $rule_ids = empty($rule_ids) ? [] : array_unique($rule_ids);
         $role_code = empty($role_code) ? [] : array_unique($role_code);
