@@ -131,7 +131,7 @@ class SystemController extends CrudController
                 ReturnJson(FALSE,'id is empty');
             }
             $record = SystemValue::findOrFail($request->id);
-            $record->status = $request->status;
+            $record->state = $request->state;
             if(!$record->save()){
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
