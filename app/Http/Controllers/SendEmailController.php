@@ -165,7 +165,9 @@ class SendEmailController extends Controller
         $id = $request->user->id;
         $user = User::find($id);
         $user = $user ? $user->toArray() : [];
-
+        $token = $user['email'].'&'.$user['id'];
+        $user['token'] = base64_encode($token);
+        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
@@ -269,7 +271,9 @@ class SendEmailController extends Controller
         $id = $request->user->id;
         $user = User::find($id);
         $user = $user ? $user->toArray() : [];
-
+        $token = $user['email'].'&'.$user['id'];
+        $user['token'] = base64_encode($token);
+        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 邮箱账号配置信息
