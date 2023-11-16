@@ -50,9 +50,9 @@ class Rule extends Base
      * @param $value
      * @return string
      */
-    public function setTypeAttribute()
+    public function setTypeAttribute($value)
     {
-        if($this->attributes['type'] == 'CATALOG'){
+        if($value == 'CATALOG'){
             $this->attributes['component'] = 'Layout';
         }
     }
