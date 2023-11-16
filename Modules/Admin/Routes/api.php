@@ -178,6 +178,9 @@ Route::middleware([
     Route::post('admin/department/store','DepartmentController@store')->name('部门新增');
     Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
     Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
+
+    // EmailLog控制器
+    Route::post('admin/email-log/destroy',[Modules\Admin\Http\Controllers\EmailLogController::class,'destroy'])->name('邮箱日志删除');
     
     require __DIR__ . '/api_temp/loginAndRule.php';
     

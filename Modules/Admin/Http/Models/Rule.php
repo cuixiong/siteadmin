@@ -55,5 +55,6 @@ class Rule extends Base
         if($value == 'CATALOG'){
             $this->attributes['component'] = 'Layout';
         }
+        return $value;
     }
 }
