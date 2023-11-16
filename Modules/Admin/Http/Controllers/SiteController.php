@@ -623,7 +623,9 @@ class SiteController extends CrudController
         $res = Role::whereIn('id', explode(',',$request->user->role_id))->pluck('site_id')->toArray();
         $site_ids = [];
         foreach ($res as $key => $value) {
-            $site_ids = array_merge($site_ids,$value);
+            if(is_array($value)){
+                $site_ids = array_merge($site_ids,$value);
+            }
         }
         $is_super = Role::whereIn('id',explode(',',$request->user->role_id))->where('is_super', 1)->count();
         $filed = $request->HeaderLanguage == 'en' ? ['english_name as value','english_name as label'] : ['english_name as value','name as label'];
