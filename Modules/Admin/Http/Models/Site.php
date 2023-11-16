@@ -3,27 +3,32 @@
 namespace Modules\Admin\Http\Models;
 
 use Modules\Admin\Http\Models\Base;
+use App\Models\Tenant;
+use Illuminate\Support\Facades\DB;
 use PDO;
 
 class Site extends Base
 {
     // 设置可以入库的字段
     protected $fillable = [
-        'name', 
-        'english_name', 
-        'domain', 
-        'country_id', 
-        'publisher_id', 
-        'language_id', 
-        'status', 
+        'name',
+        'english_name',
+        'domain',
+        'country_id',
+        'publisher_id',
+        'language_id',
+        'status',
         'database_id',
         'server_id',
+        'api_repository',
+        'frontend_repository',
         // 'db_host', 
         // 'db_port', 
         // 'db_database', 
         // 'db_username', 
         // 'db_password', 
-        'updated_by', 
+        // 'table_prefix', 
+        'updated_by',
         'created_by'
     ];
 
@@ -135,9 +140,10 @@ class Site extends Base
         return $model;
     }
 
-    
+
     //打印sql
-    public function printSql($model){
+    public function printSql($model)
+    {
         $sql = $model->toSql();
         $bindings = $model->getBindings();
 
@@ -146,6 +152,60 @@ class Site extends Base
             $sql = preg_replace('/\?/', "'$binding'", $sql, 1);
         }
         return $sql;
-        
+    }
+
+    
+    /**
+     * 初始化一个租户
+     * @param bool $is_create 是否需要创建数据库
+     * @param string $name 租户的英文标识
+     * @param string $domain 租户域名
+     * @param string $DB_HOST 数据库HOST
+     * @param string $DB_DATABASE 数据库DATABASE
+     * @param string $DB_USERNAME 数据库用户名
+     * @param string $DB_PASSWORD 数据库密码
+     * @param string $DB_PORT 数据库端口
+     */
+    public static function initTenant($is_create, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
+    {
+        try {
+            if ($is_create == 1) {
+                // 创建租户
+                $tenant = Tenant::create([
+                    'id' => $name,
+                    'tenancy_db_host' => $DB_HOST,
+                    'tenancy_db_name' => $DB_DATABASE,
+                    'tenancy_db_username' => $DB_USERNAME,
+                    'tenancy_db_password' => $DB_PASSWORD,
+                    'tenancy_db_port' => $DB_PORT,
+                ]);
+                $tenant->domains()->create([
+                    'domain' => $domain,
+                ]);
+                // 保存租户配置
+                $tenant->save();
+
+                
+            } else {
+                $time = date('Y-m-d H:i:s', time());
+                $data = [
+                    'created_at' => $time,
+                    'updated_at' => $time,
+                    'tenancy_db_host' => $DB_HOST,
+                    'tenancy_db_name' => $DB_DATABASE,
+                    'tenancy_db_port' => $DB_PORT,
+                    'tenancy_db_password' => $DB_PASSWORD,
+                    'tenancy_db_username' => $DB_USERNAME,
+                ];
+                $data = json_encode($data);
+                // 入库tenants表
+                DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                // 入库domains
+                DB::table('domains')->insert(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+            }
+            return true;
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        }
     }
 }

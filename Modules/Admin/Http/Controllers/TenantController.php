@@ -1,9 +1,11 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
 use Illuminate\Routing\Controller;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
+
 class TenantController extends Controller
 {
     /**
@@ -17,10 +19,10 @@ class TenantController extends Controller
      * @param string $DB_PASSWORD 数据库密码
      * @param string $DB_PORT 数据库端口
      */
-    public function initTenant($is_create,$name,$domain,$DB_HOST,$DB_DATABASE,$DB_USERNAME,$DB_PASSWORD,$DB_PORT)
+    public function initTenant($is_create, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
     {
         try {
-            if($is_create == 1){
+            if ($is_create == 1) {
                 // 创建租户
                 $tenant = Tenant::create([
                     'id' => $name,
@@ -35,8 +37,10 @@ class TenantController extends Controller
                 ]);
                 // 保存租户配置
                 $tenant->save();
+
+                
             } else {
-                $time = date('Y-m-d H:i:s',time());
+                $time = date('Y-m-d H:i:s', time());
                 $data = [
                     'created_at' => $time,
                     'updated_at' => $time,
@@ -48,9 +52,9 @@ class TenantController extends Controller
                 ];
                 $data = json_encode($data);
                 // 入库tenants表
-                DB::table('tenants')->insert(['id' => $name,'created_at' => $time,'updated_at' => $time,'data' => $data]);
+                DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
                 // 入库domains
-                DB::table('domains')->insert(['domain' => $domain,'tenant_id'=>$name,'created_at' => $time,'updated_at' => $time]);
+                DB::table('domains')->insert(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
             }
             return true;
         } catch (\Exception $e) {
@@ -69,10 +73,10 @@ class TenantController extends Controller
      * @param string $DB_PASSWORD 数据库密码
      * @param string $DB_PORT 数据库端口
      */
-    public function updateTenant($id,$name,$domain,$DB_HOST,$DB_DATABASE,$DB_USERNAME,$DB_PASSWORD,$DB_PORT)
+    public function updateTenant($id, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
     {
         try {
-            $time = date('Y-m-d H:i:s',time());
+            $time = date('Y-m-d H:i:s', time());
             $data = [
                 'created_at' => $time,
                 'updated_at' => $time,
@@ -84,11 +88,11 @@ class TenantController extends Controller
             ];
             $data = json_encode($data);
             // 查询当前的租户信息
-            $tenant = DB::table('domains')->where('id',$id)->first();
+            $tenant = DB::table('domains')->where('id', $id)->first();
             // 入库tenants表
-            DB::table('tenants')->where('id',$tenant->tenant_id)->update(['id' => $name,'created_at' => $time,'updated_at' => $time,'data' => $data]);
+            DB::table('tenants')->where('id', $tenant->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
             // 入库domains
-            DB::table('domains')->where('id',$id)->update(['domain' => $domain,'tenant_id'=>$name,'created_at' => $time,'updated_at' => $time]);
+            DB::table('domains')->where('id', $id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
             return true;
         } catch (\Exception $e) {
             return $e->getMessage();
@@ -104,11 +108,11 @@ class TenantController extends Controller
     {
         try {
             // 查询当前的租户信息
-            $tenant = DB::table('domains')->where('id',$id)->first();
+            $tenant = DB::table('domains')->where('id', $id)->first();
             //删除tenants表
-            DB::table('tenants')->where('id',$tenant->tenant_id)->delete();
+            DB::table('tenants')->where('id', $tenant->tenant_id)->delete();
             //删除domains表
-            DB::table('domains')->where('id',$id)->delete();
+            DB::table('domains')->where('id', $id)->delete();
             return true;
         } catch (\Exception $e) {
             return $e->getMessage();
