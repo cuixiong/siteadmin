@@ -125,21 +125,26 @@ class SendEmailController extends Controller
                 'password' =>  $senderEmail->password
             ];
             $this->SetConfig($config);
-            // 备用邮箱配置信息
-            $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
-            $BackupConfig = [
-                'host' =>  $BackupSenderEmail->host,
-                'port' =>  $BackupSenderEmail->port,
-                'encryption' =>  $BackupSenderEmail->encryption,
-                'username' =>  $BackupSenderEmail->email,
-                'password' =>  $BackupSenderEmail->password
-            ];
-            $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+
             foreach ($emails as $email) {
                 try {
                     $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
                 } catch (\Exception $e) {
-                    $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
                 }
             }
             EmailLog::AddLog(1,$scene->email_sender_id,$emails,$scene->id,$user);
@@ -212,20 +217,24 @@ class SendEmailController extends Controller
                 'password' =>  $senderEmail->password
             ];
             $this->SetConfig($config);
-            // 备用邮箱配置信息
-            $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
-            $BackupConfig = [
-                'host' =>  $BackupSenderEmail->host,
-                'port' =>  $BackupSenderEmail->port,
-                'encryption' =>  $BackupSenderEmail->encryption,
-                'username' =>  $BackupSenderEmail->email,
-                'password' =>  $BackupSenderEmail->password
-            ];
-            $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
             try {
                 $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
             } catch (\Exception $e) {
-                $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                if($scene->alternate_email_id){
+                    $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                }
             }
             EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
