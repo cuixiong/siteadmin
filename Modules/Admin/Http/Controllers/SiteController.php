@@ -620,13 +620,17 @@ class SiteController extends CrudController
      * @param int $user_id user id
      */
     public function UserOption(Request $request){
-        $site_ids = Role::whereIn('id', explode(',',$request->user->role_id))->value('site_id');
+        $res = Role::whereIn('id', explode(',',$request->user->role_id))->pluck('site_id')->toArray();
+        $site_ids = [];
+        foreach ($res as $key => $value) {
+            $site_ids = array_merge($site_ids,$value);
+        }
         $is_super = Role::whereIn('id',explode(',',$request->user->role_id))->where('is_super', 1)->count();
         $filed = $request->HeaderLanguage == 'en' ? ['english_name as value','english_name as label'] : ['english_name as value','name as label'];
         $res = [];
-        if($is_super > 0){
+        if($is_super > 0) {
             $res = (new Site)->GetListLabel($filed,false,'',['status' => 1]);
-        }else{
+        } else {
             $res = (new Site)->GetListLabel($filed,false,'',['status' => 1,'id' => $site_ids]);
         }
         ReturnJson(TRUE, trans('lang.request_success'), $res);

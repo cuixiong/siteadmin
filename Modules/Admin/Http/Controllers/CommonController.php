@@ -30,10 +30,8 @@ class CommonController extends Controller
         $data['roles'] = $res['code'];
         $rule_ids = $res['rule'];
         $RuleModel = new Rule();
-        $where = $siteId > 0 ? ['category' => 2] : ['category' => 1];
-        if($is_super > 0){
-            // ->where(['visible' => 1,'category' => 1])
-            
+        $where = $siteId > 0 ? ['category' => 2,'status' => 1] : ['category' => 1,'status' => 1];
+        if($is_super > 0){            
             $perms = $RuleModel->where('type','BUTTON')->where($where)->pluck('perm');
         } else {
             $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->pluck('perm');
@@ -64,7 +62,7 @@ class CommonController extends Controller
             $fields = array_merge($fields,['name']);
         }
         $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
-        $where = $siteId > 0 ? ['category' => 2] : ['category' => 1];
+        $where = $siteId > 0 ? ['category' => 2,'status' => 1] : ['category' => 1,'status' => 1];
         if($is_super > 0){
             $rules = $model->select($fields)->whereIn('type',['CATALOG','MENU'])->where($where)->get()->toArray();
         } else {

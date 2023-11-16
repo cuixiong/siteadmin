@@ -6,7 +6,7 @@ use App\Observers\OperationLog;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['parent_id','name','english_name','path','component','redirect','perm','route','icon','type','sort','category','visible','keepAlive','created_by','updated_by','category'];
+    protected $fillable = ['parent_id','name','english_name','path','component','redirect','perm','route','icon','type','sort','category','visible','keepAlive','created_by','updated_by','category','status'];
 
     protected static function booted()
     {
