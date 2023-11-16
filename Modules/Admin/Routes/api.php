@@ -90,6 +90,7 @@ Route::middleware([
     Route::post('admin/system-value/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('平台字段子级修改状态');
     Route::get('admin/system/option',[Modules\Admin\Http\Controllers\SystemController::class,'option'])->name('平台字段option');
     Route::get('admin/system/value-list/{parent_id}',[Modules\Admin\Http\Controllers\SystemController::class,'valueList'])->name('平台字段全部子级列表');
+    Route::post('admin/system-value/change-hidden',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeHidden'])->name('平台字段:子级显示状态');
 
 
     // Department控制器

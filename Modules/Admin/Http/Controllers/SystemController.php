@@ -131,7 +131,7 @@ class SystemController extends CrudController
                 ReturnJson(FALSE,'id is empty');
             }
             $record = SystemValue::findOrFail($request->id);
-            $record->state = $request->state;
+            $record->status = $request->status;
             if(!$record->save()){
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
@@ -166,6 +166,27 @@ class SystemController extends CrudController
             $record = (new SystemValue)->where('hidden',1)->where('parent_id',$request->parent_id)->get();
             ReturnJson(TRUE,trans('lang.request_success'),$record);
             
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+
+    /**
+     * Child modification status
+     * @param use Illuminate\Http\Request;
+     */
+    public function valueChangeHidden(Request $request)
+    {
+        try {
+            if(empty($request->id)){
+                ReturnJson(FALSE,'id is empty');
+            }
+            $record = SystemValue::findOrFail($request->id);
+            $record->hidden = $request->hidden;
+            if(!$record->save()){
+                ReturnJson(FALSE,trans('lang.update_error'));
+            }
+            ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
