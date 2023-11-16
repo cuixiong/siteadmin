@@ -4,6 +4,13 @@ namespace Modules\Admin\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Modules\Admin\Http\Models\Role;
+use Modules\Admin\Http\Models\Rule;
+use App\Observers\OperationLog;
+use Modules\Admin\Http\Models\Database;
+use Modules\Admin\Http\Models\Department;
+use Modules\Admin\Http\Models\Server;
+use Modules\Admin\Http\Models\User;
 
 class AdminServiceProvider extends ServiceProvider
 {
@@ -28,6 +35,13 @@ class AdminServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        Role::observe(OperationLog::class);
+        Rule::observe(OperationLog::class);
+        Department::observe(OperationLog::class);
+        User::observe(OperationLog::class);
+        Server::observe(OperationLog::class);
+        Database::observe(OperationLog::class);
     }
 
     /**

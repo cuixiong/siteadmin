@@ -113,7 +113,7 @@ Route::middleware([
 
     // OperationLogController 控制器
     Route::get('admin/operation-log/list',[Modules\Admin\Http\Controllers\OperationLogController::class,'list'])->name('操作日志:数据列表');
-    Route::get('admin/operation-log/destroy',[Modules\Admin\Http\Controllers\OperationLogController::class,'destroy'])->name('操作日志:删除操作');
+    Route::post('admin/operation-log/destroy',[Modules\Admin\Http\Controllers\OperationLogController::class,'destroy'])->name('操作日志:删除操作');
 });
 
 /** 需要登陆并且需要验证权限的路由 */

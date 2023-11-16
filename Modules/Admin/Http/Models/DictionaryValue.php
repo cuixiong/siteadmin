@@ -28,7 +28,6 @@ class DictionaryValue extends Base
      * @return mixed
      */
     public static function GetNameAsCode($code,$value){
-        // $NameField = $request->HeaderLanguage == 'en' ? 'english_name' : 'name';
         $name = DictionaryValue::where('code',$code)->where('value',$value)->value('name');
         return $name;
     }

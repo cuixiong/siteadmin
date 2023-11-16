@@ -2,16 +2,11 @@
 
 namespace Modules\Admin\Http\Models;
 use Modules\Admin\Http\Models\Base;
-use App\Observers\OperationLog;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
     protected $fillable = ['parent_id','name','english_name','path','component','redirect','perm','route','icon','type','sort','category','visible','keepAlive','created_by','updated_by','category','status'];
 
-    protected static function booted()
-    {
-        static::observe(OperationLog::class);
-    }
     /**
      * 递归分类权限
      * @param $rules 权限数组
