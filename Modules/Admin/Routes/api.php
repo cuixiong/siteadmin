@@ -109,6 +109,10 @@ Route::middleware([
     // EmailLog控制器
     Route::get('admin/email-log/list',[Modules\Admin\Http\Controllers\EmailLogController::class,'list'])->name('邮箱日志列表');
     Route::get('admin/email-log/option',[Modules\Admin\Http\Controllers\EmailLogController::class,'option'])->name('邮箱日志option');
+
+    // OperationLogController 控制器
+    Route::get('admin/operation-log/list',[Modules\Admin\Http\Controllers\OperationLogController::class,'list'])->name('操作日志:数据列表');
+    Route::get('admin/operation-log/destroy',[Modules\Admin\Http\Controllers\OperationLogController::class,'destroy'])->name('操作日志:删除操作');
 });
 
 /** 需要登陆并且需要验证权限的路由 */

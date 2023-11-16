@@ -19,7 +19,7 @@ class OperationLogController extends CrudController
         $model->type = $type;
         $model->category = $category;
         $model->route = $route;
-        $model->title = $route;
+        $model->title = $name;
         $model->content = $content;
         $model->site = $site;
         $model->save();
