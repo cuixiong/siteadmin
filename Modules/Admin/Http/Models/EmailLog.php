@@ -6,7 +6,7 @@ class EmailLog extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = ['status','send_email_id','emails','email_scenes','updated_by','created_by'];
-    protected $appends = ['status_text'];
+    protected $appends = ['status_text','send_email'];
 
     public static function AddLog($status,$sendEmailId,$emails,$scenesId,$data = [])
     {
