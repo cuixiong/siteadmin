@@ -52,7 +52,7 @@ Route::middleware([
     Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
     Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
     Route::get('admin/role/options',[Modules\Admin\Http\Controllers\RoleController::class,'options'])->name('角色字典数据');
-    Route::post('admin/rule/change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限修改状态');
+    Route::post('admin/role/change-status',[Modules\Admin\Http\Controllers\RoleController::class,'changeStatus'])->name('权限修改状态');
 
 
     // Email控制器
@@ -108,6 +108,7 @@ Route::middleware([
 
     // EmailLog控制器
     Route::get('admin/email-log/list',[Modules\Admin\Http\Controllers\EmailLogController::class,'list'])->name('邮箱日志列表');
+    Route::get('admin/email-log/option',[Modules\Admin\Http\Controllers\EmailLogController::class,'option'])->name('邮箱日志option');
 });
 
 /** 需要登陆并且需要验证权限的路由 */

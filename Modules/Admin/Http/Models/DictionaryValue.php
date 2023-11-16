@@ -1,7 +1,6 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
-use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Base;
 class DictionaryValue extends Base
 {
@@ -32,5 +31,12 @@ class DictionaryValue extends Base
         // $NameField = $request->HeaderLanguage == 'en' ? 'english_name' : 'name';
         $name = DictionaryValue::where('code',$code)->where('value',$value)->value('name');
         return $name;
+    }
+
+    public static function GetOption($code){
+        $request = request();
+        $filed = $request->HeaderLanguage == 'en'? ['english_name as label','value'] : ['name as label','value'];
+        $option = self::where('code',$code)->where('status',1)->select($filed)->get();
+        return $option;
     }
 }

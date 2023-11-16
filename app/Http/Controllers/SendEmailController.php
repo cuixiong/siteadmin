@@ -105,7 +105,7 @@ class SendEmailController extends Controller
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','register')->select(['name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            $scene = EmailScene::where('action','register')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -142,10 +142,10 @@ class SendEmailController extends Controller
                     $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
                 }
             }
-            EmailLog::AddLog(1,$scene->email_sender_id,$emails,$user);
+            EmailLog::AddLog(1,$scene->email_sender_id,$emails,$scene->id,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
-            EmailLog::AddLog(0,$scene->email_sender_id,$emails,$user);
+            EmailLog::AddLog(0,$scene->email_sender_id,$emails,$scene->id,$user);
             ReturnJson(FALSE,$e->getMessage());
         }
     }
@@ -198,7 +198,7 @@ class SendEmailController extends Controller
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','password')->select(['name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            $scene = EmailScene::where('action','password')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -227,10 +227,10 @@ class SendEmailController extends Controller
             } catch (\Exception $e) {
                 $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
             }
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$user);
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$user);
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
             ReturnJson(FALSE,$e->getMessage());
         }
     }

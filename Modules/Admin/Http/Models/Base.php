@@ -44,7 +44,6 @@ class Base extends Model
                 $model->updated_by = $user->id;
             }
         });
-        // static::observe(OperationLog::class);
     }
     /**
      * 创建时间获取器
