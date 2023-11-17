@@ -67,4 +67,17 @@ class SelectTxt extends Base
             ['id' => 1, 'name' => '是'],
         ];
     }
+
+    
+    /**
+     * 站点是否更新成功
+     */
+    public static function GetUpgradeTxt()
+    {
+        return [
+            ['id' => '', 'name' => '状态'],
+            ['id' => 0, 'name' => '更新失败'],
+            ['id' => 1, 'name' => '更新成功'],
+        ];
+    }
 }
