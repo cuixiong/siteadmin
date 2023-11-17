@@ -15,13 +15,16 @@ class OperationLogController extends CrudController
 {
     public static function AddLog($model,$type)
     {
-        $ClassName = $model->get_class();
-        var_dump(method_exists(new OperationLogController,$ClassName),$ClassName);die;
+        $ClassName = class_basename($model);
         $content = method_exists(new OperationLogController,$ClassName) ? self::$ClassName($model) : self::getContent($model);
 
         $request = request();
         $site = $request->header('Site');
+
         $category = $site ? 2 : 1;
+        if(!empty($site)){
+            $site = Site::where('english_name',$site)->value('name');
+        }
         $name = $request->route()->getName();
         $route = request()->path();
 
@@ -49,7 +52,7 @@ class OperationLogController extends CrudController
                 $contents[] = $title;
             }
         }
-        $contents = implode(';',$contents);
+        $contents = implode('、',$contents);
         return $contents;
     }
 
@@ -63,12 +66,10 @@ class OperationLogController extends CrudController
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
-                var_dump($field);
                 switch ($field) {
                     case 'parent_id':
                         $OriginalName = Rule::where('id', $OriginalValue)->value('name');
                         $NewName = Rule::where('id', $value)->value('name');
-                var_dump($OriginalName,$NewName);die;
 
                     break;
 
@@ -102,11 +103,11 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 $contents[] = $title;
             }
         }
-        $contents = implode(';',$contents);
+        $contents = implode('、',$contents);
         return $contents;
     }
 
@@ -159,11 +160,11 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 $contents[] = $title;
             }
         }
-        $contents = implode(';',$contents);
+        $contents = implode('、',$contents);
         return $contents;
     }
 
@@ -200,11 +201,11 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 $contents[] = $title;
             }
         }
-        $contents = implode(';',$contents);
+        $contents = implode('、',$contents);
         return $contents;
     }
 
@@ -219,16 +220,23 @@ class OperationLogController extends CrudController
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
                 switch ($field) {
-                    case 'parent_id':
-                        $OriginalName = Department::where('id', $OriginalValue)->value('name');
-                        $NewName = Department::where('id', $value)->value('name');
-                    break;
-
-                    case 'default_role':
+                    case 'role_id':
                         $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name');
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $NewName = Role::whereIn('id', $value)->pluck('name');
                         $NewName = $NewName ? implode(',',$NewName) : '';
+                    break;
+
+                    case 'department_id':
+                        $OriginalName = Department::where('id', $OriginalValue)->value('name');
+                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $NewName = Department::where('id', $value)->value('name');
+                        $NewName = $NewName ? implode(',',$NewName) : '';
+                    break;
+
+                    case 'gender':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Gender',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Gender',$value);
                     break;
 
                     case 'status':
@@ -241,11 +249,11 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 $contents[] = $title;
             }
         }
-        $contents = implode(';',$contents);
+        $contents = implode('、',$contents);
         return $contents;
     }
 }
