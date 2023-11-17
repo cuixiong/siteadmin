@@ -82,7 +82,7 @@ Route::middleware([
 
     // Server控制器
     Route::get('admin/server/list','ServerController@list')->name('服务器列表');
-    Route::post('admin/server/changeStatus','EmailController@changeStatus')->name('服务器状态修改');
+    Route::post('admin/server/changeStatus',[Modules\Admin\Http\Controllers\ServerController::class,'changeStatus'])->name('服务器管理:状态修改');
 
     // System控制器
     Route::get('admin/system/list','SystemController@list')->name('平台字段父级列表');
@@ -105,7 +105,7 @@ Route::middleware([
 
     require __DIR__ . '/api_temp/loginNoRule.php';
     // Database控制器
-    Route::post('admin/database/changeStatus','EmailController@changeStatus')->name('数据库状态修改');
+    Route::post('admin/database/changeStatus',[Modules\Admin\Http\Controllers\DatabaseController::class,'changeStatus'])->name('数据库管理:状态修改');
 
     // Site控制器
     Route::get('admin/site/user-option',[Modules\Admin\Http\Controllers\SiteController::class,'UserOption'])->name('用户的站点下拉数据');
