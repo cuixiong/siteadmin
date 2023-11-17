@@ -173,7 +173,7 @@ class Site extends Base
         $database = Database::findOrFail($site->database_id);
 
         $checkParamEmpty = [
-            'site-english_name' => $site->english_name,
+            'site-name' => $site->name,
             'site-api_repository' => $site->api_repository,
             'site-frontend_repository' => $site->frontend_repository,
             'server-ip' => $server->ip,
@@ -204,11 +204,11 @@ class Site extends Base
         }
 
         // 项目所在外层路径
-        $siteBasePath = '/www/wwwroot/platform_test/' . $site->english_name . '/';
+        $siteBasePath = '/www/wwwroot/platform_test/' . $site->name . '/';
         // 接口/后台代码仓库别名
-        $apiDirName = 'admin.' . $site->english_name;
+        $apiDirName = 'admin.' . $site->name;
         // 前台代码仓库别名
-        $frontedDirName = 'nuxt.' . $site->english_name;
+        $frontedDirName = 'nuxt.' . $site->name;
 
         //根据类型获取命令
         $commands = [];
@@ -307,7 +307,7 @@ class Site extends Base
             SiteUpdateLog::insert(
                 [
                     'site_id' => $site->id,
-                    'english_name' => $site->english_name,
+                    'site_name' => $site->name,
                     'message' => $message,
                     'output' => $output['output'],
                     'exec_status' => $output['result'] ? 1 : 0,

@@ -59,7 +59,7 @@ class SiteController extends CrudController
             $Tenant = new TenantController();
             $res = $Tenant->initTenant(
                 $is_create,
-                $input['english_name'],
+                $input['name'],
                 $input['domain'],
                 $database['db_host'],
                 $database['db_database'],
@@ -164,7 +164,7 @@ class SiteController extends CrudController
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
                 $input['id'],
-                $input['english_name'],
+                $input['name'],
                 $input['domain'],
                 $database['db_host'],
                 $database['db_database'],
