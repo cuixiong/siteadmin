@@ -11,7 +11,7 @@ class User extends Base
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['deptName','genderLabel','avatar','deptId','roleIds','ruleText'];
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['name','nickname','email','password','role_id','status','gender','mobile','department_id','created_by','updated_by'];
+    protected $fillable = ['name','nickname','email','password','role_id','status','gender','mobile','department_id','created_by','updated_by','sort'];
 
 
     /**

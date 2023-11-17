@@ -5,12 +5,19 @@ namespace Modules\Admin\Http\Controllers;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\OperationLog;
 use Illuminate\Support\Facades\DB;
+use Modules\Admin\Http\Models\Department;
+use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Role;
+use Modules\Admin\Http\Models\Rule;
+use Modules\Admin\Http\Models\Site;
+
 class OperationLogController extends CrudController
 {
     public static function AddLog($model,$type)
     {
-        $ClassName = get_class($model);
-        $content = method_exists($model,$ClassName) ? self::$ClassName($model) : self::getContent($model);
+        $ClassName = $model->get_class();
+        var_dump(method_exists(new OperationLogController,$ClassName),$ClassName);die;
+        $content = method_exists(new OperationLogController,$ClassName) ? self::$ClassName($model) : self::getContent($model);
 
         $request = request();
         $site = $request->header('Site');
@@ -32,40 +39,213 @@ class OperationLogController extends CrudController
     private static function getContent($model)
     {
         $dirty = $model->getDirty();
-
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
-        $ageColumnComment = $DbManager->getColumn('id')->getComment();
-        $sexColumnComment = $DbManager->getColumn('sex')->getComment();
-        var_dump($DbManager);die;
         foreach ($dirty as $field => $value) {
             if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
-                $FiledName = $DbManager[$field]->getName();
-
-                var_dump($FiledName);die;
-                $data = [
-                    'key' => $field,
-                    'value' => $value,
-                    'original' => $model->getOriginal($field)
-                ];
-                $contents[] = $data;
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $title = $ColumnComment .'从'.$model->getOriginal($field) .'更新为：'. $value;
+                $contents[] = $title;
             }
         }
+        $contents = implode(';',$contents);
+        return $contents;
     }
 
     private static function Rule($model)
     {
         $dirty = $model->getDirty();
         $contents = [];
+        $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
         foreach ($dirty as $field => $value) {
             if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
-                $data = [
-                    'key' => $field,
-                    'value' => $value,
-                    'original' => $model->getOriginal($field)
-                ];
-                $contents[] = $data;
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $OriginalValue = $model->getOriginal($field);
+                var_dump($field);
+                switch ($field) {
+                    case 'parent_id':
+                        $OriginalName = Rule::where('id', $OriginalValue)->value('name');
+                        $NewName = Rule::where('id', $value)->value('name');
+                var_dump($OriginalName,$NewName);die;
+
+                    break;
+
+                    case 'type':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Menu_Type',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Menu_Type',$value);
+                    break;
+
+                    case 'category':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Route_Classification',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Route_Classification',$value);
+                    break;
+
+                    case 'visible':
+                        $OriginalName = $OriginalValue == 1? '显示' : '隐藏';
+                        $NewName = $value == 1? '显示' : '隐藏';
+                    break;
+
+                    case 'keepAlive':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Cache',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Cache',$value);
+                    break;
+
+                    case 'status':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Switch_State',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Switch_State',$value);
+                    break;
+                    
+                    default:
+                        $OriginalName = $OriginalValue;
+                        $NewName = $value;
+                    break;
+                }
+                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $contents[] = $title;
             }
         }
+        $contents = implode(';',$contents);
+        return $contents;
+    }
+
+
+    private static function Role($model)
+    {
+        $dirty = $model->getDirty();
+        $contents = [];
+        $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
+        foreach ($dirty as $field => $value) {
+            if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $OriginalValue = $model->getOriginal($field);
+                switch ($field) {
+                    case 'rule_id':
+                        $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $NewName = Rule::whereIn('id', $value)->pluck('name');
+                        $NewName = $NewName ? implode(',',$NewName) : '';
+
+                    break;
+
+                    case 'site_rule_id':
+                        $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $NewName = Rule::whereIn('id', $value)->pluck('name');
+                        $NewName = $NewName ? implode(',',$NewName) : '';
+                    break;
+
+                    case 'site_id':
+                        $OriginalName = Site::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $NewName = Site::whereIn('id', $value)->pluck('name');
+                        $NewName = $NewName ? implode(',',$NewName) : '';
+                    break;
+
+                    case 'is_super':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Administrator',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Administrator',$value);
+                    break;
+
+                    case 'status':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Switch_State',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Switch_State',$value);
+                    break;
+                    
+                    default:
+                        $OriginalName = $OriginalValue;
+                        $NewName = $value;
+                    break;
+                }
+                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $contents[] = $title;
+            }
+        }
+        $contents = implode(';',$contents);
+        return $contents;
+    }
+
+    private static function Department($model)
+    {
+        $dirty = $model->getDirty();
+        $contents = [];
+        $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
+        foreach ($dirty as $field => $value) {
+            if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $OriginalValue = $model->getOriginal($field);
+                switch ($field) {
+                    case 'parent_id':
+                        $OriginalName = Department::where('id', $OriginalValue)->value('name');
+                        $NewName = Department::where('id', $value)->value('name');
+                    break;
+
+                    case 'default_role':
+                        $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $NewName = Role::whereIn('id', $value)->pluck('name');
+                        $NewName = $NewName ? implode(',',$NewName) : '';
+                    break;
+
+                    case 'status':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Switch_State',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Switch_State',$value);
+                    break;
+                    
+                    default:
+                        $OriginalName = $OriginalValue;
+                        $NewName = $value;
+                    break;
+                }
+                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $contents[] = $title;
+            }
+        }
+        $contents = implode(';',$contents);
+        return $contents;
+    }
+
+    private static function User($model)
+    {
+        $dirty = $model->getDirty();
+        $contents = [];
+        $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
+        foreach ($dirty as $field => $value) {
+            if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $OriginalValue = $model->getOriginal($field);
+                switch ($field) {
+                    case 'parent_id':
+                        $OriginalName = Department::where('id', $OriginalValue)->value('name');
+                        $NewName = Department::where('id', $value)->value('name');
+                    break;
+
+                    case 'default_role':
+                        $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $NewName = Role::whereIn('id', $value)->pluck('name');
+                        $NewName = $NewName ? implode(',',$NewName) : '';
+                    break;
+
+                    case 'status':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Switch_State',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Switch_State',$value);
+                    break;
+                    
+                    default:
+                        $OriginalName = $OriginalValue;
+                        $NewName = $value;
+                    break;
+                }
+                $title = "$ColumnComment 从 $OriginalName （ $OriginalValue ）更新为 $NewName （ $value ）";
+                $contents[] = $title;
+            }
+        }
+        $contents = implode(';',$contents);
+        return $contents;
     }
 }

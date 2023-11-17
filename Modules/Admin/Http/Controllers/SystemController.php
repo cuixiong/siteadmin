@@ -30,11 +30,15 @@ class SystemController extends CrudController
             if(!empty($request->pageSize)){
                 $model->limit($request->pageSize);
             }
+            $model =  $model->select($ModelInstance->ListSelect);
             // 数据排序
-            $order = $request->order ? $request->order : 'id';
-            // 升序/降序
             $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
-            $record = $model->select($ModelInstance->ListSelect)->orderBy($order,$sort)->get();
+            if(!empty($request->order)){
+                $model = $model->orderBy($request->order,$sort);
+            } else {
+                $model = $model->orderBy('sort',$sort)->orderBy('created_at',$sort);
+            }
+            $record = $model->get();
             
             $data = [
                 'total' => $total,
