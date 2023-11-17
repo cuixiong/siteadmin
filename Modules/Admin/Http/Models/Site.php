@@ -420,7 +420,7 @@ class Site extends Base
              * 网站项目的console我新增了一个Controller,通过命令行传递数据库信息以填写数据库信息
              * config/index config是控制器名，index是函数方法
              */
-            'cd ' . $siteBasePath . $apiDirName . ' && ./yii config/index --dbHost=' . $dbHost . ' --dbUsername=' . $dbUsername . ' --dbPassword=' . $dbPassword . ' --dbName=' . $dbName . ' --tablePrefix=' . $tablePrefix,
+            // 'cd ' . $siteBasePath . $apiDirName . ' && ./yii config/index --dbHost=' . $dbHost . ' --dbUsername=' . $dbUsername . ' --dbPassword=' . $dbPassword . ' --dbName=' . $dbName . ' --tablePrefix=' . $tablePrefix,
         ];
         return $commands;
     }
