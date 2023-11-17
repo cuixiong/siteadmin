@@ -36,12 +36,12 @@ class AdminServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
 
-        Role::observe(OperationLog::class);
-        Rule::observe(OperationLog::class);
-        Department::observe(OperationLog::class);
-        User::observe(OperationLog::class);
-        Server::observe(OperationLog::class);
-        Database::observe(OperationLog::class);
+        // Role::observe(OperationLog::class);
+        // Rule::observe(OperationLog::class);
+        // Department::observe(OperationLog::class);
+        // User::observe(OperationLog::class);
+        // Server::observe(OperationLog::class);
+        // Database::observe(OperationLog::class);
     }
 
     /**
