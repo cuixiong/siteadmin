@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::get('admin/user/export',[Modules\Admin\Http\Controllers\UserController::class,'export'])->name('用户管理:用户导出');
 
 /** 需要登陆验证但不需要权限验证的路由 */
 Route::middleware([
@@ -39,6 +38,9 @@ Route::middleware([
     Route::get('admin/user/options','UserController@options')->name('User字典数据');
     Route::post('admin/user/change-status','UserController@changeStatus')->name('用户修改状态');
     Route::post('admin/user/import',[Modules\Admin\Http\Controllers\UserController::class,'import'])->name('用户管理:用户导入');
+    Route::get('admin/user/export',[Modules\Admin\Http\Controllers\UserController::class,'export'])->name('用户管理:用户导出');
+    Route::get('admin/user/download',[Modules\Admin\Http\Controllers\UserController::class,'download'])->name('用户管理:模版下载');
+
 
     // Rule控制器
     Route::get('admin/rule/list','RuleController@list')->name('权限列表');

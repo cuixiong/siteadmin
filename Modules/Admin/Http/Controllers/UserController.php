@@ -121,6 +121,16 @@ class UserController extends CrudController
 
     public function export()
     {
-        return Excel::download(new UsersExport,'users.xlsx');
+        try {
+            return Excel::download(new UsersExport,'users.xlsx');
+        } catch (\Exception $e) {
+            ReturnJson(false,$e->getMessage());
+        }
+    }
+
+    public function download()
+    {
+        $file = public_path('import_template/UserTemplate.xls');
+        return response()->download($file);
     }
 }
