@@ -204,7 +204,7 @@ class Site extends Base
         }
 
         // 项目所在外层路径
-        $siteBasePath = '/www/wwwroot/' . $site->english_name . '/';
+        $siteBasePath = '/www/wwwroot/platform_test/' . $site->english_name . '/';
         // 接口/后台代码仓库别名
         $apiDirName = 'admin.' . $site->english_name;
         // 前台代码仓库别名
