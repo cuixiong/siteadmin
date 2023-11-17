@@ -380,6 +380,12 @@ class Site extends Base
         //前台暂未部署
 
         $commands = [
+            /**
+             * 基本目录不存在则新建
+             */
+            'if [ ! -d "'.$siteBasePath.'" ]; then
+                mkdir -p "'.$siteBasePath.'"
+            fi',
             /** 
              * 一、第一次克隆代码
              * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
