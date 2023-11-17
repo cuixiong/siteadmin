@@ -1,7 +1,11 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
+use App\Exports\UsersExport;
+use App\Imports\UserImport;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Role;
@@ -102,5 +106,21 @@ class UserController extends CrudController
         }
         $options['roles'] = (new Role)->GetList(['id as value','name as label']);
         ReturnJson(TRUE,'', $options);
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            Excel::import(new UserImport, request()->file('file'));
+            ReturnJson(true);
+        } catch (\Exception $e) {
+            ReturnJson(false,$e->getMessage());
+        }
+
+    }
+
+    public function export()
+    {
+        return Excel::download(new UsersExport,'users.xlsx');
     }
 }
