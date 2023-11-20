@@ -219,19 +219,28 @@ class Site extends Base
             // 前台代码仓库地址
             $frontendRepository = $site->frontend_repository;
             $commands = self::getAddSiteCommands($siteBasePath, $apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database);
+
         } elseif ($type == 'pull_code') {
             //拉取代码、升级站点
             $commands = self::getPullCodeCommands($siteBasePath, $apiDirName, $frontedDirName);
-        } elseif ($type == 'commit_history') {
+            
+        } elseif ($type == 'current_hash') {
+            //当前版本hash及hash短格式
+            $commands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
+
+        }elseif ($type == 'commit_history') {
             //历史提交记录、返回哈希值及注释
             $commands = self::getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName);
+
         } elseif ($type == 'available_pull') {
             $commands = self::getAvailablePullCommands($siteBasePath, $apiDirName, $frontedDirName);
+
         } elseif ($type == 'rollback_code') {
             $hash = $option['hash'];
             $commands = self::getRollbackCodeCommands($siteBasePath, $apiDirName, $frontedDirName, $hash);
+            
         }
-
+        // return $commands;
         //执行命令
         //输出的$output['result']为true时只代表命令正常执行，不代表达到预期结果
         $output = self::executeCommands($ssh, $commands);
@@ -289,10 +298,9 @@ class Site extends Base
                 //判断是否有可用更新
                 if (strpos($output['output'], 'Your branch is behind') !== false) {
                     $output['result'] = true;
+                }elseif(strpos($output['output'], 'Your branch is up to date') !== false) {
+                    $output['result'] = false;
                 }
-                // elseif(strpos($output['output'], 'Your branch is up to date') !== false) {
-                //     $output['result'] = false;
-                // }
                 else {
                     $output['result'] = false;
                 }
@@ -383,9 +391,7 @@ class Site extends Base
             /**
              * 基本目录不存在则新建
              */
-            'if [ ! -d "'.$siteBasePath.'" ]; then
-                mkdir -p "'.$siteBasePath.'"
-            fi',
+            'if [ ! -d "' . $siteBasePath . '" ]; then mkdir -p "' . $siteBasePath . '"; fi',
             /** 
              * 一、第一次克隆代码
              * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
@@ -405,21 +411,21 @@ class Site extends Base
              */
             'cd ' . $siteBasePath . $apiDirName . ' &&  /www/server/php/74/bin/php /usr/bin/composer install --no-interaction',
             /**
-             * 三、修改项目的权限
-             * 因为每一句命令独立运行，所以每次都要指定目录
-             */
-            'chown -R www:www ' . $siteBasePath . $apiDirName . ' && chmod -R 755 ' . $siteBasePath . $apiDirName,
+         * 三、修改项目的权限
+         * 因为每一句命令独立运行，所以每次都要指定目录
+         */
+            // 'chown -R www:www ' . $siteBasePath . $apiDirName . ' && chmod -R 755 ' . $siteBasePath . $apiDirName,
             /**
-             * 四、配置初始化
-             * 基于第三步的修改权限，不然提示没权限
-             * --env=Development --overwrite=n 默认使用Development模式，选择不覆盖重名文件
-             */
-            'cd ' . $siteBasePath . $apiDirName . ' && ./init --env=Development --overwrite=n',
+         * 四、配置初始化
+         * 基于第三步的修改权限，不然提示没权限
+         * --env=Development --overwrite=n 默认使用Development模式，选择不覆盖重名文件
+         */
+            // 'cd ' . $siteBasePath . $apiDirName . ' && ./init --env=Development --overwrite=n',
             /**
-             * 五、配置文件连接数据库
-             * 网站项目的console我新增了一个Controller,通过命令行传递数据库信息以填写数据库信息
-             * config/index config是控制器名，index是函数方法
-             */
+         * 五、配置文件连接数据库
+         * 网站项目的console我新增了一个Controller,通过命令行传递数据库信息以填写数据库信息
+         * config/index config是控制器名，index是函数方法
+         */
             // 'cd ' . $siteBasePath . $apiDirName . ' && ./yii config/index --dbHost=' . $dbHost . ' --dbUsername=' . $dbUsername . ' --dbPassword=' . $dbPassword . ' --dbName=' . $dbName . ' --tablePrefix=' . $tablePrefix,
         ];
         return $commands;
@@ -475,6 +481,23 @@ class Site extends Base
         return $commands;
     }
 
+    /**
+     * 获取当前提交版本的hash值
+     * @param string siteBasePath 部署基本路径/项目所在外层路径
+     * @param string apiDirName 接口仓库别名
+     * @param string frontedDirName 网站仓库别名
+     * @return array|string commands 命令
+     */
+    private static function getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName)
+    {
+        //前台暂无
+
+        $commands = [
+            'cd ' . $siteBasePath . $apiDirName . ' &&  git rev-parse HEAD && git rev-parse --short HEAD',
+
+        ];
+        return $commands;
+    }
 
     /**
      * 是否可更新

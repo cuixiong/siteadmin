@@ -52,9 +52,9 @@ class Publisher extends Base
             $model = $model->where('content', 'like', '%' . $search->content . '%');
         }
         
-        //order
-        if (isset($search->order) && !empty($search->order)) {
-            $model = $model->where('order', $search->order);
+        //sort
+        if (isset($search->sort) && !empty($search->sort)) {
+            $model = $model->where('sort', $search->sort);
         }
 
         //status 状态

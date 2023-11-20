@@ -7,7 +7,7 @@ use Modules\Admin\Http\Models\Base;
 class Region extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'status', 'order', 'updated_by', 'created_by'];
+    protected $fillable = ['name', 'status', 'sort', 'updated_by', 'created_by'];
 
 
     /**
@@ -27,9 +27,9 @@ class Region extends Base
             $model = $model->where('name', 'like', '%' . $search->name . '%');
         }
 
-        //order
-        if (isset($search->order) && !empty($search->order)) {
-            $model = $model->where('order', $search->order);
+        //sort
+        if (isset($search->sort) && !empty($search->sort)) {
+            $model = $model->where('sort', $search->sort);
         }
 
         //status 状态

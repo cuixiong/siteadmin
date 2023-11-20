@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Language extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name','status','order','updated_by','created_by'];
+    protected $fillable = ['name','status','sort','updated_by','created_by'];
     
     /**
      * 处理查询列表条件数组
@@ -25,8 +25,8 @@ class Language extends Base
         }
 
         //order
-        if (isset($search->order) && !empty($search->order)) {
-            $model = $model->where('order', $search->order);
+        if (isset($search->sort) && !empty($search->sort)) {
+            $model = $model->where('sort', $search->sort);
         }
 
         //status 状态

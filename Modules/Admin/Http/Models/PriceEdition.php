@@ -7,7 +7,7 @@ use Modules\Admin\Http\Models\Base;
 class PriceEdition extends Base
 {
     // 设置可以入库的字段
-    protected $fillable = ['publisher_id', 'order', 'status', 'created_by', 'updated_by',];
+    protected $fillable = ['publisher_id', 'sort', 'status', 'created_by', 'updated_by',];
 
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['publisher'];
@@ -47,9 +47,9 @@ class PriceEdition extends Base
             $model = $model->whereRaw("FIND_IN_SET(?, publisher_id) > 0", [$search->publisher_id]);
         }
         
-        //order
-        if (isset($search->order) && !empty($search->order)) {
-            $model = $model->where('order', $search->order);
+        //sort
+        if (isset($search->sort) && !empty($search->sort)) {
+            $model = $model->where('sort', $search->sort);
         }
 
         //status 状态

@@ -374,13 +374,31 @@ class SiteController extends CrudController
             $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get();
 
             //查询后的数据处理
-            // if ($record && count($record) > 0) {
+            if ($record && count($record) > 0) {
 
-            //     foreach ($record as $key => $item) {
-            //         //子项数据
-            //         $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics')->where('id', $item['id'])->get();
-            //     }
-            // }
+                foreach ($record as $key => $item) {
+                    //获取当前站点仓库的版本hash值
+                    $currentHashData = Site::executeRemoteCommand($item['id'], 'current_hash');
+
+                    $record[$key]['hash'] = '';
+                    $record[$key]['hash_sample'] = '';
+                    if($currentHashData['result']){
+                        $temp_array = explode("\n",$currentHashData['output']);
+                        $record[$key]['hash'] = $temp_array[0];
+                        $record[$key]['hash_sample'] = $temp_array[1];
+                    }
+
+                    //是否可更新
+                    $record[$key]['available_pull'] = false;
+                    // $availablePullData = Site::executeRemoteCommand($item['id'], 'available_pull');
+                    // $record[$key]['available_pull'] = $availablePullData['result'];
+
+                    //最新一条站点更新记录
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status','updated_at'])->first();
+                    $record[$key]['site_update_log'] = $siteUpdateLog;
+
+                }
+            }
             $data = [
                 'count' => $count,
                 'pageCount' => $pageCount,
