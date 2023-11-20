@@ -395,10 +395,10 @@ class SiteController extends CrudController
 
                     //最新一条站点更新记录
                     $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status','updated_at','hash','hash_sample'])->first();
-                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status'];
-                    $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at'];
-                    $record[$key]['log_updated_hash'] = $siteUpdateLog['hash'];
-                    $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample'];
+                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status']??'';
+                    $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at']??'';
+                    $record[$key]['log_updated_hash'] = $siteUpdateLog['hash']??'';
+                    $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample']??'';
 
                 }
             }
