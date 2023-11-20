@@ -115,7 +115,11 @@ class RuleController extends CrudController
         $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->get()->toArray();
         if(!empty($data)){
             foreach ($data as $map){
-                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                if($map['code'] == 'V_Show' || $map['code'] == 'Switch_State' || $map['code'] == 'Route_Classification'){
+                    $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
+                } else {
+                    $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                }
             }
         }
         ReturnJson(TRUE,'', $options);
