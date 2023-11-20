@@ -121,7 +121,7 @@ class Base extends Model
         if(!empty($search)){
             $model = $this->HandleSearch($model,$search);
         }
-        $list = $model->select($filed)->orderBy('sort','ASC')->orderBy('created_at','ASC')->get()->toArray();
+        $list = $model->select($filed)->orderBy('sort','ASC')->orderBy('created_at','DESC')->get()->toArray();
         if(!empty($list)){
 
             if($isTree){

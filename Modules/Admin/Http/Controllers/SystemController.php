@@ -36,7 +36,7 @@ class SystemController extends CrudController
             if(!empty($request->order)){
                 $model = $model->orderBy($request->order,$sort);
             } else {
-                $model = $model->orderBy('sort',$sort)->orderBy('created_at',$sort);
+                $model = $model->orderBy('sort',$sort)->orderBy('created_at','DESC');
             }
             $record = $model->get();
             
