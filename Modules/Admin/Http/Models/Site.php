@@ -165,12 +165,14 @@ class Site extends Base
      */
     protected static function executeRemoteCommand($siteId, $type, $option = [])
     {
+        set_time_limit(100);
+
         //获取站点配置
         $site = self::findOrFail($siteId);
         //获取服务器配置
-        $server = Server::findOrFail($site->server_id);
+        $server = Server::find($site->server_id);
         //获取数据库配置
-        $database = Database::findOrFail($site->database_id);
+        $database = Database::find($site->database_id);
 
         $checkParamEmpty = [
             'site-name' => $site->name,
