@@ -13,113 +13,152 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
 /** 需要登陆验证但不需要权限验证的路由 */
 Route::middleware([
     'api',
     JwtMiddleware::class, // JWT验证中间件
     'language' // 语言中间件
 ])->group(function() {
+    require __DIR__ . '/api_temp/loginNoRule.php';
+});
+
+/** 需要登陆验证但不需要权限验证的路由 */
+Route::middleware([
+    'api',
+    JwtMiddleware::class, // JWT验证中间件
+    'language' // 语言中间件
+])->prefix('admin')->group(function() {
+    Route::post('admin/update/info','UserController@updateInfo')->name('个人信息修改');
     // Common控制器
-    Route::get('admin/common/info','CommonController@info')->name('INFO接口');
-    Route::get('admin/common/menus','CommonController@menus')->name('菜单栏');
-    Route::get('admin/common/switchSite',[Modules\Admin\Http\Controllers\CommonController::class,'switchSite'])->name('用户切换站点');
-    Route::get('admin/rule/option','RuleController@option')->name('权限Admin模块option接口');
-    Route::get('admin/rule/option-site','RuleController@optionSite')->name('权限Site模块option接口');
-    Route::get('admin/role/adminId/{id}','RoleController@adminId')->name('Admin权限IDS');
-    Route::get('admin/role/siteId/{id}','RoleController@siteId')->name('Site权限IDS');
-    Route::get('admin/site/option','SiteController@option')->name('站点列表option');
+    Route::prefix('common')->group(function() {
+        Route::get('info',[Modules\Admin\Http\Controllers\CommonController::class,'info'])->name('公共模块:INFO接口');
+        Route::get('menus',[Modules\Admin\Http\Controllers\CommonController::class,'menus'])->name('公共模块:菜单栏');
+        Route::get('switchSite',[Modules\Admin\Http\Controllers\CommonController::class,'switchSite'])->name('公共模块:切换站点');
+    });
 
     // User控制器
-    Route::get('admin/user/form/{id}','UserController@form')->name('用户单查');
-    Route::get('admin/user/list','UserController@list')->name('用户列表');
-    Route::post('admin/update/info','UserController@updateInfo')->name('个人信息修改');
-    Route::get('admin/user/info','UserController@UserInfo')->name('个人信息');
-    Route::get('admin/user/options','UserController@options')->name('User字典数据');
-    Route::post('admin/user/change-status','UserController@changeStatus')->name('用户修改状态');
-    Route::post('admin/user/import',[Modules\Admin\Http\Controllers\UserController::class,'import'])->name('用户管理:用户导入');
-    Route::get('admin/user/export',[Modules\Admin\Http\Controllers\UserController::class,'export'])->name('用户管理:用户导出');
-    Route::get('admin/user/download',[Modules\Admin\Http\Controllers\UserController::class,'download'])->name('用户管理:模版下载');
+    Route::prefix('user')->group(function() {
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\UserController::class,'form'])->name('用户管理:用户单查');
+        Route::get('list',[Modules\Admin\Http\Controllers\UserController::class,'list'])->name('用户管理:用户列表');
+        Route::get('info',[Modules\Admin\Http\Controllers\UserController::class,'UserInfo'])->name('用户管理:个人信息');
+        Route::get('options',[Modules\Admin\Http\Controllers\UserController::class,'options'])->name('用户管理:字典数据');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\UserController::class,'changeStatus'])->name('用户管理:修改状态');
+        Route::post('import',[Modules\Admin\Http\Controllers\UserController::class,'import'])->name('用户管理:用户导入');
+        Route::get('export',[Modules\Admin\Http\Controllers\UserController::class,'export'])->name('用户管理:用户导出');
+        Route::get('download',[Modules\Admin\Http\Controllers\UserController::class,'download'])->name('用户管理:模版下载');
+    });
+
 
 
     // Rule控制器
-    Route::get('admin/rule/list','RuleController@list')->name('权限列表');
-    Route::post('admin/rule/admin-routes','RuleController@GetAdminRoute')->name('Admin模块Route');
-    Route::get('admin/rule/form/{id}','RuleController@form')->name('权限单查');
-    Route::get('admin/rule/options',[Modules\Admin\Http\Controllers\RuleController::class,'options'])->name('权限字典数据');
-    Route::post('admin/rule/change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限修改状态');
-
+    Route::prefix('rule')->group(function() {
+        Route::get('option',[Modules\Admin\Http\Controllers\RuleController::class,'option'])->name('权限管理:总控权限下拉数据');
+        Route::get('option-site',[Modules\Admin\Http\Controllers\RuleController::class,'optionSite'])->name('权限管理:站点权限下拉数据');
+        Route::get('list',[Modules\Admin\Http\Controllers\RuleController::class,'list'])->name('权限管理:数据列表');
+        Route::post('admin-routes',[Modules\Admin\Http\Controllers\RuleController::class,'GetAdminRoute'])->name('权限管理:总控模块路由');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\RuleController::class,'form'])->name('权限管理:权限单查');
+        Route::get('options',[Modules\Admin\Http\Controllers\RuleController::class,'options'])->name('权限管理:字典数据');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限管理:修改状态');
+        Route::get('option-add-rule',[Modules\Admin\Http\Controllers\RuleController::class,'optionAddRule'])->name('权限管理:新增权限的字典数据');
+    });
 
     // Role控制器
-    Route::get('admin/role/list','RoleController@list')->name('角色列表');
-    Route::get('admin/role/form/{id}','RoleController@form')->name('角色单查');
-    Route::get('admin/role/option','RoleController@option')->name('角色option');
-    Route::post('admin/role/adminRule','RoleController@adminRule')->name('Admin分配权限');
-    Route::post('admin/role/siteRule','RoleController@siteRule')->name('Site分配权限');
-    Route::get('admin/role/options',[Modules\Admin\Http\Controllers\RoleController::class,'options'])->name('角色字典数据');
-    Route::post('admin/role/change-status',[Modules\Admin\Http\Controllers\RoleController::class,'changeStatus'])->name('权限修改状态');
-
+    Route::prefix('role')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\RoleController::class,'list'])->name('角色管理:角色列表');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\RoleController::class,'form'])->name('角色管理:角色单查');
+        Route::get('option',[Modules\Admin\Http\Controllers\RoleController::class,'option'])->name('角色管理:角色数据下拉');
+        Route::post('adminRule',[Modules\Admin\Http\Controllers\RoleController::class,'adminRule'])->name('角色管理:总控分配权限');
+        Route::post('siteRule',[Modules\Admin\Http\Controllers\RoleController::class,'siteRule'])->name('角色管理:站点分配权限');
+        Route::get('options',[Modules\Admin\Http\Controllers\RoleController::class,'options'])->name('角色管理:字典数据');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\RoleController::class,'changeStatus'])->name('角色管理:修改状态');
+        Route::get('adminId/{id}',[Modules\Admin\Http\Controllers\RoleController::class,'adminId'])->name('角色管理:总控权限数据下拉');
+        Route::get('siteId/{id}',[Modules\Admin\Http\Controllers\RoleController::class,'siteId'])->name('角色管理:站点权限数据下拉');
+    });
 
     // Email控制器
-    Route::get('admin/email/list','EmailController@list')->name('邮箱列表');
-    Route::post('admin/email/changeStatus','EmailController@changeStatus')->name('邮箱状态改变');
-    Route::get('admin/email/option','EmailController@option')->name('邮箱option列表');
+    Route::prefix('email')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\EmailController::class,'list'])->name('邮箱管理:邮箱列表');
+        Route::post('changeStatus',[Modules\Admin\Http\Controllers\EmailController::class,'changeStatus'])->name('邮箱管理:状态改变');
+        Route::get('option',[Modules\Admin\Http\Controllers\EmailController::class,'option'])->name('邮箱管理:邮箱下拉数据');
+    });
 
 
     // EmailScene控制器
-    Route::get('admin/email-scene/list','EmailSceneController@list')->name('发邮列表');
-    Route::post('admin/email-scene/changeStatus','EmailSceneController@changeStatus')->name('发邮状态改变');
+    Route::prefix('email-scene')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\EmailSceneController::class,'list'])->name('发邮场景:发邮列表');
+        Route::post('changeStatus',[Modules\Admin\Http\Controllers\EmailSceneController::class,'changeStatus'])->name('发邮场景:状态改变');
+    });
 
     // Dictionary控制器
-    Route::get('admin/dictionary/list','DictionaryController@list')->name('字典列表');
-    Route::get('admin/dictionary/form/{id}','DictionaryController@form')->name('字典单查');
-    Route::get('admin/dictionary/options',[Modules\Admin\Http\Controllers\DictionaryController::class,'options'])->name('字典数据');
-    Route::post('admin/dictionary/change-status',[Modules\Admin\Http\Controllers\DictionaryController::class,'changeStatus'])->name('字典修改状态');
+    Route::prefix('dictionary')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\DictionaryController::class,'list'])->name('字典管理:字典列表');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\DictionaryController::class,'form'])->name('字典管理:字典单查');
+        Route::get('options',[Modules\Admin\Http\Controllers\DictionaryController::class,'options'])->name('字典管理:字典数据');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\DictionaryController::class,'changeStatus'])->name('字典管理:修改状态');
+    });
 
     // DictionaryValue控制器
-    Route::get('admin/dictionary-value/list/','DictionaryValueController@list')->name('字典项列表');
-    Route::get('admin/dictionary-value/form/{id}','DictionaryValueController@form')->name('字典项单查');
-    Route::get('admin/dictionary-value/get/{code}','DictionaryValueController@get')->name('字典项查询');
-    Route::post('admin/dictionary-value/change-status',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'changeStatus'])->name('字典项修改状态');
+    Route::prefix('dictionary-value')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'list'])->name('字典管理:字典项列表');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'form'])->name('字典管理:字典项单查');
+        Route::get('get/{code}',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'get'])->name('字典管理:字典项查询(KEY)');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'changeStatus'])->name('字典管理:字典项修改状态');
+    });
 
     // Server控制器
-    Route::get('admin/server/list','ServerController@list')->name('服务器列表');
-    Route::post('admin/server/changeStatus',[Modules\Admin\Http\Controllers\ServerController::class,'changeStatus'])->name('服务器管理:状态修改');
+    Route::prefix('server')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\ServerController::class,'list'])->name('服务器管理:服务器列表');
+        Route::post('changeStatus',[Modules\Admin\Http\Controllers\ServerController::class,'changeStatus'])->name('服务器管理:状态修改');
+    });
 
     // System控制器
-    Route::get('admin/system/list','SystemController@list')->name('平台字段父级列表');
-    Route::get('admin/system/form/{id}','SystemController@form')->name('平台字段父级单查');
-    Route::get('admin/system-value/form/{id}','SystemController@formValue')->name('平台字段子级单查');
-    Route::get('admin/system-value/list',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('平台字段子级列表');
-    Route::post('admin/system/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'changeStatus'])->name('平台字段父级修改状态');
-    Route::post('admin/system-value/change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('平台字段子级修改状态');
-    Route::get('admin/system/option',[Modules\Admin\Http\Controllers\SystemController::class,'option'])->name('平台字段option');
-    Route::get('admin/system/value-list/{parent_id}',[Modules\Admin\Http\Controllers\SystemController::class,'valueList'])->name('平台字段全部子级列表');
-    Route::post('admin/system-value/change-hidden',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeHidden'])->name('平台字段:子级显示状态');
+    Route::prefix('system')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\SystemController::class,'list'])->name('平台字段:父级列表');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\SystemController::class,'form'])->name('平台字段:父级单查');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\SystemController::class,'changeStatus'])->name('平台字段:父级修改状态');
+        Route::get('option',[Modules\Admin\Http\Controllers\SystemController::class,'option'])->name('平台字段:父级下拉数据');
+        Route::get('value-list/{parent_id}',[Modules\Admin\Http\Controllers\SystemController::class,'valueList'])->name('平台字段:某个父级下的子级列表');
+    });
+    Route::prefix('system-value')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueList'])->name('平台字段:全部子级列表');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeStatus'])->name('平台字段:子级修改状态');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\SystemController::class,'formValue'])->name('平台字段:子级单查');
+        Route::post('change-hidden',[Modules\Admin\Http\Controllers\SystemController::class,'valueChangeHidden'])->name('平台字段:子级显示状态');
+    });
 
 
     // Department控制器
-    Route::get('admin/department/list','DepartmentController@list')->name('部门列表');
-    Route::get('admin/department/form/{id}','DepartmentController@form')->name('部门单查');
-    Route::get('admin/department/options',[Modules\Admin\Http\Controllers\DepartmentController::class,'options'])->name('部门字典数据');
-    Route::post('admin/department/change-status',[Modules\Admin\Http\Controllers\DepartmentController::class,'changeStatus'])->name('部门修改状态');
+    Route::prefix('department')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\DepartmentController::class,'list'])->name('部门管理:部门列表');
+        Route::get('form/{id}',[Modules\Admin\Http\Controllers\DepartmentController::class,'form'])->name('部门管理:部门单查');
+        Route::get('options',[Modules\Admin\Http\Controllers\DepartmentController::class,'options'])->name('部门管理:字典数据');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\DepartmentController::class,'changeStatus'])->name('部门管理:修改状态');
+    });
 
 
-    require __DIR__ . '/api_temp/loginNoRule.php';
     // Database控制器
-    Route::post('admin/database/changeStatus',[Modules\Admin\Http\Controllers\DatabaseController::class,'changeStatus'])->name('数据库管理:状态修改');
-    Route::get('admin/database/phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
+    Route::prefix('database')->group(function() {
+        Route::post('changeStatus',[Modules\Admin\Http\Controllers\DatabaseController::class,'changeStatus'])->name('数据库管理:状态修改');
+        Route::get('phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
+    });
 
     // Site控制器
-    Route::get('admin/site/user-option',[Modules\Admin\Http\Controllers\SiteController::class,'UserOption'])->name('用户的站点下拉数据');
+    Route::prefix('site')->group(function() {
+        Route::get('user-option',[Modules\Admin\Http\Controllers\SiteController::class,'UserOption'])->name('站点管理:用户站点下拉数据');
+        Route::get('option',[Modules\Admin\Http\Controllers\SiteController::class,'option'])->name('站点管理:站点列表下拉数据');
+    });
 
     // EmailLog控制器
-    Route::get('admin/email-log/list',[Modules\Admin\Http\Controllers\EmailLogController::class,'list'])->name('邮箱日志列表');
-    Route::get('admin/email-log/option',[Modules\Admin\Http\Controllers\EmailLogController::class,'option'])->name('邮箱日志option');
+    Route::prefix('email-log')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\EmailLogController::class,'list'])->name('邮箱日志:日志列表');
+        Route::get('option',[Modules\Admin\Http\Controllers\EmailLogController::class,'option'])->name('邮箱日志:字典数据');
+    });
 
     // OperationLogController 控制器
-    Route::get('admin/operation-log/list',[Modules\Admin\Http\Controllers\OperationLogController::class,'list'])->name('操作日志:数据列表');
-    Route::post('admin/operation-log/destroy',[Modules\Admin\Http\Controllers\OperationLogController::class,'destroy'])->name('操作日志:删除操作');
+    Route::prefix('operation-log')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\OperationLogController::class,'list'])->name('操作日志:数据列表');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\OperationLogController::class,'destroy'])->name('操作日志:删除操作');
+    });
 });
 
 /** 需要登陆并且需要验证权限的路由 */
@@ -192,7 +231,7 @@ Route::middleware([
 
     // EmailLog控制器
     Route::post('admin/email-log/destroy',[Modules\Admin\Http\Controllers\EmailLogController::class,'destroy'])->name('邮箱日志删除');
-    
+
     require __DIR__ . '/api_temp/loginAndRule.php';
     
 });
