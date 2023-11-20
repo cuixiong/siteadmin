@@ -174,16 +174,19 @@ class Site extends Base
         //获取数据库配置
         $database = Database::find($site->database_id);
 
+
         $checkParamEmpty = [
-            'site-name' => $site->name,
-            'site-api_repository' => $site->api_repository,
-            'site-frontend_repository' => $site->frontend_repository,
-            'server-ip' => $server->ip,
-            'server-username' => $server->username,
-            'server-password' => $server->password,
-            'database-ip' => $database->ip,
-            'database-username' => $database->username,
-            'database-password' => $database->password,
+            'server-model' => $server,
+            'database-model' => $database,
+            'site-name' => $site->name ?? '',
+            'site-api_repository' => $site->api_repository ?? '',
+            'site-frontend_repository' => $site->frontend_repository ?? '',
+            'server-ip' => $server->ip ?? '',
+            'server-username' => $server->username ?? '',
+            'server-password' => $server->password ?? '',
+            'database-ip' => $database->ip ?? '',
+            'database-username' => $database->username ?? '',
+            'database-password' => $database->password ?? '',
         ];
         //判断参数是否为空
         foreach ($checkParamEmpty as $key => $value) {
