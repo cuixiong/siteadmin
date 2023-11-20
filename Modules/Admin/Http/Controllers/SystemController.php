@@ -154,7 +154,7 @@ class SystemController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $fileds = $request->HeaderLangague == 'en' ? ['id as value','english_name as label'] : ['id as value','name as label'];
+            $fileds = $request->HeaderLanguage == 'en' ? ['id as value','english_name as label'] : ['id as value','name as label'];
             $record = $ModelInstance->GetListLabel($fileds,false,'',['status' => 1]);
             ReturnJson(TRUE,trans('lang.request_success'),$record);
         } catch (\Exception $e) {
