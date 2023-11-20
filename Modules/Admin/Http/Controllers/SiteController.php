@@ -355,12 +355,12 @@ class SiteController extends CrudController
             // 总页数
             $pageCount = $request->pageSize > 0 ? ceil($count / $request->pageSize) : 1;
             // 当前页码数
-            $page = $request->page ? $request->page : 1;
+            $page = $request->pageNum ? $request->pageNum : 1;
             $pageSize = $request->pageSize ? $request->pageSize : 100;
 
             // 查询偏移量
-            if (!empty($request->page) && !empty($request->pageSize)) {
-                $model->offset(($request->page - 1) * $request->pageSize);
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
             }
             // 查询条数
             if (!empty($request->pageSize)) {
