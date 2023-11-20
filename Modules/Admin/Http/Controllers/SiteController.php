@@ -446,10 +446,10 @@ class SiteController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1]);
 
             //是否创建数据库
-            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
+            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database','status' => 1]);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

@@ -44,7 +44,7 @@ class Publisher extends Base
         
         //company
         if (isset($search->company) && !empty($search->company)) {
-            $model = $model->where('name', 'like', '%' . $search->company . '%');
+            $model = $model->where('company', 'like', '%' . $search->company . '%');
         }
         
         //content

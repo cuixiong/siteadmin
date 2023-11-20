@@ -53,7 +53,7 @@ class PublisherController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1]);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
