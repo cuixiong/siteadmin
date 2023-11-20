@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::get('admin/database/phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
 
 /** 需要登陆验证但不需要权限验证的路由 */
 Route::middleware([
