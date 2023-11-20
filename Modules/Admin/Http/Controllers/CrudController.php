@@ -140,7 +140,7 @@ class CrudController extends Controller
             }
             $model = $model->select($ModelInstance->ListSelect);
             // 数据排序
-            $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if(!empty($request->order)){
                 $model = $model->orderBy($request->order,$sort);
             } else {

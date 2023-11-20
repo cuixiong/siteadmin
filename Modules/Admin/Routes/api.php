@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::get('admin/database/phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
 
 /** 需要登陆验证但不需要权限验证的路由 */
 Route::middleware([
@@ -109,6 +108,7 @@ Route::middleware([
     require __DIR__ . '/api_temp/loginNoRule.php';
     // Database控制器
     Route::post('admin/database/changeStatus',[Modules\Admin\Http\Controllers\DatabaseController::class,'changeStatus'])->name('数据库管理:状态修改');
+    Route::get('admin/database/phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
 
     // Site控制器
     Route::get('admin/site/user-option',[Modules\Admin\Http\Controllers\SiteController::class,'UserOption'])->name('用户的站点下拉数据');

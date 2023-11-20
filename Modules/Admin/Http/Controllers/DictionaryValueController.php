@@ -17,6 +17,7 @@ class DictionaryValueController extends CrudController{
         try {
             $search = $request->input('search');
             $search = $search ? json_decode($search,true) : [];
+            $search['status'] = 1;
             if($request->code){
                 $search['code'] = $request->code;
             }

@@ -5,7 +5,7 @@ return [
     'add_error'   =>  'Add failed',
     'request_success'   =>  'Request successful',
     'request_error'   =>  'request failure',
-    'delete_success'   =>  'Successfully added',
+    'delete_success'   =>  'Successfully deleted',
     'delete_error'   =>  'Delete failed',
     'update_success'   =>  'update success',
     'update_error'   =>  'Update failed',

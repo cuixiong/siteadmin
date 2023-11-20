@@ -49,10 +49,7 @@ class Rule extends Base
     {
         if($value == 'CATALOG'){
             $this->attributes['component'] = 'Layout';
-        } else {
-            $this->attributes['component'] = $this->attributes['component'];
         }
         $this->attributes['type'] = $value;
-
     }
 }
