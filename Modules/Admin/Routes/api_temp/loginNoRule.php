@@ -9,6 +9,8 @@ Route::get('admin/site/list', 'SiteController@list')->name('站点列表');
 // Route::get('admin/site/option','SiteController@option')->name('站点option');
 Route::get('admin/site/search-droplist','SiteController@searchDroplist')->name('站点搜索下拉列表数据');
 
+//SiteUpdateLog控制器 
+Route::get('admin/site-update-log/list', 'SiteUpdateLogController@list')->name('升级站点日志列表');
 
 // Region控制器
 Route::get('admin/region/list', 'RegionController@list')->name('地区列表');

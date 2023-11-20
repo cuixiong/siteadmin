@@ -187,7 +187,10 @@ class PriceEditionController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'order')->where('edition_id', $item['id'])->get();
+                    $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort')
+                    ->where('edition_id', $item['id'])
+                    ->orderBy('sort', 'ASC')
+                    ->get();
                 }
             }
             $data = [

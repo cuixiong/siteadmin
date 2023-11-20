@@ -59,7 +59,7 @@ class SiteController extends CrudController
             $Tenant = new TenantController();
             $res = $Tenant->initTenant(
                 $is_create,
-                $input['english_name'],
+                $input['name'],
                 $input['domain'],
                 $database['db_host'],
                 $database['db_database'],
@@ -120,138 +120,19 @@ class SiteController extends CrudController
     {
 
         $siteId = $request->input('site_id');
+        // 创建者ID
+        $created_by = $request->user->id;
 
         try {
-
-            //获取站点配置
-            $site = Site::findOrFail($siteId);
-
-            if (empty($site->english_name) || empty($site->api_repository) || empty($site->frontend_repository)) {
-                ReturnJson(TRUE, trans('lang.param_empty'), 'site');
-            }
-
-            //获取服务器配置
-            $server = Server::findOrFail($site->server_id);
-
-            if (empty($server->ip) || empty($server->username) || empty($server->password)) {
-                ReturnJson(TRUE, trans('lang.param_empty'), 'server');
-            }
-
-            //获取数据库配置
-            $database = Database::findOrFail($site->database_id);
-
-            if (empty($database->ip) || empty($database->username) || empty($database->password)) {
-                ReturnJson(TRUE, trans('lang.param_empty'), 'database');
-            }
-
-
-            //连接远程服务器
-            $ssh = new SSH2($server->ip);
-
-            if (!$ssh->login($server->username, $server->password)) {
-                ReturnJson(TRUE, trans('lang.request_error'), 'Login Failed');
-            }
-
-            // 项目所在外层路径
-            $siteBasePath = '/www/wwwroot/' . $site->english_name . '/';
-            // 接口/后台代码仓库地址
-            $apiRepository = $site->api_repository;
-            // 仓库别名
-            $apiDirName = 'admin.' . $site->english_name;
-            // 前台代码仓库地址
-            // $frontedRepository = $site->api_repository;
-            // 仓库别名
-            // $frontedDirName = 'nuxt.' . $site->english_name;
-
-            //数据库信息
-            $dbHost = $database->ip;
-            $dbName = $database->name;
-            $dbUsername = $database->username;
-            $dbPassword = $database->password;
-            $tablePrefix = empty($database->prefix) ? $database->prefix : '';
-
-            $output = [];
-            $commands = [
-                /** 
-                 * 一、第一次克隆代码
-                 * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
-                 * 原：git clone 仓库地址 [新建的目录名]
-                 * 例: git clone https://gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
-                 * 携带密码：git clone https://用户名:密码@仓库地址 [新建的目录名]
-                 * 例: git clone https://6953%40qq.com:1234567acde@gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
-                 * 用户名密码有@这些特殊符号需转义
-                 */
-                'cd ' . $siteBasePath . ' && git clone ' . $apiRepository . ' ' . $apiDirName,
-                /**
-                 * 二、下载依赖
-                 * 因为每一句命令独立运行，所以每次都要cd到指定目录
-                 * /www/server/php/74/bin/php 是因为项目基于7.4，而服务器默认的php版本为8.0
-                 * 使用时提示是否使用root用户，追加--no-interaction 参数默认应答
-                 */
-                'cd ' . $siteBasePath . $apiDirName . ' &&  /www/server/php/74/bin/php /usr/bin/composer install --no-interaction',
-                /**
-                 * 三、修改项目的权限
-                 * 因为每一句命令独立运行，所以每次都要指定目录
-                 */
-                'chown -R www:www ' . $siteBasePath . $apiDirName . ' && chmod -R 755 ' . $siteBasePath . $apiDirName,
-                /**
-                 * 四、配置初始化
-                 * 基于第三步的修改权限，不然提示没权限
-                 * --env=Development --overwrite=n 默认使用Development模式，选择不覆盖重名文件
-                 */
-                'cd ' . $siteBasePath . $apiDirName . ' && ./init --env=Development --overwrite=n',
-                /**
-                 * 五、配置文件连接数据库
-                 * 网站项目的console我新增了一个Controller,通过命令行传递数据库信息以填写数据库信息
-                 * config/index config是控制器名，index是函数方法
-                 */
-                'cd ' . $siteBasePath . $apiDirName . ' && ./yii config/index --dbHost=' . $dbHost . ' --dbUsername=' . $dbUsername . ' --dbPassword=' . $dbPassword . ' --dbName=' . $dbName . ' --tablePrefix=' . $tablePrefix,
-            ];
-
-            //执行命令
-            $output = $this->executeRemoteCommand($ssh, $commands);
+            $output = Site::executeRemoteCommand($siteId, 'add_site', ['created_by' => $created_by]);
 
             ReturnJson(TRUE, trans('lang.request_success'), $output);
         } catch (\Throwable $th) {
-            ReturnJson(TRUE, trans('lang.request_error'), $th->getMessage());
+            ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
 
         ReturnJson(TRUE, trans('lang.request_success'));
     }
-    /**
-     * 远程服务器 执行命令处理输出
-     * @param \phpseclib3\Net\SSH2 $ssh 
-     * @param Array|String $command
-     */
-    private function executeRemoteCommand($ssh, $commands)
-    {
-
-        if (is_array($commands)) {
-
-            foreach ($commands as $command) {
-                # code...
-                if (!empty($command)) {
-
-                    $output = $ssh->exec($command);
-                    if ($ssh->getExitStatus() !== 0) {
-                        // 执行失败
-                        return [
-                            'result' => false,
-                            'output' => $output,
-                            'command' => $command,
-                        ];
-                    }
-                }
-            }
-        } elseif (!empty($commands)) {
-
-            $output = $ssh->exec($commands);
-        }
-        return [
-            'result' => true,
-        ];
-    }
-
 
     /**
      * 编辑一个站点
@@ -265,7 +146,7 @@ class SiteController extends CrudController
         $input['created_by'] = $request->user->id;
 
         // 开启事务
-        DB::beginTransaction();
+        // DB::beginTransaction();
         try {
             // 入库site表
             $model = new Site();
@@ -273,25 +154,132 @@ class SiteController extends CrudController
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
-                DB::rollBack();
+                // DB::rollBack();
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-            // // 创建租户
-            // $Tenant = new TenantController();
-            // $res = $Tenant->updateTenant($input['id'], $input['english_name'], $input['domain'], $input['db_host'], $input['db_database'], $input['db_username'], $input['db_password'], $input['db_port']);
+
+            $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first()->toArray();
+
+            // 更新租户
+            $Tenant = new TenantController();
+            $res = $Tenant->updateTenant(
+                $input['id'],
+                $input['name'],
+                $input['domain'],
+                $database['db_host'],
+                $database['db_database'],
+                $database['db_username'],
+                $database['db_password'],
+                $database['db_port'] ?? 3306
+            );
+
+
             // if ($res !== true) {
             //     // 回滚事务
             //     DB::rollBack();
             //     ReturnJson(FALSE, $res);
             // }
-            DB::commit();
+            // DB::commit();
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
-            DB::rollBack();
+            // DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+    /**
+     * 远程连接服务器更新站点/拉取代码
+     * @param Request $request
+     */
+    public function updateSiteToRemoteServer(Request $request)
+    {
+
+        $siteId = $request->input('site_id');
+        // 创建者ID
+        $created_by = $request->user->id;
+
+        try {
+            $output = Site::executeRemoteCommand($siteId, 'pull_code', ['created_by' => $created_by]);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $output);
+        } catch (\Throwable $th) {
+            ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'));
+    }
+
+
+    /**
+     * 获取提交历史记录列表
+     * @param Request $request
+     */
+    public function CommitHistory(Request $request)
+    {
+
+        $siteId = $request->input('site_id');
+        // 创建者ID
+        $created_by = $request->user->id;
+
+        try {
+            $output = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by]);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $output);
+        } catch (\Throwable $th) {
+            ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'));
+    }
+
+    /**
+     * 是否可更新/可升级
+     * @param Request $request
+     */
+    public function availableUpgrade(Request $request)
+    {
+
+        $siteId = $request->input('site_id');
+        // 创建者ID
+        $created_by = $request->user->id;
+
+        try {
+            $output = Site::executeRemoteCommand($siteId, 'available_pull', ['created_by' => $created_by]);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $output);
+        } catch (\Throwable $th) {
+            ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'));
+    }
+
+    /**
+     * 版本回退、代码回滚
+     * @param Request $request
+     */
+    public function rollbackCode(Request $request)
+    {
+
+        $siteId = $request->input('site_id');
+        $hash = $request->input('hash');
+        // 创建者ID
+        $created_by = $request->user->id;
+        if (empty($hash)) {
+            ReturnJson(FALSE, trans('lang.param_empty'), 'hash');
+        }
+        try {
+            $output = Site::executeRemoteCommand($siteId, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $output);
+        } catch (\Throwable $th) {
+            ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'));
+    }
+
 
     /**
      * 删除一个站点
@@ -367,12 +355,12 @@ class SiteController extends CrudController
             // 总页数
             $pageCount = $request->pageSize > 0 ? ceil($count / $request->pageSize) : 1;
             // 当前页码数
-            $page = $request->page ? $request->page : 1;
+            $page = $request->pageNum ? $request->pageNum : 1;
             $pageSize = $request->pageSize ? $request->pageSize : 100;
 
             // 查询偏移量
-            if (!empty($request->page) && !empty($request->pageSize)) {
-                $model->offset(($request->page - 1) * $request->pageSize);
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
             }
             // 查询条数
             if (!empty($request->pageSize)) {
@@ -386,13 +374,31 @@ class SiteController extends CrudController
             $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get();
 
             //查询后的数据处理
-            // if ($record && count($record) > 0) {
+            if ($record && count($record) > 0) {
 
-            //     foreach ($record as $key => $item) {
-            //         //子项数据
-            //         $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics')->where('id', $item['id'])->get();
-            //     }
-            // }
+                foreach ($record as $key => $item) {
+                    //获取当前站点仓库的版本hash值
+                    $currentHashData = Site::executeRemoteCommand($item['id'], 'current_hash');
+
+                    $record[$key]['hash'] = '';
+                    $record[$key]['hash_sample'] = '';
+                    if($currentHashData['result']){
+                        $temp_array = explode("\n",$currentHashData['output']);
+                        $record[$key]['hash'] = $temp_array[0];
+                        $record[$key]['hash_sample'] = $temp_array[1];
+                    }
+
+                    //是否可更新
+                    $record[$key]['available_pull'] = false;
+                    // $availablePullData = Site::executeRemoteCommand($item['id'], 'available_pull');
+                    // $record[$key]['available_pull'] = $availablePullData['result'];
+
+                    //最新一条站点更新记录
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status','updated_at'])->first();
+                    $record[$key]['site_update_log'] = $siteUpdateLog;
+
+                }
+            }
             $data = [
                 'count' => $count,
                 'pageCount' => $pageCount,
