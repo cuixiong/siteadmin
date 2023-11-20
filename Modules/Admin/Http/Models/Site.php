@@ -327,8 +327,8 @@ class Site extends Base
                     'created_at' => time(),
                     'updated_at' => time(),
                     'created_by' => $option['created_by'] ?? '',
-                    'currentHash' => $currentHash,
-                    'currentHashSample' => $currentHashSample,
+                    'hash' => $currentHash,
+                    'hash_sample' => $currentHashSample,
                 ],
             );
         }
