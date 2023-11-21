@@ -1,11 +1,21 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
+
+use Illuminate\Support\Facades\Schema;
 use Modules\Admin\Http\Models\Base;
 class OperationLog extends Base
 {
     protected $appends = ['category_text','type_text'];
 
+    public function __construct()
+    {
+        // $year = date('Y');
+        // $this->table = 'operation_log_'.$year;
+        // if(Schema::hasTable($this->table) == false){
+
+        // }
+    }
     public function getCategoryTextAttribute($value)
     {
         if(isset($this->attributes['category'])){

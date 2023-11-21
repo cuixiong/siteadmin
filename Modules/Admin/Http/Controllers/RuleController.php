@@ -76,6 +76,7 @@ class RuleController extends CrudController
             $data['name'] = $name;
             $data['children'] = $group_data;
             $data['module'] = $group;
+            $data['value'] = '';// 前端要求加上的
             $routeList[] = $data;
         }
         return $routeList;
