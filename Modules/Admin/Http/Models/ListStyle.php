@@ -32,8 +32,9 @@ class ListStyle extends Base
                 ]
             );
             $id = $listStyleModel->id;
+            $data = self::where(['id' => $id])->first()->toArray();
         } else {
-            $id = self::insert([
+            $data = self::create([
                 'user_id' => $user_id,
                 'model' => $modelName,
                 'header_title' => $title_json,
@@ -43,7 +44,7 @@ class ListStyle extends Base
             ]);
         }
 
-        return self::where(['id' => $id])->first()->toArray();
+        return $data;
     }
 
     /**
@@ -53,8 +54,7 @@ class ListStyle extends Base
      */
     public function getHeaderTitle($modelName, $user_id)
     {
-        $headerTitle = self::where(['user_id' => $user_id, 'model' => $modelName, 'status' => 1])->select(['model', 'header_title as title_json'])->first();
-
-        return $headerTitle ? $headerTitle->toArray() : [];
+        $headerTitle = self::where(['user_id' => $user_id, 'model' => $modelName, 'status' => 1])->pluck('header_title');
+        return $headerTitle;
     }
 }

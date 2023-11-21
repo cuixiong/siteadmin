@@ -46,3 +46,4 @@ Route::post('admin/price-edition/store', 'PriceEditionController@store')->name('
 Route::post('admin/price-edition/update', 'PriceEditionController@update')->name('价格版本修改');
 Route::post('admin/price-edition/destroy', 'PriceEditionController@destroy')->name('价格版本删除');
 Route::post('admin/price-edition/changeStatus', 'PriceEditionController@changeStatus')->name('价格版本状态切换');
+Route::post('admin/price-edition/set-header-title', 'PriceEditionController@setHeaderTitle')->name('设置表头');

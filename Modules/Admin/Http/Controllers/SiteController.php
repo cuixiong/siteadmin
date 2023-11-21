@@ -423,32 +423,6 @@ class SiteController extends CrudController
         }
     }
 
-    /**
-     * 为用户设置自定义表头
-     * @param Request $request 请求信息
-     * @param int $id 主键ID
-     */
-    public function setHeaderTitle(Request $request)
-    {
-        $modelName = $request->input('model_name');
-        $titleJson = $request->input('title_json');
-        $userId = $request->user->id;
-        try {
-            if (empty($userId)) {
-                ReturnJson(FALSE, 'user_id is empty');
-            } elseif (empty($modelName)) {
-                ReturnJson(FALSE, 'model_name is empty');
-            } elseif (empty($titleJson)) {
-                ReturnJson(FALSE, 'title_json is empty');
-            }
-            $data = (new \Modules\Admin\Http\Models\ListStyle())->setHeaderTitle($modelName, $userId, $titleJson);
-
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
-        } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
-        }
-    }
-
 
     /**
      * 获取搜索下拉列表

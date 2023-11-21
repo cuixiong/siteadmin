@@ -11,6 +11,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Requests\PriceEditionValueRequest;
+use Modules\Admin\Http\Models\ListStyle;
 
 class PriceEditionController extends CrudController
 {
@@ -193,9 +194,12 @@ class PriceEditionController extends CrudController
                     ->get();
                 }
             }
+            //表头排序
+            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
                 'total' => $total,
-                'list' => $record
+                'list' => $record,
+                'headerTitle' => $headerTitle,
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
