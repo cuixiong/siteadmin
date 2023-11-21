@@ -21,6 +21,7 @@ class DatabaseController extends CrudController
                 ];
                 $param = http_build_query($param);
                 $ip = $_SERVER['SERVER_ADDR'];
+                var_dump($ip);die;
                 $url = "http://$ip:888/".env('PHPMYADMIN_URL')."/?".$param;
                 return redirect($url);
             }
