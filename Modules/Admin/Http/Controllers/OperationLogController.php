@@ -41,6 +41,7 @@ class OperationLogController extends CrudController
         $model->title = $name;
         $model->content = $content;
         $model->site = $site;
+        $model->module = strtolower($ClassName);
         $model->save();
     }
 
