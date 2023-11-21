@@ -11,6 +11,7 @@ use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Department;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\User;
+use Modules\Admin\Http\Models\Site;
 
 class AdminServiceProvider extends ServiceProvider
 {
@@ -42,6 +43,7 @@ class AdminServiceProvider extends ServiceProvider
         User::observe(OperationLog::class);
         Server::observe(OperationLog::class);
         Database::observe(OperationLog::class);
+        Site::observe(OperationLog::class);
     }
 
     /**

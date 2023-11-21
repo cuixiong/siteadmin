@@ -261,4 +261,36 @@ class OperationLogController extends CrudController
         $contents = implode('、',$contents);
         return $contents;
     }
+
+    
+
+    private static function Site($model)
+    {
+
+        $dirty = $model->getDirty();
+        $contents = [];
+        $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
+        foreach ($dirty as $field => $value) {
+            if (!in_array($field, ['created_by', 'updated_by', 'created_at', 'updated_at'])) {
+
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $OriginalValue = $model->getOriginal($field);
+
+                switch ($field) {
+                    
+                    default:
+                        $OriginalName = $OriginalValue;
+                        $NewName = $value;
+                        break;
+                }
+            }
+
+            $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
+            $contents[] = $title;
+        }
+
+        $contents = implode('、', $contents);
+        return $contents;
+    }
 }
