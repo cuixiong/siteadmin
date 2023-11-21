@@ -75,9 +75,10 @@ class RuleController extends CrudController
             }
             $data['name'] = $name;
             $data['children'] = $group_data;
-            $routeList[$group] = $data;
+            $data['module'] = $group;
+            $routeList[] = $data;
         }
-        return $result;
+        return $routeList;
     }
     /**
      * 返回Admin模块路由
