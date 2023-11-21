@@ -165,23 +165,28 @@ class Site extends Base
      */
     protected static function executeRemoteCommand($siteId, $type, $option = [])
     {
+        set_time_limit(100);
+
         //获取站点配置
         $site = self::findOrFail($siteId);
         //获取服务器配置
-        $server = Server::findOrFail($site->server_id);
+        $server = Server::find($site->server_id);
         //获取数据库配置
-        $database = Database::findOrFail($site->database_id);
+        $database = Database::find($site->database_id);
+
 
         $checkParamEmpty = [
-            'site-name' => $site->name,
-            'site-api_repository' => $site->api_repository,
-            'site-frontend_repository' => $site->frontend_repository,
-            'server-ip' => $server->ip,
-            'server-username' => $server->username,
-            'server-password' => $server->password,
-            'database-ip' => $database->ip,
-            'database-username' => $database->username,
-            'database-password' => $database->password,
+            'server-model' => $server,
+            'database-model' => $database,
+            'site-name' => $site->name ?? '',
+            'site-api_repository' => $site->api_repository ?? '',
+            'site-frontend_repository' => $site->frontend_repository ?? '',
+            'server-ip' => $server->ip ?? '',
+            'server-username' => $server->username ?? '',
+            'server-password' => $server->password ?? '',
+            'database-ip' => $database->ip ?? '',
+            'database-username' => $database->username ?? '',
+            'database-password' => $database->password ?? '',
         ];
         //判断参数是否为空
         foreach ($checkParamEmpty as $key => $value) {
@@ -219,26 +224,20 @@ class Site extends Base
             // 前台代码仓库地址
             $frontendRepository = $site->frontend_repository;
             $commands = self::getAddSiteCommands($siteBasePath, $apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database);
-
         } elseif ($type == 'pull_code') {
             //拉取代码、升级站点
             $commands = self::getPullCodeCommands($siteBasePath, $apiDirName, $frontedDirName);
-            
         } elseif ($type == 'current_hash') {
             //当前版本hash及hash短格式
             $commands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
-
-        }elseif ($type == 'commit_history') {
+        } elseif ($type == 'commit_history') {
             //历史提交记录、返回哈希值及注释
             $commands = self::getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName);
-
         } elseif ($type == 'available_pull') {
             $commands = self::getAvailablePullCommands($siteBasePath, $apiDirName, $frontedDirName);
-
         } elseif ($type == 'rollback_code') {
             $hash = $option['hash'];
             $commands = self::getRollbackCodeCommands($siteBasePath, $apiDirName, $frontedDirName, $hash);
-            
         }
         // return $commands;
         //执行命令
@@ -298,10 +297,9 @@ class Site extends Base
                 //判断是否有可用更新
                 if (strpos($output['output'], 'Your branch is behind') !== false) {
                     $output['result'] = true;
-                }elseif(strpos($output['output'], 'Your branch is up to date') !== false) {
+                } elseif (strpos($output['output'], 'Your branch is up to date') !== false) {
                     $output['result'] = false;
-                }
-                else {
+                } else {
                     $output['result'] = false;
                 }
             }
@@ -311,6 +309,17 @@ class Site extends Base
 
         //拉取、回滚等操作要写到站点更新日志里
         if ($writeUpdateLog) {
+            //因为还需记录版本号，只能再调用一次
+            $currentHashCommands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $currentHashOutput = self::executeCommands($ssh, $currentHashCommands);
+
+            $currentHash = '';
+            $currentHashSample = '';
+            if ($currentHashOutput['result']) {
+                $temp_array = explode("\n", $currentHashOutput['output']);
+                $currentHash = $temp_array[0];
+                $currentHashSample = $temp_array[1];
+            }
 
             SiteUpdateLog::insert(
                 [
@@ -323,6 +332,8 @@ class Site extends Base
                     'created_at' => time(),
                     'updated_at' => time(),
                     'created_by' => $option['created_by'] ?? '',
+                    'hash' => $currentHash,
+                    'hash_sample' => $currentHashSample,
                 ],
             );
         }

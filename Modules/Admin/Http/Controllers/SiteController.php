@@ -394,8 +394,14 @@ class SiteController extends CrudController
                     // $record[$key]['available_pull'] = $availablePullData['result'];
 
                     //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status','updated_at'])->first();
-                    $record[$key]['site_update_log'] = $siteUpdateLog;
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status','updated_at','hash','hash_sample'])->first();
+                    if($siteUpdateLog){
+                        $siteUpdateLog = $siteUpdateLog->toArray();
+                    }
+                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status']??'';
+                    $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at']??'';
+                    $record[$key]['log_updated_hash'] = $siteUpdateLog['hash']??'';
+                    $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample']??'';
 
                 }
             }
@@ -440,10 +446,10 @@ class SiteController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1]);
 
             //是否创建数据库
-            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database']);
+            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database','status' => 1]);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
