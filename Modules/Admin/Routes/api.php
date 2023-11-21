@@ -288,7 +288,7 @@ Route::middleware([
     Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
 
     Route::get('baba',[\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class,'test'])->name('测试接口');
-    Route::get('phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
+    Route::get('admin/database/phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
 
     require __DIR__ . '/api_temp/other.php';
 });
