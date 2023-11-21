@@ -30,9 +30,12 @@ class RuleController extends CrudController
      */
     private function RoutesList($module = '')
     {
-        $routes = Route::getRoutes()->get();
+        $routes = Route::getRoutes();
         $result = [];
         foreach ($routes as $route) {
+            $prefix = $route->getPrefix();
+            $group = explode('/',$prefix);
+            $group = isset($group[2]) ? $group[2] : null;
             $name = $route->getName();
             if(!empty($name)){
                 $uri = $route->uri;
@@ -40,12 +43,39 @@ class RuleController extends CrudController
                 $controller = $action['controller'];
                 if(!empty($module)){
                     if(strpos($controller,$module) !== false){
-                        array_push($result,['name' => $name,'route' => $uri,'value' => $controller]);
+                        if($group){
+                            array_push($result,['name' => $name,'route' => $uri,'value' => $controller,'group' => $group]);
+                        }
                     }
-                } else {
-                    array_push($result,['name' => $name,'route' => $uri,'value' => $controller]);
                 }
             }
+        }
+        $groups = array_column($result,'group');
+        $groups = array_unique($groups);
+        $routeList = [];
+        foreach ($groups as $key => $group) {
+            $group_data = array_filter($result, function ($route) use ($group) {
+                return $route['group'] == $group;
+            });
+            sort($group_data, SORT_REGULAR);
+            $data = [];
+            $name = '';
+            for ($i = 0; $i < count($group_data); $i++) { 
+                if(empty($name)){
+                    if(isset($group_data[$i]['name'])){
+                        $name = $group_data[$i]['name'];
+                    }
+                }
+            }
+            if(!empty($name)){
+                $name = explode(':',$name);
+                if(isset($name[0]) && !empty($name[0])){
+                    $name = $name[0];
+                }
+            }
+            $data['name'] = $name;
+            $data['children'] = $group_data;
+            $routeList[$group] = $data;
         }
         return $result;
     }

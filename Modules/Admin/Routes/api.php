@@ -55,11 +55,11 @@ Route::middleware([
         Route::get('option',[Modules\Admin\Http\Controllers\RuleController::class,'option'])->name('权限管理:总控权限下拉数据');
         Route::get('option-site',[Modules\Admin\Http\Controllers\RuleController::class,'optionSite'])->name('权限管理:站点权限下拉数据');
         Route::get('list',[Modules\Admin\Http\Controllers\RuleController::class,'list'])->name('权限管理:数据列表');
-        Route::post('admin-routes',[Modules\Admin\Http\Controllers\RuleController::class,'GetAdminRoute'])->name('权限管理:总控模块路由');
         Route::get('form/{id}',[Modules\Admin\Http\Controllers\RuleController::class,'form'])->name('权限管理:权限单查');
         Route::get('options',[Modules\Admin\Http\Controllers\RuleController::class,'options'])->name('权限管理:字典数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限管理:修改状态');
         Route::get('option-add-rule',[Modules\Admin\Http\Controllers\RuleController::class,'optionAddRule'])->name('权限管理:新增权限的字典数据');
+        Route::get('admin-routes',[Modules\Admin\Http\Controllers\RuleController::class,'GetAdminRoute'])->name('权限管理:总控模块路由');
     });
 
     // Role控制器
@@ -139,7 +139,6 @@ Route::middleware([
     // Database控制器
     Route::prefix('database')->group(function() {
         Route::post('changeStatus',[Modules\Admin\Http\Controllers\DatabaseController::class,'changeStatus'])->name('数据库管理:状态修改');
-        Route::get('phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
     });
 
     // Site控制器
@@ -167,73 +166,109 @@ Route::middleware([
     JwtMiddleware::class, // JWT验证中间件
     'language', // 语言中间件
     // 'rule' // 权限验证中间件
-])->group(function() {
+])->prefix('admin')->group(function() {
+
     // User控制器
-    Route::post('admin/user/store','UserController@store')->name('用户新增');
-    Route::post('admin/user/destroy','UserController@destroy')->name('用户删除');
-    Route::post('admin/user/update','UserController@update')->name('用户编辑');
+    Route::prefix('user')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\UserController::class,'store'])->name('用户管理:用户新增');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\UserController::class,'destroy'])->name('用户管理:用户删除');
+        Route::post('update',[Modules\Admin\Http\Controllers\UserController::class,'update'])->name('用户管理:用户编辑');
+    });
+
 
     // Rule控制器
-    Route::post('admin/rule/store','RuleController@store')->name('权限新增');
-    Route::post('admin/rule/destroy','RuleController@destroy')->name('权限删除');
-    Route::post('admin/rule/update','RuleController@update')->name('权限编辑');
+    Route::prefix('rule')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\RuleController::class,'store'])->name('权限管理:权限新增');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\RuleController::class,'destroy'])->name('权限管理:权限删除');
+        Route::post('update',[Modules\Admin\Http\Controllers\RuleController::class,'update'])->name('权限管理:权限编辑');
+    });
 
     // Role控制器
-    Route::post('admin/role/store','RoleController@store')->name('角色新增');
-    Route::post('admin/role/update','RoleController@update')->name('角色编辑');
-    Route::post('admin/role/destroy','RoleController@destroy')->name('角色删除');
+    Route::prefix('role')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\RoleController::class,'store'])->name('角色管理:角色新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\RoleController::class,'update'])->name('角色管理:角色编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\RoleController::class,'destroy'])->name('角色管理:角色删除');
+    });
 
 
     // Email控制器
-    Route::post('admin/email/store','EmailController@store')->name('邮箱新增');
-    Route::post('admin/email/destroy','EmailController@destroy')->name('邮箱删除');
-    Route::post('admin/email/update','EmailController@update')->name('邮箱编辑');
+    Route::prefix('email')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\EmailController::class,'store'])->name('邮箱管理:邮箱新增');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\EmailController::class,'destroy'])->name('邮箱管理:邮箱删除');
+        Route::post('update',[Modules\Admin\Http\Controllers\EmailController::class,'update'])->name('邮箱管理:邮箱编辑');
+    });
 
     // EmailScene控制器
-    Route::post('admin/email-scene/store','EmailSceneController@store')->name('发邮新增');
-    Route::post('admin/email-scene/update','EmailSceneController@update')->name('发邮编辑');
-    Route::post('admin/email-scene/destroy','EmailSceneController@destroy')->name('字典删除');
+    Route::prefix('email-scene')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\EmailSceneController::class,'store'])->name('发邮场景:发邮新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\EmailSceneController::class,'update'])->name('发邮场景:发邮编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\EmailSceneController::class,'destroy'])->name('发邮场景:发邮删除');
+    });
 
 
     // Dictionary控制器
-    Route::post('admin/dictionary/store','DictionaryController@store')->name('字典新增');
-    Route::post('admin/dictionary/update','DictionaryController@update')->name('字典编辑');
-    Route::post('admin/dictionary/destroy','DictionaryController@destroy')->name('字典删除');
+    Route::prefix('dictionary')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\DictionaryController::class,'store'])->name('字典管理:字典新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\DictionaryController::class,'update'])->name('字典管理:字典编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\DictionaryController::class,'destroy'])->name('字典管理:字典删除');
+    });
 
     // DictionaryValue控制器
-    Route::post('admin/dictionary-value/store','DictionaryValueController@store')->name('字典项新增');
-    Route::post('admin/dictionary-value/update','DictionaryValueController@update')->name('字典项编辑');
-    Route::post('admin/dictionary-value/destroy','DictionaryValueController@destroy')->name('字典项删除');
+    Route::prefix('dictionary-value')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'store'])->name('字典管理:字典项新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'update'])->name('字典管理:字典项编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\DictionaryValueController::class,'destroy'])->name('字典管理:字典项删除');
+    });
 
     // Database控制器
-    Route::get('admin/database/list','DatabaseController@list')->name('数据库列表');
-    Route::post('admin/database/store','DatabaseController@store')->name('数据库新增');
-    Route::post('admin/database/update','DatabaseController@update')->name('数据库编辑');
-    Route::post('admin/database/destroy','DatabaseController@destroy')->name('数据库删除');
+    Route::prefix('database')->group(function() {
+        Route::get('list',[Modules\Admin\Http\Controllers\DatabaseController::class,'list'])->name('数据库管理:列表');
+        Route::post('store',[Modules\Admin\Http\Controllers\DatabaseController::class,'store'])->name('数据库管理:新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\DatabaseController::class,'update'])->name('数据库管理:编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\DatabaseController::class,'destroy'])->name('数据库管理:删除');
+    });
 
     // Server控制器
-    Route::post('admin/server/store','ServerController@store')->name('服务器新增');
-    Route::post('admin/server/update','ServerController@update')->name('服务器编辑');
-    Route::post('admin/server/destroy','ServerController@destroy')->name('服务器删除');
+    Route::prefix('server')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\ServerController::class,'store'])->name('服务器管理:新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\ServerController::class,'update'])->name('服务器管理:编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\ServerController::class,'destroy'])->name('服务器管理:删除');
+    });
 
     // System控制器
-    Route::post('admin/system/store','SystemController@store')->name('设置Tab新增');
-    Route::post('admin/system/update','SystemController@update')->name('设置Tab编辑');
-    Route::post('admin/system/destroy','SystemController@destroy')->name('设置Tab删除');
-    Route::post('admin/system-value/store',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueStore'])->name('设置键值新增');
-    Route::post('admin/system-value/update',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueUpdate'])->name('设置键值编辑');
-    Route::post('admin/system-value/destroy',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueDestroy'])->name('设置键值删除');
+    Route::prefix('system')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\SystemController::class,'store'])->name('平台字段:父级新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\SystemController::class,'update'])->name('平台字段:父级编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\SystemController::class,'destroy'])->name('平台字段:父级删除');
+    });
+    
+    Route::prefix('system-value')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueStore'])->name('平台字段:子级新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueUpdate'])->name('平台字段:子级编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\SystemController::class,'systemValueDestroy'])->name('平台字段:子级删除');
+    });
 
     // Department控制器
-    Route::post('admin/department/store','DepartmentController@store')->name('部门新增');
-    Route::post('admin/department/update','DepartmentController@update')->name('部门编辑');
-    Route::post('admin/department/destroy','DepartmentController@destroy')->name('部门删除');
+    Route::prefix('department')->group(function() {
+        Route::post('store',[Modules\Admin\Http\Controllers\DepartmentController::class,'store'])->name('部门管理:部门新增');
+        Route::post('update',[Modules\Admin\Http\Controllers\DepartmentController::class,'update'])->name('部门管理:部门编辑');
+        Route::post('destroy',[Modules\Admin\Http\Controllers\DepartmentController::class,'destroy'])->name('部门管理:部门删除');
+    });
 
     // EmailLog控制器
-    Route::post('admin/email-log/destroy',[Modules\Admin\Http\Controllers\EmailLogController::class,'destroy'])->name('邮箱日志删除');
-
-    require __DIR__ . '/api_temp/loginAndRule.php';
+    Route::prefix('email-log')->group(function() {
+        Route::post('admin/email-log/destroy',[Modules\Admin\Http\Controllers\EmailLogController::class,'destroy'])->name('邮箱日志:日志删除');
+    });
     
+});
+
+Route::middleware([
+    'api',
+    JwtMiddleware::class, // JWT验证中间件
+    'language', // 语言中间件
+    // 'rule' // 权限验证中间件
+])->group(function() {
+    require __DIR__ . '/api_temp/loginAndRule.php';
 });
 
 /** 不需要登陆也不需要验证权限的路由 */
@@ -253,6 +288,7 @@ Route::middleware([
     Route::get('admin/test/test02','TestController@Test02')->name('测试接口');
 
     Route::get('baba',[\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class,'test'])->name('测试接口');
+    Route::get('phpmyadmin/{id}',[Modules\Admin\Http\Controllers\DatabaseController::class,'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
 
     require __DIR__ . '/api_temp/other.php';
 });

@@ -124,24 +124,24 @@ class OperationLogController extends CrudController
                 $OriginalValue = $model->getOriginal($field);
                 switch ($field) {
                     case 'rule_id':
-                        $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = Rule::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
-                        $NewName = Rule::whereIn('id', $value)->pluck('name');
+                        $NewName = Rule::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
 
                     break;
 
                     case 'site_rule_id':
-                        $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = Rule::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
-                        $NewName = Rule::whereIn('id', $value)->pluck('name');
+                        $NewName = Rule::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
                     break;
 
                     case 'site_id':
-                        $OriginalName = Site::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = Site::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
-                        $NewName = Site::whereIn('id', $value)->pluck('name');
+                        $NewName = Site::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
                     break;
 
@@ -185,9 +185,9 @@ class OperationLogController extends CrudController
                     break;
 
                     case 'default_role':
-                        $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = Role::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
-                        $NewName = Role::whereIn('id', $value)->pluck('name');
+                        $NewName = Role::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
                     break;
 
@@ -221,17 +221,17 @@ class OperationLogController extends CrudController
                 $OriginalValue = $model->getOriginal($field);
                 switch ($field) {
                     case 'role_id':
-                        $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name');
+                        $OriginalName = Role::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
-                        $NewName = Role::whereIn('id', $value)->pluck('name');
+                        $NewName = Role::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
                     break;
 
                     case 'department_id':
                         $OriginalName = Department::where('id', $OriginalValue)->value('name');
-                        $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
+                        $OriginalName = $OriginalName ? $OriginalName : '';
                         $NewName = Department::where('id', $value)->value('name');
-                        $NewName = $NewName ? implode(',',$NewName) : '';
+                        $NewName = $NewName ? $NewName : '';
                     break;
 
                     case 'gender':
