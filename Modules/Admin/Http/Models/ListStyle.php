@@ -20,16 +20,14 @@ class ListStyle extends Base
         $id = '';
         if ($listStyleModel) {
 
-            self::update(
+            self::where(['id' => $listStyleModel->id])->update(
                 [
                     'header_title' => $title_json,
                     'status' => 1,
                     'updated_at' => time(),
                     'updated_by' => $user_id,
                 ],
-                [
-                    'id' => $listStyleModel->id
-                ]
+
             );
             $id = $listStyleModel->id;
             $data = self::where(['id' => $id])->first()->toArray();
