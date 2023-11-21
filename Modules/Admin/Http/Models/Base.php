@@ -242,4 +242,21 @@ class Base extends Model
     {
         return $request;
     }
+
+    /**
+     * Get sub node id
+     * @param $id
+     * @return array
+     */
+    public static function TreeGetChildIds($id)
+    {
+        $result = [];
+        $ids = self::where('parent_id',$id)->pluck('id')->toArray();
+        if($ids){
+            foreach ($ids as $map){
+                $result = array_merge($result,self::TreeGetChildIds($map));
+            }
+        }
+        return array_merge($result,[$id]);
+    }
 }

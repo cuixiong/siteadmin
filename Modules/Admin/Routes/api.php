@@ -59,7 +59,7 @@ Route::middleware([
         Route::get('options',[Modules\Admin\Http\Controllers\RuleController::class,'options'])->name('权限管理:字典数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\RuleController::class,'changeStatus'])->name('权限管理:修改状态');
         Route::get('option-add-rule',[Modules\Admin\Http\Controllers\RuleController::class,'optionAddRule'])->name('权限管理:新增权限的字典数据');
-        Route::get('admin-routes',[Modules\Admin\Http\Controllers\RuleController::class,'GetAdminRoute'])->name('权限管理:总控模块路由');
+        Route::post('admin-routes',[Modules\Admin\Http\Controllers\RuleController::class,'GetAdminRoute'])->name('权限管理:总控模块路由');
     });
 
     // Role控制器

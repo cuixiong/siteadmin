@@ -32,11 +32,14 @@ class CommonController extends Controller
         $RuleModel = new Rule();
         $where = $siteId > 0 ? ['category' => 2,'status' => 1] : ['category' => 1,'status' => 1];
         if($is_super > 0){            
-            $perms = $RuleModel->where('type','BUTTON')->where($where)->pluck('perm');
+            $perms = $RuleModel->where('type','BUTTON')->where($where)->select(['name','perm'])->get()->toArray();
         } else {
-            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->pluck('perm');
+            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->select(['name','perm'])->get('perm')->toArray();
         }
-        $data['perms'] = $perms;
+        $data['perms'] = array_column($perms,'perm');
+        
+        $data['button'] = $perms;
+
         ReturnJson(true,trans('lang.request_success'),$data);
     }
 
