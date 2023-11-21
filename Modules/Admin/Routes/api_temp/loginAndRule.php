@@ -12,6 +12,7 @@ Route::post('admin/site/init-database', 'SiteController@initDatabase')->name('�
 Route::post('admin/site/commit-history', 'SiteController@CommitHistory')->name('git提交记录历史');
 Route::post('admin/site/available-upgrade', 'SiteController@availableUpgrade')->name('git可用更新');
 Route::post('admin/site/rollback-code', 'SiteController@rollbackCode')->name('版本回退');
+Route::post('admin/site/set-header-title', 'SiteController@setHeaderTitle')->name('设置表头');
 
 
 Route::post('admin/site/changeStatus', 'SiteController@changeStatus')->name('站点状态切换');
