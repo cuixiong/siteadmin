@@ -29,5 +29,7 @@ return [
     'action_unique' => '代码已存在，请更换其他代码',
     'code_exists' => '编码已存在，请更换其他编码',
     'param_empty' => '缺少必要参数',
-
+    'alternate_email_empty' => '备用邮箱为空',
+    'alias_name_empty' => '别名为空',
+    'english_name_empty' => '英文名称为空',
 ];

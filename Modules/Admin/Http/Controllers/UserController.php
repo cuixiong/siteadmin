@@ -1,8 +1,14 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
+use App\Exports\UsersExport;
+use App\Imports\UserImport;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\Admin\Http\Controllers\CrudController;
+use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Role;
 
 class UserController extends CrudController
 {
@@ -81,5 +87,50 @@ class UserController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(TRUE,$e->getMessage());
         }
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function options(Request $request)
+    {
+        $options = [];
+        $codes = ['Switch_State','Gender'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        $options['roles'] = (new Role)->GetList(['id as value','name as label']);
+        ReturnJson(TRUE,'', $options);
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            Excel::import(new UserImport, request()->file('file'));
+            ReturnJson(true);
+        } catch (\Exception $e) {
+            ReturnJson(false,$e->getMessage());
+        }
+
+    }
+
+    public function export()
+    {
+        try {
+            return Excel::download(new UsersExport,'users.xlsx');
+        } catch (\Exception $e) {
+            ReturnJson(false,$e->getMessage());
+        }
+    }
+
+    public function download()
+    {
+        $file = public_path('import_template/UserTemplate.xls');
+        return response()->download($file);
     }
 }

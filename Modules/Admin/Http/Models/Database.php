@@ -5,5 +5,5 @@ use Modules\Admin\Http\Models\Base;
 class Database extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['ip','name','username','password','prefix','status','updated_by','created_by'];
+    protected $fillable = ['ip','name','username','password','prefix','status','port','updated_by','created_by','sort'];
 }

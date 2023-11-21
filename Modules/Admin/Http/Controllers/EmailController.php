@@ -12,7 +12,7 @@ class EmailController extends CrudController{
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $record = $ModelInstance->GetListLabel(['id as value','email as label']);
+            $record = $ModelInstance->GetListLabel(['id as value','email as label'],false,'',['status' => 1]);
             ReturnJson(TRUE,trans('lang.request_success'),$record);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());

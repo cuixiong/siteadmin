@@ -11,7 +11,7 @@ class User extends Base
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['deptName','genderLabel','avatar','deptId','roleIds','ruleText'];
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['name','nickname','email','password','role_id','status','gender','mobile','department_id','created_by','updated_by'];
+    protected $fillable = ['name','nickname','email','password','role_id','status','gender','mobile','department_id','created_by','updated_by','sort'];
 
 
     /**
@@ -45,9 +45,9 @@ class User extends Base
         $text = '';
         if(isset($this->attributes['gender']))
         {   
-            $lists = SelectTxt::GetGenderTxt();
+            $lists = DictionaryValue::where('code','gender')->where('status',1)->select(['value','name'])->get()->toArray();
             foreach ($lists as $list) {
-                if($list['id'] == $this->attributes['gender']){
+                if($list['value'] == $this->attributes['gender']){
                     $text = $list['name'];
                 }
             }
@@ -151,5 +151,46 @@ class User extends Base
         return Attribute::make(
             get: fn ($value) => date('Y-m-d H:i:s',$value),
         );
+    }
+
+    /**
+     * 处理查询列表条件数组
+     * @param $model moxel
+     * @param $search 搜索条件
+     */
+    public function HandleSearch($model,$search){
+        if(!is_array($search)){
+            $search = json_decode($search,true);
+        }
+            $search = array_filter($search,function($v){
+                if(!(empty($v) && $v != "0")){
+                    return true;
+                }
+            });
+            if(!empty($search)){
+                if(isset($search['created_by'])){
+                    unset($search['created_by']);
+                }
+                if(isset($search['updated_by'])){
+                    unset($search['updated_by']);
+                }
+                $timeArray = ['created_at','updated_at'];
+                foreach ($search as $key => $value) {
+                    if(in_array($key,['name','english_name','title'])){
+                        $model = $model->where($key,'like','%'.trim($value).'%');
+                    } else if (in_array($key,$timeArray)){
+                        if(is_array($value)){
+                            $model = $model->whereBetween($key,$value);
+                        }
+                    } else if(is_array($value) && !in_array($key,$timeArray)){
+                        $model = $model->whereIn($key,$value);
+                    } else if($key == 'role_id'){
+                        $model = $model->whereRaw('FIND_IN_SET('.$value.',role_id)');
+                    } else {
+                        $model = $model->where($key,$value);
+                    }
+                }
+            }
+        return $model;
     }
 }

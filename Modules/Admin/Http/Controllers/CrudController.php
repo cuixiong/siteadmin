@@ -138,11 +138,16 @@ class CrudController extends Controller
             if(!empty($request->pageSize)){
                 $model->limit($request->pageSize);
             }
+            $model = $model->select($ModelInstance->ListSelect);
             // 数据排序
-            $order = $request->order ? $request->order : 'id';
-            // 升序/降序
-            $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
-            $record = $model->select($ModelInstance->ListSelect)->orderBy($order,$sort)->get();
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if(!empty($request->order)){
+                $model = $model->orderBy($request->order,$sort);
+            } else {
+                $model = $model->orderBy('sort',$sort)->orderBy('created_at','DESC');
+            }
+            
+            $record = $model->get();
             
             $data = [
                 'total' => $total,
@@ -163,7 +168,7 @@ class CrudController extends Controller
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $record = $ModelInstance->GetListLabel(['id as value','name as label']);
+            $record = $ModelInstance->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
             ReturnJson(TRUE,trans('lang.request_success'),$record);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());

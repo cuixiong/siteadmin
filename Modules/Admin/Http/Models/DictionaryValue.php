@@ -20,4 +20,22 @@ class DictionaryValue extends Base
         }
         return $model;
     }
+
+    /**
+     * get name by code and value
+     * @param $code code
+     * @param $value value
+     * @return mixed
+     */
+    public static function GetNameAsCode($code,$value){
+        $name = DictionaryValue::where('code',$code)->where('value',$value)->value('name');
+        return $name;
+    }
+
+    public static function GetOption($code){
+        $request = request();
+        $filed = $request->HeaderLanguage == 'en'? ['english_name as label','value'] : ['name as label','value'];
+        $option = self::where('code',$code)->where('status',1)->select($filed)->get();
+        return $option;
+    }
 }

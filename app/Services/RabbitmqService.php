@@ -1,57 +1,158 @@
 <?php
 namespace App\Services;
-
-use Modules\Admin\Http\Models\Site;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+/**
+ * Class RabbitmqService.
+ */
 class RabbitmqService
 {
+    const READ_LINE_NUMBER = 0;
+    const READ_LENGTH      = 1;
+    const READ_DATA        = 2;
+
+    public $config;
+
+    public static $prefix   = 'laravel'; // 默认队列前缀
+    protected $exchangeName = 'laravel'; // 默认交换机名称
+    protected $queueName    = 'laravel'; // 默认队列名称
+    protected $queueMode    = ''; // 默认队列模式
+
     /**
-     * 配置连接信息
-     * @param use PhpAmqpLib\Connection\AMQPStreamConnection;
+     * @var \PhpAmqpLib\Connection\AMQPStreamConnection
      */
-    private static function getConnect(){
-        $Config = [
-            'host' => env('RABBITMQ_HOST'),
-            'port' => env('RABBITMQ_PORT'),
-            'user' => env('RABBITMQ_USER'),
-            'password' => env('RABBITMQ_PASSWORD'),
-            // 'vhost' => env('RABBITMQ_VHOST'),
-            'vhost' => '/test',
-        ];
-        return new AMQPStreamConnection(
-            $Config['host'],
-            $Config['port'],
-            $Config['user'],
-            $Config['password'],
-            $Config['vhost']
-        );
+    protected $connection;
+    /**
+     * @var \PhpAmqpLib\Channel\AMQPChannel
+     */
+    protected $channel;
+    protected $queue;
+	
+    //配置项
+    private $host;
+    private $port;
+    private $user;
+    private $pass;
+    private $vhost;
+
+    public function __construct($config = [])
+    {
+        //$this->config = $config;
+
+        //设置rabbitmq配置值
+        $this->host  = env('RABBITMQ_HOST');
+        $this->port  = env('RABBITMQ_PORT');
+        $this->user  = env('RABBITMQ_USER');
+        $this->pass  = env('RABBITMQ_PASSWORD');
+        $this->vhost = env('RABBITMQ_VHOST');
+
+        $this->connect();
     }
 
+    public function __call($method, $args = [])
+    {
+        $reConnect = false;
+        try {
+            $this->initChannel();
+            $result = call_user_func_array([$this->channel, $method], $args);
+        } catch (\Exception $e) {
+            //已重连过，仍然报错
+            if ($reConnect) {
+                throw $e;
+            }
+            if ($this->connection) {
+                $this->close();
+            }
+            $this->connect();
+            $reConnect = true;
+        }
+        return $result;
+    }
 
-    public static function push($queue,$exchange,$routing_key,$type='direct',$messageBody){
-        $connection = self::getConnect();
-        $channel = $connection->channel();
-        $channel->set_ack_handler(function (AMQPMessage $message){
-            dump("数据写入成功");
-        });
-        $channel->set_nack_handler(function (AMQPMessage $message){
-            dump("数据写入失败");
-        });
-        $channel->queue_declare($queue,false,true,false,false);
-        $channel->exchange_declare($exchange,$type,false,true,false);
-        $channel->queue_bind($queue,$exchange,$routing_key);
+    /**
+     * 连接rabbitmq消息队列.
+     *
+     * @return bool
+     */
+    public function connect()
+    {
+        try {
+            if ($this->connection) {
+                unset($this->connection);
+            }
+            $this->connection = new AMQPStreamConnection($this->host, $this->port, $this->user, $this->pass, $this->vhost);
+        } catch (\Exception $e) {
+			echo __CLASS__ ."Swoole RabbitMQ Exception'".$e->getMessage();
+            return false;
+        }
+    }
 
-        $config = [
-            'content_type' => 'text/plain',
-            'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT
-        ];
-        $message = new AMQPMessage($messageBody,$config);
-        $channel->basic_publish($message,$exchange,$routing_key);
-        $channel->wait_for_pending_acks();
-        $channel->close();
-        $connection->close();
+    /**
+     * 关闭连接.
+     */
+    public function close()
+    {
+        $this->channel->close();
+        $this->connection->close();
+    }
+
+    /**
+     * 设置交换机名称.
+     *
+     * @param string $exchangeName
+     */
+    public function setExchangeName($exchangeName = '')
+    {
+        $exchangeName && $this->exchangeName = $exchangeName;
+    }
+
+    /**
+     * 设置队列名称.
+     *
+     * @param string $queueName
+     */
+    public function setQueueName($queueName = '')
+    {
+        $queueName && $this->queueName = $queueName;
+    }
+
+    /**
+     * 设置队列模式
+     * 
+     * @param string $mode
+     */
+    public function setQueueMode($mode = '')
+    {
+        $mode && $this->queueMode = $mode;
+    }
+    /**
+     * 设置频道.
+     */
+    public function initChannel()
+    {
+        if (!$this->channel) {
+            //通道
+            $this->channel = $this->connection->channel();
+            $this->channel->queue_declare($this->queueName, false, true, false, false);
+            $this->channel->exchange_declare($this->exchangeName, $this->queueMode, false, true, false);
+            $this->channel->queue_bind($this->queueName, $this->exchangeName);
+        }
+    }
+
+    /**
+     * 插入队列数据.
+     *
+     * @param $data
+     * @return bool
+     */
+    public function push($data)
+    {	
+        $this->connect();
+        $this->initChannel();
+        $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'devlivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
+        $this->channel->basic_publish($message, $this->exchangeName);
+        $this->channel->wait_for_pending_acks();
+        $this->close();
     }
 }
-

@@ -1,5 +1,6 @@
 <?php
 namespace Modules\Admin\Http\Models;
+use App\Observers\OperationLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
@@ -120,7 +121,7 @@ class Base extends Model
         if(!empty($search)){
             $model = $this->HandleSearch($model,$search);
         }
-        $list = $model->select($filed)->get()->toArray();
+        $list = $model->select($filed)->orderBy('sort','ASC')->orderBy('created_at','DESC')->get()->toArray();
         if(!empty($list)){
 
             if($isTree){
@@ -235,5 +236,10 @@ class Base extends Model
             }
         }
         return $tree;
+    }
+
+    public function GetRequest(Request $request)
+    {
+        return $request;
     }
 }

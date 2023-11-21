@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Modules\Admin\Http\Models\Department;
 use Modules\Admin\Http\Models\Email;
+use Modules\Admin\Http\Models\EmailLog;
 use Modules\Admin\Http\Models\EmailScene;
 use Modules\Admin\Http\Models\User;
 
@@ -19,11 +20,11 @@ class SendEmailController extends Controller
      * 动态配置邮箱参数
      * @param array $data 邮箱配置参数信息
      */
-    private function SetConfig($data){
+    private function SetConfig($data,$name = 'trends'){
         $keys = ['transport','host','port','encryption','username','password','timeout','local_domain'];
         foreach ($data as $key => $value) {
             if(in_array($key,$keys)){
-                Config::set('mail.mailers.trends.'.$key,$value,true);
+                Config::set('mail.mailers.'.$name.'.'.$key,$value,true);
             }
         }
         return true;
@@ -37,10 +38,10 @@ class SendEmailController extends Controller
      * @param string $subject 邮箱标题
      * @param string $EmailUser 邮箱发件人
      */
-    private function SendEmail($email,$templet,$data,$subject,$EmailUser)
+    private function SendEmail($email,$templet,$data,$subject,$EmailUser,$name = 'trends')
     {
-        // 发送邮件
-        Mail::mailer('trends')->to($email)->send(new TrendsEmail($templet,$data,$subject,$EmailUser));
+        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet,$data,$subject,$EmailUser));
+        return $res;
     }
 
     /**
@@ -104,7 +105,7 @@ class SendEmailController extends Controller
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','register')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
+            $scene = EmailScene::where('action','register')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -124,11 +125,32 @@ class SendEmailController extends Controller
                 'password' =>  $senderEmail->password
             ];
             $this->SetConfig($config);
-            foreach ($emails as $email) {
-                $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
             }
+
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                    }
+                }
+            }
+            EmailLog::AddLog(1,$scene->email_sender_id,$emails,$scene->id,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
+            EmailLog::AddLog(0,$scene->email_sender_id,$emails,$scene->id,$user);
             ReturnJson(FALSE,$e->getMessage());
         }
     }
@@ -143,7 +165,9 @@ class SendEmailController extends Controller
         $id = $request->user->id;
         $user = User::find($id);
         $user = $user ? $user->toArray() : [];
-
+        $token = $user['email'].'&'.$user['id'];
+        $user['token'] = base64_encode($token);
+        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
@@ -181,7 +205,7 @@ class SendEmailController extends Controller
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','password')->select(['name','title','body','email_sender_id','email_recipient','status'])->first();
+            $scene = EmailScene::where('action','password')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
             if(empty($scene)){
                 ReturnJson(FALSE,trans()->get('lang.eamail_error'));
             }
@@ -195,9 +219,29 @@ class SendEmailController extends Controller
                 'password' =>  $senderEmail->password
             ];
             $this->SetConfig($config);
-            $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+            } catch (\Exception $e) {
+                if($scene->alternate_email_id){
+                    $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
             ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
             ReturnJson(FALSE,$e->getMessage());
         }
     }
@@ -217,5 +261,32 @@ class SendEmailController extends Controller
             ];
         }
         ReturnJson(true,'',$list);
+    }
+    /**
+     * reset password eamil send Test
+     * @param use Illuminate\Http\Request $request;
+     * @return response Code
+     */
+    public function passwordTest(Request $request){
+        $id = $request->user->id;
+        $user = User::find($id);
+        $user = $user ? $user->toArray() : [];
+        $token = $user['email'].'&'.$user['id'];
+        $user['token'] = base64_encode($token);
+        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $scene = $request->all();
+        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        // 邮箱账号配置信息
+        $config = [
+            'host' =>  $senderEmail->host,
+            'port' =>  $senderEmail->port,
+            'encryption' =>  $senderEmail->encryption,
+            'username' =>  $senderEmail->email,
+            'password' =>  $senderEmail->password
+        ];
+        $this->SetConfig($config);
+        $email = $request->test_email ? $request->test_email : $request->user->email;
+        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        return true;
     }
 }

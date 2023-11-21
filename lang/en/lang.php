@@ -5,7 +5,7 @@ return [
     'add_error'   =>  'Add failed',
     'request_success'   =>  'Request successful',
     'request_error'   =>  'request failure',
-    'delete_success'   =>  'Successfully added',
+    'delete_success'   =>  'Successfully deleted',
     'delete_error'   =>  'Delete failed',
     'update_success'   =>  'update success',
     'update_error'   =>  'Update failed',
@@ -29,4 +29,7 @@ return [
     'action_unique' => 'Code already exists',
     'code_exists' => 'Code already exists',
     'param_empty' => 'The parameter is empty',
+    'alternate_email_empty' => 'The alternate_email is empty',
+    'alias_name_empty' => 'The alias name is empty',
+    'english_name_empty' => 'The english name is empty',
 ];

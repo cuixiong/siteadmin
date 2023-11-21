@@ -3,6 +3,7 @@
 namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Rule;
 
 class RuleController extends CrudController
@@ -71,7 +72,7 @@ class RuleController extends CrudController
      */
     public function option(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id');
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1,'visible' => 1]);
         ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 
@@ -80,7 +81,47 @@ class RuleController extends CrudController
      */
     public function optionSite(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2]);
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2,'visible' => 1]);
         ReturnJson(TRUE,trans('lang.request_success'),$list);
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function options(Request $request)
+    {
+        $options = [];
+        $codes = ['Switch_State','Route_Classification','Menu_Type'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        ReturnJson(TRUE,'', $options);
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function optionAddRule(Request $request)
+    {
+        $options = [];
+        $codes = ['Menu_Type','Route_Classification','Switch_State','V_Show'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                if($map['code'] == 'V_Show' || $map['code'] == 'Switch_State' || $map['code'] == 'Route_Classification'){
+                    $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
+                } else {
+                    $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                }
+            }
+        }
+        ReturnJson(TRUE,'', $options);
     }
 }

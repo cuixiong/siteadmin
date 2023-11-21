@@ -5,7 +5,7 @@ use Modules\Admin\Http\Models\Base;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
-    protected $fillable = ['parent_id','name','english_name','path','component','redirect','perm','route','icon','type','sort','category','visible','keepAlive','created_by','updated_by','category'];
+    protected $fillable = ['parent_id','name','english_name','path','component','redirect','perm','route','icon','type','sort','category','visible','keepAlive','created_by','updated_by','category','status'];
 
     /**
      * 递归分类权限
@@ -38,5 +38,18 @@ class Rule extends Base
             }
         }
         return $tree;
+    }
+
+    /**
+     * components 修改器
+     * @param $value
+     * @return string
+     */
+    public function setTypeAttribute($value)
+    {
+        if($value == 'CATALOG'){
+            $this->attributes['component'] = 'Layout';
+        }
+        $this->attributes['type'] = $value;
     }
 }
