@@ -20,16 +20,14 @@ class ListStyle extends Base
         $id = '';
         if ($listStyleModel) {
 
-            self::update(
+            self::where(['id' => $listStyleModel->id])->update(
                 [
                     'header_title' => $title_json,
                     'status' => 1,
                     'updated_at' => time(),
                     'updated_by' => $user_id,
                 ],
-                [
-                    'id' => $listStyleModel->id
-                ]
+
             );
             $id = $listStyleModel->id;
             $data = self::where(['id' => $id])->first()->toArray();
@@ -54,7 +52,12 @@ class ListStyle extends Base
      */
     public function getHeaderTitle($modelName, $user_id)
     {
-        $headerTitle = self::where(['user_id' => $user_id, 'model' => $modelName, 'status' => 1])->pluck('header_title');
+        $headerTitle = self::where(['user_id' => $user_id, 'model' => $modelName, 'status' => 1])->value('header_title');
+        try {
+            $headerTitle = json_decode($headerTitle, true);
+        } catch (\Throwable $th) {
+            $headerTitle = [];
+        }
         return $headerTitle;
     }
 }

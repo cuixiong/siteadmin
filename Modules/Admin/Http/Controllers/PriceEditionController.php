@@ -199,7 +199,7 @@ class PriceEditionController extends CrudController
             $data = [
                 'total' => $total,
                 'list' => $record,
-                'headerTitle' => $headerTitle,
+                'headerTitle' => $headerTitle??[],
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

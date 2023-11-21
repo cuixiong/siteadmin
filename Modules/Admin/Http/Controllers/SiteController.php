@@ -415,7 +415,7 @@ class SiteController extends CrudController
                 'page' => $page,
                 'pageSize' => $pageSize,
                 'list' => $record,
-                'headerTitle' => $headerTitle,
+                'headerTitle' => !empty($headerTitle)?$headerTitle:[],
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
