@@ -15,6 +15,7 @@ use Modules\Admin\Http\Models\Language;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Region;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\SiteUpdateLog;
 use phpseclib3\Net\SSH2;
@@ -382,8 +383,8 @@ class SiteController extends CrudController
 
                     $record[$key]['hash'] = '';
                     $record[$key]['hash_sample'] = '';
-                    if($currentHashData['result']){
-                        $temp_array = explode("\n",$currentHashData['output']);
+                    if ($currentHashData['result']) {
+                        $temp_array = explode("\n", $currentHashData['output']);
                         $record[$key]['hash'] = $temp_array[0];
                         $record[$key]['hash_sample'] = $temp_array[1];
                     }
@@ -394,24 +395,54 @@ class SiteController extends CrudController
                     // $record[$key]['available_pull'] = $availablePullData['result'];
 
                     //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status','updated_at','hash','hash_sample'])->first();
-                    if($siteUpdateLog){
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample'])->first();
+                    if ($siteUpdateLog) {
                         $siteUpdateLog = $siteUpdateLog->toArray();
                     }
-                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status']??'';
-                    $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at']??'';
-                    $record[$key]['log_updated_hash'] = $siteUpdateLog['hash']??'';
-                    $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample']??'';
-
+                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status'] ?? '';
+                    $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at'] ?? '';
+                    $record[$key]['log_updated_hash'] = $siteUpdateLog['hash'] ?? '';
+                    $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample'] ?? '';
                 }
             }
+
+            //表头排序
+            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
+
             $data = [
                 'count' => $count,
                 'pageCount' => $pageCount,
                 'page' => $page,
                 'pageSize' => $pageSize,
-                'list' => $record
+                'list' => $record,
+                'headerTitle' => $headerTitle,
             ];
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    /**
+     * 为用户设置自定义表头
+     * @param Request $request 请求信息
+     * @param int $id 主键ID
+     */
+    public function setHeaderTitle(Request $request)
+    {
+        $modelName = $request->input('model_name');
+        $titleJson = $request->input('title_json');
+        $userId = $request->user->id;
+        try {
+            if (empty($userId)) {
+                ReturnJson(FALSE, 'user_id is empty');
+            } elseif (empty($modelName)) {
+                ReturnJson(FALSE, 'model_name is empty');
+            } elseif (empty($titleJson)) {
+                ReturnJson(FALSE, 'title_json is empty');
+            }
+            $data = (new \Modules\Admin\Http\Models\ListStyle())->setHeaderTitle($modelName, $userId, $titleJson);
+
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -446,7 +477,7 @@ class SiteController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1]);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1]);
 
             //是否创建数据库
             // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database','status' => 1]);
