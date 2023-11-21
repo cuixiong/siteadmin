@@ -31,10 +31,11 @@ class CommonController extends Controller
         $rule_ids = $res['rule'];
         $RuleModel = new Rule();
         $where = $siteId > 0 ? ['category' => 2,'status' => 1] : ['category' => 1,'status' => 1];
+        $NameFiled = $request->HeaderLanguage == 'en' ? 'english_name as name' : 'name';
         if($is_super > 0){            
-            $perms = $RuleModel->where('type','BUTTON')->where($where)->select(['name','perm'])->get()->toArray();
+            $perms = $RuleModel->where('type','BUTTON')->where($where)->select([$NameFiled,'perm'])->get()->toArray();
         } else {
-            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->select(['name','perm'])->get('perm')->toArray();
+            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->select([$NameFiled,'perm'])->get('perm')->toArray();
         }
         $data['perms'] = array_column($perms,'perm');
         

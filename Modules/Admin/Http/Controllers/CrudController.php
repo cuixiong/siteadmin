@@ -64,14 +64,15 @@ class CrudController extends Controller
     {
         try {
             $this->ValidateInstance($request);
-            $record = $this->ModelInstance()->query();
             $ids = $request->ids;
             if(!is_array($ids)){
                 $ids = explode(",",$ids);
             }
-            $record->whereIn('id',$ids);
-            if(!$record->delete()){
-                ReturnJson(FALSE,trans('lang.delete_error'));
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if($record){
+                    $record->delete();
+                }
             }
             ReturnJson(TRUE,trans('lang.delete_success'));
         } catch (\Exception $e) {

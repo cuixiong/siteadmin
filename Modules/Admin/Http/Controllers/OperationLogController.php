@@ -16,8 +16,13 @@ class OperationLogController extends CrudController
     public static function AddLog($model,$type)
     {
         $ClassName = class_basename($model);
-        $content = method_exists(new OperationLogController,$ClassName) ? self::$ClassName($model) : self::getContent($model);
-
+        if($type == 'update'){
+            $content = method_exists(new OperationLogController,$ClassName) ? self::$ClassName($model) : self::getContent($model);
+        } else if($type == 'insert'){
+            $content = "新增数据:".json_encode($model->all());
+        } else if($type == 'delete'){
+            $content = '删除了ID='.$model->id.'的数据行。';
+        }
         $request = request();
         $site = $request->header('Site');
 
@@ -103,7 +108,7 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
+                $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
                 $contents[] = $title;
             }
         }
@@ -160,7 +165,7 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
+                $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
                 $contents[] = $title;
             }
         }
@@ -201,7 +206,7 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
+                $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
                 $contents[] = $title;
             }
         }
@@ -249,7 +254,7 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                     break;
                 }
-                $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
+                $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
                 $contents[] = $title;
             }
         }
