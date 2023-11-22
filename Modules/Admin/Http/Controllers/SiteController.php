@@ -231,9 +231,16 @@ class SiteController extends CrudController
         $created_by = $request->user->id;
 
         try {
-            $output = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
-
-            ReturnJson(TRUE, trans('lang.request_success'), $output);
+            //获取数量
+            $commitCountOutput = Site::executeRemoteCommand($siteId, 'commit_history_count', ['created_by' => $created_by]);
+            $commitCount = 0;
+            if ($commitCountOutput['result']) {
+                $commitCount = trim($commitCountOutput['output'], "\n");
+            }
+            //获取具体内容
+            $commitOutput = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
+            $commitOutput['count'] = $commitCount;
+            ReturnJson(TRUE, trans('lang.request_success'), $commitOutput);
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
