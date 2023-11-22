@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Models;
 use Modules\Admin\Http\Models\Base;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class Rule extends Base
 {
     // 下面即是允许入库的字段，数组形式
@@ -51,5 +52,13 @@ class Rule extends Base
             $this->attributes['component'] = 'Layout';
         }
         $this->attributes['type'] = $value;
+    }
+
+    protected function route() : Attribute
+    {
+        return new Attribute(
+            get: fn ($value) => explode(',', $value),
+            set: fn ($value) => implode(',',$value),
+        );
     }
 }
