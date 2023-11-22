@@ -420,7 +420,7 @@ class Site extends Base
              * /www/server/php/74/bin/php 是因为项目基于7.4，而服务器默认的php版本为8.0
              * 使用时提示是否使用root用户，追加--no-interaction 参数默认应答
              */
-            'cd ' . $siteBasePath . $apiDirName . ' &&  /www/server/php/74/bin/php /usr/bin/composer install --no-interaction',
+            // 'cd ' . $siteBasePath . $apiDirName . ' &&  /www/server/php/74/bin/php /usr/bin/composer install --no-interaction',
             /**
          * 三、修改项目的权限
          * 因为每一句命令独立运行，所以每次都要指定目录
