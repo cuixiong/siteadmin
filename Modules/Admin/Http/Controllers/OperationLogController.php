@@ -314,7 +314,7 @@ class OperationLogController extends CrudController
             }
         }
         $options['site'] = (new Site)->GetListLabel(['english_name as value',$NameField],false,'',['status' => '1']);
-        $options['user'] = (new User)->GetListLabel(['id as value','email as label'],false,'',['status' => '1']);
+        $options['user'] = (new User)->GetListLabel(['id as value','name as label'],false,'',['status' => '1']);
         ReturnJson(TRUE,'', $options);
     }
 }
