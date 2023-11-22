@@ -34,7 +34,7 @@ class Site extends Base
     ];
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['publisher', 'country', 'language'];
+    protected $appends = ['publisher', 'country', 'language', 'server', 'database'];
 
     /**
      * 出版商获取器
@@ -71,6 +71,30 @@ class Site extends Base
         $text = '';
         if (isset($this->attributes['language_id'])) {
             $text = Language::where('id', $this->attributes['language_id'])->value('name');
+        }
+        return $text;
+    }
+    
+    /**
+     * 服务器获取器
+     */
+    public function getServerAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['server_id'])) {
+            $text = Server::where('id', $this->attributes['server_id'])->value('name');
+        }
+        return $text;
+    }
+    
+    /**
+     * 数据库获取器
+     */
+    public function getDatabaseAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['database_id'])) {
+            $text = Database::where('id', $this->attributes['database_id'])->value('name');
         }
         return $text;
     }
@@ -415,11 +439,11 @@ class Site extends Base
              */
             'cd ' . $siteBasePath . ' && git clone ' . $apiRepository . ' ' . $apiDirName,
             /**
-             * 二、下载依赖
-             * 因为每一句命令独立运行，所以每次都要cd到指定目录
-             * /www/server/php/74/bin/php 是因为项目基于7.4，而服务器默认的php版本为8.0
-             * 使用时提示是否使用root用户，追加--no-interaction 参数默认应答
-             */
+         * 二、下载依赖
+         * 因为每一句命令独立运行，所以每次都要cd到指定目录
+         * /www/server/php/74/bin/php 是因为项目基于7.4，而服务器默认的php版本为8.0
+         * 使用时提示是否使用root用户，追加--no-interaction 参数默认应答
+         */
             // 'cd ' . $siteBasePath . $apiDirName . ' &&  /www/server/php/74/bin/php /usr/bin/composer install --no-interaction',
             /**
          * 三、修改项目的权限
