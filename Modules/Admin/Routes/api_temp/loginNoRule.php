@@ -11,6 +11,7 @@ Route::get('admin/site/search-droplist','SiteController@searchDroplist')->name('
 
 //SiteUpdateLog控制器 
 Route::get('admin/site-update-log/list', 'SiteUpdateLogController@list')->name('升级站点日志列表');
+Route::get('admin/site-update-log/search-droplist','SiteUpdateLogController@searchDroplist')->name('搜索下拉列表数据');
 
 // Region控制器
 Route::get('admin/region/list', 'RegionController@list')->name('地区列表');
