@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Models;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Admin\Http\Models\Base;
 class OperationLog extends Base
@@ -10,11 +11,10 @@ class OperationLog extends Base
 
     public function __construct()
     {
-        // $year = date('Y');
-        // $this->table = 'operation_log_'.$year;
-        // if(Schema::hasTable($this->table) == false){
-
-        // }
+        $this->SetTableName();
+        if(Schema::hasTable($this->table) == false){
+            $this->CreateTable();
+        }
     }
     public function getCategoryTextAttribute($value)
     {
@@ -31,5 +31,27 @@ class OperationLog extends Base
             $text = DictionaryValue::GetNameAsCode('OperationLog_Type',$this->attributes['type']);
             return $text;
         }
+    }
+
+    protected function SetTableName($year = '')
+    {
+        $year = $year ? $year : date('Y');
+        $table = 'operation_log_'. $year;
+        $this->table = $table;
+        return $table;
+    }
+
+    private function CreateTable()
+    {
+        $res = DB::select("SHOW CREATE TABLE `operation_logs` ");
+        $array = get_object_vars($res[0]);
+        $createTableStatement = '';
+        foreach ($array as $key => $value) {
+            if($key == 'Create Table'){
+                $createTableStatement = $value;
+            }
+        }
+        $createTableStatement = str_replace('operation_logs', $this->table, $createTableStatement);
+        DB::unprepared($createTableStatement);
     }
 }

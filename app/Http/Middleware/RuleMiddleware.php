@@ -21,15 +21,21 @@ class RuleMiddleware
                 // 获取当前角色已分配ID
                 $rule_ids = (new Role)->GetRules($request->user->role_id,'rule');
                 $action = $route->getAction();
-                $res = Rule::whereIn('id',$rule_ids)->where('route',$action['controller'])->count();
-                if($res == 0){
-                    return response()->json([
-                        'code' => 'B001',
-                        'message' => 'No permission to operate',
-                    ]);
+
+                $rules = Rule::whereIn('id',$rule_ids)->pluck('route')->toArray();
+                $rules = array_filter($rules);
+                foreach ($rules as $value) {
+                    $value = explode(',', $value);
+                    if(in_array($action['controller'],$value)){
+                        return $next($request);
+                        break;
+                    }
                 }
+                return response()->json([
+                    'code' => 'B001',
+                    'message' => 'No permission to operate',
+                ]);
             }
-            return $next($request);
         } catch (\Exception $e) {
             return response()->json([
                 'code' => 'B001',

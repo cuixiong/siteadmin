@@ -157,6 +157,7 @@ Route::middleware([
     Route::prefix('operation-log')->group(function() {
         Route::get('list',[Modules\Admin\Http\Controllers\OperationLogController::class,'list'])->name('操作日志:数据列表');
         Route::post('destroy',[Modules\Admin\Http\Controllers\OperationLogController::class,'destroy'])->name('操作日志:删除操作');
+        Route::get('options',[Modules\Admin\Http\Controllers\OperationLogController::class,'options'])->name('操作日志:字典数据');
     });
 });
 

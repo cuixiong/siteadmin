@@ -44,6 +44,8 @@ class AdminServiceProvider extends ServiceProvider
         Server::observe(OperationLog::class);
         Database::observe(OperationLog::class);
         Site::observe(OperationLog::class);
+        Server::observe(OperationLog::class);
+        Database::observe(OperationLog::class);
     }
 
     /**

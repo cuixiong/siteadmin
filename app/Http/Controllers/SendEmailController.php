@@ -181,7 +181,7 @@ class SendEmailController extends Controller
             'password' =>  $senderEmail->password
         ];
         $this->SetConfig($config);
-        $email = $request->test_email ? $request->test_email : $request->user->email;
+        $email = $request->test ? $request->test : $request->user->email;
         $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
         return true;
     }
@@ -285,7 +285,7 @@ class SendEmailController extends Controller
             'password' =>  $senderEmail->password
         ];
         $this->SetConfig($config);
-        $email = $request->test_email ? $request->test_email : $request->user->email;
+        $email = $request->test ? $request->test : $request->user->email;
         $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
         return true;
     }

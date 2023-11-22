@@ -10,7 +10,6 @@ class EmailLog extends Base
 
     public static function AddLog($status,$sendEmailId,$emails,$scenesId,$data = [])
     {
-        // var_dump($scenesId);die;
         $model = new EmailLog();
         $model->status = $status;
         $model->send_email_id = $sendEmailId;

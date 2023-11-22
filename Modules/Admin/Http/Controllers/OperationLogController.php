@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\OperationLog;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Rule;
 use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\User;
 
 class OperationLogController extends CrudController
 {
@@ -41,6 +43,8 @@ class OperationLogController extends CrudController
         $model->title = $name;
         $model->content = $content;
         $model->site = $site;
+        $model->module = strtolower($ClassName);
+        $model->created_by = request()->user->id;
         $model->save();
     }
 
@@ -190,7 +194,7 @@ class OperationLogController extends CrudController
                     break;
 
                     case 'default_role':
-                        $OriginalName = Role::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
+                        $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $NewName = Role::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
@@ -292,5 +296,25 @@ class OperationLogController extends CrudController
 
         $contents = implode('、', $contents);
         return $contents;
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function options(Request $request)
+    {
+        $options = [];
+        $codes = ['Route_Classification','OperationLogModule'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        $options['site'] = (new Site)->GetListLabel(['english_name as value',$NameField],false,'',['status' => '1']);
+        $options['user'] = (new User)->GetListLabel(['id as value','name as label'],false,'',['status' => '1']);
+        ReturnJson(TRUE,'', $options);
     }
 }
