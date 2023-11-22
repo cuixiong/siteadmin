@@ -409,7 +409,7 @@ class SiteController extends CrudController
                     // $record[$key]['available_pull'] = $availablePullData['result'];
 
                     //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample'])->first();
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample'])->orderBy('id', 'desc')->first();
                     if ($siteUpdateLog) {
                         $siteUpdateLog = $siteUpdateLog->toArray();
                     }
