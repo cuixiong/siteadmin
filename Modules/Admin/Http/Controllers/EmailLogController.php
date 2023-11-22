@@ -4,6 +4,7 @@ namespace Modules\Admin\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Email;
 use Modules\Admin\Http\Models\EmailScene;
 
 class EmailLogController extends CrudController{
@@ -12,6 +13,7 @@ class EmailLogController extends CrudController{
         $data = [
             'status'    =>  DictionaryValue::GetOption('EmailLog_Status'),
             'scence'    =>  (new EmailScene)->GetListLabel(['id as value', 'name as label']),
+            'email'    =>  (new Email)->GetListLabel(['id as value', 'email as label']),
         ];
         ReturnJson(true,'',$data);
     }
