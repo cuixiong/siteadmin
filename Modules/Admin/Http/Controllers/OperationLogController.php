@@ -194,7 +194,7 @@ class OperationLogController extends CrudController
                     break;
 
                     case 'default_role':
-                        $OriginalName = Role::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
+                        $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $NewName = Role::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
