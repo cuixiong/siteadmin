@@ -29,6 +29,7 @@ class RuleController extends CrudController
                     unset($list[$map['id']]);
                 }
             }
+            $list = array_values($list);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
