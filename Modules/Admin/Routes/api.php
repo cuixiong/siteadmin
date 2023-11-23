@@ -138,7 +138,7 @@ Route::middleware([
         Route::get('list', [Modules\Admin\Http\Controllers\SiteController::class, 'list'])->name('站点管理:站点列表');
         Route::get('user-option', [Modules\Admin\Http\Controllers\SiteController::class, 'UserOption'])->name('站点管理:用户站点下拉数据');
         Route::get('option', [Modules\Admin\Http\Controllers\SiteController::class, 'option'])->name('站点管理:站点列表下拉数据');
-        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteController::class, 'lisearchDroplistst'])->name('站点管理:搜索下拉列表数据');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteController::class, 'searchDroplist'])->name('站点管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\SiteController::class, 'changeStatus'])->name('站点管理:状态修改');
         // Route::post('message', [Modules\Admin\Http\Controllers\SiteController::class, 'message'])->name('站点管理:站点测试');
         // Route::post('callback-results', [Modules\Admin\Http\Controllers\SiteController::class, 'callbackResults'])->name('站点管理:站点更新结果');
@@ -160,8 +160,8 @@ Route::middleware([
 
     // SiteUpdateLogController 控制器
     Route::prefix('site-update-log')->group(function () {
-        Route::get('list', [Modules\Admin\Http\Controllers\OperationLogController::class, 'list'])->name('升级日志:日志列表');
-        Route::get('search-droplist', [Modules\Admin\Http\Controllers\OperationLogController::class, 'searchDroplist'])->name('升级日志:搜索下拉列表数据');
+        Route::get('list', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'list'])->name('升级日志:日志列表');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'searchDroplist'])->name('升级日志:搜索下拉列表数据');
     });
 
     // Region 控制器
@@ -307,7 +307,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Admin\Http\Controllers\SiteController::class, 'destroy'])->name('站点管理:站点删除');
         Route::post('create-site-to-remote-server', [Modules\Admin\Http\Controllers\SiteController::class, 'createSiteToRemoteServer'])->name('站点管理:初始化站点');
         Route::post('init-database', [Modules\Admin\Http\Controllers\SiteController::class, 'initDatabase'])->name('站点管理:初始化数据库');
-        Route::post('available-upgrad', [Modules\Admin\Http\Controllers\SiteController::class, 'availableUpgrade'])->name('站点管理:git可用更新');
+        Route::post('available-upgrade', [Modules\Admin\Http\Controllers\SiteController::class, 'availableUpgrade'])->name('站点管理:git可用更新');
         Route::post('update-site-to-remote-server', [Modules\Admin\Http\Controllers\SiteController::class, 'updateSiteToRemoteServer'])->name('站点管理:站点升级');
         Route::post('commit-history', [Modules\Admin\Http\Controllers\SiteController::class, 'CommitHistory'])->name('站点管理:git提交记录历史');
         Route::post('rollback-code', [Modules\Admin\Http\Controllers\SiteController::class, 'rollbackCode'])->name('站点管理:git版本回退');

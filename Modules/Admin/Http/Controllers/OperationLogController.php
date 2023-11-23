@@ -286,6 +286,10 @@ class OperationLogController extends CrudController
 
                 switch ($field) {
                     
+                    case 'status':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Switch_State',$OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Switch_State',$value);
+                    break;
                     default:
                         $OriginalName = $OriginalValue;
                         $NewName = $value;
