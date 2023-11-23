@@ -660,7 +660,7 @@ class SiteController extends CrudController
             }
         }
         $is_super = Role::whereIn('id', explode(',', $request->user->role_id))->where('is_super', 1)->count();
-        $filed = $request->HeaderLanguage == 'en' ? ['english_name as value', 'english_name as label'] : ['english_name as value', 'name as label'];
+        $filed = $request->HeaderLanguage == 'en' ? ['name as value', 'english_name as label'] : ['name as value', 'name as label'];
         $res = [];
         if ($is_super > 0) {
             $res = (new Site)->GetListLabel($filed, false, '', ['status' => 1]);
