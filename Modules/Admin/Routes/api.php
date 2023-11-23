@@ -160,8 +160,8 @@ Route::middleware([
 
     // SiteUpdateLogController 控制器
     Route::prefix('site-update-log')->group(function () {
-        Route::get('list', [Modules\Admin\Http\Controllers\OperationLogController::class, 'list'])->name('升级日志:日志列表');
-        Route::get('search-droplist', [Modules\Admin\Http\Controllers\OperationLogController::class, 'searchDroplist'])->name('升级日志:搜索下拉列表数据');
+        Route::get('list', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'list'])->name('升级日志:日志列表');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'searchDroplist'])->name('升级日志:搜索下拉列表数据');
     });
 
     // Region 控制器
