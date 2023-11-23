@@ -32,13 +32,15 @@ class SiteController extends CrudController
 
         $input = $request->all();
         // 创建者ID
-        // $input['created_by'] = $request->user->id;
-        // // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
-        // $is_create = $request->is_create;
-        // // is_create不是入库的字段变量所以删除
-        // unset($request->is_create);
+        $input['created_by'] = $request->user->id;
+        // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
+        $is_create = $request->is_create;
+        // is_create不是入库的字段变量所以删除
+        unset($request->is_create);
 
-        $is_create = 1;
+        if(!isset($is_create)){
+            $is_create = 0;
+        }
 
         // 开启事务
         // DB::beginTransaction();
