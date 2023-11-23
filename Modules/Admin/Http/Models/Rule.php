@@ -18,13 +18,13 @@ class Rule extends Base
         $Site = request()->header('Site');
         foreach ($rules as $item) {
             $data = [];
-            $data['path'] = $item['path'];
+            $data['component'] = $item['component'];
+
             if($data['type'] == 'CATALOG'){
-                $data['component'] = $Site ? '/'. $Site . '/'. $item['component'] : $item['component'];
+                $data['path'] = $Site ? '/'. $Site . '/'. $item['path'] : $item['path'];
             } else {
-                $data['component'] = $item['component'];
+                $data['path'] = $item['path'];
             }
-            
             $data['meta'] = [
                 'title' => $item['name'],
                 'hidden' => $item['visible'] == 1 ? false : true,
