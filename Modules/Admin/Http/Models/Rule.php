@@ -57,8 +57,8 @@ class Rule extends Base
     protected function route() : Attribute
     {
         return new Attribute(
-            get: fn ($value) => explode(',', $value),
-            set: fn ($value) => implode(',',$value),
+            get: fn ($value) => $value ? explode(',', $value) : [],
+            set: fn ($value) => $value && is_array($value) ? implode(',',$value) : '',
         );
     }
 }
