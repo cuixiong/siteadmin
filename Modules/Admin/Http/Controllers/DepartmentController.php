@@ -59,12 +59,13 @@ class DepartmentController extends CrudController
             if(empty($request->id)){
                 ReturnJson(FALSE,'id is empty');
             }
-            $childerIds = Department::TreeGetChildIds($request->id);
-            $ids = array_merge(array($request->id),$childerIds);
-            $record = $this->ModelInstance()->whereIn('id',$ids)->update(['status' => $request->status]);
-            if(!$record){
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->status = $request->status;
+            if(!$record->save()){
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
+            $childerIds = Department::TreeGetChildIds($request->id);
+            $this->ModelInstance()->whereIn('id',$childerIds)->update(['status' => $request->status]);
             ReturnJson(TRUE,trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
