@@ -16,7 +16,7 @@ class RuleMiddleware
     public function handle($request, Closure $next)
     {
         try {
-            if($request->user->is_super){
+            if(!$request->user->is_super){
                 $route = $request->route();
                 // 获取当前角色已分配ID
                 $rule_ids = (new Role)->GetRules($request->user->role_id,'rule');

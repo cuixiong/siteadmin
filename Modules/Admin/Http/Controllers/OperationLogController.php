@@ -57,7 +57,10 @@ class OperationLogController extends CrudController
             if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
-                $title = $ColumnComment .'从'.$model->getOriginal($field) .'更新为：'. $value;
+                $OriginalValue = $model->getOriginal($field);
+                $OriginalValue = is_array($OriginalValue) ? implode(',',$OriginalValue) : $OriginalValue;
+                $NewValue = is_array($value) ? implode(',',$value) : $value;
+                $title = $ColumnComment .'从'.$OriginalValue .'更新为：'. $NewValue;
                 $contents[] = $title;
             }
         }
@@ -108,8 +111,8 @@ class OperationLogController extends CrudController
                     break;
                     
                     default:
-                        $OriginalName = $OriginalValue;
-                        $NewName = $value;
+                        $OriginalName = is_array($OriginalValue) ? implode(',',$OriginalValue) : $OriginalValue;
+                        $NewName = is_array($value) ? implode(',',$value) : $value;
                     break;
                 }
                 $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
@@ -168,8 +171,8 @@ class OperationLogController extends CrudController
                     break;
                     
                     default:
-                        $OriginalName = $OriginalValue;
-                        $NewName = $value;
+                        $OriginalName = is_array($OriginalValue) ? implode(',',$OriginalValue) : $OriginalValue;
+                        $NewName = is_array($value) ? implode(',',$value) : $value;
                     break;
                 }
                 $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
@@ -209,8 +212,8 @@ class OperationLogController extends CrudController
                     break;
                     
                     default:
-                        $OriginalName = $OriginalValue;
-                        $NewName = $value;
+                        $OriginalName = is_array($OriginalValue) ? implode(',',$OriginalValue) : $OriginalValue;
+                        $NewName = is_array($value) ? implode(',',$value) : $value;
                     break;
                 }
                 $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
@@ -257,8 +260,8 @@ class OperationLogController extends CrudController
                     break;
                     
                     default:
-                        $OriginalName = $OriginalValue;
-                        $NewName = $value;
+                        $OriginalName = is_array($OriginalValue) ? implode(',',$OriginalValue) : $OriginalValue;
+                        $NewName = is_array($value) ? implode(',',$value) : $value;
                     break;
                 }
                 $title = "[$ColumnComment] 从 “ $OriginalName ” 更新为=> “ $NewName ”";
