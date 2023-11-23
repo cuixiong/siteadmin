@@ -37,8 +37,6 @@ class TenantController extends Controller
                 ]);
                 // 保存租户配置
                 $tenant->save();
-
-                
             } else {
                 $time = date('Y-m-d H:i:s', time());
                 $data = [
@@ -89,10 +87,18 @@ class TenantController extends Controller
             $data = json_encode($data);
             // 查询当前的租户信息
             $tenant = DB::table('domains')->where('id', $id)->first();
-            // 入库tenants表
-            DB::table('tenants')->where('id', $tenant->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
-            // 入库domains
-            DB::table('domains')->where('id', $id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+            if ($tenant) {
+                // 入库tenants表
+                DB::table('tenants')->where('id', $tenant->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                // 入库domains
+                DB::table('domains')->where('id', $id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+            } else {
+
+                // 入库tenants表
+                DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                // 入库domains
+                DB::table('domains')->insert(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+            }
             return true;
         } catch (\Exception $e) {
             return $e->getMessage();

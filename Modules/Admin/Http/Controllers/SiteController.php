@@ -159,8 +159,12 @@ class SiteController extends CrudController
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
 
-            $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first()->toArray();
-
+            $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first();
+            if (!$database) {
+                ReturnJson(TRUE, trans('lang.update_error') . ' database is not exist');
+            } else {
+                $database = $database->toArray();
+            }
             // 更新租户
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
@@ -409,11 +413,11 @@ class SiteController extends CrudController
                     // $record[$key]['available_pull'] = $availablePullData['result'];
 
                     //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample','message','output'])->orderBy('id', 'desc')->first();
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample', 'message', 'output'])->orderBy('id', 'desc')->first();
                     if ($siteUpdateLog) {
                         $siteUpdateLog = $siteUpdateLog->toArray();
                     }
-                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status'] ?? '';
+                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status_text'] ?? '';
                     $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at'] ?? '';
                     $record[$key]['log_updated_hash'] = $siteUpdateLog['hash'] ?? '';
                     $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample'] ?? '';
