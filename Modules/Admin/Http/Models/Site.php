@@ -74,7 +74,7 @@ class Site extends Base
         }
         return $text;
     }
-    
+
     /**
      * 服务器获取器
      */
@@ -86,7 +86,7 @@ class Site extends Base
         }
         return $text;
     }
-    
+
     /**
      * 数据库获取器
      */
@@ -256,7 +256,12 @@ class Site extends Base
             $commands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
         } elseif ($type == 'commit_history') {
             //历史提交记录、返回哈希值及注释
-            $commands = self::getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $pageNum = $option['pageNum'] ?? 0;
+            $pageSize = $option['pageSize'] ?? 0;
+            $commands = self::getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName, $pageNum, $pageSize);
+        } elseif ($type == 'commit_history_count') {
+            //历史提交记录总数
+            $commands = self::getCommitHistoryCountCommands($siteBasePath, $apiDirName, $frontedDirName);
         } elseif ($type == 'available_pull') {
             $commands = self::getAvailablePullCommands($siteBasePath, $apiDirName, $frontedDirName);
         } elseif ($type == 'rollback_code') {
@@ -267,7 +272,8 @@ class Site extends Base
         //执行命令
         //输出的$output['result']为true时只代表命令正常执行，不代表达到预期结果
         $output = self::executeCommands($ssh, $commands);
-
+        // return $commands;
+        // return $output;
         //是否写入日志
         $writeUpdateLog = false;
         $message = $output['output'] ?? '';
@@ -297,21 +303,23 @@ class Site extends Base
 
             if ($output['result']) {
                 // return $output['output'];
-                $logArray = explode("\n", trim($output['output']));
                 $logData = [];
 
-                foreach ($logArray as $logItem) {
-                    // 解析每一行 log 条目
-                    list($hash, $hashSample, $authorName, $authorEmail, $date, $message) = explode('|', $logItem);
-                    // 构建数组
-                    $logData[] = [
-                        'hash' => $hash,
-                        'hashSample' => $hashSample,
-                        'authorName' => $authorName,
-                        'authorEmail' => $authorEmail,
-                        'date' => $date,
-                        'message' => $message,
-                    ];
+                if (!empty(trim($output['output']))) {
+                    $logArray = explode("\n", trim($output['output']));
+                    foreach ($logArray as $logItem) {
+                        // 解析每一行 log 条目
+                        list($hash, $hashSample, $authorName, $authorEmail, $date, $message) = explode('|', $logItem);
+                        // 构建数组
+                        $logData[] = [
+                            'hash' => $hash,
+                            'hashSample' => $hashSample,
+                            'authorName' => $authorName,
+                            'authorEmail' => $authorEmail,
+                            'date' => $date,
+                            'message' => $message,
+                        ];
+                    }
                 }
                 $output['output'] = $logData;
             }
@@ -499,10 +507,19 @@ class Site extends Base
      * @param string frontedDirName 网站仓库别名
      * @return array|string commands 命令
      */
-    private static function getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName)
+    private static function getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName, $pageNum, $pageSize)
     {
         //前台暂无
-
+        $param = [];
+        $param[] = '--pretty=format:"%H|%h|%an|%ae|%ad|%s"';
+        $param[] = '--date=format:"%Y-%m-%d %H:%M:%S"';
+        if ($pageSize > 0) {
+            $param[] = '-n ' . $pageSize;
+        }
+        if ($pageNum > 0) {
+            $param[] = '--skip=' . ($pageNum - 1) * ($pageSize > 0 ? $pageSize : 0);
+        }
+        $paramStr = implode(' ', $param);
         $commands = [
             /** 
              * 提交记录命令
@@ -510,7 +527,31 @@ class Site extends Base
              * -n 5 指定返回5条
              * --pretty=format:"%H|%an|%ae|%ad|%s" 展示格式
              */
-            'cd ' . $siteBasePath . $apiDirName . ' &&  git log --pretty=format:"%H|%h|%an|%ae|%ad|%s" --date=format:"%Y-%m-%d %H:%M:%S" ',
+            'cd ' . $siteBasePath . $apiDirName  . ' &&  git log ' . $paramStr,
+
+        ];
+        return $commands;
+    }
+
+    /**
+     * 提交记录总数
+     * @param string siteBasePath 部署基本路径/项目所在外层路径
+     * @param string apiDirName 接口仓库别名
+     * @param string frontedDirName 网站仓库别名
+     * @return array|string commands 命令
+     */
+    private static function getCommitHistoryCountCommands($siteBasePath, $apiDirName, $frontedDirName)
+    {
+        //前台暂无
+
+        $commands = [
+            /** 
+             * 获取提交记录总数量命令
+             * 参数:
+             * count 总数，需git 2.7以上版本
+             * HEAD 当前分支
+             */
+            'cd ' . $siteBasePath . $apiDirName  . ' &&  git rev-list --count HEAD',
 
         ];
         return $commands;

@@ -220,13 +220,27 @@ class SiteController extends CrudController
     {
 
         $siteId = $request->input('site_id');
+
+        $pageNum = $request->input('pageNum');
+        $pageSize = $request->input('pageSize');
+
+        $pageNum = !empty($pageNum) ? $pageNum : 1;
+        $pageSize = !empty($pageSize) ? $pageSize : 10;
+
         // 创建者ID
         $created_by = $request->user->id;
 
         try {
-            $output = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by]);
-
-            ReturnJson(TRUE, trans('lang.request_success'), $output);
+            //获取数量
+            $commitCountOutput = Site::executeRemoteCommand($siteId, 'commit_history_count', ['created_by' => $created_by]);
+            $commitCount = 0;
+            if ($commitCountOutput['result']) {
+                $commitCount = trim($commitCountOutput['output'], "\n");
+            }
+            //获取具体内容
+            $commitOutput = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
+            $commitOutput['count'] = $commitCount;
+            ReturnJson(TRUE, trans('lang.request_success'), $commitOutput);
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
@@ -395,7 +409,7 @@ class SiteController extends CrudController
                     // $record[$key]['available_pull'] = $availablePullData['result'];
 
                     //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample'])->first();
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample'])->orderBy('id', 'desc')->first();
                     if ($siteUpdateLog) {
                         $siteUpdateLog = $siteUpdateLog->toArray();
                     }
@@ -415,7 +429,7 @@ class SiteController extends CrudController
                 'page' => $page,
                 'pageSize' => $pageSize,
                 'list' => $record,
-                'headerTitle' => !empty($headerTitle)?$headerTitle:[],
+                'headerTitle' => !empty($headerTitle) ? $headerTitle : [],
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -636,21 +650,22 @@ class SiteController extends CrudController
      * Get the current user's site
      * @param int $user_id user id
      */
-    public function UserOption(Request $request){
-        $res = Role::whereIn('id', explode(',',$request->user->role_id))->pluck('site_id')->toArray();
+    public function UserOption(Request $request)
+    {
+        $res = Role::whereIn('id', explode(',', $request->user->role_id))->pluck('site_id')->toArray();
         $site_ids = [];
         foreach ($res as $key => $value) {
-            if(is_array($value)){
-                $site_ids = array_merge($site_ids,$value);
+            if (is_array($value)) {
+                $site_ids = array_merge($site_ids, $value);
             }
         }
-        $is_super = Role::whereIn('id',explode(',',$request->user->role_id))->where('is_super', 1)->count();
-        $filed = $request->HeaderLanguage == 'en' ? ['english_name as value','english_name as label'] : ['english_name as value','name as label'];
+        $is_super = Role::whereIn('id', explode(',', $request->user->role_id))->where('is_super', 1)->count();
+        $filed = $request->HeaderLanguage == 'en' ? ['english_name as value', 'english_name as label'] : ['english_name as value', 'name as label'];
         $res = [];
-        if($is_super > 0) {
-            $res = (new Site)->GetListLabel($filed,false,'',['status' => 1]);
+        if ($is_super > 0) {
+            $res = (new Site)->GetListLabel($filed, false, '', ['status' => 1]);
         } else {
-            $res = (new Site)->GetListLabel($filed,false,'',['status' => 1,'id' => $site_ids]);
+            $res = (new Site)->GetListLabel($filed, false, '', ['status' => 1, 'id' => $site_ids]);
         }
         ReturnJson(TRUE, trans('lang.request_success'), $res);
     }
