@@ -162,12 +162,6 @@ class Base extends Model
                 }
             });
             if(!empty($search)){
-                if(isset($search['created_by'])){
-                    unset($search['created_by']);
-                }
-                if(isset($search['updated_by'])){
-                    unset($search['updated_by']);
-                }
                 $timeArray = ['created_at','updated_at'];
                 foreach ($search as $key => $value) {
                     if(in_array($key,['name','english_name','title'])){
