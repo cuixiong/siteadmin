@@ -44,9 +44,6 @@ class RoleController extends CrudController
      */
     public function adminRule(Request $request) {
         try {
-            if(empty($request->roleId)){
-                ReturnJson(FALSE,'roleId is empty');
-            }
             if(empty($request->id)){
                 ReturnJson(FALSE,'id is empty');
             }
@@ -69,9 +66,6 @@ class RoleController extends CrudController
      */
     public function siteRule(Request $request) {
         try {
-            if(empty($request->site_rule_id)){
-                ReturnJson(FALSE,'site_rule_id is empty');
-            }
             if(empty($request->id)){
                 ReturnJson(FALSE,'id is empty');
             }
