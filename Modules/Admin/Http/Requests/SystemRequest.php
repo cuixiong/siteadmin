@@ -45,7 +45,6 @@ class SystemRequest extends BaseRequest
             'key' => 'required|unique:system_values',
             'value' => 'required',
             'type' => 'required',
-            'status' => 'required',
         ];
         $message = [
             'parent_id.required' => '父级ID不能为空',
@@ -54,7 +53,6 @@ class SystemRequest extends BaseRequest
             'key.unique' => 'key已经存在',
             'value.required' => 'value不能为空',
             'type.required' => 'type不能为空',
-            'status.required' => 'status不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -67,7 +65,6 @@ class SystemRequest extends BaseRequest
             'key' => 'required',
             'value' => 'required',
             'type' => 'required',
-            'status' => 'required',
         ];
         $message = [
             'id.required' => 'ID不能为空',
@@ -76,7 +73,6 @@ class SystemRequest extends BaseRequest
             'key.required' => 'key不能为空',
             'value.required' => 'value不能为空',
             'type.required' => 'type不能为空',
-            'status.required' => 'status不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }

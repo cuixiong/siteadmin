@@ -173,4 +173,21 @@ class RuleController extends CrudController
             ReturnJson(FALSE,$e->getMessage());
         }
     }
+
+    public function update(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) { 
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            $childerIds = Rule::TreeGetChildIds($request->id);
+            $this->ModelInstance()->whereIn('id',$childerIds)->update(['status' => $request->status]);
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }
