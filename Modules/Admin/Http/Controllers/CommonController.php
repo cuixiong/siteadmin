@@ -52,7 +52,7 @@ class CommonController extends Controller
         // 角色ID
         $role_id = explode(',',$request->user->role_id);
         $siteName = $request->header('Site');
-        $siteId = Site::where('english_name',$siteName)->value('id');
+        $siteId = Site::where('name',$siteName)->value('id');
         $siteId = $siteId ? $siteId : 0;
         $data = (new Role)->GetRules($role_id,'all',$siteId);
         $rule_ids = $data['rule'];
