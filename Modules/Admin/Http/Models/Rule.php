@@ -15,10 +15,11 @@ class Rule extends Base
     public function buildTree($rules,$roleCodes, $parentId = 0,)
     {
         $tree = [];
+        $X_site = request()->header('X_site');
         foreach ($rules as $item) {
             $data = [];
             $data['path'] = $item['path'];
-            $data['component'] = $item['component'];
+            $data['component'] = $item['component'] ? ($X_site ? $X_site . '/'. $item['component'] : $item['component']) : '';
             $data['meta'] = [
                 'title' => $item['name'],
                 'hidden' => $item['visible'] == 1 ? false : true,
