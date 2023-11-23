@@ -100,7 +100,7 @@ Route::middleware([
     // Server控制器
     Route::prefix('server')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\ServerController::class, 'list'])->name('服务器管理:服务器列表');
-        Route::post('changeStatus', [Modules\Admin\Http\Controllers\ServerController::class, 'changeStatus'])->name('服务器管理:状态修改');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\ServerController::class, 'changeStatus'])->name('服务器管理:状态修改');
     });
 
     // System控制器
@@ -130,7 +130,7 @@ Route::middleware([
 
     // Database控制器
     Route::prefix('database')->group(function () {
-        Route::post('changeStatus', [Modules\Admin\Http\Controllers\DatabaseController::class, 'changeStatus'])->name('数据库管理:状态修改');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\DatabaseController::class, 'changeStatus'])->name('数据库管理:状态修改');
     });
 
     // Site控制器
