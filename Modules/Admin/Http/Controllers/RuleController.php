@@ -103,7 +103,7 @@ class RuleController extends CrudController
      */
     public function option(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1,'visible' => 1]);
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1,'status' => 1]);
         ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 
@@ -112,7 +112,7 @@ class RuleController extends CrudController
      */
     public function optionSite(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2,'visible' => 1]);
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2,'status' => 1]);
         ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 
