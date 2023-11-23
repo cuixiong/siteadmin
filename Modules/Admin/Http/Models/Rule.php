@@ -19,7 +19,12 @@ class Rule extends Base
         foreach ($rules as $item) {
             $data = [];
             $data['path'] = $item['path'];
-            $data['component'] = $item['component'] ? ($Site ? '/'. $Site . '/'. $item['component'] : $item['component']) : '';
+            if($data['type'] == 'CATALOG'){
+                $data['component'] = $Site ? '/'. $Site . '/'. $item['component'] : $item['component'];
+            } else {
+                $data['component'] = $item['component'];
+            }
+            
             $data['meta'] = [
                 'title' => $item['name'],
                 'hidden' => $item['visible'] == 1 ? false : true,
