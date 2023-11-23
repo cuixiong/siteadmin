@@ -8,7 +8,6 @@ use Modules\Admin\Http\Models\Rule;
 
 class RuleController extends CrudController
 {
-    public $childNode = array(); // 储存已递归的ID
     /**
      * 查询列表页
      * @param use Illuminate\Http\Request;
@@ -18,14 +17,15 @@ class RuleController extends CrudController
             $search = $request->input('search');
             $list = (new Rule)->GetList('*',false,'parent_id',$search);
             $list = array_column($list,null,'id');
+            $childNode = array(); // 储存已递归的ID
             foreach ($list as &$map) {
-                $children = $this->tree($list,'parent_id',$map['id']);
+                $children = $this->tree($list,'parent_id',$map['id'],$childNode);
                 if($children){
                     $map['children'] = $children;
                 }
             }
             foreach ($list as &$map) {
-                if (in_array($map['id'], $this->childNode)) {
+                if (in_array($map['id'], $childNode)) {
                     unset($list[$map['id']]);
                 }
             }
@@ -43,13 +43,13 @@ class RuleController extends CrudController
      * @param $parentId 父级默认值
      * @return array $res
      */
-    public function tree($list,$key,$parentId = 0) {
+    public function tree($list,$key,$parentId = 0,&$childNode) {
 
         $tree = [];
         foreach ($list as $item) {
             if ($item[$key] == $parentId) {
-                $this->childNode[] = $item['id'];// 储存已递归的ID
-                $children = $this->tree($list,$key,$item['id']);
+                $childNode[] = $item['id'];// 储存已递归的ID
+                $children = $this->tree($list,$key,$item['id'],$childNode);
                 if (!empty($children)) {
                     $item['children'] = $children;
                 }
