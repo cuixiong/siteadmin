@@ -8,7 +8,7 @@ use Modules\Admin\Http\Models\Rule;
 
 class RuleController extends CrudController
 {
-
+    public $childNode = array(); // 储存已递归的ID
     /**
      * 查询列表页
      * @param use Illuminate\Http\Request;
@@ -16,11 +16,45 @@ class RuleController extends CrudController
     public function list(Request $request) {
         try {
             $search = $request->input('search');
-            $list = (new Rule)->GetList('*',true,'parent_id',$search);
+            $list = (new Rule)->GetList('*',false,'parent_id',$search);
+            $list = array_column($list,null,'id');
+            foreach ($list as &$map) {
+                $children = $this->tree($list,'parent_id',$map['id']);
+                $map['children'] = $children ? $children : [];
+            }
+            foreach ($list as &$map) {
+                if (in_array($map['id'], $this->childNode)) {
+                    unset($list[$map['id']]);
+                }
+            }
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function tree($list,$key,$parentId = 0) {
+
+        $tree = [];
+        foreach ($list as $item) {
+            if ($item[$key] == $parentId) {
+                $this->childNode[] = $item['id'];// 储存已递归的ID
+                $children = $this->tree($list,$key,$item['id']);
+                if (!empty($children)) {
+                    $item['children'] = $children;
+                }
+                $tree[] = $item;
+            }
+
+        }
+        return $tree;
     }
 
     /**
