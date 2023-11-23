@@ -20,7 +20,9 @@ class RuleController extends CrudController
             $list = array_column($list,null,'id');
             foreach ($list as &$map) {
                 $children = $this->tree($list,'parent_id',$map['id']);
-                $map['children'] = $children ? $children : [];
+                if($children){
+                    $map['children'] = $children;
+                }
             }
             foreach ($list as &$map) {
                 if (in_array($map['id'], $this->childNode)) {
