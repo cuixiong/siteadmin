@@ -112,7 +112,7 @@ class UserController extends CrudController
     {
         try {
             Excel::import(new UserImport, request()->file('file'));
-            ReturnJson(true);
+            ReturnJson(true,trans('lang.upload_successful'));
         } catch (\Exception $e) {
             ReturnJson(false,$e->getMessage());
         }

@@ -32,4 +32,5 @@ return [
     'alternate_email_empty' => '备用邮箱为空',
     'alias_name_empty' => '别名为空',
     'english_name_empty' => '英文名称为空',
+    'upload_successful' => '上传成功',
 ];

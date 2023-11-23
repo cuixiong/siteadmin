@@ -133,7 +133,7 @@ class OperationLogController extends CrudController
                 $OriginalValue = $model->getOriginal($field);
                 switch ($field) {
                     case 'rule_id':
-                        $OriginalName = Rule::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
+                        $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $NewName = Rule::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
@@ -141,14 +141,14 @@ class OperationLogController extends CrudController
                     break;
 
                     case 'site_rule_id':
-                        $OriginalName = Rule::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
+                        $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $NewName = Rule::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';
                     break;
 
                     case 'site_id':
-                        $OriginalName = Site::whereIn('id', explode(',',$OriginalValue))->pluck('name')->toArray();
+                        $OriginalName = Site::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $NewName = Site::whereIn('id', explode(',',$value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',',$NewName) : '';

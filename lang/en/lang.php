@@ -32,4 +32,5 @@ return [
     'alternate_email_empty' => 'The alternate_email is empty',
     'alias_name_empty' => 'The alias name is empty',
     'english_name_empty' => 'The english name is empty',
+    'upload_successful' => 'Upload successful',
 ];
