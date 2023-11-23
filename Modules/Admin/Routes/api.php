@@ -138,7 +138,7 @@ Route::middleware([
         Route::get('list', [Modules\Admin\Http\Controllers\SiteController::class, 'list'])->name('站点管理:站点列表');
         Route::get('user-option', [Modules\Admin\Http\Controllers\SiteController::class, 'UserOption'])->name('站点管理:用户站点下拉数据');
         Route::get('option', [Modules\Admin\Http\Controllers\SiteController::class, 'option'])->name('站点管理:站点列表下拉数据');
-        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteController::class, 'earchDroplist'])->name('站点管理:搜索下拉列表数据');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteController::class, 'searchDroplist'])->name('站点管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\SiteController::class, 'changeStatus'])->name('站点管理:状态修改');
         // Route::post('message', [Modules\Admin\Http\Controllers\SiteController::class, 'message'])->name('站点管理:站点测试');
         // Route::post('callback-results', [Modules\Admin\Http\Controllers\SiteController::class, 'callbackResults'])->name('站点管理:站点更新结果');
