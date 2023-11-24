@@ -451,4 +451,115 @@ class FileManagement extends Controller{
         }
         return $size_array;
     }
+
+    //压缩
+    public function cmpress(Request $request)
+    {
+        $base_param = public_path();
+        $path = $request->path ?? '';
+        $name = $request->name ?? '';
+        $full_path = $base_param . $path . '/' . $name;
+
+        if (empty($name)) {
+            ReturnJson(false,'文件夹名未传入');
+        } elseif ($path == '..' || $name == '..') {
+            //不能进去基本路径的上层
+            ReturnJson(false,'超过文件管理范围');
+        } elseif (!file_exists($full_path)) {
+            ReturnJson(false,'选择路径不存在');
+        } else {
+            $rand = rand(10000, 99999);
+            $zipFileName = $full_path . '_' . $rand . '.zip';
+            $res = self::zipDir(glob($full_path . '/*'), $zipFileName);
+        }
+        if (file_exists($zipFileName)) {
+            ReturnJson(true,'压缩成功',['path' => trim($path . '/' . $name . '_' . $rand . '.zip', "/")]);
+        } else {
+            ReturnJson(false,'压缩失败，请检查是否是空文件夹');
+        }
+    }
+
+    /**
+     * 压缩文件
+     * 使用:
+     *   $pathArray = array( '/path/to/sourceDir', '/path/to/sourceDir2' );
+     *   HZip::zipDir( pathArray, '/path/to/out.zip' );
+     *
+     * @param array $pathArray 需要压缩的文件夹路径数组
+     * @param string $outZipPath 压缩文件夹路径
+     */
+    private static function zipDir($pathArray, $outZipPath)
+    {
+        if (empty($pathArray)) {
+            return false;
+        }
+
+        $z = new \ZipArchive();
+        // 初始化
+        $z->open($outZipPath, \ZipArchive::CREATE);
+        // 新建压缩文件
+        try {
+            foreach ($pathArray as $key => $sourcePath) {
+                //linux服务器需要注释
+                $sourcePath = trim($sourcePath, '/');
+                // 去除后缀，防止压缩包内出现文件夹名带有前缀“/”
+                $sourcePath = trim($sourcePath, '\\');
+                $pathInfo = pathinfo($sourcePath);
+                // var_dump( $pathInfo );
+                // echo '<br/>';
+                $parentPath = $pathInfo['dirname'];
+                $dirName = $pathInfo['basename'];
+                if (empty($pathInfo['extension'])) {
+                    // $z->addEmptyDir($dirName);
+                    // 添加一个新目录
+                    self::folderToZip($sourcePath, $z, strlen("$parentPath/"));
+                } else {
+                    // 单文件压缩
+                    if (file_exists($sourcePath)) {
+                        $z->addFile($sourcePath, $dirName);
+                    }
+                }
+            }
+            $z->close();
+            // 关闭存档
+        } catch (\Throwable $th) {
+            return false;
+        }
+        if (!is_dir($outZipPath)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 把文件打包成 zip
+     *
+     * @param $folder 需要压缩的文件夹
+     * @param $zipFile 压缩文件
+     * @param $exclusiveLength 截取上级文件夹路径的长度，以递归新建目录
+     */
+    private static function folderToZip($folder, &$zipFile, $exclusiveLength)
+    {
+        $handle = opendir($folder);
+        //打开一个目录
+        while (false !== $f = readdir($handle)) {
+            if ($f != '.' && $f != '..') {
+                $filePath = "$folder/$f";
+                // 截取的上级文件夹路径
+                $localPath = substr($filePath, $exclusiveLength);
+                if (is_file($filePath)) {
+                    //添加文件
+                    $a = $zipFile->addFile($filePath, $localPath);
+                } elseif (is_dir($filePath)) {
+                    //添加新目录
+                    $zipFile->addEmptyDir($localPath);
+                    //递归
+                    self::folderToZip($filePath, $zipFile, $exclusiveLength);
+                }
+            }
+        }
+        closedir($handle);
+        //关闭
+    }
 }

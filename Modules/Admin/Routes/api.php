@@ -70,7 +70,7 @@ Route::middleware([
     // Email控制器
     Route::prefix('email')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\EmailController::class, 'list'])->name('邮箱管理:邮箱列表');
-        Route::post('changeStatus', [Modules\Admin\Http\Controllers\EmailController::class, 'changeStatus'])->name('邮箱管理:状态改变');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\EmailController::class, 'changeStatus'])->name('邮箱管理:状态改变');
         Route::get('option', [Modules\Admin\Http\Controllers\EmailController::class, 'option'])->name('邮箱管理:邮箱下拉数据');
     });
 
@@ -78,7 +78,7 @@ Route::middleware([
     // EmailScene控制器
     Route::prefix('email-scene')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\EmailSceneController::class, 'list'])->name('发邮场景:发邮列表');
-        Route::post('changeStatus', [Modules\Admin\Http\Controllers\EmailSceneController::class, 'changeStatus'])->name('发邮场景:状态改变');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\EmailSceneController::class, 'changeStatus'])->name('发邮场景:状态改变');
     });
 
     // Dictionary控制器
@@ -205,6 +205,7 @@ Route::middleware([
         Route::post('delete', [Modules\Admin\Http\Controllers\FileManagement::class, 'delete'])->name('文件管理:文件夹删除');
         Route::post('copy', [Modules\Admin\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹复制');
         Route::post('move', [Modules\Admin\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹移动');
+        Route::post('cmpress', [Modules\Admin\Http\Controllers\FileManagement::class, 'cmpress'])->name('文件管理:文件夹压缩');
     });
 });
 
@@ -306,7 +307,7 @@ Route::middleware([
 
     // EmailLog控制器
     Route::prefix('email-log')->group(function () {
-        Route::post('admin/email-log/destroy', [Modules\Admin\Http\Controllers\EmailLogController::class, 'destroy'])->name('邮箱日志:日志删除');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\EmailLogController::class, 'destroy'])->name('邮箱日志:日志删除');
     });
 
 
