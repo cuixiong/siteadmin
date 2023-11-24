@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Modules\Admin\Http\Models\Department;
+use Modules\Admin\Http\Models\Site;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller
@@ -40,6 +41,13 @@ class LoginController extends Controller
             }
             if ($model->status == 0) {
                 ReturnJson(false,trans('lang.accounts_disabled'));
+            }
+            if($request->header('Site')){
+                $SiteCount = Site::where('name',$request->header('Site'))
+                    ->where('status',1)->count();
+                if($SiteCount == 0){
+                    ReturnJson(false,trans('lang.site_undefined'));
+                }
             }
             $token=JWTAuth::fromUser($model);//生成token
             if (!$token) {

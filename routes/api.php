@@ -14,7 +14,7 @@ use App\Http\Middleware\JwtMiddleware;
 |
 */
 // Login控制器
-Route::post('login', [\App\Http\Controllers\LoginController::class,'login']);// 账号登陆
+Route::post('login', [\App\Http\Controllers\LoginController::class,'login'])->middleware('language');// 账号登陆
 Route::post('register', [\App\Http\Controllers\LoginController::class,'register']);// 账号注册
 // SendEmail控制器
 Route::get('send-email/register', [\App\Http\Controllers\SendEmailController::class,'register']);// 注册账号邮箱接口

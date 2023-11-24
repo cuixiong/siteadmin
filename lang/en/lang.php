@@ -33,4 +33,5 @@ return [
     'alias_name_empty' => 'The alias name is empty',
     'english_name_empty' => 'The english name is empty',
     'upload_successful' => 'Upload successful',
+    'site_undefined' => 'site undefined',
 ];

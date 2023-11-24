@@ -33,4 +33,5 @@ return [
     'alias_name_empty' => '别名为空',
     'english_name_empty' => '英文名称为空',
     'upload_successful' => '上传成功',
+    'site_undefined' => '站点不存在',
 ];
