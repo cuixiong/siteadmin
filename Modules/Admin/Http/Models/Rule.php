@@ -21,7 +21,7 @@ class Rule extends Base
             $data['component'] = $item['component'];
 
             if($item['type'] == 'CATALOG'){
-                $data['path'] = $Site ? '/'. $Site . $item['path'] : $item['path'];
+                $data['path'] = $Site ? '/'. $Site . $item['path'] : 'control'.$item['path'];
             } else {
                 $data['path'] = $item['path'];
             }

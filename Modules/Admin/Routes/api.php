@@ -196,6 +196,11 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'changeStatus'])->name('价格版本管理:状态修改');
     });
+
+    // PriceEdition 控制器
+    Route::prefix('file-management')->group(function () {
+        Route::get('list', [Modules\Admin\Http\Controllers\FileManagement::class, 'FileList'])->name('文件管理:文件列表');
+    });
 });
 
 
