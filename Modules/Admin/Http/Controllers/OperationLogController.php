@@ -298,6 +298,8 @@ class OperationLogController extends CrudController
                         $NewName = $value;
                         break;
                 }
+            }else{
+                continue;
             }
 
             $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";

@@ -32,13 +32,15 @@ class SiteController extends CrudController
 
         $input = $request->all();
         // 创建者ID
-        // $input['created_by'] = $request->user->id;
-        // // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
-        // $is_create = $request->is_create;
-        // // is_create不是入库的字段变量所以删除
-        // unset($request->is_create);
+        $input['created_by'] = $request->user->id;
+        // 是否生成数据库0不生成，1生成！生成数据库必须是MYSQL的ROOT账号，不是ROOT账号否则无法生成数据库
+        $is_create = $request->is_create;
+        // is_create不是入库的字段变量所以删除
+        unset($request->is_create);
 
-        $is_create = 1;
+        if(!isset($is_create)){
+            $is_create = 0;
+        }
 
         // 开启事务
         // DB::beginTransaction();
@@ -159,8 +161,12 @@ class SiteController extends CrudController
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
 
-            $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first()->toArray();
-
+            $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first();
+            if (!$database) {
+                ReturnJson(TRUE, trans('lang.update_error') . ' database is not exist');
+            } else {
+                $database = $database->toArray();
+            }
             // 更新租户
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
@@ -409,14 +415,16 @@ class SiteController extends CrudController
                     // $record[$key]['available_pull'] = $availablePullData['result'];
 
                     //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample'])->orderBy('id', 'desc')->first();
+                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(['exec_status', 'updated_at', 'hash', 'hash_sample', 'message', 'output'])->orderBy('id', 'desc')->first();
                     if ($siteUpdateLog) {
                         $siteUpdateLog = $siteUpdateLog->toArray();
                     }
-                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status'] ?? '';
+                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status_text'] ?? '';
                     $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at'] ?? '';
                     $record[$key]['log_updated_hash'] = $siteUpdateLog['hash'] ?? '';
                     $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample'] ?? '';
+                    $record[$key]['log_message'] = $siteUpdateLog['message'] ?? '';
+                    $record[$key]['log_output'] = $siteUpdateLog['output'] ?? '';
                 }
             }
 

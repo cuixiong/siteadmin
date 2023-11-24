@@ -29,7 +29,7 @@ class PriceEdition extends Base
     }
 
 
-    
+
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
@@ -46,7 +46,7 @@ class PriceEdition extends Base
         if (isset($search->publisher_id) && !empty($search->publisher_id)) {
             $model = $model->whereRaw("FIND_IN_SET(?, publisher_id) > 0", [$search->publisher_id]);
         }
-        
+
         //sort
         if (isset($search->sort) && !empty($search->sort)) {
             $model = $model->where('sort', $search->sort);
@@ -72,6 +72,35 @@ class PriceEdition extends Base
             $model = $model->where('updated_at', '<=', $updateTime[1]);
         }
 
+
+
+        //查询外联表
+        $model = $model->whereHas('priceEditionValueHasOne', function ($query) use ($search) {
+            // 在这里添加条件
+            if (isset($search->language_id) && !empty($search->language_id)) {
+                $query->where('language_id', $search->language_id);
+            }
+        
+            if (isset($search->rules) && !empty($search->rules)) {
+                $query->where('rules', 'like', '%' . $search->rules . '%');
+            }
+            
+            if (isset($search->is_logistics) && !empty($search->is_logistics)) {
+                $query->where('is_logistics', $search->is_logistics);
+            }
+
+            if (isset($search->notice) && !empty($search->notice)) {
+                $query->where('notice', 'like', '%' . $search->notice . '%');
+            }
+        });
+
         return $model;
     }
+
+
+     // 定义与 PriceEditionValue 的关联
+     public function priceEditionValueHasOne()
+     {
+         return $this->hasOne(PriceEditionValue::class, 'edition_id', 'id');
+     }
 }
