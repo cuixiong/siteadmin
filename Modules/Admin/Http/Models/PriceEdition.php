@@ -88,6 +88,10 @@ class PriceEdition extends Base
             if (isset($search->is_logistics) && !empty($search->is_logistics)) {
                 $query->where('is_logistics', $search->is_logistics);
             }
+
+            if (isset($search->notice) && !empty($search->notice)) {
+                $query->where('notice', 'like', '%' . $search->notice . '%');
+            }
         });
 
         return $model;
