@@ -16,12 +16,13 @@ class Rule extends Base
     {
         $tree = [];
         $Site = request()->header('Site');
+        $SiteCount = Site::where('name',$Site)->where('status',1)->count();
         foreach ($rules as $item) {
             $data = [];
             $data['component'] = $item['component'];
 
             if($item['type'] == 'CATALOG'){
-                $data['path'] = $Site ? '/'. $Site . $item['path'] : '/'. 'control'.$item['path'];
+                $data['path'] = $SiteCount > 0 ? '/'. $Site . $item['path'] : '/'. 'control'.$item['path'];
             } else {
                 $data['path'] = $item['path'];
             }
