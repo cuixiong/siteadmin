@@ -93,7 +93,6 @@ class PriceEdition extends Base
                 $query->where('notice', 'like', '%' . $search->notice . '%');
             }
 
-            
             if (isset($search->name) && !empty($search->name)) {
                 $query->where('name', 'like', '%' . $search->name . '%');
             }
