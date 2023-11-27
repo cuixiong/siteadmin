@@ -360,7 +360,7 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'store'])->name('价格版本管理:价格版本新增');
         Route::post('update', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'update'])->name('价格版本管理:价格版本编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'destroy'])->name('价格版本管理:价格版本删除');
-        Route::post('set-header-title', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'uploadLogo'])->name('价格版本管理:设置自定义表头');
+        Route::post('set-header-title', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'setHeaderTitle'])->name('价格版本管理:设置自定义表头');
     });
 
 });

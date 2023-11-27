@@ -3,6 +3,7 @@
 namespace Modules\Admin\Http\Models;
 
 use Modules\Admin\Http\Models\Base;
+use Modules\Site\Http\Models\User;
 
 class SiteUpdateLog extends Base
 {
@@ -27,7 +28,7 @@ class SiteUpdateLog extends Base
         return $text;
     }
 
-    
+
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class SiteUpdateLog extends Base
         if (isset($search->site_id) && !empty($search->site_id)) {
             $model = $model->where('site_id', $search->site_id);
         }
-        
+
         //site_name
         if (isset($search->site_name) && !empty($search->site_name)) {
             $model = $model->where('site_name', 'like', '%' . $search->site_name . '%');
@@ -93,6 +94,14 @@ class SiteUpdateLog extends Base
             $updateTime = $search->updated_at;
             $model = $model->where('updated_at', '>=', $updateTime[0]);
             $model = $model->where('updated_at', '<=', $updateTime[1]);
+        }
+
+
+        //操作者
+        if (isset($search->created_by) && !empty($search->created_by)) {
+            $userIds = User::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
+            $userIds = $userIds ? $userIds : [];
+            $model = $model->whereIn('created_by',$userIds);
         }
 
         return $model;

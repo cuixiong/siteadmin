@@ -92,6 +92,10 @@ class PriceEdition extends Base
             if (isset($search->notice) && !empty($search->notice)) {
                 $query->where('notice', 'like', '%' . $search->notice . '%');
             }
+
+            if (isset($search->name) && !empty($search->name)) {
+                $query->where('name', 'like', '%' . $search->name . '%');
+            }
         });
 
         return $model;
