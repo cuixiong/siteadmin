@@ -3,13 +3,20 @@ namespace Modules\Admin\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Helper\AdminUploads;
+use Illuminate\Support\Facades\Storage;
 
 class FileManagement extends Controller{
+    private $RootPath;
+    public function __construct()
+    {
+        $this->RootPath = AdminUploads::GetRootPath();
+    }
 
     public function FileList(Request $request)
     {   
         $path = $request->path ?? '';
-        $filename = public_path() . '/' . $path;
+        $filename = $this->RootPath . $path;
 
         if (!is_dir($filename)) {
             ReturnJson(false,'该路径非文件夹');
@@ -111,7 +118,7 @@ class FileManagement extends Controller{
         $path = $request->path ?? '';
         $name = $request->name ?? '';
 
-        $full_path = public_path() . $path . '/' . $name;
+        $full_path = $this->RootPath . $path . '/' . $name;
         if (empty($name)) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..') {
@@ -137,7 +144,7 @@ class FileManagement extends Controller{
         $old_name = $request->old_name?? '';
         $new_name = $request->new_name?? '';
 
-        $base_param = public_path();
+        $base_param = $this->RootPath;
         $old_full_path = $base_param . $path . '/' . $old_name;
         $new_full_path = $base_param . $path . '/' . $new_name;
         if (empty($old_name)) {
@@ -166,7 +173,7 @@ class FileManagement extends Controller{
     //删除
     public function delete(Request $request)
     {
-        $base_param = public_path();
+        $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
         // var_dump($name);die;
@@ -210,7 +217,7 @@ class FileManagement extends Controller{
     //复制或移动
     public function CopyAndMove(Request $request)
     {
-        $base_param = public_path();
+        $base_param = $this->RootPath;
 
         $old_path = $request->old_path ?? '';
         $new_path = $request->new_path ?? '';
@@ -455,7 +462,7 @@ class FileManagement extends Controller{
     //压缩
     public function cmpress(Request $request)
     {
-        $base_param = public_path();
+        $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
         $full_path = $base_param . $path . '/' . $name;
@@ -561,5 +568,39 @@ class FileManagement extends Controller{
         }
         closedir($handle);
         //关闭
+    }
+
+    // 上传文件
+    public function uploads(Request $request)
+    {
+        $path = $request->path;
+        if (empty($path)) {
+            ReturnJson(false, '请选择上传目录');
+        }
+        $file = $request->file('file');
+        if (empty($file)) {
+            ReturnJson(false, '请选择上传文件');
+        }
+        $name = $file->getClientOriginalName();
+        $res = AdminUploads::uploads($file, $path,$name);
+        ReturnJson(true, '上传成功', $res);
+    }
+
+    // 下载文件
+    public function download(Request $request)
+    {
+        $path = $request->path;
+        if (empty($path)) {
+            ReturnJson(false, '请选择下载文件所在的目录');
+        }
+        $name = $request->name;
+        if (empty($name)) {
+            ReturnJson(false, '请选择下载文件名称');
+        }
+        $res = AdminUploads::download($path,$name);
+        if($res == false){
+            ReturnJson(false, '下载失败');
+        }
+        return response()->download($res);
     }
 }

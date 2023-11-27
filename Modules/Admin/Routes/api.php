@@ -197,7 +197,7 @@ Route::middleware([
         Route::post('change-status',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'changeStatus'])->name('价格版本管理:状态修改');
     });
 
-    // PriceEdition 控制器
+    // FileManagement 控制器
     Route::prefix('file-management')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\FileManagement::class, 'FileList'])->name('文件管理:文件列表');
         Route::get('create_dir', [Modules\Admin\Http\Controllers\FileManagement::class, 'CreateDir'])->name('文件管理:文件创建');
@@ -206,6 +206,7 @@ Route::middleware([
         Route::post('copy', [Modules\Admin\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹复制');
         Route::post('move', [Modules\Admin\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹移动');
         Route::post('cmpress', [Modules\Admin\Http\Controllers\FileManagement::class, 'cmpress'])->name('文件管理:文件夹压缩');
+        Route::post('uploads', [Modules\Admin\Http\Controllers\FileManagement::class, 'uploads'])->name('文件管理:文件上传');
     });
 });
 
@@ -382,6 +383,7 @@ Route::middleware([
 
     Route::get('baba', [\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class, 'test'])->name('测试接口');
     Route::get('admin/database/phpmyadmin/{id}', [Modules\Admin\Http\Controllers\DatabaseController::class, 'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
+    Route::get('admin/file-management/download', [Modules\Admin\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
 
 });
 
