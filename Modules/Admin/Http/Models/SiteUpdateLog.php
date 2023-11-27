@@ -99,7 +99,7 @@ class SiteUpdateLog extends Base
 
         //操作者
         if (isset($search->created_by) && !empty($search->created_by)) {
-            $userIds = User::where('created_by', 'like', '%' . $search->created_by . '%')->pluck('id');
+            $userIds = User::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
             $userIds = $userIds ? $userIds : [];
             $model = $model->whereIn('created_by',$userIds);
         }
