@@ -15,7 +15,8 @@ class AdminUploads
     public static function uploads($file,$path,$name){
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
-        return '/'.trim($path,'/').'/'.$name;
+        $path = '/'.trim($path,'/').'/'.$name;
+        return $path;
     }
 
     public static function GetRootPath($path = ''){

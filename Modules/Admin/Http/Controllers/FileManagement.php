@@ -574,9 +574,6 @@ class FileManagement extends Controller{
     public function uploads(Request $request)
     {
         $path = $request->path;
-        if (empty($path)) {
-            ReturnJson(false, '请选择上传目录');
-        }
         $file = $request->file('file');
         if (empty($file)) {
             ReturnJson(false, '请选择上传文件');
