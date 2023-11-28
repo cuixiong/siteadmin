@@ -572,6 +572,10 @@ class FileManagement extends Controller{
     {
         $path = $request->path;
         $files = $request->file('files');
+        $file = $request->file('file');
+        var_dump($files);
+        var_dump($file);
+        die;
         if (empty($files)) {
             ReturnJson(false, '请选择上传文件');
         }
@@ -599,5 +603,32 @@ class FileManagement extends Controller{
             ReturnJson(false, '下载失败');
         }
         return response()->download($res);
+    }
+
+    // 递归查询文件夹
+    public function DirList()
+    {
+        $RootPath = AdminUploads::getRootPath();
+        $DirList = $this->listFolderFiles($RootPath);
+        $res = array_map(function ($v) use ($RootPath) {
+            return str_replace($RootPath, '', $v);
+        }, $DirList);
+        ReturnJson(true, trans('lang.request_success'), $res);
+    }
+
+    // 递归查询文件夹
+    public function listFolderFiles($dir){
+        $dir = rtrim($dir, '/');
+        $result = array();
+        $cdir = scandir($dir);
+        foreach ($cdir as $value){
+            if (!in_array($value,array(".",".."))){
+                if (is_dir($dir . '/' . $value)){
+                    $result[] = ['value'=>$dir . '/' . $value,'label' => $dir . '/' . $value];
+                    $result = array_merge($result, $this->listFolderFiles($dir . '/' . $value));
+                }
+            }
+        }
+        return $result;
     }
 }

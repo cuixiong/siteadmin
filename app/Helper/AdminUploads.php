@@ -21,7 +21,11 @@ class AdminUploads
 
     public static function GetRootPath($path = ''){
         $path = trim($path,'/');
-        $path = public_path().'/'.self::$DIR.'/'.$path.'/';
+        if($path){
+            $path = public_path().'/'.self::$DIR.'/'.$path.'/';
+        } else {
+            $path = public_path().'/'.self::$DIR.'/';
+        }
         return $path;
     }
 

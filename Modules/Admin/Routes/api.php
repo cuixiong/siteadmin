@@ -207,6 +207,7 @@ Route::middleware([
         Route::post('move', [Modules\Admin\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹移动');
         Route::post('cmpress', [Modules\Admin\Http\Controllers\FileManagement::class, 'cmpress'])->name('文件管理:文件夹压缩');
         Route::post('uploads', [Modules\Admin\Http\Controllers\FileManagement::class, 'uploads'])->name('文件管理:文件上传');
+        Route::get('dir_list', [Modules\Admin\Http\Controllers\FileManagement::class, 'DirList'])->name('文件管理:文件夹列表(下拉)');
     });
 });
 
