@@ -587,12 +587,14 @@ class FileManagement extends Controller{
     public function download(Request $request)
     {
         $path = $request->path;
-        if (empty($path)) {
-            ReturnJson(false, '请选择下载文件所在的目录');
-        }
         $name = $request->name;
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
+        }
+        $RootPath = AdminUploads::getRootPath();
+        $filePath = rtrim($RootPath, '/').'/'. trim($path, '/'). '/'. $name;
+        if(!file_exists($filePath)){
+            ReturnJson(false, '下载文件不存在');
         }
         $res = AdminUploads::download($path,$name);
         if($res == false){
