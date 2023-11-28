@@ -29,7 +29,7 @@ Route::middleware([
     // FileManagement 控制器
     Route::prefix('file-management')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\FileManagement::class, 'FileList'])->name('文件管理:文件列表');
-        Route::get('create_dir', [Modules\Site\Http\Controllers\FileManagement::class, 'CreateDir'])->name('文件管理:文件创建');
+        Route::post('create_dir', [Modules\Site\Http\Controllers\FileManagement::class, 'CreateDir'])->name('文件管理:文件创建');
         Route::post('rename', [Modules\Site\Http\Controllers\FileManagement::class, 'rename'])->name('文件管理:文件夹重命名');
         Route::post('delete', [Modules\Site\Http\Controllers\FileManagement::class, 'delete'])->name('文件管理:文件夹删除');
         Route::post('copy', [Modules\Site\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹复制');
