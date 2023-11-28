@@ -38,7 +38,7 @@ class SiteController extends CrudController
         // is_create不是入库的字段变量所以删除
         unset($request->is_create);
 
-        if(!isset($is_create)){
+        if (!isset($is_create)) {
             $is_create = 0;
         }
 
@@ -92,6 +92,7 @@ class SiteController extends CrudController
      */
     public function initDatabase(Request $request)
     {
+        $dir = 'admin';
 
         // 查询当前的租户信息
         $siteId = $request->input('site_id');
@@ -102,7 +103,7 @@ class SiteController extends CrudController
         Tenancy::initialize($tenant);
 
         // 读取 SQL 文件内容
-        $basePath = resource_path();
+        $basePath = public_path() . '/' . $dir;
         $sqlFilePath = $basePath . '/uploads/sql/init_database.sql';
         $sqlContent = file_get_contents($sqlFilePath);
 

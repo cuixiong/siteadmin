@@ -6,6 +6,7 @@ use Intervention\Image\Facades\Image;
 
 class ImageHelper
 {
+    private static $DIR = 'admin';// 一级目录
 
     /**
      * 保存图片
@@ -28,7 +29,7 @@ class ImageHelper
             $image->resize($width, $height);
         }
         
-        $basePath = resource_path();
+        $basePath = public_path().'/'.self::$DIR;
         //检验目录是否存在
         if (!is_dir($basePath . $outputDir)) {
             @mkdir($basePath.$outputDir, 0777, true);

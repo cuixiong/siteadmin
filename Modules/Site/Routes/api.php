@@ -37,5 +37,11 @@ Route::middleware([
         Route::post('cmpress', [Modules\Site\Http\Controllers\FileManagement::class, 'cmpress'])->name('文件管理:文件夹压缩');
         Route::post('uploads', [Modules\Site\Http\Controllers\FileManagement::class, 'uploads'])->name('文件管理:文件上传');
     });
+
+    
+    // Products 控制器
+    Route::prefix('products')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ProductsController::class, 'list'])->name('报告管理:报告列表');
+    });
 });
 Route::get('site/file-management/download', [Modules\Admin\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
