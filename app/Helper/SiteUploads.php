@@ -33,7 +33,7 @@ class SiteUploads
         }
         self::$SiteDir = $request->header('Site');
         $RootPath = public_path().'/'.self::$DIR.'/'.self::$SiteDir;
-        if(!file_exists($RootPath)){
+        if(!is_dir($RootPath)){
             mkdir($RootPath,0777,true);
         }
         $path = trim($path,'/');

@@ -173,8 +173,7 @@ class FileManagement extends Controller{
         $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
-        // var_dump($name);die;
-        $nameArray = json_decode($name, true);
+        $nameArray = explode(",",$name);
 
         if (!is_array($nameArray) || count($nameArray) <= 0) {
             ReturnJson(false,'文件夹名未传入');
@@ -505,7 +504,7 @@ class FileManagement extends Controller{
         try {
             foreach ($pathArray as $key => $sourcePath) {
                 //linux服务器需要注释
-                $sourcePath = trim($sourcePath, '/');
+                // $sourcePath = trim($sourcePath, '/');
                 // 去除后缀，防止压缩包内出现文件夹名带有前缀“/”
                 $sourcePath = trim($sourcePath, '\\');
                 $pathInfo = pathinfo($sourcePath);
@@ -571,7 +570,7 @@ class FileManagement extends Controller{
     public function uploads(Request $request)
     {
         $path = $request->path;
-        $files = $request->file('files');
+        $files = $request->file('file');
         if (empty($files)) {
             ReturnJson(false, '请选择上传文件');
         }
@@ -580,7 +579,6 @@ class FileManagement extends Controller{
             $name = $file->getClientOriginalName();
             $res[] = SiteUploads::uploads($file, $path,$name);
         }
-
         ReturnJson(true, '上传成功', $res);
     }
 
@@ -592,10 +590,60 @@ class FileManagement extends Controller{
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
         }
+        $RootPath = SiteUploads::getRootPath();
+        $filePath = rtrim($RootPath, '/').'/'. trim($path, '/'). '/'. $name;
+        if(!file_exists($filePath)){
+            ReturnJson(false, '下载文件不存在');
+        }
         $res = SiteUploads::download($path,$name);
         if($res == false){
             ReturnJson(false, '下载失败');
         }
         return response()->download($res);
+    }
+
+    // 根目录查询文件夹
+    public function DirList(Request $request)
+    {
+        $RootPath = SiteUploads::getRootPath();
+        $DirList = $this->listFolderFiles($RootPath);
+        $res = array_map(function ($v) use ($RootPath) {
+            return str_replace($RootPath, '', $v);
+        }, $DirList);
+        ReturnJson(true, trans('lang.request_success'), $res);
+    }
+
+    // 递归查询文件夹
+    public function listFolderFiles($dir){
+        $dir = rtrim($dir, '/');
+        $result = array();
+        $cdir = scandir($dir);
+        foreach ($cdir as $value){
+            if (!in_array($value,array(".",".."))){
+                if (is_dir($dir . '/' . $value)){
+                    $result[] = ['value'=>$dir . '/' . $value,'label' => $dir . '/' . $value];
+                    $result = array_merge($result, $this->listFolderFiles($dir . '/' . $value));
+                }
+            }
+        }
+        return $result;
+    }
+
+    // 计算文件夹大小
+    public function DirSize(Request $request){
+        $path = $request->path;
+        $name = $request->name;
+        if (empty($name)) {
+            ReturnJson(false, '文件夹目录为空');
+        }
+        $RootPath = SiteUploads::getRootPath();
+        $path = rtrim($RootPath, '/') . '/'.trim($path,'/').'/'. $name;
+        if(!is_dir($path)){
+            ReturnJson(false, '文件夹不存在');
+        }
+        $SizeList = self::getDirSize($path,[]);
+        $size = array_sum($SizeList);
+        $size = $this->converFileSize($size);
+        ReturnJson(true, trans('lang.request_success'), $size);
     }
 }

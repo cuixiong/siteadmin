@@ -36,6 +36,8 @@ Route::middleware([
         Route::post('move', [Modules\Site\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('文件管理:文件夹移动');
         Route::post('cmpress', [Modules\Site\Http\Controllers\FileManagement::class, 'cmpress'])->name('文件管理:文件夹压缩');
         Route::post('uploads', [Modules\Site\Http\Controllers\FileManagement::class, 'uploads'])->name('文件管理:文件上传');
+        Route::get('dir_list', [Modules\Site\Http\Controllers\FileManagement::class, 'DirList'])->name('文件管理:文件夹列表(下拉)');
+        Route::post('dir_size', [Modules\Site\Http\Controllers\FileManagement::class, 'DirSize'])->name('文件管理:文件夹大小计算');
     });
 });
-Route::get('site/file-management/download', [Modules\Admin\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
+Route::get('site/file-management/download', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
