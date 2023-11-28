@@ -38,3 +38,4 @@ Route::middleware([
         Route::post('uploads', [Modules\Site\Http\Controllers\FileManagement::class, 'uploads'])->name('文件管理:文件上传');
     });
 });
+Route::get('site/file-management/download', [Modules\Admin\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');

@@ -16,6 +16,13 @@ class SiteUploads
     public static function uploads($file,$path,$name){
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
+        if(env('OSS_ACCESS_IS_OPEN') == true){
+            $ossClient = new AliyuncsOss();
+            if(!file_exists($FilePath.$name)){
+                ReturnJson(false,'文件不存在,无法上传到OSS');
+            }
+            AliyuncsOss::uploads(self::$SiteDir, $path.'/'. $name, $FilePath.$name);
+        }
         return '/'.trim($path,'/').'/'.$name;
     }
 

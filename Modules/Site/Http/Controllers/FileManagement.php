@@ -44,7 +44,6 @@ class FileManagement extends Controller{
         $result['current_path'] = $bread_crumb_temp; //当前路径
         // 扫描目录下的所有文件
         $tempArray = scandir($filename);
-        // var_dump($tempArray);die;
         $fileNameArray = [];
         if (is_array($tempArray)) {
             foreach ($tempArray as $k => $v) {
@@ -589,9 +588,6 @@ class FileManagement extends Controller{
     public function download(Request $request)
     {
         $path = $request->path;
-        if (empty($path)) {
-            ReturnJson(false, '请选择下载文件所在的目录');
-        }
         $name = $request->name;
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
