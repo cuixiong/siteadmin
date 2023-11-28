@@ -1,15 +1,15 @@
 <?php
-namespace Modules\Admin\Http\Controllers;
+namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Helper\AdminUploads;
+use App\Helper\SiteUploads;
 
 class FileManagement extends Controller{
     private $RootPath;
     public function __construct()
     {
-        $this->RootPath = AdminUploads::GetRootPath();
+        $this->RootPath = SiteUploads::GetRootPath();
     }
 
     public function FileList(Request $request)
@@ -579,8 +579,9 @@ class FileManagement extends Controller{
         $res = [];
         foreach ($files as $file) {
             $name = $file->getClientOriginalName();
-            $res[] = AdminUploads::uploads($file, $path,$name);
+            $res[] = SiteUploads::uploads($file, $path,$name);
         }
+
         ReturnJson(true, '上传成功', $res);
     }
 
@@ -595,7 +596,7 @@ class FileManagement extends Controller{
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
         }
-        $res = AdminUploads::download($path,$name);
+        $res = SiteUploads::download($path,$name);
         if($res == false){
             ReturnJson(false, '下载失败');
         }
