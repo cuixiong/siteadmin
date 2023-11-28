@@ -505,7 +505,7 @@ class FileManagement extends Controller{
         try {
             foreach ($pathArray as $key => $sourcePath) {
                 //linux服务器需要注释
-                $sourcePath = trim($sourcePath, '/');
+                // $sourcePath = trim($sourcePath, '/');
                 // 去除后缀，防止压缩包内出现文件夹名带有前缀“/”
                 $sourcePath = trim($sourcePath, '\\');
                 $pathInfo = pathinfo($sourcePath);
