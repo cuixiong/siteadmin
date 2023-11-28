@@ -572,7 +572,7 @@ class FileManagement extends Controller{
     {
         $path = $request->path;
         $files = $request->file('file');
-        // var_dump($files);die;
+        var_dump($files);die;
         if (empty($files)) {
             ReturnJson(false, '请选择上传文件');
         }
