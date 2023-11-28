@@ -601,8 +601,8 @@ class FileManagement extends Controller{
         return response()->download($res);
     }
 
-    // 递归查询文件夹
-    public function DirList()
+    // 根目录查询文件夹
+    public function DirList(Request $request)
     {
         $RootPath = AdminUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
@@ -626,5 +626,23 @@ class FileManagement extends Controller{
             }
         }
         return $result;
+    }
+
+    // 计算文件夹大小
+    public function DirSize(Request $request){
+        $path = $request->path;
+        $name = $request->name;
+        if (empty($name)) {
+            ReturnJson(false, '文件夹目录为空');
+        }
+        $RootPath = AdminUploads::getRootPath();
+        $path = rtrim($RootPath, '/') . '/'.trim($path,'/').'/'. $name;
+        if(!is_dir($path)){
+            ReturnJson(false, '文件夹不存在');
+        }
+        $SizeList = self::getDirSize($path,[]);
+        $size = array_sum($SizeList);
+        $size = $this->converFileSize($size);
+        ReturnJson(true, trans('lang.request_success'), $size);
     }
 }

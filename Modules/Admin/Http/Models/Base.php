@@ -5,8 +5,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Stancl\Tenancy\Database\Concerns\ResourceSyncing;
+use Stancl\Tenancy\Database\Concerns\CentralConnection;
 class Base extends Model
 {
+    use ResourceSyncing, CentralConnection;
     // 时间戳
     protected $dateFormat = 'U';
     // 下面是设置数据表名，如果不设置，则使用类名的复数形式作为表名，如Users
