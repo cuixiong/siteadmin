@@ -41,7 +41,6 @@ class SiteUpdateLogController extends CrudController
      */
     protected function destroy(Request $request)
     {
-        return 111;
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
