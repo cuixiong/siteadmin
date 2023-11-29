@@ -157,13 +157,12 @@ class FileManagement extends Controller{
         } elseif (file_exists($new_full_path)) {
             ReturnJson(false,'命名的文件已存在');
         } else {
-            rename($old_full_path, $new_full_path);
-        }
-
-        if (file_exists($new_full_path)) {
-            ReturnJson(true,'重命名成功');
-        } else {
-            ReturnJson(false,'重命名失败');
+            $res = SiteUploads::rename($old_full_path, $new_full_path);
+            if ($res) {
+                ReturnJson(true,'重命名成功');
+            } else {
+                ReturnJson(false,'重命名失败');
+            }
         }
     }
 
@@ -193,7 +192,7 @@ class FileManagement extends Controller{
                 array_push($fiter_full_path, $full_path);
             }
             foreach ($fiter_full_path as $k => $v) {
-                $this->delDir($v);
+                SiteUploads::delete($v);
             }
         }
 
@@ -255,17 +254,17 @@ class FileManagement extends Controller{
                     if (!file_exists($new_full_path)) {
 
                         if ($copy_or_move == 1) {
-                            $this->copyFile($old_full_path, $new_full_path, $overwrite);
+                            SiteUploads::copyFile($old_full_path, $new_full_path, $overwrite);
                         } elseif ($copy_or_move == 2) {
-                            $this->moveFile($old_full_path, $new_full_path, $overwrite);
+                            SiteUploads::moveFile($old_full_path, $new_full_path, $overwrite);
                         }
                     }
                 } elseif ($overwrite) {
 
                     if ($copy_or_move == 1) {
-                        $this->copyFile($old_full_path, $new_full_path, $overwrite);
+                        SiteUploads::copyFile($old_full_path, $new_full_path, $overwrite);
                     } elseif ($copy_or_move == 2) {
-                        $this->moveFile($old_full_path, $new_full_path, $overwrite);
+                        SiteUploads::moveFile($old_full_path, $new_full_path, $overwrite);
                     }
                 }
             }
@@ -278,33 +277,7 @@ class FileManagement extends Controller{
         }
     }
 
-    public function delDir($path)
-    {
-        //如果是目录则继续
-        if (is_dir($path)) {
-            //扫描一个文件夹内的所有文件夹和文件并返回数组
-            $p = scandir($path);
-            foreach ($p as $val) {
-                //排除目录中的.和..
-                if ($val != "." && $val != "..") {
-                    //如果是目录则递归子目录，继续操作
-                    if (is_dir($path . '/' . $val)) {
-                        //子目录中操作删除文件夹和文件
-                        $this->delDir($path . '/' . $val);
-                        //目录清空后删除空文件夹
-                        @rmdir($path . '/' . $val);
-                    } else {
-                        //如果是文件直接删除
-                        unlink($path . '/' . $val);
-                    }
-                }
-            }
-            //目录清空后删除总文件夹
-            @rmdir($path);
-        } else {
-            @unlink($path);
-        }
-    }
+
 
     /**
      *移动文件夹
@@ -335,39 +308,12 @@ class FileManagement extends Controller{
                 continue;
             }
             if (!is_dir($oldDir . $file)) {
-                $this->moveFile($oldDir . $file, $aimDir . $file, $overWrite);
+                SiteUploads::moveFile($oldDir . $file, $aimDir . $file, $overWrite);
             } else {
                 $this->moveDir($oldDir . $file, $aimDir . $file, $overWrite);
             }
         }
         return rmdir($oldDir);
-    }
-
-    /**
-     *移动文件
-     *
-     *@param string $fileUrl
-     *@param string $aimUrl
-     *@param boolean $overWrite 该参数控制是否覆盖原文件
-     *@return boolean
-     */
-    function moveFile($fileUrl, $aimUrl, $overWrite = false)
-    {
-        if (!file_exists($fileUrl)) {
-            return false;
-        }
-        if (file_exists($aimUrl) && $overWrite = false) {
-            return false;
-        } elseif (file_exists($aimUrl) && $overWrite = true) {
-            $this->delDir($aimUrl);
-        }
-        $aimDir = dirname($aimUrl);
-        if (!file_exists($aimDir)) {
-            mkdir($aimDir, 0755, true);
-            chmod($aimDir, 0755);
-        }
-        rename($fileUrl, $aimUrl);
-        return true;
     }
 
     /**
@@ -399,38 +345,11 @@ class FileManagement extends Controller{
                 continue;
             }
             if (!is_dir($oldDir . $file)) {
-                $this->copyFile($oldDir . $file, $aimDir . $file, $overWrite);
+                SiteUploads::copyFile($oldDir . $file, $aimDir . $file, $overWrite);
             } else {
                 $this->copyDir($oldDir . $file, $aimDir . $file, $overWrite);
             }
         }
-    }
-
-    /**
-     * 复制文件
-     *
-     * @param string $fileUrl
-     * @param string $aimUrl
-     * @param boolean $overWrite 该参数控制是否覆盖原文件
-     * @return boolean
-     */
-    function copyFile($fileUrl, $aimUrl, $overWrite = false)
-    {
-        if (!file_exists($fileUrl)) {
-            return false;
-        }
-        if (file_exists($aimUrl) && $overWrite == false) {
-            return false;
-        } elseif (file_exists($aimUrl) && $overWrite == true) {
-            $this->delDir($aimUrl);
-        }
-        $aimDir = dirname($aimUrl);
-        if (!file_exists($aimDir)) {
-            mkdir($aimDir, 0755, true);
-            chmod($aimDir, 0755);
-        }
-        copy($fileUrl, $aimUrl);
-        return true;
     }
 
     //递归函数

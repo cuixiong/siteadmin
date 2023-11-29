@@ -33,7 +33,7 @@ class AliyuncsOss
 
     public function setBucket($bucket)
     {
-        $this->bucket = $bucket ?? $this->bucket;
+        $this->bucket = $bucket ? $bucket : $this->bucket;
     }
 
     /**
@@ -95,8 +95,10 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->copyObject($this->bucket, $newFile, $this->bucket, $oldFile);
-            $this->ossClient->deleteObject($this->bucket, $oldFile);
+            $this->ossClient->copyObject($this->bucket, $oldFile, $this->bucket, $newFile);
+            if($oldFile != $newFile){
+                $this->ossClient->deleteObject($this->bucket, $oldFile);
+            }
             return true;
         } catch (OssException $e) {
             return $e->getMessage();
@@ -114,6 +116,44 @@ class AliyuncsOss
             $this->setBucket($bucket);
             $exist = $this->ossClient->doesObjectExist($this->bucket, $file);
             return $exist ? true : false;
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * delete dir
+     * @param $dir dir name
+     * @param $bucket Storage space name
+     * @return bool
+     */
+    public function deleteDir($dir,$bucket = '')
+    {
+        try {
+            $this->setBucket($bucket);
+            $this->ossClient->deleteObject($this->bucket, $dir);
+            return true;
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * move file
+     * @param $oldFile Old file name
+     * @param $newFile new file name
+     * @param $bucket Storage space name
+     * @return bool
+     */
+    public function move($oldFile, $newFile,$bucket = '')
+    {
+        try {
+            $this->setBucket($bucket);
+            $this->ossClient->copyObject($this->bucket, $oldFile, $this->bucket, $newFile);
+            if($oldFile != $newFile){
+                $this->ossClient->deleteObject($this->bucket, $oldFile);
+            }
+            return true;
         } catch (OssException $e) {
             return $e->getMessage();
         }
