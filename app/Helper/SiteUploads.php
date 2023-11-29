@@ -111,7 +111,7 @@ class SiteUploads
             return false;
         }
         if(env('OSS_ACCESS_IS_OPEN') == true){
-            if(is_dir($oldPath)){
+            if(is_dir($newPath)){
                 $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
                 $newPath = str_replace(self::GetRootPath(),'', $newPath);
                 $ossClient = self::OssClient();
