@@ -71,7 +71,7 @@ class TenantController extends Controller
      * @param string $DB_PASSWORD 数据库密码
      * @param string $DB_PORT 数据库端口
      */
-    public function updateTenant($id, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
+    public function updateTenant($oldName, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
     {
         try {
             $time = date('Y-m-d H:i:s', time());
@@ -86,12 +86,12 @@ class TenantController extends Controller
             ];
             $data = json_encode($data);
             // 查询当前的租户信息
-            $tenant = DB::table('domains')->where('id', $id)->first();
+            $tenant = DB::table('domains')->where('tenant_id', $oldName)->first();
             if ($tenant) {
                 // 入库tenants表
                 DB::table('tenants')->where('id', $tenant->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
                 // 入库domains
-                DB::table('domains')->where('id', $id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+                DB::table('domains')->where('tenant_id', $tenant->tenant_id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
             } else {
 
                 // 入库tenants表

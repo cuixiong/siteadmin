@@ -171,7 +171,7 @@ class SiteController extends CrudController
             // 更新租户
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
-                $input['id'],
+                $model->name,
                 $input['name'],
                 $input['domain'],
                 $database['db_host'],
@@ -180,7 +180,7 @@ class SiteController extends CrudController
                 $database['db_password'],
                 $database['db_port'] ?? 3306
             );
-
+            // return $res;
 
             // if ($res !== true) {
             //     // 回滚事务

@@ -331,7 +331,7 @@ Route::middleware([
     
     // SiteUpdateLog 控制器
     Route::prefix('site-update-log')->group(function () {
-        Route::post('destroy', [Modules\Admin\Http\Controllers\SiteController::class, 'destroy'])->name('升级日志:日志删除');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'destroy'])->name('升级日志:日志删除');
         
     });
 

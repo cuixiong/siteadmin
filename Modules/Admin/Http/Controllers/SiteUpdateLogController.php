@@ -34,4 +34,30 @@ class SiteUpdateLogController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+    
+    /**
+     * AJax单行删除
+     * @param $ids 主键ID
+     */
+    protected function destroy(Request $request)
+    {
+        return 111;
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            return $ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if($record){
+                    $record->delete();
+                }
+            }
+            ReturnJson(TRUE, trans('lang.delete_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }
