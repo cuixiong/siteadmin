@@ -24,7 +24,7 @@ class CommonController extends Controller
         ];
         $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
         $siteName = $request->header('Site');
-        $siteId = Site::where('english_name',$siteName)->value('id');
+        $siteId = Site::where('name',$siteName)->value('id');
         $siteId = $siteId ? $siteId : 0;
         $res = (new Role)->GetRules(explode(',',$request->user->role_id),'all',$siteId);
         $data['roles'] = $res['code'];
