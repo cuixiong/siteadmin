@@ -122,23 +122,6 @@ class AliyuncsOss
     }
 
     /**
-     * delete dir
-     * @param $dir dir name
-     * @param $bucket Storage space name
-     * @return bool
-     */
-    public function deleteDir($dir,$bucket = '')
-    {
-        try {
-            $this->setBucket($bucket);
-            $this->ossClient->deleteObject($this->bucket, $dir);
-            return true;
-        } catch (OssException $e) {
-            return $e->getMessage();
-        }
-    }
-
-    /**
      * move file
      * @param $oldFile Old file name
      * @param $newFile new file name
@@ -154,6 +137,70 @@ class AliyuncsOss
                 $this->ossClient->deleteObject($this->bucket, $oldFile);
             }
             return true;
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * create dir
+     * @param $dir dir name
+     * @param $bucket Storage space name
+     * @return bool
+     */
+    public function CreateDir($dir,$bucket = '')
+    {
+        try {
+            $dir = trim($dir,'/');
+            if($dir == ''){
+                return false;
+            }
+            $dir = $dir . '/';
+            $this->setBucket($bucket);
+            $this->ossClient->putObject($this->bucket, $dir, '');
+            return true;
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * delete dir
+     * @param $dir dir name
+     * @param $bucket Storage space name
+     * @return bool
+     */
+    public function DeleteDir($dir,$bucket = '')
+    {
+        try {
+            $this->setBucket($bucket);
+            $option = array(
+                OssClient::OSS_MARKER => null,
+                // Fill in the complete path of the directory to be deleted, which does not include the bucket name.
+                OssClient::OSS_PREFIX => trim($dir,'/').'/',
+                OssClient::OSS_DELIMITER=>'',
+             );
+            $bool = true;
+            while ($bool){
+                $result = $this->ossClient->listObjects($this->bucket,$option);
+                $objects = array();
+                if(count($result->getObjectList()) > 0){
+                    foreach ($result->getObjectList() as $key => $info){
+                        $objects[] = $info->getKey();
+                    }
+                    // Delete directory and all files under it
+                    $delObjects = $this->ossClient->deleteObjects($this->bucket, $objects);
+                    foreach ($delObjects as $info){
+                        strval($info);
+                    }
+                }
+                if($result->getIsTruncated() === 'true'){
+                    $option[OssClient::OSS_MARKER] = $result->getNextMarker();
+                }else{
+                    $bool = false;
+                }
+            }
+            return false;
         } catch (OssException $e) {
             return $e->getMessage();
         }
