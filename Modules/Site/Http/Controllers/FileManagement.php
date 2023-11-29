@@ -116,22 +116,11 @@ class FileManagement extends Controller{
         $path = $request->path ?? '';
         $name = $request->name ?? '';
 
-        $full_path = $this->RootPath . $path . '/' . $name;
-        if (empty($name)) {
-            ReturnJson(false,'文件夹名未传入');
-        } elseif ($path == '..') {
-            //不能进去基本路径的上层
-            ReturnJson(false,'超过文件管理范围');
-        } elseif (file_exists($full_path)) {
-            ReturnJson(false,'文件夹名称已存在');
-        } else {
-            mkdir($full_path, 0755, true);
-            chmod($full_path, 0755);
-        }
-        if (file_exists($full_path)) {
+        $res = SiteUploads::CreateDir(trim($path,'/').$name);
+        if($res == true){
             ReturnJson(true,'文件夹创建成功');
         } else {
-            ReturnJson(true,'文件夹创建失败');
+            ReturnJson(false,$res);
         }
     }
 
