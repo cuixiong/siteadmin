@@ -95,7 +95,7 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->copyObject($this->bucket, $oldFile, $this->bucket, $newFile);
+            $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
             if($oldFile != $newFile){
                 $this->ossClient->deleteObject($this->bucket, $oldFile);
             }
@@ -200,7 +200,54 @@ class AliyuncsOss
                     $bool = false;
                 }
             }
-            return false;
+            return true;
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * Rename dir
+     * @param $OldDir dir name
+     * @param $NewDir dir name
+     * @param $bucket Storage space name
+     * @return bool
+     */
+    public function RenameDir($OldDir,$NewDir,$bucket = '')
+    {
+        try {
+            $this->setBucket($bucket);
+            $OldDir = trim($OldDir,'/');
+            $NewDir = trim($NewDir,'/');
+            $option = array(
+                OssClient::OSS_MARKER => null,
+                // Fill in the complete path of the directory to be deleted, which does not include the bucket name.
+                OssClient::OSS_PREFIX => $OldDir.'/',
+                OssClient::OSS_DELIMITER=>'',
+             );
+            $bool = true;
+            while ($bool){
+                $result = $this->ossClient->listObjects($this->bucket,$option);
+                $objects = array();
+                if(count($result->getObjectList()) > 0){
+                    foreach ($result->getObjectList() as $key => $info){
+                        $objects[] = $fromObject = $info->getKey();
+                        $toObject = str_replace($OldDir, $NewDir, $fromObject);
+                        $this->ossClient->copyObject($this->bucket, $fromObject,$this->bucket, $toObject);
+                    }
+                    // Delete directory and all files under it
+                    $delObjects = $this->ossClient->deleteObjects($this->bucket, $objects);
+                    foreach ($delObjects as $info){
+                        strval($info);
+                    }
+                }
+                if($result->getIsTruncated() === 'true'){
+                    $option[OssClient::OSS_MARKER] = $result->getNextMarker();
+                }else{
+                    $bool = false;
+                }
+            }
+            return true;
         } catch (OssException $e) {
             return $e->getMessage();
         }

@@ -43,7 +43,7 @@ class SiteUploads
             mkdir($RootPath,0777,true);
         }
         $path = trim($path,'/');
-        $path = $RootPath.'/'.$path.'/';
+        $path = $path ? $RootPath.'/' .$path.'/' : $RootPath.'/';
         return $path;
     }
     /**
@@ -111,10 +111,17 @@ class SiteUploads
             return false;
         }
         if(env('OSS_ACCESS_IS_OPEN') == true){
-            $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
-            $newPath = str_replace(self::GetRootPath(),'', $newPath);
-            $ossClient = self::OssClient();
-            $ossClient->rename($oldPath,$newPath);
+            if(is_dir($oldPath)){
+                $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
+                $newPath = str_replace(self::GetRootPath(),'', $newPath);
+                $ossClient = self::OssClient();
+                $ossClient->RenameDir($oldPath,$newPath);
+            } else {
+                $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
+                $newPath = str_replace(self::GetRootPath(),'', $newPath);
+                $ossClient = self::OssClient();
+                $ossClient->rename($oldPath,$newPath);
+            }
         }
         return true;
     }
