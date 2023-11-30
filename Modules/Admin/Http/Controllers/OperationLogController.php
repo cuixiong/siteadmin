@@ -22,6 +22,7 @@ class OperationLogController extends CrudController
             $content = method_exists(new OperationLogController,$ClassName) ? self::$ClassName($model) : self::getContent($model);
         } else if($type == 'insert'){
             $content = "新增数据:".json_encode($model->all());
+            // $content = "新增数据:".json_encode($model::find($model->id));
         } else if($type == 'delete'){
             $content = '删除了ID='.$model->id.'的数据行。';
         }

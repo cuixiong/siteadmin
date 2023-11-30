@@ -43,7 +43,7 @@ class SiteController extends CrudController
         }
 
         // 开启事务
-        // DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // 入库site表
             $model = new Site();
@@ -57,6 +57,8 @@ class SiteController extends CrudController
             // 
 
             $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first()->toArray();
+
+            DB::commit();
 
             // 创建租户
             $Tenant = new TenantController();
@@ -80,7 +82,7 @@ class SiteController extends CrudController
             ReturnJson(TRUE, trans('lang.add_success'));
         } catch (\Exception $e) {
             // 回滚事务
-            // DB::rollBack();
+            DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -150,7 +152,7 @@ class SiteController extends CrudController
         $input['created_by'] = $request->user->id;
 
         // 开启事务
-        // DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // 入库site表
             $model = new Site();
@@ -158,16 +160,18 @@ class SiteController extends CrudController
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
-                // DB::rollBack();
+                DB::rollBack();
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
 
             $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first();
             if (!$database) {
+                DB::rollBack();
                 ReturnJson(TRUE, trans('lang.update_error') . ' database is not exist');
             } else {
                 $database = $database->toArray();
             }
+            DB::commit();
             // 更新租户
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
@@ -308,22 +312,20 @@ class SiteController extends CrudController
      */
     public function destroy(Request $request)
     {
-        DB::beginTransaction();
+        
         try {
-            if (empty($request->ids)) {
-                ReturnJson(FALSE, '请输入需要删除的ID');
-            }
-            $record = $this->ModelInstance()->query();
+            $this->ValidateInstance($request);
             $ids = $request->ids;
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            $record->whereIn('id', $ids);
-            if (!$record->delete()) {
-                // 回滚事务
-                DB::rollBack();
-                ReturnJson(FALSE, trans('lang.delete_error'));
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if($record){
+                    $record->delete();
+                }
             }
+            
             // $Tenant = new TenantController();
             // foreach ($ids as $id) {
             //     $res = $Tenant->destroyTenant($id);
@@ -333,11 +335,8 @@ class SiteController extends CrudController
             //         ReturnJson(FALSE, $res);
             //     }
             // }
-            DB::commit();
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
-            // 回滚事务
-            DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }

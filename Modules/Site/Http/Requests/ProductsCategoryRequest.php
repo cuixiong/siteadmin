@@ -1,5 +1,7 @@
 <?php
+
 namespace Modules\Site\Http\Requests;
+
 use Modules\Admin\Http\Requests\BaseRequest;
 
 class ProductsCategoryRequest extends BaseRequest
@@ -12,8 +14,13 @@ class ProductsCategoryRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
+            'name' => 'required|unique:product_category,name',
         ];
-        return $this->validateRequest($request, $rules);
+        $message = [
+            'name.required' => '名称不能为空',
+            'name.unique' => '名称不能重复',
+        ];
+        return $this->validateRequest($request, $rules, $message);
     }
     /**
      * 更新数据验证
@@ -22,8 +29,15 @@ class ProductsCategoryRequest extends BaseRequest
     public function update($request)
     {
         $rules = [
-            'id' => 'required',
+            'id' => [
+                'required',
+                \Illuminate\Validation\Rule::unique('product_category')->ignore($request->input('id')),
+            ]
         ];
-        return $this->validateRequest($request, $rules);
+        $message = [
+            'name.required' => '名称不能为空',
+            'name.unique' => '名称不能重复',
+        ];
+        return $this->validateRequest($request, $rules, $message);
     }
 }
