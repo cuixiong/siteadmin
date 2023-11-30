@@ -242,12 +242,16 @@ class SiteUploads
                 if(is_dir($RootPath.$filename)){
                     if(env('OSS_ACCESS_IS_OPEN') == true){
                         $ossClient = self::OssClient();
-                        $ossClient->CreateDir($unzipPath.'/'.trim($filename,'/').'/');
+                        $toPath = $unzipPath ? $unzipPath.'/'.trim($filename,'/').'/' : trim($filename,'/').'/';
+                        var_dump($toPath);
+                        $ossClient->CreateDir($toPath);
                     }
                 } else {
                     if(env('OSS_ACCESS_IS_OPEN') == true){
                         $ossClient = self::OssClient();
-                        $ossClient->uploads($unzipPath.'/'.trim($filename,'/'),$LocalUnzipPath.$filename);
+                        $toPath = $unzipPath ? $unzipPath.'/'.trim($filename,'/') : trim($filename,'/');
+                        var_dump($toPath);
+                        $ossClient->uploads($toPath,$LocalUnzipPath.$filename);
                     }
                 }
             }
