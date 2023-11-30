@@ -57,6 +57,7 @@ Route::middleware([
         Route::post('store', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'store'])->name('报告分类:新增分类');
         Route::post('update', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'update'])->name('报告分类:修改分类');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'destroy'])->name('报告分类:删除分类');
+        
     });
 });
 Route::get('site/file-management/download', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
