@@ -232,6 +232,7 @@ class SiteUploads
         if(strpos($name, '.zip') == false){
             return '文件不是ZIP文件';
         }
+        var_dump($RootPath,file_exists($FilePath));die;
         if(!file_exists($FilePath)){
             return 'ZIP文件不存在';
         }

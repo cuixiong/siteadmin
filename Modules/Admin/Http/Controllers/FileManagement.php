@@ -654,9 +654,6 @@ class FileManagement extends Controller{
         if (empty($name)) {
             ReturnJson(false, '请选择需要解压的文件名称');
         }
-        if (empty($unzipPath)) {
-            ReturnJson(false, '请输入解压目录');
-        }
         $res = AdminUploads::unzip($path, $name, $unzipPath);
         if($res === true){
             ReturnJson(true, '文件解压成功');
