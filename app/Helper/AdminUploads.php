@@ -45,8 +45,8 @@ class AdminUploads
     public static function unzip($path,$name,$unzipPath){
         $path = trim($path,'/');
         $RootPath = self::GetRootPath($path);
-        var_dump($RootPath,file_exists($FilePath));die;
         $FilePath = $path ? $RootPath. $path .'/' .$name : $RootPath. $name;
+        var_dump($RootPath,file_exists($FilePath));die;
         $LocalUnzipPath = $RootPath.$unzipPath.'/';
         if(strpos($name, '.zip') == false){
             return '文件不是ZIP文件';
