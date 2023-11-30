@@ -422,7 +422,7 @@ class FileManagement extends Controller{
                 // var_dump( $pathInfo );
                 // echo '<br/>';
                 $arr = explode('/', $pathInfo['dirname']);
-                array_pop($arr);
+                $ZipDir = array_pop($arr);
                 $pathInfo['dirname'] = implode('/', $arr);
                 $parentPath = $pathInfo['dirname'];
                 $dirName = $pathInfo['basename'];
@@ -433,7 +433,7 @@ class FileManagement extends Controller{
                 } else {
                     // 单文件压缩
                     if (file_exists($sourcePath)) {
-                        $z->addFile($sourcePath, $dirName);
+                        $z->addFile($sourcePath, $ZipDir.'/'.$dirName);
                     }
                 }
             }
