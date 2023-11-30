@@ -142,8 +142,6 @@ class SiteUploads
         }
         if (file_exists($newPath) && $overWrite == false) {
             return false;
-        } elseif (file_exists($newPath) && $overWrite == true) {
-            self::delete($newPath);
         }
         $aimDir = dirname($newPath);
         if (!file_exists($aimDir)) {
