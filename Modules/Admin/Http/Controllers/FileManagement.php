@@ -233,7 +233,7 @@ class FileManagement extends Controller{
             ReturnJson(false,'超过文件管理范围');
         } elseif (!file_exists($old_full_path)) {
             ReturnJson(false,'选择的文件不存在');
-        } elseif ($old_path == $new_path && $copy_or_move == 1) {
+        } elseif ($old_path == $new_path) {
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
         } else {
             if ($overwrite == 1) {
