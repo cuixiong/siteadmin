@@ -554,4 +554,22 @@ class FileManagement extends Controller{
         $size = $this->converFileSize($size);
         ReturnJson(true, trans('lang.request_success'), $size);
     }
+
+    public function unzip(Request $request) {
+        $path = $request->path;
+        $name = $request->name;
+        $unzipPath = $request->unzipPath;
+        if (empty($name)) {
+            ReturnJson(false, '请选择需要解压的文件名称');
+        }
+        if (empty($unzipPath)) {
+            ReturnJson(false, '请输入解压目录');
+        }
+        $res = SiteUploads::unzip($path, $name, $unzipPath);
+        if($res == true){
+            ReturnJson(true, '文件解压成功');
+        } else {
+            ReturnJson(false, $res);
+        }
+    }
 }

@@ -221,4 +221,43 @@ class SiteUploads
             return '文件夹创建失败';
         }
     }
+
+    public static function unzip($path,$name,$unzipPath){
+        $path = trim($path,'/');
+        $RootPath = self::GetRootPath($path);
+        $FilePath = $path ? $RootPath. $path .'/' .$name : $RootPath. $name;
+        $LocalUnzipPath = $RootPath.$unzipPath.'/';
+        if(strpos($name, '.zip') == false){
+            return '文件不是ZIP文件';
+        }
+        if(!file_exists($FilePath)){
+            return 'ZIP文件不存在';
+        }
+        if(is_dir($LocalUnzipPath)){
+            return '文件夹已存在';
+        }
+        $zip = new \ZipArchive();;
+        $res = $zip->open($FilePath);
+        if($res === true){
+            $zip->extractTo($LocalUnzipPath);
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $filename = $zip->getNameIndex($i);
+                if(is_dir($RootPath.$filename)){
+                    if(env('OSS_ACCESS_IS_OPEN') == true){
+                        $ossClient = self::OssClient();
+                        $ossClient->CreateDir($unzipPath.'/'.trim($filename,'/').'/');
+                    }
+                } else {
+                    if(env('OSS_ACCESS_IS_OPEN') == true){
+                        $ossClient = self::OssClient();
+                        $ossClient->uploads($unzipPath.'/'.trim($filename,'/'),$LocalUnzipPath.$filename);
+                    }
+                }
+            }
+            $zip->close();
+            return true;
+        } else {
+            return '文件解压失败';
+        }
+    }
 }
