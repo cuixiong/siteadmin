@@ -235,9 +235,6 @@ class SiteUploads
         if(!file_exists($FilePath)){
             return 'ZIP文件不存在';
         }
-        if(is_dir($LocalUnzipPath)){
-            return '文件夹已存在';
-        }
         $zip = new \ZipArchive();;
         $res = $zip->open($FilePath);
         if($res === true){
