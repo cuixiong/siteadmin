@@ -61,4 +61,4 @@ Route::middleware([
         
     });
 });
-Route::get('site/file-management/download', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
+Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

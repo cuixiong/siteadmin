@@ -495,8 +495,12 @@ class FileManagement extends Controller{
     {
         $path = $request->path;
         $name = $request->name;
+        $site = $request->site;
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
+        }
+        if (empty($site)) {
+            ReturnJson(false, '站点名称为空');
         }
         $RootPath = SiteUploads::getRootPath();
         $filePath = rtrim($RootPath, '/').'/'. trim($path, '/'). '/'. $name;

@@ -3,7 +3,7 @@
 namespace App\Helper;
 class SiteUploads
 {
-    private static $DIR = 'site';// 一级目录
+    public static $DIR = 'site';// 一级目录
     private static $SiteDir;// 站点目录
 
     private static function OssClient(){
@@ -35,9 +35,11 @@ class SiteUploads
     public static function GetRootPath($path = ''){
         $request = request();
         if(!$request->header('Site')){
-            ReturnJson(false,'当前站点的请求头为空');
+            if(!$request->site){
+                ReturnJson(false,'当前站点的请求头为空');
+            }
         }
-        self::$SiteDir = $request->header('Site');
+        self::$SiteDir = $request->header('Site') ? $request->header('Site') : $request->site;
         $RootPath = public_path().'/'.self::$DIR.'/'.self::$SiteDir;
         if(!is_dir($RootPath)){
             mkdir($RootPath,0777,true);
