@@ -226,13 +226,12 @@ class SiteUploads
 
     public static function unzip($path,$name,$unzipPath){
         $path = trim($path,'/');
-        $RootPath = self::GetRootPath($path);
+        $RootPath = self::GetRootPath();
         $FilePath = $path ? $RootPath. $path .'/' .$name : $RootPath. $name;
         $LocalUnzipPath = $RootPath.$unzipPath.'/';
         if(strpos($name, '.zip') == false){
             return '文件不是ZIP文件';
         }
-        var_dump($RootPath,file_exists($FilePath));die;
         if(!file_exists($FilePath)){
             return 'ZIP文件不存在';
         }
