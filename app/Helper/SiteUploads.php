@@ -43,7 +43,7 @@ class SiteUploads
             mkdir($RootPath,0777,true);
         }
         $path = trim($path,'/');
-        $path = $RootPath.'/'.$path.'/';
+        $path = $path ? $RootPath.'/' .$path.'/' : $RootPath.'/';
         return $path;
     }
     /**
@@ -89,7 +89,7 @@ class SiteUploads
             if(env('OSS_ACCESS_IS_OPEN') == true){
                 $path = str_replace(self::GetRootPath(),'', $path);
                 $ossClient = self::OssClient();
-                $ossClient->delete($path);
+                $ossClient->DeleteDir($path);
             }
         } else {
             @unlink($path);
@@ -111,10 +111,17 @@ class SiteUploads
             return false;
         }
         if(env('OSS_ACCESS_IS_OPEN') == true){
-            $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
-            $newPath = str_replace(self::GetRootPath(),'', $newPath);
-            $ossClient = self::OssClient();
-            $ossClient->rename($oldPath,$newPath);
+            if(is_dir($newPath)){
+                $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
+                $newPath = str_replace(self::GetRootPath(),'', $newPath);
+                $ossClient = self::OssClient();
+                $ossClient->RenameDir($oldPath,$newPath);
+            } else {
+                $oldPath = str_replace(self::GetRootPath(),'', $oldPath);
+                $newPath = str_replace(self::GetRootPath(),'', $newPath);
+                $ossClient = self::OssClient();
+                $ossClient->rename($oldPath,$newPath);
+            }
         }
         return true;
     }
@@ -180,5 +187,38 @@ class SiteUploads
             $ossClient->move($newPath, $oldPath);
         }
         return true;
+    }
+
+    /**
+     * 创建文件夹
+     * @param string $path
+     * @param int $mode
+     * @param bool $recursive
+     * @param bool $force
+     * @return bool
+     */
+
+     public static function CreateDir($path, $mode = 0775)
+    {
+        $RootPath = self::GetRootPath();
+        $DirPath = $RootPath.trim($path,'/');
+        if ($path == '..') {
+            //不能进去基本路径的上层
+            return '超过文件管理范围';
+        } else if (file_exists($DirPath)) {
+            return '文件夹名称已存在';
+        } else {
+            mkdir($DirPath, $mode, true);
+            chmod($DirPath, $mode);
+        }
+        if (file_exists($DirPath)) {
+            if(env('OSS_ACCESS_IS_OPEN') == true){
+                $ossClient = self::OssClient();
+                $ossClient->CreateDir(trim($path,'/').'/');
+            }
+            return true;
+        } else {
+            return '文件夹创建失败';
+        }
     }
 }
