@@ -3,7 +3,7 @@
 namespace App\Helper;
 class SiteUploads
 {
-    private static $DIR = 'site';// 一级目录
+    public static $DIR = 'site';// 一级目录
     private static $SiteDir;// 站点目录
 
     private static function OssClient(){
@@ -35,9 +35,11 @@ class SiteUploads
     public static function GetRootPath($path = ''){
         $request = request();
         if(!$request->header('Site')){
-            ReturnJson(false,'当前站点的请求头为空');
+            if(!$request->site){
+                ReturnJson(false,'当前站点的请求头为空');
+            }
         }
-        self::$SiteDir = $request->header('Site');
+        self::$SiteDir = $request->header('Site') ? $request->header('Site') : $request->site;
         $RootPath = public_path().'/'.self::$DIR.'/'.self::$SiteDir;
         if(!is_dir($RootPath)){
             mkdir($RootPath,0777,true);
@@ -140,8 +142,6 @@ class SiteUploads
         }
         if (file_exists($newPath) && $overWrite == false) {
             return false;
-        } elseif (file_exists($newPath) && $overWrite == true) {
-            self::delete($newPath);
         }
         $aimDir = dirname($newPath);
         if (!file_exists($aimDir)) {
@@ -219,6 +219,44 @@ class SiteUploads
             return true;
         } else {
             return '文件夹创建失败';
+        }
+    }
+
+    public static function unzip($path,$name,$unzipPath){
+        $path = trim($path,'/');
+        $RootPath = self::GetRootPath();
+        $FilePath = $path ? $RootPath. $path .'/' .$name : $RootPath. $name;
+        $LocalUnzipPath = $RootPath.$unzipPath.'/';
+        if(strpos($name, '.zip') == false){
+            return '文件不是ZIP文件';
+        }
+        if(!file_exists($FilePath)){
+            return 'ZIP文件不存在';
+        }
+        $zip = new \ZipArchive();;
+        $res = $zip->open($FilePath);
+        if($res === true){
+            $zip->extractTo($LocalUnzipPath);
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $filename = $zip->getNameIndex($i);
+                if(is_dir($RootPath.$filename)){
+                    if(env('OSS_ACCESS_IS_OPEN') == true){
+                        $ossClient = self::OssClient();
+                        $toPath = $unzipPath ? $unzipPath.'/'.trim($filename,'/').'/' : trim($filename,'/').'/';
+                        $ossClient->CreateDir($toPath);
+                    }
+                } else {
+                    if(env('OSS_ACCESS_IS_OPEN') == true){
+                        $ossClient = self::OssClient();
+                        $toPath = $unzipPath ? $unzipPath.'/'.trim($filename,'/') : trim($filename,'/');
+                        $ossClient->uploads($toPath,$LocalUnzipPath.$filename);
+                    }
+                }
+            }
+            $zip->close();
+            return true;
+        } else {
+            return '文件解压失败';
         }
     }
 }

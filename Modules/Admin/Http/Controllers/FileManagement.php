@@ -233,6 +233,8 @@ class FileManagement extends Controller{
             ReturnJson(false,'超过文件管理范围');
         } elseif (!file_exists($old_full_path)) {
             ReturnJson(false,'选择的文件不存在');
+        } elseif ($old_path == $new_path) {
+            ReturnJson(false,'复制或移动的目标相同，请正确操作');
         } else {
             if ($overwrite == 1) {
                 $overwrite = true;
@@ -421,8 +423,6 @@ class FileManagement extends Controller{
         }
         if (file_exists($aimUrl) && $overWrite == false) {
             return false;
-        } elseif (file_exists($aimUrl) && $overWrite == true) {
-            $this->delDir($aimUrl);
         }
         $aimDir = dirname($aimUrl);
         if (!file_exists($aimDir)) {
@@ -461,7 +461,7 @@ class FileManagement extends Controller{
         $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
-        $full_path = $base_param . $path . '/' . $name;
+        $full_path = $path ? $base_param . $path . '/' . $name : $base_param . $name;
 
         if (empty($name)) {
             ReturnJson(false,'文件夹名未传入');
@@ -510,6 +510,9 @@ class FileManagement extends Controller{
                 $pathInfo = pathinfo($sourcePath);
                 // var_dump( $pathInfo );
                 // echo '<br/>';
+                $arr = explode('/', $pathInfo['dirname']);
+                $ZipDir = array_pop($arr);
+                $pathInfo['dirname'] = implode('/', $arr);
                 $parentPath = $pathInfo['dirname'];
                 $dirName = $pathInfo['basename'];
                 if (empty($pathInfo['extension'])) {
@@ -519,7 +522,7 @@ class FileManagement extends Controller{
                 } else {
                     // 单文件压缩
                     if (file_exists($sourcePath)) {
-                        $z->addFile($sourcePath, $dirName);
+                        $z->addFile($sourcePath, $ZipDir.'/'.$dirName);
                     }
                 }
             }
@@ -545,6 +548,7 @@ class FileManagement extends Controller{
     private static function folderToZip($folder, &$zipFile, $exclusiveLength)
     {
         $handle = opendir($folder);
+        $zipFile->addEmptyDir(substr($folder, $exclusiveLength));
         //打开一个目录
         while (false !== $f = readdir($handle)) {
             if ($f != '.' && $f != '..') {
@@ -645,5 +649,20 @@ class FileManagement extends Controller{
         $size = array_sum($SizeList);
         $size = $this->converFileSize($size);
         ReturnJson(true, trans('lang.request_success'), $size);
+    }
+
+    public function unzip(Request $request) {
+        $path = $request->path;
+        $name = $request->name;
+        $unzipPath = $request->unzipPath;
+        if (empty($name)) {
+            ReturnJson(false, '请选择需要解压的文件名称');
+        }
+        $res = AdminUploads::unzip($path, $name, $unzipPath);
+        if($res === true){
+            ReturnJson(true, '文件解压成功');
+        } else {
+            ReturnJson(false, $res);
+        }
     }
 }

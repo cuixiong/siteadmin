@@ -41,4 +41,26 @@ class AdminUploads
         }
         return $FilePath.$name;
     }
+
+    public static function unzip($path,$name,$unzipPath){
+        $path = trim($path,'/');
+        $RootPath = self::GetRootPath();
+        $FilePath = $path ? $RootPath. $path .'/' .$name : $RootPath. $name;
+        $LocalUnzipPath = $RootPath.$unzipPath.'/';
+        if(strpos($name, '.zip') == false){
+            return '文件不是ZIP文件';
+        }
+        if(!file_exists($FilePath)){
+            return 'ZIP文件不存在';
+        }
+        $zip = new \ZipArchive();;
+        $res = $zip->open($FilePath);
+        if($res === true){
+            $zip->extractTo($LocalUnzipPath);
+            $zip->close();
+            return true;
+        } else {
+            return '文件解压失败';
+        }
+    }
 }
