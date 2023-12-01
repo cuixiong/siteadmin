@@ -52,13 +52,19 @@ class FileManagement extends Controller{
                     continue;
                 } else {
                     $info = [];
-                    $info['is_file'] = ['name' => $v];
                     $info['type'] = self::filetype($filename . '/' . $v);
                     if ($info['type'] == 'dir') {
                         $info['size'] = "";
                     } else {
                         $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
                     }
+                    if($info['type'] == 'image'){
+                        $url = $path ? str_replace(public_path(),'',$this->RootPath. $path. '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
+                        $info['is_file'] = ['name' => $v,'path' => $url];
+                    } else {
+                        $info['is_file'] = ['name' => $v];
+                    }
+
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
                     $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
