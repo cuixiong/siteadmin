@@ -120,7 +120,7 @@ class FileManagement extends Controller{
                     case 'bmp':
                         return 'image';
                     case'zip':
-                        return 'image';
+                        return 'zip';
                     default:
                         return 'file';
                 }
