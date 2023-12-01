@@ -34,4 +34,5 @@ return [
     'english_name_empty' => 'The english name is empty',
     'upload_successful' => 'Upload successful',
     'site_undefined' => 'site undefined',
+    'aliyun_oss_config_exist'   =>  'The current site is already bound to another OSS configuration. Please select another site',
 ];

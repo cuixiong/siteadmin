@@ -34,4 +34,5 @@ return [
     'english_name_empty' => '英文名称为空',
     'upload_successful' => '上传成功',
     'site_undefined' => '站点不存在',
+    'aliyun_oss_config_exist'   =>  '当前站点已绑定其他OSS配置，请选择其他站点',
 ];

@@ -16,6 +16,7 @@ class AliyunOssConfigRequest extends BaseRequest
             'endpoint' => 'required',
             'bucket' => 'required',
             'site_id' => 'required|unique:aliyun_oss_configs', 
+            'domain' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
@@ -25,6 +26,7 @@ class AliyunOssConfigRequest extends BaseRequest
             'bucket.required' => 'bucket不能为空',
             'site_id.required' => 'site_id不能为空',
             'site_id.unique' => '选择的站点已绑定其他空间，请重新选择',
+            'domain.required' => '域名不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -42,6 +44,7 @@ class AliyunOssConfigRequest extends BaseRequest
             'endpoint' => 'required',
             'bucket' => 'required',
             'site_id' => 'required', 
+            'domain' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
@@ -50,6 +53,7 @@ class AliyunOssConfigRequest extends BaseRequest
             'endpoint.required' => 'endpoint不能为空',
             'bucket.required' => 'bucket不能为空',
             'site_id.required' => 'site_id不能为空',
+            'domain.required' => '域名不能为空',
         ];
         return $this->validateRequest($request, $rules);
     }
