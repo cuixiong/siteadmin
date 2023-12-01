@@ -38,6 +38,4 @@ class Products extends Base
         'show_hot',    // 热门
         'show_recommend' // 推荐
     ];
-
-    
 }

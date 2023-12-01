@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class ProductsController extends CrudController
 {
-    
+
     /**
      * 查询列表页
      * @param $request 请求信息
@@ -50,12 +50,18 @@ class ProductsController extends CrudController
 
             //附加详情数据
             foreach ($record as $key => $item) {
-                $year = date('Y',$item['published_date']);
-                if(empty($year) || !is_numeric($year) || strlen($year) !== 4){
+                $year = date('Y', $item['published_date']);
+                if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
                     continue;
                 }
-                $descriptionData = (new ProductsDescription($year))::find()->where(['product_id','=',$item['id']])->first();
-                $record[$key]['description'] = $$descriptionData;
+                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
+                $record[$key]['description'] = $descriptionData['description'];
+                $record[$key]['table_of_content'] = $descriptionData['table_of_content'];
+                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'];
+                $record[$key]['description_en'] = $descriptionData['description_en'];
+                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'];
+                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'];
+                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'];
             }
 
             $data = [
@@ -68,12 +74,12 @@ class ProductsController extends CrudController
         }
     }
 
-    
+
     /**
      * 创建报告
      * @param Request $request
      */
-    public function store(Request $request)
+    protected function store(Request $request)
     {
 
         try {
@@ -84,31 +90,125 @@ class ProductsController extends CrudController
 
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
-                // 回滚事务
-                DB::rollBack();
-                ReturnJson(FALSE, trans('lang.add_error'));
+                throw new \Exception(trans('lang.add_error'));
             }
-            
-            $year = date('Y',$input['published_date']);
-            if(empty($year) || !is_numeric($year) || strlen($year) !== 4){
-                DB::rollBack();
+
+            $year = $this->publishedDateFormatYear($input['published_date']);
+            if (!$year) {
+                throw new \Exception(trans('lang.add_error') . ':published_date');
             }
+
             $productDescription = new ProductsDescription($year);
             $input['product_id'] = $record->id;
             $descriptionRecord = $productDescription->saveWithAttributes($input);
             if (!$descriptionRecord) {
-                // 回滚事务
-                DB::rollBack();
-                ReturnJson(FALSE, trans('lang.add_error'));
-            }else{
-                DB::commit();
+                throw new \Exception(trans('lang.add_error'));
             }
+            DB::commit();
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            // 回滚事务
+            // 建表时无法回滚
+            DB::rollBack();
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    /**
+     * 更新报告
+     * @param $request 请求信息
+     */
+    protected function update(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            // 开启事务
+            DB::beginTransaction();
+            $model = $this->ModelInstance();
+            $record = $model->findOrFail($request->id);
+
+            //旧纪录年份
+            $oldYear = $this->publishedDateFormatYear($record->published_date);
+            //新纪录年份
+            $newYear = $this->publishedDateFormatYear($input['published_date']);
+            // return $oldYear;
+            if (!$record->update($input)) {
+                throw new \Exception(trans('lang.update_error'));
+            }
+
+            $input['product_id'] = $record->id;
+            $newProductDescription = (new ProductsDescription($newYear));
+            //出版时间年份更改
+            if ($oldYear != $newYear) {
+                //删除旧详情
+                if ($oldYear) {
+                    $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $request->id)->first();
+                    $oldProductDescription->delete();
+                }
+                //然后新增
+                $descriptionRecord = $newProductDescription->saveWithAttributes($input);
+            } else {
+                //直接更新
+                $newProductDescription = $newProductDescription->where('product_id', $request->id)->first();
+                $descriptionRecord = $newProductDescription->updateWithAttributes($input);
+            }
+
+            if (!$descriptionRecord) {
+                throw new \Exception(trans('lang.update_error'));
+            }
+
+            DB::commit();
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            // 回滚事务
+            DB::rollBack();
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    private function publishedDateFormatYear($timestamp)
+    {
+
+        $year = date('Y', $timestamp);
+        if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+            return false;
+        }
+        return $year;
+    }
+
+    /**
+     * AJax单行删除
+     * @param $ids 主键ID
+     */
+    protected function destroy(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+
+                $year = $this->publishedDateFormatYear($record->published_date);
+                if ($year) {
+                    $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
+                }
+                if ($record) {
+                    $record->delete();
+                }
+                if ($recordDescription) {
+                    $recordDescription->delete();
+                }
+            }
+            ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
-        
     }
+
 
 
     /**
@@ -159,6 +259,4 @@ class ProductsController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-
-
 }
