@@ -124,6 +124,8 @@ class FileManagement extends Controller{
                     case 'png':
                     case 'gif':
                     case 'bmp':
+                    case 'webp':
+                    case 'svg':
                         return 'image';
                     case'zip':
                         return 'zip';

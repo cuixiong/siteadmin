@@ -11,11 +11,11 @@ class AliyunOssConfigRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
-            'status' => 'required',
-            'data_scope' => 'required',
-            'code' => 'required|unique:roles',
-            'sort' => 'required',
-            'is_super' => 'required', 
+            'access_key_id' => 'required',
+            'access_key_secret' => 'required',
+            'endpoint' => 'required|unique:roles',
+            'bucket' => 'required',
+            'site_id' => 'required|unique:aliyun_oss_configs', 
         ];
         $message = [
             'code.unique' => '编码已存在，请更换其他编码',
