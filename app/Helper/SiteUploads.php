@@ -1,18 +1,35 @@
 <?php
 
 namespace App\Helper;
+
+use Modules\Admin\Http\Models\AliyunOssConfig;
+use Modules\Admin\Http\Models\Site;
+
 class SiteUploads
 {
     public static $DIR = 'site';// 一级目录
     private static $SiteDir;// 站点目录
 
     private static function OssClient(){
+        // $site = request()->header('site');
+        // $siteId = Site::where('name',$site)->value('id');
+        // $config = AliyunOssConfig::where('site_id',$siteId)->first();
+        // if(empty($config)){
+        //     ReturnJson(false,"当前站点未配置阿里云OSS信息,请配置完整信息再上传");
+        // }
+        // $config = $config->toArray();
+        // if(empty($config['access_key_id']) || empty($config['access_key_secret']) || empty($config['endpoint']) || empty($config['bucket'])){
+        //     ReturnJson(false,"阿里云OSS配置信息不完整");
+        // }
         // 查询出站点OSS的配置信息
-        $config['accessKey_id'] = env('OSS_ACCESS_KEY_ID');
-        $config['accessKey_secret'] = env('OSS_ACCESS_KEY_SECRET');
+        $config['access_key_id'] = env('OSS_ACCESS_KEY_ID');
+        $config['access_key_secret'] = env('OSS_ACCESS_KEY_SECRET');
         $config['endpoint'] = env('OSS_ACCESS_KEY_ENDPOINT');
         $config['bucket'] = env('OSS_ACCESS_KEY_BUCKET');
-        $ossClient = new AliyuncsOss($config['accessKey_id'],$config['accessKey_secret'],$config['endpoint'],$config['bucket']);
+        $ossClient = new AliyuncsOss($config['access_key_id'],$config['access_key_secret'],$config['endpoint'],$config['bucket']);
+        if(false){
+            ReturnJson(false,"阿里云OSS链接失败");
+        }
         return $ossClient;
     }
     /**

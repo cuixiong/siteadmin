@@ -21,8 +21,7 @@ class OperationLogController extends CrudController
         if($type == 'update'){
             $content = method_exists(new OperationLogController,$ClassName) ? self::$ClassName($model) : self::getContent($model);
         } else if($type == 'insert'){
-            $content = "新增数据:".json_encode($model->all());
-            // $content = "新增数据:".json_encode($model::find($model->id));
+            $content = "新增了ID=".$model->id;
         } else if($type == 'delete'){
             $content = '删除了ID='.$model->id.'的数据行。';
         }
@@ -137,6 +136,7 @@ class OperationLogController extends CrudController
                 $OriginalValue = $model->getOriginal($field);
                 switch ($field) {
                     case 'rule_id':
+                        $OriginalValue = $OriginalValue ? $OriginalValue : [];
                         $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $value = is_array($value) ? $value : ($value ? explode(',',$value) : []);
@@ -146,6 +146,7 @@ class OperationLogController extends CrudController
                     break;
 
                     case 'site_rule_id':
+                        $OriginalValue = $OriginalValue ? $OriginalValue : [];
                         $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',',$OriginalName) : '';
                         $value = is_array($value) ? $value : ($value ? explode(',',$value) : []);

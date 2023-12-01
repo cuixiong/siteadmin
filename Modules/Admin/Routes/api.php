@@ -211,6 +211,12 @@ Route::middleware([
         Route::post('dir_size', [Modules\Admin\Http\Controllers\FileManagement::class, 'DirSize'])->name('文件管理:文件夹大小计算');
         Route::post('unzip', [Modules\Admin\Http\Controllers\FileManagement::class, 'unzip'])->name('文件管理:文件解压');
     });
+
+    // AliyunOssConfig 控制器
+    Route::prefix('aliyun-oss-config')->group(function () {
+        Route::get('list', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'list'])->name('阿里云OSS配置:数据列表');
+        Route::get('form', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'form'])->name('阿里云OSS配置:数据单查');
+    });
 });
 
 
@@ -365,7 +371,12 @@ Route::middleware([
         Route::post('destroy', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'destroy'])->name('价格版本管理:价格版本删除');
         Route::post('set-header-title', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'setHeaderTitle'])->name('价格版本管理:设置自定义表头');
     });
-
+    // AliyunOssConfig 控制器
+    Route::prefix('aliyun-oss-config')->group(function () {
+        Route::post('store', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'store'])->name('阿里云OSS配置:数据新增');
+        Route::post('update', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'update'])->name('阿里云OSS配置:数据编辑');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'destroy'])->name('阿里云OSS配置:删除操作');
+    });
 });
 
 /** 不需要登陆也不需要验证权限的路由 */

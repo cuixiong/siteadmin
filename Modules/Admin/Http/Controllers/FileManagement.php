@@ -52,13 +52,17 @@ class FileManagement extends Controller{
                     continue;
                 } else {
                     $info = [];
-                    $info['is_file'] = ['name' => $v];
                     $info['type'] = self::filetype($filename . '/' . $v);
-                    if ($info['type'] == 'file') {
-                        $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
-                    } else {
+                    if ($info['type'] == 'dir') {
                         $info['size'] = "";
+                    } else {
+                        $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
                     }
+                    $info['is_file'] = ['name' => $v];
+                    if($info['type'] == 'image'){
+                        $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. $path. '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
+                    }
+
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
                     $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
@@ -103,9 +107,30 @@ class FileManagement extends Controller{
     // 计算文件类型
     public static function filetype ($path)
     {
+
         if(is_dir($path)){
             return 'dir';
-        } else {
+        } else if(is_file($path)) {
+            // 使用pathinfo()函数获取文件路径信息
+            $fileinfo = pathinfo($path);
+            // 获取文件类型
+            $filetype = $fileinfo['extension'];
+            if(isset($filetype)){
+                switch ($filetype) {
+                    case 'jpg':
+                    case 'jpeg':
+                    case 'png':
+                    case 'gif':
+                    case 'bmp':
+                    case 'webp':
+                    case 'svg':
+                        return 'image';
+                    case'zip':
+                        return 'zip';
+                    default:
+                        return 'file';
+                }
+            }
             return 'file';
         }
     }
@@ -445,10 +470,10 @@ class FileManagement extends Controller{
                 continue;
             } else {
                 $file_type = filetype($full_path . '/' . $v);
-                if ($file_type == 'file') {
-                    $size_array[] = filesize($full_path . '/' . $v);
-                } else {
+                if ($file_type == 'dir') {
                     $size_array = array_merge($size_array, self::getDirSize($full_path . '/' . $v));
+                } else {
+                    $size_array[] = filesize($full_path . '/' . $v);
                 }
             }
         }
