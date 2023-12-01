@@ -245,12 +245,44 @@ class ProductsController extends CrudController
             if (empty($request->id)) {
                 ReturnJson(FALSE, 'id is empty');
             }
+            if (empty($request->discount_type)) {
+                ReturnJson(FALSE, 'discount type is empty');
+            }
+            if (empty($request->discount_value)) {
+                ReturnJson(FALSE, 'discount value is empty');
+            }
             $record = $this->ModelInstance()->findOrFail($request->id);
 
-            $record->discount = $request->discount ?? 100;
-            $record->discount_amount = $request->discount_amount ?? 0;
-            $record->discount_time_begin = $request->discount_time_begin;
-            $record->discount_time_end = $request->discount_time_end;
+            $type = $request->discount_type;
+            $value = $request->discount_value;
+
+            $record->discount_type = $type;
+            if ($type == 1) {
+                $record->discount = $value;
+                $record->discount_amount = 0;
+            } elseif ($type == 2) {
+                $record->discount = 100;
+                $record->discount_amount = $value;
+            } 
+            // else {
+            //     throw new \Exception(trans('lang.update_error') . ':discount_type is out of range');
+            // }
+            //可能恢复原价
+            if ($type == 1 && $value == 100) {
+                $record->discount_time_begin = null;
+                $record->discount_time_end = null;
+            } elseif ($type == 2 && $value == 0) {
+                $record->discount_time_begin = null;
+                $record->discount_time_end = null;
+            } else {
+                $record->discount_time_begin = $request->discount_time_begin;
+                $record->discount_time_end = $request->discount_time_end;
+            }
+            //验证
+            request()->offsetSet('discount', $record->discount);
+            request()->offsetSet('discount_amount', $record->discount_amount);
+            $this->ValidateInstance($request);
+
             if (!$record->save()) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }

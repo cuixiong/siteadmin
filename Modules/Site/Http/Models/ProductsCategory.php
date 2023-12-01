@@ -19,6 +19,7 @@ class ProductsCategory extends Base
         'status',
         'discount',
         'discount_amount',
+        'discount_type',
         'discount_time_begin',
         'discount_time_end',
         'seo_title',
@@ -42,6 +43,11 @@ class ProductsCategory extends Base
         //id 
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
+        }
+
+        //name
+        if (isset($search->name) && !empty($search->name)) {
+            $model = $model->where('link', 'name', '%' . $search->name . '%');
         }
 
         //link
@@ -85,6 +91,11 @@ class ProductsCategory extends Base
         //discount_amount
         if (isset($search->discount_amount) && $search->discount_amount != '') {
             $model = $model->where('discount_amount', $search->discount_amount);
+        }
+
+        //discount_type
+        if (isset($search->discount_type) && $search->discount_type != '') {
+            $model = $model->where('discount_type', $search->discount_type);
         }
 
         //status 状态
