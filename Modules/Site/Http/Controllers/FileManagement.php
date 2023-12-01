@@ -58,11 +58,9 @@ class FileManagement extends Controller{
                     } else {
                         $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
                     }
+                    $info['is_file'] = ['name' => $v];
                     if($info['type'] == 'image'){
-                        $url = $path ? str_replace(public_path(),'',$this->RootPath. $path. '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
-                        $info['is_file'] = ['name' => $v,'path' => $url];
-                    } else {
-                        $info['is_file'] = ['name' => $v];
+                        $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. $path. '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
                     }
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
