@@ -45,8 +45,8 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->uploadFile($this->bucket, $file, $content);
-            return true;
+            $res = $this->ossClient->uploadFile($this->bucket, $file, $content);
+            return $res;
         } catch (OssException $e) {
             return $e->getMessage();
         }
