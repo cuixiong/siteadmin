@@ -97,6 +97,7 @@ class AliyuncsOss
         try {
             $this->setBucket($bucket);
             $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
+            var_dump($oldFile != $newFile,$oldFile,$newFile);
             if($oldFile != $newFile){
                 $this->ossClient->deleteObject($this->bucket, $oldFile);
             }
