@@ -216,6 +216,7 @@ Route::middleware([
     Route::prefix('aliyun-oss-config')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'list'])->name('阿里云OSS配置:数据列表');
         Route::get('form', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'form'])->name('阿里云OSS配置:数据单查');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'changeStatus'])->name('部门管理:修改状态');
     });
 });
 
