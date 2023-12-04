@@ -10,7 +10,7 @@ class SiteUploads
     public static $DIR = 'site';// 一级目录
     private static $SiteDir;// 站点目录
 
-    private static function OssClient(){
+    public static function OssClient(){
         $site = request()->header('site');
         $siteId = Site::where('name',$site)->value('id');
         $config = AliyunOssConfig::where('site_id',$siteId)->first();
@@ -29,9 +29,9 @@ class SiteUploads
         // $config['bucket'] = env('OSS_ACCESS_KEY_BUCKET');
         $ossClient = new AliyuncsOss($config['access_key_id'],$config['access_key_secret'],$config['endpoint'],$config['bucket']);
         var_dump($ossClient);
-        if(false){
-            ReturnJson(false,"阿里云OSS链接失败");
-        }
+        // if(false){
+        //     ReturnJson(false,"阿里云OSS链接失败");
+        // }
         return $ossClient;
     }
     /**
