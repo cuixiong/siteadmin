@@ -10,6 +10,7 @@ class FileManagement extends Controller{
     public function __construct()
     {
         $this->RootPath = SiteUploads::GetRootPath();
+        $client = SiteUploads::OssClient();
     }
 
     public function FileList(Request $request)
