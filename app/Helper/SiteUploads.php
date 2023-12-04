@@ -21,6 +21,11 @@ class SiteUploads
         if(empty($config['access_key_id']) || empty($config['access_key_secret']) || empty($config['endpoint']) || empty($config['bucket'])){
             ReturnJson(false,"阿里云OSS配置信息不完整");
         }
+        // 查询出站点OSS的配置信息
+        // $config['access_key_id'] = env('OSS_ACCESS_KEY_ID');
+        // $config['access_key_secret'] = env('OSS_ACCESS_KEY_SECRET');
+        // $config['endpoint'] = env('OSS_ACCESS_KEY_ENDPOINT');
+        // $config['bucket'] = env('OSS_ACCESS_KEY_BUCKET');
         try{
             $ossClient = new AliyuncsOss($config['access_key_id'],$config['access_key_secret'],$config['endpoint'],$config['bucket']);
         } catch (\Exception $e){
