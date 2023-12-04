@@ -62,7 +62,7 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->deleteObject($this->bucket, $file);
+            $this->ossClient->deleteObject($this->bucket, ltrim($file,'/'));
             return true;
         } catch (OssException $e) {
             return $e->getMessage();
@@ -97,9 +97,8 @@ class AliyuncsOss
         try {
             $this->setBucket($bucket);
             $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
-            var_dump($oldFile != $newFile,$oldFile,$newFile);
             if($oldFile != $newFile){
-                $this->ossClient->deleteObject($this->bucket, $oldFile);
+                $this->ossClient->deleteObject($this->bucket, ltrim($oldFile,'/'));
             }
             return true;
         } catch (OssException $e) {
@@ -134,9 +133,9 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->copyObject($this->bucket, $oldFile, $this->bucket, $newFile);
+            $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, $newFile);
             if($oldFile != $newFile){
-                $this->ossClient->deleteObject($this->bucket, $oldFile);
+                $this->ossClient->deleteObject($this->bucket, ltrim($oldFile,'/'));
             }
             return true;
         } catch (OssException $e) {
