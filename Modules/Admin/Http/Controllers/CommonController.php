@@ -68,9 +68,9 @@ class CommonController extends Controller
         $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
         $where = $siteId > 0 ? ['category' => 2,'status' => 1] : ['category' => 1,'status' => 1];
         if($is_super > 0){
-            $rules = $model->select($fields)->whereIn('type',['CATALOG','MENU'])->where($where)->get()->toArray();
+            $rules = $model->select($fields)->whereIn('type',['CATALOG','MENU'])->where($where)->orderBy('sort','asc')->get()->toArray();
         } else {
-            $rules = $model->select($fields)->whereIn('id',$rule_ids)->whereIn('type',['CATALOG','MENU'])->where($where)->get()->toArray();
+            $rules = $model->select($fields)->whereIn('id',$rule_ids)->whereIn('type',['CATALOG','MENU'])->where($where)->orderBy('sort','asc')->get()->toArray();
         }
         // 递归分类权限
         $rules = $model->buildTree($rules,$roleCodes);
