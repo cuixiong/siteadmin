@@ -38,11 +38,12 @@ class SiteUploads
     public static function uploads($file,$path,$name){
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
-        var_dump(env('OSS_ACCESS_IS_OPEN'),env('OSS_ACCESS_IS_OPEN') == true);
         if(env('OSS_ACCESS_IS_OPEN') == true){
             $ossClient = self::OssClient();
             $res = $ossClient->uploads($path.'/'. $name, $FilePath.$name);
-            var_dump($res);
+            if(!is_array($res)){
+                ReturnJson(false,$res);
+            }
         }
         return '/'.trim($path,'/').'/'.$name;
     }
