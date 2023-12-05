@@ -10,6 +10,7 @@ class FileManagement extends Controller{
     public function __construct()
     {
         $this->RootPath = SiteUploads::GetRootPath();
+        $client = SiteUploads::OssClient();
     }
 
     public function FileList(Request $request)
@@ -510,17 +511,22 @@ class FileManagement extends Controller{
     // 上传文件
     public function uploads(Request $request)
     {
-        $path = $request->path;
-        $files = $request->file('file');
-        if (empty($files)) {
-            ReturnJson(false, '请选择上传文件');
+        try {
+            $path = $request->path;
+            $files = $request->file('file');
+            if (empty($files)) {
+                ReturnJson(false, '请选择上传文件');
+            }
+            $res = [];
+            foreach ($files as $file) {
+                $name = $file->getClientOriginalName();
+                $res[] = SiteUploads::uploads($file, $path,$name);
+            }
+            ReturnJson(true, '上传成功', $res);
+        } catch (\Exception $e){
+            ReturnJson(false,$e->getMessage());
         }
-        $res = [];
-        foreach ($files as $file) {
-            $name = $file->getClientOriginalName();
-            $res[] = SiteUploads::uploads($file, $path,$name);
-        }
-        ReturnJson(true, '上传成功', $res);
+
     }
 
     // 下载文件

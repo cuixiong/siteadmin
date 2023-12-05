@@ -10,7 +10,7 @@ class SiteUploads
     public static $DIR = 'site';// 一级目录
     private static $SiteDir;// 站点目录
 
-    private static function OssClient(){
+    public static function OssClient(){
         $site = request()->header('site');
         $siteId = Site::where('name',$site)->value('id');
         $config = AliyunOssConfig::where('site_id',$siteId)->first();
@@ -22,13 +22,14 @@ class SiteUploads
             ReturnJson(false,"阿里云OSS配置信息不完整");
         }
         // 查询出站点OSS的配置信息
-        $config['access_key_id'] = env('OSS_ACCESS_KEY_ID');
-        $config['access_key_secret'] = env('OSS_ACCESS_KEY_SECRET');
-        $config['endpoint'] = env('OSS_ACCESS_KEY_ENDPOINT');
-        $config['bucket'] = env('OSS_ACCESS_KEY_BUCKET');
-        $ossClient = new AliyuncsOss($config['access_key_id'],$config['access_key_secret'],$config['endpoint'],$config['bucket']);
-        if(false){
-            ReturnJson(false,"阿里云OSS链接失败");
+        // $config['access_key_id'] = env('OSS_ACCESS_KEY_ID');
+        // $config['access_key_secret'] = env('OSS_ACCESS_KEY_SECRET');
+        // $config['endpoint'] = env('OSS_ACCESS_KEY_ENDPOINT');
+        // $config['bucket'] = env('OSS_ACCESS_KEY_BUCKET');
+        try{
+            $ossClient = new AliyuncsOss($config['access_key_id'],$config['access_key_secret'],$config['endpoint'],$config['bucket']);
+        } catch (\Exception $e){
+            ReturnJson(false,$e->getMessage());
         }
         return $ossClient;
     }
@@ -44,7 +45,10 @@ class SiteUploads
         $file->move($FilePath, $name);
         if(env('OSS_ACCESS_IS_OPEN') == true){
             $ossClient = self::OssClient();
-            $ossClient->uploads($path.'/'. $name, $FilePath.$name);
+            $res = $ossClient->uploads($path.'/'. $name, $FilePath.$name);
+            if(!is_array($res)){
+                ReturnJson(false,$res);
+            }
         }
         return '/'.trim($path,'/').'/'.$name;
     }

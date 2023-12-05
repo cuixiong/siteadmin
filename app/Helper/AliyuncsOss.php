@@ -45,8 +45,9 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->uploadFile($this->bucket, $file, $content);
-            return true;
+            $file = ltrim($file,'/');
+            $res = $this->ossClient->uploadFile($this->bucket, $file, $content);
+            return $res;
         } catch (OssException $e) {
             return $e->getMessage();
         }
@@ -61,7 +62,7 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->deleteObject($this->bucket, $file);
+            $this->ossClient->deleteObject($this->bucket, ltrim($file,'/'));
             return true;
         } catch (OssException $e) {
             return $e->getMessage();
@@ -97,7 +98,7 @@ class AliyuncsOss
             $this->setBucket($bucket);
             $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
             if($oldFile != $newFile){
-                $this->ossClient->deleteObject($this->bucket, $oldFile);
+                $this->ossClient->deleteObject($this->bucket, ltrim($oldFile,'/'));
             }
             return true;
         } catch (OssException $e) {
@@ -132,9 +133,9 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->copyObject($this->bucket, $oldFile, $this->bucket, $newFile);
+            $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, $newFile);
             if($oldFile != $newFile){
-                $this->ossClient->deleteObject($this->bucket, $oldFile);
+                $this->ossClient->deleteObject($this->bucket, ltrim($oldFile,'/'));
             }
             return true;
         } catch (OssException $e) {
