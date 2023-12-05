@@ -131,11 +131,10 @@ class SiteController extends CrudController
 
         try {
             $output = Site::executeRemoteCommand($siteId, 'add_site', ['created_by' => $created_by]);
-            
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
-        if(!$output['result']){
+        if (!$output['result']) {
             ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
         }
         ReturnJson(TRUE, trans('lang.request_success'));
@@ -252,6 +251,10 @@ class SiteController extends CrudController
             //获取具体内容
             $commitOutput = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
             $commitOutput['count'] = $commitCount;
+
+            if (!$commitOutput['result']) {
+                ReturnJson(FALSE, trans('lang.request_error'), $commitOutput['output']);
+            }
             ReturnJson(TRUE, trans('lang.request_success'), $commitOutput);
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
@@ -274,6 +277,9 @@ class SiteController extends CrudController
         try {
             $output = Site::executeRemoteCommand($siteId, 'available_pull', ['created_by' => $created_by]);
 
+            if (!$output['result']) {
+                ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+            }
             ReturnJson(TRUE, trans('lang.request_success'), $output);
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
@@ -299,6 +305,9 @@ class SiteController extends CrudController
         try {
             $output = Site::executeRemoteCommand($siteId, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
 
+            if (!$output['result']) {
+                ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+            }
             ReturnJson(TRUE, trans('lang.request_success'), $output);
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
