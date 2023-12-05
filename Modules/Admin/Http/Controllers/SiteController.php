@@ -312,7 +312,7 @@ class SiteController extends CrudController
      */
     public function destroy(Request $request)
     {
-        
+
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
@@ -321,11 +321,11 @@ class SiteController extends CrudController
             }
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
-                if($record){
+                if ($record) {
                     $record->delete();
                 }
             }
-            
+
             // $Tenant = new TenantController();
             // foreach ($ids as $id) {
             //     $res = $Tenant->destroyTenant($id);
@@ -473,10 +473,10 @@ class SiteController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], [['sort', 'ASC']]);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
             //是否创建数据库
-            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database','status' => 1], [['sort', 'ASC']]);
+            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database','status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

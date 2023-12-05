@@ -189,7 +189,7 @@ class Base extends Model
     public function HandleSort($model,$sort){
         if(is_array($sort)){
             foreach ($sort as $key => $sortItem) {
-                $model->orderBy($sortItem[0],$sortItem[1]);
+                $model->orderBy($key,$sortItem);
             }
         }
         return $model;
