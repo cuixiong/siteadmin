@@ -26,6 +26,8 @@ class ProductsCategoryController extends CrudController
                 $filed = ['name as label', 'value'];
             }
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            
+            $data['show_home'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Website_Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

@@ -31,6 +31,12 @@ class ProductsCategory extends Base
         'product_tag',  //产品标签
     ];
 
+    protected $attributes = [
+        'show_home' => 0,
+        'status' => 1,
+        'sort' => 100,
+    ];
+
     
     /**
      * 处理查询列表条件数组
