@@ -131,12 +131,13 @@ class SiteController extends CrudController
 
         try {
             $output = Site::executeRemoteCommand($siteId, 'add_site', ['created_by' => $created_by]);
-
-            ReturnJson(TRUE, trans('lang.request_success'), $output);
+            
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
-
+        if(!$output['result']){
+            ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+        }
         ReturnJson(TRUE, trans('lang.request_success'));
     }
 

@@ -228,7 +228,7 @@ class Site extends Base
         if (!$ssh->login($server->username, $server->password)) {
             return [
                 'result' => false,
-                'output' => trans('lang.request_error'), 'Login Failed',
+                'output' => 'Login Failed 服务器登录失败',
             ];
         }
 

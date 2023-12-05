@@ -2,14 +2,16 @@
 
 namespace Modules\Site\Http\Controllers;
 
-use Illuminate\Routing\Controller;
+use App\Imports\ProductsImport;
+use App\Services\RabbitmqService;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
-use Modules\Site\Http\Models\Prodcuts;
-use Modules\Admin\Http\Models\DictionaryValue;
-use Modules\Site\Http\Models\ProductsDescription;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use App\Services\RabbitmqService;
+use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsDescription;
+use Modules\Admin\Http\Models\DictionaryValue;
 
 class ProductsController extends CrudController
 {
@@ -94,7 +96,7 @@ class ProductsController extends CrudController
                 throw new \Exception(trans('lang.add_error'));
             }
 
-            $year = $this->publishedDateFormatYear($input['published_date']);
+            $year = Products::publishedDateFormatYear($input['published_date']);
             if (!$year) {
                 throw new \Exception(trans('lang.add_error') . ':published_date');
             }
@@ -130,9 +132,9 @@ class ProductsController extends CrudController
             $record = $model->findOrFail($request->id);
 
             //旧纪录年份
-            $oldYear = $this->publishedDateFormatYear($record->published_date);
+            $oldYear = Products::publishedDateFormatYear($record->published_date);
             //新纪录年份
-            $newYear = $this->publishedDateFormatYear($input['published_date']);
+            $newYear = Products::publishedDateFormatYear($input['published_date']);
             // return $oldYear;
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
@@ -168,15 +170,6 @@ class ProductsController extends CrudController
         }
     }
 
-    private function publishedDateFormatYear($timestamp)
-    {
-
-        $year = date('Y', $timestamp);
-        if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
-            return false;
-        }
-        return $year;
-    }
 
     /**
      * AJax单行删除
@@ -193,7 +186,7 @@ class ProductsController extends CrudController
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
 
-                $year = $this->publishedDateFormatYear($record->published_date);
+                $year = Products::publishedDateFormatYear($record->published_date);
                 if ($year) {
                     $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
                 }
@@ -264,7 +257,7 @@ class ProductsController extends CrudController
             } elseif ($type == 2) {
                 $record->discount = 100;
                 $record->discount_amount = $value;
-            } 
+            }
             // else {
             //     throw new \Exception(trans('lang.update_error') . ':discount_type is out of range');
             // }
@@ -293,32 +286,37 @@ class ProductsController extends CrudController
         }
     }
 
-    
+
     /**
      * 批量上传报告
      * @param $request 请求信息
      */
-    public function uploadProducts(Request $request) {
+    public function uploadProducts(Request $request)
+    {
 
-        $paths = $request->path;
+        // $paths = $request->path;
         // return $paths;
-        //读取
-        $data = ['id'=>112333,'name'=>'zqy'];
-        $data = json_encode(['class' => 'Modules\Site\Http\Controllers\ProductsController', 'method' => 'handleProducts', 'data'=>$data]);
-        $RabbitMQ = new RabbitmqService();
-        
-        $RabbitMQ->setQueueName('products-queue');// 设置队列名称
-        $RabbitMQ->setExchangeName('Products');// 设置交换机名称
-        $RabbitMQ->setQueueMode('fanout');// 设置队列模式
-        $RabbitMQ->push($data);// 推送数据
-        echo '推送成功';
+
+        $basePath = public_path() . '/site/QY_EN/';
+        Excel::import(new ProductsImport, $basePath . 'qy_en.xlsx');
+
+
+        // $data = ['id'=>112333,'name'=>'zqy'];
+        // $data = json_encode(['class' => 'Modules\Site\Http\Controllers\ProductsController', 'method' => 'handleProducts', 'data'=>$data]);
+        // $RabbitMQ = new RabbitmqService();
+        // $RabbitMQ->setQueueName('products-queue');// 设置队列名称
+        // $RabbitMQ->setExchangeName('Products');// 设置交换机名称
+        // $RabbitMQ->setQueueMode('fanout');// 设置队列模式
+        // $RabbitMQ->push($data);// 推送数据
+        // echo '推送成功';
     }
 
     /**
      * 批量上传报告
      * @param $params 报告数据
      */
-    public function handleProducts($params = null) {
+    public function handleProducts($params = null)
+    {
         // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt",json_encode($params));
     }
 }
