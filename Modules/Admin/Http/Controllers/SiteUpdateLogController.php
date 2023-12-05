@@ -8,7 +8,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 
 class SiteUpdateLogController extends CrudController
 {
-    
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -26,15 +26,14 @@ class SiteUpdateLogController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['exec_status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Exec_State', 'status' => 1]);
-
+            $data['exec_status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Exec_State', 'status' => 1], [['sort', 'ASC']]);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
+
     /**
      * AJax单行删除
      * @param $ids 主键ID
@@ -50,7 +49,7 @@ class SiteUpdateLogController extends CrudController
             }
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
-                if($record){
+                if ($record) {
                     $record->delete();
                 }
             }

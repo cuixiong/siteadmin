@@ -180,6 +180,20 @@ class Base extends Model
             }
         return $model;
     }
+    
+    /**
+     * 处理查询排序
+     * @param $model moxel
+     * @param $sort 搜索条件
+     */
+    public function HandleSort($model,$sort){
+        if(is_array($sort)){
+            foreach ($sort as $key => $sortItem) {
+                $model->orderBy($sortItem[0],$sortItem[1]);
+            }
+        }
+        return $model;
+    }
 
         /**
      * 列表数据
@@ -187,14 +201,21 @@ class Base extends Model
      * @param $isTree 是否返回递归类型
      * @param $treeKey 递归类型的key
      * @param array $where 查询条件
+     * @param array $sort 排序
      * @return array $res
      */
-    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$search = [])
+    public function GetListLabel($filed = '*',$isTree = false,$treeKey = 'parent_id',$search = [],$sort = [])
     {
         $model = self::query();
         if(!empty($search)){
             $model = $this->HandleSearch($model,$search);
         }
+        
+        if(!empty($sort)){
+            $model = $this->HandleSort($model,$sort);
+        }
+
+
         $list = $model->select($filed)->get()->toArray();
 
         if($isTree){

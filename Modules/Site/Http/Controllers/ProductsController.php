@@ -9,6 +9,7 @@ use Modules\Site\Http\Models\Prodcuts;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\ProductsDescription;
 use Illuminate\Support\Facades\DB;
+use App\Services\RabbitmqService;
 
 class ProductsController extends CrudController
 {
@@ -224,7 +225,7 @@ class ProductsController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1]);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], [['sort', 'ASC']]);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
@@ -290,5 +291,34 @@ class ProductsController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
+    }
+
+    
+    /**
+     * 批量上传报告
+     * @param $request 请求信息
+     */
+    public function uploadProducts(Request $request) {
+
+        $paths = $request->path;
+        // return $paths;
+        //读取
+        $data = ['id'=>112333,'name'=>'zqy'];
+        $data = json_encode(['class' => 'Modules\Site\Http\Controllers\ProductsController', 'method' => 'handleProducts', 'data'=>$data]);
+        $RabbitMQ = new RabbitmqService();
+        
+        $RabbitMQ->setQueueName('products-queue');// 设置队列名称
+        $RabbitMQ->setExchangeName('Products');// 设置交换机名称
+        $RabbitMQ->setQueueMode('fanout');// 设置队列模式
+        $RabbitMQ->push($data);// 推送数据
+        echo '推送成功';
+    }
+
+    /**
+     * 批量上传报告
+     * @param $params 报告数据
+     */
+    public function handleProducts($params = null) {
+        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt",json_encode($params));
     }
 }
