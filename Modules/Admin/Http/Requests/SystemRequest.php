@@ -63,7 +63,6 @@ class SystemRequest extends BaseRequest
             'parent_id' => 'required',
             'name' => 'required',
             'key' => 'required',
-            'value' => 'required',
             'type' => 'required',
         ];
         $message = [
@@ -71,7 +70,6 @@ class SystemRequest extends BaseRequest
             'parent_id.required' => '父级ID不能为空',
             'name.required' => '名称不能为空',
             'key.required' => 'key不能为空',
-            'value.required' => 'value不能为空',
             'type.required' => 'type不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
