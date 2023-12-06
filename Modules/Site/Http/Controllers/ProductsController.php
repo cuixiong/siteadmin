@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\ListStyle;
 
 class ProductsController extends CrudController
 {
