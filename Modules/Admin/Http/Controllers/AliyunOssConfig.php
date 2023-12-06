@@ -13,7 +13,7 @@ class AliyunOssConfig extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            $count = $this->ModelInstance()->where('site_id', $request->site_id)->count();
+            $count = $this->ModelInstance()->where('site_id', $request->site_id)->where('id','<>',$request->id)->count();
             if($count > 0){
                 ReturnJson(FALSE, trans('lang.aliyun_oss_config_exist'));
             }
