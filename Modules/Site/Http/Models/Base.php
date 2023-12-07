@@ -148,6 +148,20 @@ class Base extends Model
         }
         return $model;
     }
+    
+    /**
+     * 处理查询排序
+     * @param $model moxel
+     * @param $sort 搜索条件
+     */
+    public function HandleSort($model,$sort){
+        if(is_array($sort)){
+            foreach ($sort as $key => $sortItem) {
+                $model->orderBy($sortItem[0],$sortItem[1]);
+            }
+        }
+        return $model;
+    }
 
     /**
      * 处理查询列表条件数组

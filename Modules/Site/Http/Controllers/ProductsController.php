@@ -2,13 +2,18 @@
 
 namespace Modules\Site\Http\Controllers;
 
-use Illuminate\Routing\Controller;
+use App\Imports\ProductsImport;
+use App\Services\RabbitmqService;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
-use Modules\Site\Http\Models\Prodcuts;
-use Modules\Admin\Http\Models\DictionaryValue;
-use Modules\Site\Http\Models\ProductsDescription;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsDescription;
+use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\ListStyle;
 
 class ProductsController extends CrudController
 {
@@ -93,7 +98,7 @@ class ProductsController extends CrudController
                 throw new \Exception(trans('lang.add_error'));
             }
 
-            $year = $this->publishedDateFormatYear($input['published_date']);
+            $year = Products::publishedDateFormatYear($input['published_date']);
             if (!$year) {
                 throw new \Exception(trans('lang.add_error') . ':published_date');
             }
@@ -129,9 +134,9 @@ class ProductsController extends CrudController
             $record = $model->findOrFail($request->id);
 
             //旧纪录年份
-            $oldYear = $this->publishedDateFormatYear($record->published_date);
+            $oldYear = Products::publishedDateFormatYear($record->published_date);
             //新纪录年份
-            $newYear = $this->publishedDateFormatYear($input['published_date']);
+            $newYear = Products::publishedDateFormatYear($input['published_date']);
             // return $oldYear;
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
@@ -167,15 +172,6 @@ class ProductsController extends CrudController
         }
     }
 
-    private function publishedDateFormatYear($timestamp)
-    {
-
-        $year = date('Y', $timestamp);
-        if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
-            return false;
-        }
-        return $year;
-    }
 
     /**
      * AJax单行删除
@@ -192,7 +188,7 @@ class ProductsController extends CrudController
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
 
-                $year = $this->publishedDateFormatYear($record->published_date);
+                $year = Products::publishedDateFormatYear($record->published_date);
                 if ($year) {
                     $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
                 }
@@ -224,7 +220,7 @@ class ProductsController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1]);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
@@ -263,7 +259,7 @@ class ProductsController extends CrudController
             } elseif ($type == 2) {
                 $record->discount = 100;
                 $record->discount_amount = $value;
-            } 
+            }
             // else {
             //     throw new \Exception(trans('lang.update_error') . ':discount_type is out of range');
             // }
@@ -290,5 +286,87 @@ class ProductsController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
+    }
+
+
+    /**
+     * 批量上传报告
+     * @param $request 请求信息
+     */
+    public function uploadProducts(Request $request)
+    {
+
+        // $paths = $request->path;
+        // return $paths;
+
+        $basePath = public_path() . '/site/QY_EN/';
+        Excel::import(new ProductsImport, $basePath . 'qy_en.xlsx');
+    }
+
+    /**
+     * 批量上传报告
+     * @param $params 报告数据
+     */
+    public function handleProducts($params = null)
+    {
+
+        //行业信息
+
+        foreach ($params['data'] as $row) {
+
+            //表头
+            $item = [];
+            $item['name'] = $row[0];
+            $item['pages'] = $row[1];
+            $item['tables'] = $row[2];
+            $item['price'] = $row[3];
+            $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row[6]);
+            $item['category_id'] = ProductsCategory::where('name', trim($row[13]))->value('id') ?? 0;
+            $item['author'] = $row[14];
+            $item['keywords'] = $row[27];
+
+            $itemDescription = [];
+            $itemDescription['description'] = str_replace('_x000D_', '', $row[9]);
+            $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row[11]);
+            $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row[12]);
+            $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row[17]);
+
+            //新纪录年份
+            $newYear = Products::publishedDateFormatYear($item['published_date']);
+
+            // 处理每行数据
+            $product = Products::where('name', trim($row[0]))->first();
+            if ($product) {
+                //旧纪录年份
+                $oldPublishedDate = $product->published_date;
+                $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
+                //更新报告
+                $product->update($item);
+
+                $newProductDescription = (new ProductsDescription($newYear));
+                //出版时间年份更改
+                if ($oldYear != $newYear) {
+                    //删除旧详情
+                    if ($oldYear) {
+                        $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
+                        $oldProductDescription->delete();
+                    }
+                    //然后新增
+                    $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                } else {
+                    //直接更新
+                    $newProductDescription = $newProductDescription->where('product_id', $product->id)->first();
+                    $descriptionRecord = $newProductDescription->updateWithAttributes($itemDescription);
+                }
+            } else {
+                //新增报告
+                $product = Products::create($item);
+                //新增报告详情
+                $newProductDescription = (new ProductsDescription($newYear));
+                $itemDescription['product_id'] = $product->id;
+                $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+            }
+        }
+        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt",json_encode($params['data']),FILE_APPEND );
     }
 }

@@ -189,9 +189,9 @@ class PriceEditionController extends CrudController
                 foreach ($record as $key => $item) {
                     //子项数据
                     $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort')
-                    ->where('edition_id', $item['id'])
-                    ->orderBy('sort', 'ASC')
-                    ->get();
+                        ->where('edition_id', $item['id'])
+                        ->orderBy('sort', 'ASC')
+                        ->get();
                 }
             }
             //表头排序
@@ -199,7 +199,7 @@ class PriceEditionController extends CrudController
             $data = [
                 'total' => $total,
                 'list' => $record,
-                'headerTitle' => $headerTitle??[],
+                'headerTitle' => $headerTitle ?? [],
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -228,10 +228,10 @@ class PriceEditionController extends CrudController
             } else {
                 $filed = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1]);
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
             //是否送货
-            $data['logistics'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Logistics_State','status' => 1]);
+            $data['logistics'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Logistics_State', 'status' => 1], ['sort' => 'ASC']);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
