@@ -32,6 +32,7 @@ class Rule extends Base
                 'icon' => $item['icon'],
                 'keepAlive' => $item['keepAlive'] == 1 ? true : false,
                 'roles' => $roleCodes,
+                'alwaysShow' => true,
             ];
             $data['name'] = ($item['parent_id'] > 0 && $item['type'] == 1) ? ucfirst($item['path']) : $item['path'];
             if(!empty($item['redirect'])){
