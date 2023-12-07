@@ -2,11 +2,15 @@
 
 namespace Modules\Site\Http\Models;
 
+use Modules\Admin\Http\Models\Country;
 use Modules\Site\Http\Models\Base;
 
 class Products extends Base
 {
     protected $table = 'product_routine';
+
+    //将虚拟字段追加到数据对象列表里去
+    protected $appends = ['category', 'country','published_date_format'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -196,6 +200,39 @@ class Products extends Base
     }
 
     
+    /**
+     * 分类获取器
+     */
+    public function getCategoryAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['category_id'])) {
+            $text = ProductsCategory::where('id', $this->attributes['category_id'])->value('name')??'';
+        }
+        return $text;
+    }
+
+    /**
+     * 国家地区获取器
+     */
+    public function getCountryAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['country_id'])) {
+            $text = Country::whereIn('id', $this->attributes['country_id'])->value('name');
+        }
+        return $text;
+    }
+    
+    /**
+     * 出版时间获取器
+     */
+    public function getPublishedDateFormatAttribute()
+    {
+        return date('Y-m-d H:i:s',$this->attributes['published_date']);
+    }
+
+    
     public static function publishedDateFormatYear($timestamp)
     {
 
@@ -205,4 +242,6 @@ class Products extends Base
         }
         return $year;
     }
+
+
 }

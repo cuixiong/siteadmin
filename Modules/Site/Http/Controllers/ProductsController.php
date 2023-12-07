@@ -11,6 +11,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
+use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 
@@ -300,16 +301,6 @@ class ProductsController extends CrudController
 
         $basePath = public_path() . '/site/QY_EN/';
         Excel::import(new ProductsImport, $basePath . 'qy_en.xlsx');
-
-
-        // $data = ['id'=>112333,'name'=>'zqy'];
-        // $data = json_encode(['class' => 'Modules\Site\Http\Controllers\ProductsController', 'method' => 'handleProducts', 'data'=>$data]);
-        // $RabbitMQ = new RabbitmqService();
-        // $RabbitMQ->setQueueName('products-queue');// 设置队列名称
-        // $RabbitMQ->setExchangeName('Products');// 设置交换机名称
-        // $RabbitMQ->setQueueMode('fanout');// 设置队列模式
-        // $RabbitMQ->push($data);// 推送数据
-        // echo '推送成功';
     }
 
     /**
@@ -318,6 +309,64 @@ class ProductsController extends CrudController
      */
     public function handleProducts($params = null)
     {
-        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt",json_encode($params));
+
+        //行业信息
+
+        foreach ($params['data'] as $row) {
+
+            //表头
+            $item = [];
+            $item['name'] = $row[0];
+            $item['pages'] = $row[1];
+            $item['tables'] = $row[2];
+            $item['price'] = $row[3];
+            $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row[6]);
+            $item['category_id'] = ProductsCategory::where('name', trim($row[13]))->value('id') ?? 0;
+            $item['author'] = $row[14];
+            $item['keywords'] = $row[27];
+
+            $itemDescription = [];
+            $itemDescription['description'] = str_replace('_x000D_', '', $row[9]);
+            $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row[11]);
+            $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row[12]);
+            $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row[17]);
+
+            //新纪录年份
+            $newYear = Products::publishedDateFormatYear($item['published_date']);
+
+            // 处理每行数据
+            $product = Products::where('name', trim($row[0]))->first();
+            if ($product) {
+                //旧纪录年份
+                $oldPublishedDate = $product->published_date;
+                $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
+                //更新报告
+                $product->update($item);
+
+                $newProductDescription = (new ProductsDescription($newYear));
+                //出版时间年份更改
+                if ($oldYear != $newYear) {
+                    //删除旧详情
+                    if ($oldYear) {
+                        $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
+                        $oldProductDescription->delete();
+                    }
+                    //然后新增
+                    $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                } else {
+                    //直接更新
+                    $newProductDescription = $newProductDescription->where('product_id', $product->id)->first();
+                    $descriptionRecord = $newProductDescription->updateWithAttributes($itemDescription);
+                }
+            } else {
+                //新增报告
+                $product = Products::create($item);
+                //新增报告详情
+                $newProductDescription = (new ProductsDescription($newYear));
+                $itemDescription['product_id'] = $product->id;
+                $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+            }
+        }
+        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt",json_encode($params['data']),FILE_APPEND );
     }
 }
