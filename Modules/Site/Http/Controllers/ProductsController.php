@@ -183,7 +183,7 @@ class ProductsController extends CrudController
                     $descriptionRecord = $newProductDescription->updateWithAttributes($input);
                 }else{
                     //不存在新增
-                    $descriptionRecord = $newProductDescription->saveWithAttributes($input);
+                    $descriptionRecord = (new ProductsDescription($newYear))->saveWithAttributes($input);
                 }
             }
 
