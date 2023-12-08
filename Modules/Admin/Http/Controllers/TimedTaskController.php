@@ -17,9 +17,16 @@ class TimedTaskController extends CrudController
             if (!$record) {
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
-            // 转化成定时任务命令
+            // 根据类型进行生成liunx命令
+            if($input['type'] == 'shell'){
+                $command = $input['content'];
+            } else if($input['type'] == 'http'){
+                $command = 'curl '.$input['content'];
+            } else {
+                ReturnJson(FALSE, trans('lang.add_error'));
+            }
 
-            // 根据类型进行判断是否需要远程SHH
+            // 根据定时任务来决定是否需要远程SHH进行创建定时任务
 
             // 定义日志文件路径
 
