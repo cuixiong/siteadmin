@@ -94,6 +94,17 @@ class ProductsController extends CrudController
             // 开启事务
             DB::beginTransaction();
 
+            if(empty($input['sort'])){
+                $input['sort'] = 100;
+            }
+            if(empty($input['hits'])){
+                $input['hits'] = rand(500,1000);
+            }
+            
+            if(empty($input['downloads'])){
+                $input['downloads'] = rand(100,300);
+            }
+
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 throw new \Exception(trans('lang.add_error'));
@@ -132,13 +143,24 @@ class ProductsController extends CrudController
             // 开启事务
             DB::beginTransaction();
             $model = $this->ModelInstance();
-            $record = $model->findOrFail($request->id);
+            $record = $model->findOrFail($input['id']);
 
             //旧纪录年份
             $oldYear = Products::publishedDateFormatYear($record->published_date);
             //新纪录年份
             $newYear = Products::publishedDateFormatYear($input['published_date']);
             // return $oldYear;
+            if(empty($input['sort'])){
+                $input['sort'] = 100;
+            }
+            if(empty($input['hits'])){
+                $input['hits'] = rand(500,1000);
+            }
+
+            if(empty($input['downloads'])){
+                $input['downloads'] = rand(100,300);
+            }
+
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
             }
@@ -149,14 +171,14 @@ class ProductsController extends CrudController
             if ($oldYear != $newYear) {
                 //删除旧详情
                 if ($oldYear) {
-                    $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $request->id)->first();
+                    $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $record->id)->first();
                     $oldProductDescription->delete();
                 }
                 //然后新增
                 $descriptionRecord = $newProductDescription->saveWithAttributes($input);
             } else {
                 //直接更新
-                $newProductDescription = $newProductDescription->where('product_id', $request->id)->first();
+                $newProductDescription = $newProductDescription->where('product_id', $record->id)->first();
                 $descriptionRecord = $newProductDescription->updateWithAttributes($input);
             }
 
@@ -230,6 +252,7 @@ class ProductsController extends CrudController
             $data['show_home'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
             $data['show_hot'] = $data['show_home'];
             $data['show_recommend'] = $data['show_home'];
+            $data['have_sample'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Has_Sample', 'status' => 1], ['sort' => 'ASC']);
 
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
