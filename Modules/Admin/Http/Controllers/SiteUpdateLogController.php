@@ -17,7 +17,7 @@ class SiteUpdateLogController extends CrudController
     {
         try {
             $data = [];
-            // 语言
+            // 站点
             $data['sites'] = (new Site())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             // 状态开关

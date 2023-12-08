@@ -215,12 +215,20 @@ class ProductsController extends CrudController
     public function searchDroplist(Request $request)
     {
         try {
-            // 状态开关
+            //分类
+            $data['category'] = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
             } else {
                 $filed = ['name as label', 'value'];
             }
+            //显示首页/热门/推荐
+            $data['show_home'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['show_hot'] = $data['show_home'];
+            $data['show_recommend'] = $data['show_home'];
+
+            // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
 
@@ -229,6 +237,29 @@ class ProductsController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+    /**
+     * 修改基础价
+     * @param $request 请求信息
+     * @param $id 主键ID
+     */
+    public function changePrice(Request $request)
+    {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->price = $request->price;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
 
     /**
      * 修改分类折扣
@@ -424,6 +455,6 @@ class ProductsController extends CrudController
         //     // 处理异常，例如日志记录
         //     throw $e;
         // }
-        file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", json_encode($logData)."\r\n", FILE_APPEND);
+        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", json_encode($logData)."\r\n", FILE_APPEND);
     }
 }
