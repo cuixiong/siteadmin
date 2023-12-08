@@ -217,6 +217,9 @@ class ProductsController extends CrudController
         try {
             //分类
             $data['category'] = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            
+            $data['country'] = [];
+
 
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
