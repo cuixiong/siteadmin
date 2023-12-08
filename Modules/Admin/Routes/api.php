@@ -230,6 +230,13 @@ Route::middleware([
         Route::post('read', [Modules\Admin\Http\Controllers\NoticeController::class, 'read'])->name('公告通知:阅读公告');
         Route::get('news-notice', [Modules\Admin\Http\Controllers\NoticeController::class, 'NewsNotice'])->name('公告通知:最新一条公告');
     });
+
+    // TimedTask 控制器
+    Route::prefix('timed-task')->group(function () {
+        Route::get('list', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'list'])->name('定时任务:数据列表');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'changeStatus'])->name('定时任务:修改状态');
+    });
+    
 });
 
 
@@ -395,6 +402,12 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\NoticeController::class, 'store'])->name('公告通知:数据新增');
         Route::post('update', [Modules\Admin\Http\Controllers\NoticeController::class, 'update'])->name('公告通知:数据编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\NoticeController::class, 'destroy'])->name('公告通知:删除操作');
+    });
+    // TimedTask 控制器
+    Route::prefix('timed-task')->group(function () {
+        Route::post('store', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'store'])->name('定时任务:数据新增');
+        Route::post('update', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'update'])->name('定时任务:数据编辑');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'destroy'])->name('定时任务:删除操作');
     });
 });
 
