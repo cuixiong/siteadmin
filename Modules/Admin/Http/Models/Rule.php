@@ -29,7 +29,7 @@ class Rule extends Base
             ];
             if($item['type'] == 'CATALOG'){
                 $data['path'] = $SiteCount > 0 ? '/'. $Site . $item['path'] : '/'. 'control'.$item['path'];
-                $data['meta']['alwaysShow'] = false;
+                $data['meta']['alwaysShow'] = true;
             } else {
                 $data['path'] = $item['path'];
             }
