@@ -219,6 +219,17 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'changeStatus'])->name('阿里云OSS配置:修改状态');
         Route::get('option', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'option'])->name('阿里云OSS配置:字典数据');
     });
+
+    // Notice 控制器
+    Route::prefix('notice')->group(function () {
+        Route::get('list', [Modules\Admin\Http\Controllers\NoticeController::class, 'list'])->name('公告通知:数据列表');
+        Route::get('form', [Modules\Admin\Http\Controllers\NoticeController::class, 'form'])->name('公告通知:数据单查');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\NoticeController::class, 'changeStatus'])->name('公告通知:修改状态');
+        Route::get('option', [Modules\Admin\Http\Controllers\NoticeController::class, 'option'])->name('公告通知:字典数据');
+        Route::get('user-notice', [Modules\Admin\Http\Controllers\NoticeController::class, 'UserGetNotice'])->name('公告通知:用户公告列表');
+        Route::post('read', [Modules\Admin\Http\Controllers\NoticeController::class, 'read'])->name('公告通知:阅读公告');
+        Route::get('news-notice', [Modules\Admin\Http\Controllers\NoticeController::class, 'NewsNotice'])->name('公告通知:最新一条公告');
+    });
 });
 
 
@@ -378,6 +389,12 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'store'])->name('阿里云OSS配置:数据新增');
         Route::post('update', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'update'])->name('阿里云OSS配置:数据编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'destroy'])->name('阿里云OSS配置:删除操作');
+    });
+    // Notice 控制器
+    Route::prefix('notice')->group(function () {
+        Route::post('store', [Modules\Admin\Http\Controllers\NoticeController::class, 'store'])->name('公告通知:数据新增');
+        Route::post('update', [Modules\Admin\Http\Controllers\NoticeController::class, 'update'])->name('公告通知:数据编辑');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\NoticeController::class, 'destroy'])->name('公告通知:删除操作');
     });
 });
 

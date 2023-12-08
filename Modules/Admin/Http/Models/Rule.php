@@ -20,12 +20,6 @@ class Rule extends Base
         foreach ($rules as $item) {
             $data = [];
             $data['component'] = $item['component'];
-
-            if($item['type'] == 'CATALOG'){
-                $data['path'] = $SiteCount > 0 ? '/'. $Site . $item['path'] : '/'. 'control'.$item['path'];
-            } else {
-                $data['path'] = $item['path'];
-            }
             $data['meta'] = [
                 'title' => $item['name'],
                 'hidden' => $item['visible'] == 1 ? false : true,
@@ -33,6 +27,13 @@ class Rule extends Base
                 'keepAlive' => $item['keepAlive'] == 1 ? true : false,
                 'roles' => $roleCodes,
             ];
+            if($item['type'] == 'CATALOG'){
+                $data['path'] = $SiteCount > 0 ? '/'. $Site . $item['path'] : '/'. 'control'.$item['path'];
+                $data['meta']['alwaysShow'] = true;
+            } else {
+                $data['path'] = $item['path'];
+            }
+            
             $data['name'] = ($item['parent_id'] > 0 && $item['type'] == 1) ? ucfirst($item['path']) : $item['path'];
             if(!empty($item['redirect'])){
                 $data['redirect'] = $item['redirect'];
