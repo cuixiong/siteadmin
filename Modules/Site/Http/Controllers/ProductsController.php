@@ -177,9 +177,14 @@ class ProductsController extends CrudController
                 //然后新增
                 $descriptionRecord = $newProductDescription->saveWithAttributes($input);
             } else {
-                //直接更新
                 $newProductDescription = $newProductDescription->where('product_id', $record->id)->first();
-                $descriptionRecord = $newProductDescription->updateWithAttributes($input);
+                if($newProductDescription){
+                    //直接更新
+                    $descriptionRecord = $newProductDescription->updateWithAttributes($input);
+                }else{
+                    //不存在新增
+                    $descriptionRecord = $newProductDescription->saveWithAttributes($input);
+                }
             }
 
             if (!$descriptionRecord) {
