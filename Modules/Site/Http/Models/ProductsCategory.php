@@ -53,7 +53,7 @@ class ProductsCategory extends Base
 
         //name
         if (isset($search->name) && !empty($search->name)) {
-            $model = $model->where('link', 'name', '%' . $search->name . '%');
+            $model = $model->where('name', 'like', '%' . $search->name . '%');
         }
 
         //link

@@ -43,7 +43,7 @@ class SiteUpdateLogController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
-            return $ids;
+            // return $ids;
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
