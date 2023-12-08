@@ -93,6 +93,6 @@ class ProductsDescription extends Base
     {
         $attributes = \Illuminate\Support\Arr::only($attributes, $this->fillable);
         $attributes['updated_at'] = time();
-        return DB::table($this->table)->where('product_id', '=', $attributes['id'])->update($attributes);
+        return DB::table($this->table)->where('product_id', '=', $attributes['product_id'])->update($attributes);
     }
 }
