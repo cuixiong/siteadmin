@@ -37,4 +37,15 @@ class TestController extends CrudController
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop01', 'data'=>$data]);
         RabbitmqService::push('test_queue01','test','test','fanout' ,$data);
     }
+    
+    public function my(){
+        file_put_contents('123.txt',date('Y-m-d H:i:s',time()));
+    }
+
+    public function task(){
+        // 每一分钟执行  */1 * * * *
+        // 设置定时任务
+        $res = exec('*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/my');
+        var_dump($res);die;
+    }
 }
