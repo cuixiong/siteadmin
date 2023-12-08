@@ -61,13 +61,13 @@ class ProductsController extends CrudController
                     continue;
                 }
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
-                $record[$key]['description'] = $descriptionData['description'];
-                $record[$key]['table_of_content'] = $descriptionData['table_of_content'];
-                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'];
-                $record[$key]['description_en'] = $descriptionData['description_en'];
-                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'];
-                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'];
-                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'];
+                $record[$key]['description'] = $descriptionData['description']??'';
+                $record[$key]['table_of_content'] = $descriptionData['table_of_content']??'';
+                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures']??'';
+                $record[$key]['description_en'] = $descriptionData['description_en']??'';
+                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en']??'';
+                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en']??'';
+                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned']??'';
             }
 
             $data = [
