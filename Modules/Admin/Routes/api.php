@@ -413,7 +413,8 @@ Route::middleware([
     Route::get('admin/test/test', 'TestController@TestPush')->name('测试接口');
     Route::get('admin/test/test01', 'TestController@Test01')->name('测试接口');
     Route::get('admin/test/test02', 'TestController@Test02')->name('测试接口');
-
+    Route::get('admin/test/task', 'TestController@task')->name('测试接口');
+    Route::get('admin/test/my', 'TestController@my')->name('测试接口');
     Route::get('baba', [\Modules\Admin\Http\Controllers\CronTask\DepartmentController::class, 'test'])->name('测试接口');
     Route::get('admin/database/phpmyadmin/{id}', [Modules\Admin\Http\Controllers\DatabaseController::class, 'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
     Route::get('admin/file-management/download', [Modules\Admin\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
