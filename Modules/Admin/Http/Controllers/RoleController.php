@@ -116,4 +116,24 @@ class RoleController extends CrudController
         }
         ReturnJson(TRUE,'', $options);
     }
+
+    public function update(Request $request)
+    {
+        try {
+            $count = $this->ModelInstance()->where('id','<>', $request->id)->where('code',$request->code)->count();
+            if($count > 0){
+                ReturnJson(FALSE,trans('lang.code_exists'));
+            }
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
+
+            if (!$record->update($input)) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }
