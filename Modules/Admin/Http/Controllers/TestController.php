@@ -44,9 +44,7 @@ class TestController extends CrudController
     }
 
     public function task(){
-        // 每一分钟执行  */1 * * * *
-        // 设置定时任务
-        exec('*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/my',$res);
-        var_dump($res);die;
+        $content = shell_exec('crontab -l');
+        var_dump($content);die;
     }
 }
