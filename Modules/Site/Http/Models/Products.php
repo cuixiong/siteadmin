@@ -243,5 +243,32 @@ class Products extends Base
         return $year;
     }
 
-
+    
+    //可修改的字段
+    public static function getBatchUpdateField()
+    {
+        return [
+            [
+                'name' => '行业',
+                'value' => 'category_id',
+                'type' => '2',
+            ],
+            // [
+            //     'name' => '国家地区',
+            //     'value' => 'country_id',
+            //     'type' => '2',
+            // ],
+            [
+                'name' => '价格',
+                // 'name' => trans('lang.price'),
+                'value' => 'price',
+                'type' => '1',
+            ],
+            [
+                'name' => '状态',
+                'value' => 'status',
+                'type' => '2',
+            ],
+        ];
+    }
 }

@@ -294,6 +294,51 @@ class ProductsController extends CrudController
         }
     }
 
+    
+    /**
+     * 热门开关
+     * @param $request 请求信息
+     * @param $id 主键ID
+     */
+    public function changeHot(Request $request)
+    {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->show_hot = $request->show_hot;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+    
+    /**
+     * 精品开关
+     * @param $request 请求信息
+     * @param $id 主键ID
+     */
+    public function changeRecommend(Request $request)
+    {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->show_recommend = $request->show_recommend;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
 
     /**
      * 修改分类折扣
@@ -356,6 +401,82 @@ class ProductsController extends CrudController
 
 
     /**
+     * 批量修改下拉参数
+     * @param $request 请求信息
+     */
+    public function batchUpdateParam(Request $request)
+    {
+        $field = Products::getBatchUpdateField();
+        array_unshift($field, ['name' => '请选择', 'value' => '', 'type' => '']);
+        ReturnJson(TRUE, trans('lang.update_success'), $field);
+    }
+
+
+    /**
+     * 批量修改下拉参数子项
+     * @param $request 请求信息
+     */
+    public function batchUpdateOption(Request $request)
+    {
+        $input = $request->all();
+        $keyword = $input['keyword'];
+        $data = [];
+        if ($keyword == 'category_id') {
+            //分类
+            $data = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+        } elseif ($keyword == 'status') {
+            if ($request->HeaderLanguage == 'en') {
+                $filed = ['english_name as label', 'value'];
+            } else {
+                $filed = ['name as label', 'value'];
+            }
+            $data = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
+        }
+
+        ReturnJson(TRUE, trans('lang.update_success'), $data);
+    }
+
+    /**
+     * 批量修改
+     * @param $request 请求信息
+     */
+    public function batchUpdate(Request $request)
+    {
+
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $keyword = $input['keyword'] ?? '';
+        $value = $input['value'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
+
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(TRUE, trans('lang.param_empty') . ':ids');
+            }
+            $model = $ModelInstance->whereIn('id', $ids);
+        } else {
+            //筛选
+            $model = $ModelInstance->HandleWhere($model, $request);
+        }
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $data['count'] = $model->count();
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } else {
+            $data['result_count'] = $model->update([$keyword => $value]);
+            ReturnJson(TRUE, trans('lang.update_success'));
+        }
+    }
+
+
+
+    /**
      * 批量上传报告
      * @param $request 请求信息
      */
@@ -396,7 +517,8 @@ class ProductsController extends CrudController
             $RabbitMQ = new RabbitmqService();
             $RabbitMQ->setQueueName('products-file-queue'); // 设置队列名称
             $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-            $RabbitMQ->setQueueMode('fanout'); // 设置队列模式
+            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+            $RabbitMQ->setRoutingKey('productsKey1');
             $RabbitMQ->push($data); // 推送数据
         }
 
@@ -409,6 +531,7 @@ class ProductsController extends CrudController
      */
     public function handleExcelFile($params = null)
     {
+        file_put_contents("C:\\Users\\Administrator\\Desktop\\bbbb.txt", 1 . "\r\n", FILE_APPEND);
         ini_set('memory_limit', '4096M');
         if (empty($params)) {
             throw new \Exception("filepath is empty", 1);
@@ -437,7 +560,7 @@ class ProductsController extends CrudController
             $groupData = array_chunk($excelData, 100);
             foreach ($groupData as $item) {
                 // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", json_encode(count($item)) . "\r\n", FILE_APPEND);
-                
+
                 $data = [
                     'class' => 'Modules\Site\Http\Controllers\ProductsController',
                     'method' => 'handleProducts',
@@ -449,7 +572,8 @@ class ProductsController extends CrudController
                 $RabbitMQ = new RabbitmqService();
                 $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
                 $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-                $RabbitMQ->setQueueMode('fanout'); // 设置队列模式
+                $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+                $RabbitMQ->setRoutingKey('productsKey2');
                 $RabbitMQ->push($data); // 推送数据
             }
         }
@@ -463,7 +587,7 @@ class ProductsController extends CrudController
      */
     public function handleProducts($params = null)
     {
-        file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", "1"."\r\n", FILE_APPEND);
+        file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", "1" . "\r\n", FILE_APPEND);
         // exit;
         // if (empty($params['site'])) {
         //     throw new \Exception("site is empty", 1);
