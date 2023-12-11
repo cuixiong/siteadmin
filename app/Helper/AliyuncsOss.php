@@ -10,6 +10,12 @@ class AliyuncsOss
     private $ossClient;
     private $bucket;
 
+    private function GetUploadsExt()
+    {
+        $arr = ["png","jpg","jpeg","webp","svg","pdf","txt","doc","docx"];
+        return [];
+    }
+
     public function __construct($accessKeyId = '',$accessKeySecret = '',$endpoint = '',$bucket = '')
     {
         try {
@@ -46,8 +52,11 @@ class AliyuncsOss
         try {
             $this->setBucket($bucket);
             $file = ltrim($file,'/');
-            $res = $this->ossClient->uploadFile($this->bucket, $file, $content);
-            return $res;
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+            if(in_array($ext, $this->GetUploadsExt())){
+                $this->ossClient->uploadFile($this->bucket, $file, $content);
+            }
+            return true;
         } catch (OssException $e) {
             return $e->getMessage();
         }

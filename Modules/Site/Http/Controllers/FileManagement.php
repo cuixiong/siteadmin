@@ -158,6 +158,7 @@ class FileManagement extends Controller{
         $path = $request->path?? '';
         $old_name = $request->old_name?? '';
         $new_name = $request->new_name?? '';
+        $ext = pathinfo($new_name, PATHINFO_EXTENSION);
 
         $base_param = $this->RootPath;
         $old_full_path = $base_param . $path . '/' . $old_name;
@@ -173,6 +174,8 @@ class FileManagement extends Controller{
             ReturnJson(false,'选择的文件不存在');
         } elseif (file_exists($new_full_path)) {
             ReturnJson(false,'命名的文件已存在');
+        } else if(is_file($old_full_path) && empty($ext)){
+            ReturnJson(false,"没有文件扩展名");
         } else {
             $res = SiteUploads::rename($old_full_path, $new_full_path);
             if ($res) {
