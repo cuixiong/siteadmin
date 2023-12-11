@@ -18,6 +18,7 @@ use Modules\Site\Http\Models\ProductsUploadLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Modules\Site\Http\Models\ProductsExcelField;
 
 class ProductsController extends CrudController
 {
@@ -294,7 +295,7 @@ class ProductsController extends CrudController
         }
     }
 
-    
+
     /**
      * 热门开关
      * @param $request 请求信息
@@ -316,7 +317,7 @@ class ProductsController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
+
     /**
      * 精品开关
      * @param $request 请求信息
@@ -502,15 +503,25 @@ class ProductsController extends CrudController
         //     Excel::import($productsImport, $path);
         // }
 
+        //获取表头与字段关系
+        $fieldData = ProductsExcelField::where(['status' => 1])->where('field', '<>', '')->where('sort', '>', 0)->select(['field', 'sort'])->distinct()->get()->toArray();
+        $fieldData = array_map(function ($item) {
+            $item['sort'] =  $item['sort'] - 1;
+            return $item;
+        }, $fieldData);
+        $fieldData = array_column($fieldData, 'field', 'sort');
+        // $fieldSort = array_keys($fieldData);
+
+        // return $fieldSort;
         foreach ($paths as $key => $value) {
             $path = $basePath . $value;
-
             $data = [
                 'class' => 'Modules\Site\Http\Controllers\ProductsController',
                 'method' => 'handleExcelFile',
                 'site' => $request->header('Site') ?? '',
                 'log_id' => $logModel->id,
-                'data' => $path
+                'data' => $path,
+                'fieldData' => $fieldData,
 
             ];
             $data = json_encode($data);
@@ -531,17 +542,22 @@ class ProductsController extends CrudController
      */
     public function handleExcelFile($params = null)
     {
-        file_put_contents("C:\\Users\\Administrator\\Desktop\\bbbb.txt", 1 . "\r\n", FILE_APPEND);
         ini_set('memory_limit', '4096M');
         if (empty($params)) {
             throw new \Exception("filepath is empty", 1);
         }
 
+
+
+        //读取文件
         $path = $params['data'];
+        $fieldData = $params['fieldData'];
+        $fieldSort = array_keys($fieldData);
         $reader = ReaderEntityFactory::createXLSXReader($path);
         $reader->setShouldPreserveEmptyRows(true);
         $reader->open($path);
         $excelData = [];
+
         foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
             // if ($sheetKey != 1) {
             //     continue;
@@ -551,15 +567,23 @@ class ProductsController extends CrudController
                     //表头跳过
                     continue;
                 }
-                $excelData[] = $sheetRow->toArray();
+                $tempRow =  $sheetRow->toArray();
+                $row = [];
+                foreach ($tempRow as $tempKey => $tempValue) {
+                    if (in_array($tempKey, $fieldSort)) {
+                        $row[$fieldData[$tempKey]] = $tempValue;
+                    }
+                }
+                if(count($row)>0){
+                    $excelData[] = $row;
+                }
             }
         }
 
-
+        //加入队列
         if ($excelData && count($excelData) > 0) {
             $groupData = array_chunk($excelData, 100);
             foreach ($groupData as $item) {
-                // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", json_encode(count($item)) . "\r\n", FILE_APPEND);
 
                 $data = [
                     'class' => 'Modules\Site\Http\Controllers\ProductsController',
@@ -587,107 +611,113 @@ class ProductsController extends CrudController
      */
     public function handleProducts($params = null)
     {
-        file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", "1" . "\r\n", FILE_APPEND);
         // exit;
-        // if (empty($params['site'])) {
-        //     throw new \Exception("site is empty", 1);
-        // }
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
 
-        // // 设置当前租户
-        // tenancy()->initialize($params['site']);
-        // // tenancy()->initialize('QY_EN');
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+        // tenancy()->initialize('QY_EN');
 
-        // $count = 0;
-        // $insertCount = 0;
-        // $updateCount = 0;
-        // $errorCount = 0;
+        $count = 0;
+        $insertCount = 0;
+        $updateCount = 0;
+        $errorCount = 0;
+        $details = '';
 
-        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", json_encode($params['data']) . "\r\n", FILE_APPEND);
-        // foreach ($params['data'] as $row) {
-        //     $count++;
-        //     try {
-        //         //表头
-        //         $item = [];
-        //         $item['name'] = $row[0];
-        //         $item['pages'] = $row[1];
-        //         $item['tables'] = $row[2];
-        //         $item['price'] = $row[3];
-        //         $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row[6]);
-        //         $item['category_id'] = ProductsCategory::where('name', trim($row[13]))->value('id') ?? 0;
-        //         $item['author'] = $row[14];
-        //         $item['keywords'] = $row[27];
+        foreach ($params['data'] as $row) {
+            $count++;
+            try {
+                //表头
+                $item = [];
+                isset($row['name']) && $item['name'] = $row['name'];
+                isset($row['pages']) && $item['pages'] = $row['pages'];
+                isset($row['tables']) && $item['tables'] = $row['tables'];
+                isset($row['price']) && $item['price'] = $row['price'];
+                isset($row['published_date']) && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row['published_date']);
 
-        //         $itemDescription = [];
-        //         $itemDescription['description'] = str_replace('_x000D_', '', $row[9]);
-        //         $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row[11]);
-        //         $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row[12]);
-        //         $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row[17]);
+                isset($row['category_id']) && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
 
-        //         //新纪录年份
-        //         $newYear = Products::publishedDateFormatYear($item['published_date']);
+                isset($row['author']) && $item['author'] = $row['author'];
+                isset($row['keywords']) && $item['keywords'] = $row['keywords'];
 
-        //         // 处理每行数据
-        //         $product = Products::where('name', trim($row[0]))->first();
-        //         if ($product) {
-        //             //旧纪录年份
-        //             $oldPublishedDate = $product->published_date;
-        //             $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
-        //             //更新报告
-        //             $product->update($item);
 
-        //             $newProductDescription = (new ProductsDescription($newYear));
-        //             //出版时间年份更改
-        //             if ($oldYear != $newYear) {
-        //                 //删除旧详情
-        //                 if ($oldYear) {
-        //                     $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
-        //                     $oldProductDescription->delete();
-        //                 }
-        //                 //然后新增
-        //                 $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
-        //             } else {
-        //                 //直接更新
-        //                 $newProductDescription = $newProductDescription->where('product_id', $product->id)->first();
-        //                 $descriptionRecord = $newProductDescription->updateWithAttributes($itemDescription);
-        //             }
-        //             $updateCount++;
-        //         } else {
-        //             //新增报告
-        //             $product = Products::create($item);
-        //             //新增报告详情
-        //             $newProductDescription = (new ProductsDescription($newYear));
-        //             $itemDescription['product_id'] = $product->id;
-        //             $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
-        //             $insertCount++;
-        //         }
-        //         //code...
-        //     } catch (\Throwable $th) {
-        //         //throw $th;
-        //         $errorCount++;
-        //     }
-        // }
-        // try {
-        // DB::beginTransaction();
-        // $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
-        // $logData = [
-        //     'count' => ($logModel->count ?? 0) + $count,
-        //     'insert_count' => ($logModel->insert_count ?? 0) + $insertCount,
-        //     'update_count' => ($logModel->update_count ?? 0) + $updateCount,
-        //     'error_count' => ($logModel->error_count ?? 0) + $errorCount,
-        // ];
-        // $logFlag = $logModel->update($logData);
+                $itemDescription = [];
+                isset($row['description']) && $itemDescription['description'] = str_replace('_x000D_', '', $row['description']);
+                isset($row['table_of_content']) && $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row['table_of_content']);
+                isset($row['tables_and_figures']) && $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row['tables_and_figures']);
+                isset($row['companies_mentioned']) && $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row['companies_mentioned']);
 
-        // if ($logFlag) {
-        //     DB::commit();
-        // } else {
-        //     DB::rollBack();
-        //     // 处理更新失败的情况
-        // }
-        // } catch (\Exception $e) {
-        //     DB::rollBack();
-        //     // 处理异常，例如日志记录
-        //     throw $e;
-        // }
-        // file_put_contents("C:\\Users\\Administrator\\Desktop\\aaaaaa.txt", json_encode($logData)."\r\n", FILE_APPEND);
+                //新纪录年份
+                $newYear = Products::publishedDateFormatYear($item['published_date']);
+
+                // 处理每行数据
+                $product = Products::where('name', trim($row['name']))->first();
+                if ($product) {
+                    $itemDescription['product_id'] = $product->id;
+                    //旧纪录年份
+                    $oldPublishedDate = $product->published_date;
+                    $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
+                    //更新报告
+                    $product->update($item);
+
+                    $newProductDescription = (new ProductsDescription($newYear));
+                    //出版时间年份更改
+                    if ($oldYear != $newYear) {
+                        //删除旧详情
+                        if ($oldYear) {
+                            $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
+                            $oldProductDescription->delete();
+                        }
+                        //然后新增
+                        $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                    } else {
+                        //直接更新
+                        $newProductDescription = $newProductDescription->where('product_id', $product->id)->first();
+                        $descriptionRecord = $newProductDescription->updateWithAttributes($itemDescription);
+                    }
+                    $updateCount++;
+                } else {
+                    //新增报告
+                    $product = Products::create($item);
+                    //新增报告详情
+                    $newProductDescription = (new ProductsDescription($newYear));
+                    $itemDescription['product_id'] = $product->id;
+                    $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                    $insertCount++;
+                }
+                //code...
+            } catch (\Throwable $th) {
+                //throw $th;
+                $details .= '【'.$row['name']??''.'】'.$th->getMessage() . "\r\n";
+                // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
+                $errorCount++;
+            }
+        }
+        try {
+            DB::beginTransaction();
+            $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
+            $logData = [
+                'count' => ($logModel->count ?? 0) + $count,
+                'insert_count' => ($logModel->insert_count ?? 0) + $insertCount,
+                'update_count' => ($logModel->update_count ?? 0) + $updateCount,
+                'error_count' => ($logModel->error_count ?? 0) + $errorCount,
+                'details' => ($logModel->details ?? '') . "\r\n" . $details,
+
+            ];
+            $logFlag = $logModel->update($logData);
+
+            if ($logFlag) {
+                DB::commit();
+            } else {
+                DB::rollBack();
+                // 处理更新失败的情况
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // 处理异常，例如日志记录
+            throw $e;
+        }
     }
 }

@@ -82,5 +82,19 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'destroy'])->name('报告分类:删除分类');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'discount'])->name('报告分类:设置折扣');
     });
+    
+    // ProductsExcelField 控制器
+    Route::prefix('products-excel-field')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'list'])->name('报告字段:字段列表');
+        Route::get('option', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'option'])->name('报告字段:下拉列表数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'searchDroplist'])->name('报告字段:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'changeStatus'])->name('报告字段:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'changeSort'])->name('报告字段:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'store'])->name('报告字段:新增字段');
+        Route::post('update', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'update'])->name('报告字段:修改字段');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'destroy'])->name('报告字段:删除字段');
+
+    });
 });
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
