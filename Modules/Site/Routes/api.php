@@ -49,6 +49,7 @@ Route::middleware([
         Route::get('option', [Modules\Site\Http\Controllers\RegionController::class, 'option'])->name('地区管理:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\RegionController::class, 'searchDroplist'])->name('地区管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\RegionController::class, 'changeStatus'])->name('地区管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\RegionController::class, 'changeSort'])->name('地区管理:排序修改');
 
         Route::post('store', [Modules\Site\Http\Controllers\RegionController::class, 'store'])->name('地区管理:新增地区');
         Route::post('update', [Modules\Site\Http\Controllers\RegionController::class, 'update'])->name('地区管理:修改地区');
@@ -62,6 +63,7 @@ Route::middleware([
         Route::get('option', [Modules\Site\Http\Controllers\CountryController::class, 'option'])->name('国家管理:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\CountryController::class, 'searchDroplist'])->name('国家管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
 
         Route::post('store', [Modules\Site\Http\Controllers\CountryController::class, 'store'])->name('国家管理:新增地区');
         Route::post('update', [Modules\Site\Http\Controllers\CountryController::class, 'update'])->name('国家管理:修改地区');

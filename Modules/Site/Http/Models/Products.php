@@ -219,7 +219,7 @@ class Products extends Base
     {
         $text = '';
         if (isset($this->attributes['country_id'])) {
-            $text = Country::whereIn('id', $this->attributes['country_id'])->value('name');
+            $text = Country::whereIn('id', $this->attributes['country_id'])->value('name')??'';
         }
         return $text;
     }
