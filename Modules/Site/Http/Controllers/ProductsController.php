@@ -15,6 +15,7 @@ use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Site\Http\Models\ProductsUploadLog;
+use Modules\Site\Http\Models\Region;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
@@ -252,9 +253,8 @@ class ProductsController extends CrudController
         try {
             //分类
             $data['category'] = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
-
-            $data['country'] = [];
-
+            //国家地区 region
+            $data['country'] = (new Region())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
@@ -269,6 +269,8 @@ class ProductsController extends CrudController
 
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            // 折扣
+            $data['discount_type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
@@ -413,7 +415,7 @@ class ProductsController extends CrudController
     {
         $field = Products::getBatchUpdateField();
         array_unshift($field, ['name' => '请选择', 'value' => '', 'type' => '']);
-        ReturnJson(TRUE, trans('lang.update_success'), $field);
+        ReturnJson(TRUE, trans('lang.request_success'), $field);
     }
 
 
@@ -438,7 +440,7 @@ class ProductsController extends CrudController
             $data = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
         }
 
-        ReturnJson(TRUE, trans('lang.update_success'), $data);
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 
     /**
