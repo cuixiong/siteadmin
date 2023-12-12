@@ -23,6 +23,8 @@ class Site extends Base
         'server_id',
         'api_repository',
         'frontend_repository',
+        'api_path',
+        'frontend_path',
         // 'db_host', 
         // 'db_port', 
         // 'db_database', 
@@ -232,12 +234,12 @@ class Site extends Base
             ];
         }
 
-        // 项目所在外层路径
-        $siteBasePath = '/www/wwwroot/platform_test/' . $site->name . '/';
-        // 接口/后台代码仓库别名
-        $apiDirName = 'admin.' . $site->name;
+        // // 项目所在外层路径
+        // $siteBasePath = '/www/wwwroot/platform_test/' . $site->name . '/';
+        // 接口/后台代码项目路径
+        $apiDirName = $site->api_path;
         // 前台代码仓库别名
-        $frontedDirName = 'nuxt.' . $site->name;
+        $frontedDirName = $site->frontend_path;
 
         //根据类型获取命令
         $commands = [];
@@ -247,26 +249,26 @@ class Site extends Base
             $apiRepository = $site->api_repository;
             // 前台代码仓库地址
             $frontendRepository = $site->frontend_repository;
-            $commands = self::getAddSiteCommands($siteBasePath, $apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database);
+            $commands = self::getAddSiteCommands($apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database);
         } elseif ($type == 'pull_code') {
             //拉取代码、升级站点
-            $commands = self::getPullCodeCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $commands = self::getPullCodeCommands($apiDirName, $frontedDirName);
         } elseif ($type == 'current_hash') {
             //当前版本hash及hash短格式
-            $commands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $commands = self::getCurrentHashCommands($apiDirName, $frontedDirName);
         } elseif ($type == 'commit_history') {
             //历史提交记录、返回哈希值及注释
             $pageNum = $option['pageNum'] ?? 0;
             $pageSize = $option['pageSize'] ?? 0;
-            $commands = self::getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName, $pageNum, $pageSize);
+            $commands = self::getCommitHistoryCommands($apiDirName, $frontedDirName, $pageNum, $pageSize);
         } elseif ($type == 'commit_history_count') {
             //历史提交记录总数
-            $commands = self::getCommitHistoryCountCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $commands = self::getCommitHistoryCountCommands($apiDirName, $frontedDirName);
         } elseif ($type == 'available_pull') {
-            $commands = self::getAvailablePullCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $commands = self::getAvailablePullCommands($apiDirName, $frontedDirName);
         } elseif ($type == 'rollback_code') {
             $hash = $option['hash'];
-            $commands = self::getRollbackCodeCommands($siteBasePath, $apiDirName, $frontedDirName, $hash);
+            $commands = self::getRollbackCodeCommands($apiDirName, $frontedDirName, $hash);
         }
         // return $commands;
         //执行命令
@@ -342,7 +344,7 @@ class Site extends Base
         //拉取、回滚等操作要写到站点更新日志里
         if ($writeUpdateLog) {
             //因为还需记录版本号，只能再调用一次
-            $currentHashCommands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $currentHashCommands = self::getCurrentHashCommands($apiDirName, $frontedDirName);
             $currentHashOutput = self::executeCommands($ssh, $currentHashCommands);
 
             $currentHash = '';
@@ -411,15 +413,14 @@ class Site extends Base
 
     /**
      * 获取新建站点/部署项目命令
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
      * @param string apiRepository 接口仓库地址
-     * @param string apiDirName 接口仓库别名
-     * @param string frontend_repository 网站仓库地址
+     * @param string apiDirName 接口仓库路径
+     * @param string frontend_repository 网站仓库路径
      * @param string frontedDirName 网站仓库别名
      * @param Modules\Admin\Http\Models\Database database 数据库模型对象
      * @return array|string commands 命令
      */
-    private static function getAddSiteCommands($siteBasePath, $apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database)
+    private static function getAddSiteCommands($apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database)
     {
 
         //数据库信息，用于替换项目配置的数据库信息
@@ -431,10 +432,6 @@ class Site extends Base
         //前台暂未部署
 
         $commands = [
-            /**
-             * 基本目录不存在则新建
-             */
-            'if [ ! -d "' . $siteBasePath . '" ]; then mkdir -p "' . $siteBasePath . '"; fi',
             /** 
              * 一、第一次克隆代码
              * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
@@ -445,7 +442,7 @@ class Site extends Base
              * 用户名密码有@这些特殊符号需转义
              * 命令是根据yii部署步骤而定的，若换了框架，需要重新写一个，视仓库而定
              */
-            'cd ' . $siteBasePath . ' && git clone ' . $apiRepository . ' ' . $apiDirName,
+            'git clone ' . $apiRepository . ' ' . $apiDirName,
             /**
          * 二、下载依赖
          * 因为每一句命令独立运行，所以每次都要cd到指定目录
@@ -477,12 +474,11 @@ class Site extends Base
 
     /**
      * 拉取代码
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
-     * @param string apiDirName 接口仓库别名
-     * @param string frontedDirName 网站仓库别名
+     * @param string apiDirName 接口仓库路径
+     * @param string frontedDirName 网站仓库路径
      * @return array|string commands 命令
      */
-    private static function getPullCodeCommands($siteBasePath, $apiDirName, $frontedDirName)
+    private static function getPullCodeCommands($apiDirName, $frontedDirName)
     {
         //没有更新依赖
         //前台暂无
@@ -494,7 +490,7 @@ class Site extends Base
              * fatal: detected dubious ownership in repository at 'xxx' To add an exception for this directory, call:
              * 需执行命令 git config --global --add safe.directory 项目路径
              */
-            'cd ' . $siteBasePath . $apiDirName . ' &&  git pull',
+            'cd ' . $apiDirName . ' &&  git pull',
         ];
         return $commands;
     }
@@ -502,12 +498,11 @@ class Site extends Base
 
     /**
      * 提交记录
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
-     * @param string apiDirName 接口仓库别名
-     * @param string frontedDirName 网站仓库别名
+     * @param string apiDirName 接口仓库路径
+     * @param string frontedDirName 网站仓库路径
      * @return array|string commands 命令
      */
-    private static function getCommitHistoryCommands($siteBasePath, $apiDirName, $frontedDirName, $pageNum, $pageSize)
+    private static function getCommitHistoryCommands($apiDirName, $frontedDirName, $pageNum, $pageSize)
     {
         //前台暂无
         $param = [];
@@ -527,7 +522,7 @@ class Site extends Base
              * -n 5 指定返回5条
              * --pretty=format:"%H|%an|%ae|%ad|%s" 展示格式
              */
-            'cd ' . $siteBasePath . $apiDirName  . ' &&  git log ' . $paramStr,
+            'cd ' . $apiDirName  . ' &&  git log ' . $paramStr,
 
         ];
         return $commands;
@@ -535,12 +530,11 @@ class Site extends Base
 
     /**
      * 提交记录总数
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
-     * @param string apiDirName 接口仓库别名
-     * @param string frontedDirName 网站仓库别名
+     * @param string apiDirName 接口仓库路径
+     * @param string frontedDirName 网站仓库路径
      * @return array|string commands 命令
      */
-    private static function getCommitHistoryCountCommands($siteBasePath, $apiDirName, $frontedDirName)
+    private static function getCommitHistoryCountCommands($apiDirName, $frontedDirName)
     {
         //前台暂无
 
@@ -551,7 +545,7 @@ class Site extends Base
              * count 总数，需git 2.7以上版本
              * HEAD 当前分支
              */
-            'cd ' . $siteBasePath . $apiDirName  . ' &&  git rev-list --count HEAD',
+            'cd ' . $apiDirName  . ' &&  git rev-list --count HEAD',
 
         ];
         return $commands;
@@ -559,17 +553,16 @@ class Site extends Base
 
     /**
      * 获取当前提交版本的hash值
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
-     * @param string apiDirName 接口仓库别名
-     * @param string frontedDirName 网站仓库别名
+     * @param string apiDirName 接口仓库路径
+     * @param string frontedDirName 网站仓库路径
      * @return array|string commands 命令
      */
-    private static function getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName)
+    private static function getCurrentHashCommands($apiDirName, $frontedDirName)
     {
         //前台暂无
 
         $commands = [
-            'cd ' . $siteBasePath . $apiDirName . ' &&  git rev-parse HEAD && git rev-parse --short HEAD',
+            'cd ' . $apiDirName . ' &&  git rev-parse HEAD && git rev-parse --short HEAD',
 
         ];
         return $commands;
@@ -577,12 +570,11 @@ class Site extends Base
 
     /**
      * 是否可更新
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
-     * @param string apiDirName 接口仓库别名
-     * @param string frontedDirName 网站仓库别名
+     * @param string apiDirName 接口仓库路径
+     * @param string frontedDirName 网站仓库路径
      * @return array|string commands 命令
      */
-    private static function getAvailablePullCommands($siteBasePath, $apiDirName, $frontedDirName)
+    private static function getAvailablePullCommands($apiDirName, $frontedDirName)
     {
         //前台暂无
 
@@ -608,7 +600,7 @@ class Site extends Base
              * 则判断 Your branch is up to date 即可
              * 
              */
-            'cd ' . $siteBasePath . $apiDirName . ' &&  git fetch && git status',
+            'cd ' . $apiDirName . ' &&  git fetch && git status',
 
         ];
         return $commands;
@@ -617,13 +609,12 @@ class Site extends Base
 
     /**
      * 回退站点版本/git回退
-     * @param string siteBasePath 部署基本路径/项目所在外层路径
-     * @param string apiDirName 接口仓库别名
-     * @param string frontedDirName 网站仓库别名
+     * @param string apiDirName 接口仓库路径
+     * @param string frontedDirName 网站仓库路径
      * @param string hash 回退版本的完整hash值
      * @return array|string commands 命令
      */
-    private static function getRollbackCodeCommands($siteBasePath, $apiDirName, $frontedDirName, $hash)
+    private static function getRollbackCodeCommands($apiDirName, $frontedDirName, $hash)
     {
         //前台暂无
 
@@ -636,7 +627,7 @@ class Site extends Base
              * git revert [hash值] 也是回退到之前的代码，但本质是一个新的提交
              * 
              */
-            'cd ' . $siteBasePath . $apiDirName . ' &&  git reset --hard ' . $hash,
+            'cd ' . $apiDirName . ' &&  git reset --hard ' . $hash,
 
         ];
         return $commands;

@@ -143,7 +143,6 @@ class ProductsCategoryController extends CrudController
                 'list' => $record,
                 'headerTitle' => $headerTitle ?? [],
             ];
-            Return
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());

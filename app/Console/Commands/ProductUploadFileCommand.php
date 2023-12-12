@@ -1,16 +1,16 @@
 <?php
 namespace App\Console\Commands;
 
-class ProductUploadCommand extends RabbitmqConnectCommand
+class ProductUploadFileCommand extends RabbitmqConnectCommand
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'ProductUpload';
+    protected $signature = 'ProductUploadFile';
     protected $ExchangeName = 'Products'; // exchange name
-    protected $QueueName = 'products-queue'; // queue name
+    protected $QueueName = 'products-file-queue'; // queue name
     protected $Model = 'direct';
 
     protected function initChannel()
@@ -23,7 +23,7 @@ class ProductUploadCommand extends RabbitmqConnectCommand
             //
             $this->channel->exchange_declare($this->ExchangeName,$this->Model,false,true,false);
             //
-            $this->channel->queue_bind($this->QueueName,$this->ExchangeName,'productsKey2');
+            $this->channel->queue_bind($this->QueueName,$this->ExchangeName,'productsKey1');
         }
     }
 }

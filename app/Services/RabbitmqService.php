@@ -18,6 +18,7 @@ class RabbitmqService
     protected $exchangeName = 'laravel'; // 默认交换机名称
     protected $queueName    = 'laravel'; // 默认队列名称
     protected $queueMode    = ''; // 默认队列模式
+    protected $routingKey    = ''; // direct模式绑定key
 
     /**
      * @var \PhpAmqpLib\Connection\AMQPStreamConnection
@@ -127,6 +128,17 @@ class RabbitmqService
     {
         $mode && $this->queueMode = $mode;
     }
+    
+    /**
+     * 设置routing_key
+     * 
+     * @param string $mode
+     */
+    public function setRoutingKey($routingKey = '')
+    {
+        $routingKey && $this->routingKey = $routingKey;
+    }
+
     /**
      * 设置频道.
      */
@@ -152,7 +164,7 @@ class RabbitmqService
         $this->connect();
         $this->initChannel();
         $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'devlivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
-        $this->channel->basic_publish($message, $this->exchangeName);
+        $this->channel->basic_publish($message, $this->exchangeName, $this->routingKey);
         $this->channel->wait_for_pending_acks();
         $this->close();
     }
