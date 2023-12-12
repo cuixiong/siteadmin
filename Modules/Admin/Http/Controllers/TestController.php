@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
 use App\Services\RabbitmqService;
 use FFI;
+use Modules\Admin\Http\Models\TimedTask;
 use Modules\Site\Http\Models\User;
 
 class TestController extends CrudController
@@ -51,6 +52,9 @@ class TestController extends CrudController
         if(!empty($content)){
             file_put_contents('123.txt',"\r".$content,FILE_APPEND);
         }
-        var_dump($content);die;
+        $res = (new TimedTask)->LocalHostTask('add','*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/task >> /var/www/html/logs/170236679063905.log 2>&1');
+        var_dump($content);
+        $content = shell_exec('crontab -l');
+        var_dump($content);
     }
 }
