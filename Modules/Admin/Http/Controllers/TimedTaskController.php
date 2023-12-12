@@ -194,7 +194,8 @@ class TimedTaskController extends CrudController
             if($doAction == 'add'){
                 $taskListArr = array_filter(explode('\n',$taskList));
                 if (!in_array($command, $taskListArr)){
-                    shell_exec('echo "'.$command.'"');
+                    $command = 'echo "'.trim($command).'" | crontab -';
+                    shell_exec($command);
                 }
             } else if($doAction == 'update') {
                 $taskList = str_replace($OldCommand, $command, $taskList);
@@ -232,7 +233,8 @@ class TimedTaskController extends CrudController
         if($doAction == 'add'){
             $taskListArr = array_filter(explode('\n',$taskList));
             if (!in_array($command, $taskListArr)){
-                $ssh->exec('echo "'.trim($command).'"');
+                $command = 'echo "'.trim($command).'" | crontab -';
+                $ssh->exec($command);
             }
         } else if($doAction == 'update') {
             $taskList = str_replace($OldCommand, $command, $taskList);

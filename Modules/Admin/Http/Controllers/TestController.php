@@ -47,13 +47,24 @@ class TestController extends CrudController
     public function task(){
         // $content = shell_exec('crontab -l');
         // var_dump($content);die;
-        file_put_contents('123.txt',date('Y-m-d H:i:s',time()),FILE_APPEND);
+        file_put_contents('123.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
         $content = shell_exec('crontab -l');
         if(!empty($content)){
             file_put_contents('123.txt',"\r".$content,FILE_APPEND);
         }
-        $res = (new TimedTask)->LocalHostTask('add','*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/task >> /var/www/html/logs/170236679063905.log 2>&1');
-        var_dump($content);
+        var_dump($content);die;
+        // $res = (new TimedTaskController)->LocalHostTask('add','*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/task >> /var/www/html/logs/170236679063905.log 2>&1');
+        // $command = 'echo "*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/task  >> /www/wwwroot/yadmin/admin/Modules/Admin/170236679063905.log 2>&1" | crontab -';
+        $content = str_replace("*/1 * * * * curl http://yadmin.qyrdata.com/api/admin/test/task  >> /www/wwwroot/yadmin/admin/Modules/Admin/170236679063905.log 2>&1",'',$content);
+        // var_dump($content);die;
+        $command = 'echo "'.$content.'" | crontab -';
+        // $taskList = shell_exec('crontab -l');
+        // $taskListArr = array_filter(explode('\n',$taskList));
+        // var_dump($taskListArr);
+        // if (in_array($command, $taskListArr)){
+        //     shell_exec($command);
+        // }
+        shell_exec($command);
         $content = shell_exec('crontab -l');
         var_dump($content);
     }
