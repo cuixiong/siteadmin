@@ -47,5 +47,10 @@ class TestController extends CrudController
         // $content = shell_exec('crontab -l');
         // var_dump($content);die;
         file_put_contents('123.txt',date('Y-m-d H:i:s',time()),FILE_APPEND);
+        $content = shell_exec('crontab -l');
+        if(!empty($content)){
+            file_put_contents('123.txt',"\r".$content,FILE_APPEND);
+        }
+        var_dump($content);die;
     }
 }
