@@ -25,6 +25,8 @@ class TimedTaskController extends CrudController
             }
             $CronTime = $this->CrateLiunxTime($input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $command = $CronTime.$command;// 组合命令
+            $input['command'] = $command;
+            // var_dump($command);die;
             // 事务开启
             DB::beginTransaction();
             try {
@@ -58,6 +60,25 @@ class TimedTaskController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.add_error'));
                     }
+                } else {
+                    $childrenTask = [
+                        'parent_id' => $record->id,
+                        'name' => $input['name'],
+                        'site_id' => "",
+                        'type' => $input['type'],
+                        'content' => $input['content'],
+                        'status' => $input['status'],
+                        'day' => $input['day'],
+                        'hour' => $input['hour'],
+                        'minute' => $input['minute'],
+                        'week_day' => $input['week_day'],
+                        'command' => $command,
+                        'category' => $input['category'],
+                        'time_type' => $input['time_type'],
+                        'log_path' => $log_path,// 定义日志文件路径
+                    ];
+                    $record = (new TimedTask())->create($childrenTask);
+                    $res = $this->TimedTaskQueue($record->id,'add');
                 }
                 DB::commit();
             } catch (\Exception $e) {
@@ -90,19 +111,22 @@ class TimedTaskController extends CrudController
     {
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
-            return $content . " >> " .$log_path;
+            return ' '.$content . " >> " .$log_path;
         } else if($type == 'http'){
-            return 'curl '.$content . " >> " .$log_path;
+            return ' curl '.$content . " >> " .$log_path;
         } else {
             return false;
         }
     }
 
-    public function TimedTaskQueue($id,$action)
+    public function TimedTaskQueue($ids,$action)
     {
         $RabbitMQ = new RabbitmqService();
         $RabbitMQ->setQueueName('timed_task');
-        $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+        foreach ($ids as $id) {
+            $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+        }
+        $RabbitMQ->close();
     }
 
     public function CrateLiunxTime($timeType,$day,$hour,$minute,$week_day)
@@ -140,13 +164,14 @@ class TimedTaskController extends CrudController
     public function DoTimedTask($params = null)
     {
         if($params){
-            $task = TimedTask::find($params['id']);
-            if($task->category == 'admin'){
-                $this->LocalHostTask($params['action'],$task->command,$params['command']);
-            } else if($task->category == 'index') {
-                $site = Site::find($params['site_id']);
-                $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
-            }
+            file_put_contents('test.txt', "\r".json_encode($params), FILE_APPEND);
+            // $task = TimedTask::find($params['id']);
+            // if($task->category == 'admin'){
+            //     $this->LocalHostTask($params['action'],$task->command,$params['command']);
+            // } else if($task->category == 'index') {
+            //     $site = Site::find($params['site_id']);
+            //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
+            // }
         }
     }
 
