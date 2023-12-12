@@ -14,6 +14,8 @@ class TimedTaskController extends CrudController
 {
     public function store(Request $request)
     {
+        // $this->DoTimedTask(['data' => ['id'=>2,'action' => 'add']]);
+        // return false;
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -60,6 +62,7 @@ class TimedTaskController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.add_error'));
                     }
+                    DB::commit();
                 } else {
                     $childrenTask = [
                         'parent_id' => $record->id,
@@ -78,9 +81,9 @@ class TimedTaskController extends CrudController
                         'log_path' => $log_path,// 定义日志文件路径
                     ];
                     $record = (new TimedTask())->create($childrenTask);
-                    $res = $this->TimedTaskQueue($record->id,'add');
+                    DB::commit();
+                    $res = $this->TimedTaskQueue([$record->id],'add');
                 }
-                DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
                 ReturnJson(FALSE, $e->getMessage());
@@ -163,15 +166,24 @@ class TimedTaskController extends CrudController
 
     public function DoTimedTask($params = null)
     {
-        if($params){
-            file_put_contents('test.txt', "\r".json_encode($params), FILE_APPEND);
-            // $task = TimedTask::find($params['id']);
-            // if($task->category == 'admin'){
-            //     $this->LocalHostTask($params['action'],$task->command,$params['command']);
-            // } else if($task->category == 'index') {
-            //     $site = Site::find($params['site_id']);
-            //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
-            // }
+        try {
+            if($params){
+                $params = $params['data'];
+                file_put_contents('test.txt', "\r".json_encode($params), FILE_APPEND);
+                $task = TimedTask::find($params['id']);
+                file_put_contents('test.txt', "\r".json_encode($task), FILE_APPEND);
+                if($task->category == 'admin'){
+                    $params['command'] = '';
+                    $this->LocalHostTask($params['action'],$task->command,$params['command']);
+                // } else if($task->category == 'index') {
+                //     $site = Site::find($params['site_id']);
+                //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
+                }
+                return true;
+            }
+        } catch (\Exception $e) {
+            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            return false;
         }
     }
 
@@ -204,6 +216,7 @@ class TimedTaskController extends CrudController
                 return false;
             }
         } catch (\Exception $e) {
+            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
             return false;
         }
     }
