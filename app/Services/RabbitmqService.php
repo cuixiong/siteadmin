@@ -146,9 +146,9 @@ class RabbitmqService
         if (!$this->channel) {
             //通道
             $this->channel = $this->connection->channel();
-            $this->channel->queue_declare($this->queueName, false, true, false, false);
-            $this->channel->exchange_declare($this->exchangeName, $this->queueMode, false, true, false);
-            $this->channel->queue_bind($this->queueName, $this->exchangeName, $this->routingKey);
+            // $this->channel->queue_declare($this->queueName, false, true, false, false);
+            // $this->channel->exchange_declare($this->exchangeName, $this->queueMode, false, true, false);
+            // $this->channel->queue_bind($this->queueName, $this->exchangeName);
         }
     }
 
@@ -164,6 +164,18 @@ class RabbitmqService
         $this->initChannel();
         $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'devlivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $this->channel->basic_publish($message, $this->exchangeName, $this->routingKey);
+        $this->channel->wait_for_pending_acks();
+        $this->close();
+    }
+
+    public function SimpleModePush($controller, $method, $data)
+    {
+        $data = json_encode(['class' => $controller,'method' => $method, 'data' => $data]);
+        $this->connect();
+        $this->initChannel();
+        $this->channel->queue_declare($this->queueName, false, false, false, false);
+        $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'devlivery_mode' => AMQPMessage::DELIVERY_MODE_NON_PERSISTENT]);
+        $this->channel->basic_publish($message, '',$this->queueName);
         $this->channel->wait_for_pending_acks();
         $this->close();
     }
