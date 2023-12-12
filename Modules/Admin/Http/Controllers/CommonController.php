@@ -37,6 +37,11 @@ class CommonController extends Controller
         } else {
             $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->select([$NameFiled,'perm'])->get('perm')->toArray();
         }
+        if($siteId > 0){
+            // Why do you do this? Ask your leader the reason
+            $perms2 = $RuleModel->where('type','BUTTON')->where('parent_id','172')->where('status',1)->select([$NameFiled,'perm'])->get()->toArray();
+            $perms = array_merge($perms,$perms2);
+        }
         $data['perms'] = array_column($perms,'perm');
         
         $data['button'] = $perms;
