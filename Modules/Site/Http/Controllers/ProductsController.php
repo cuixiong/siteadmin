@@ -74,9 +74,13 @@ class ProductsController extends CrudController
                 $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
             }
 
+            //表头排序
+            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
+
             $data = [
                 'total' => $total,
-                'list' => $record
+                'list' => $record,
+                'headerTitle' => $headerTitle ?? [],
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

@@ -23,6 +23,8 @@ class Site extends Base
         'server_id',
         'api_repository',
         'frontend_repository',
+        'api_path',
+        'frontend_path',
         // 'db_host', 
         // 'db_port', 
         // 'db_database', 
@@ -342,7 +344,7 @@ class Site extends Base
         //拉取、回滚等操作要写到站点更新日志里
         if ($writeUpdateLog) {
             //因为还需记录版本号，只能再调用一次
-            $currentHashCommands = self::getCurrentHashCommands($siteBasePath, $apiDirName, $frontedDirName);
+            $currentHashCommands = self::getCurrentHashCommands($apiDirName, $frontedDirName);
             $currentHashOutput = self::executeCommands($ssh, $currentHashCommands);
 
             $currentHash = '';
@@ -532,7 +534,7 @@ class Site extends Base
      * @param string frontedDirName 网站仓库路径
      * @return array|string commands 命令
      */
-    private static function getCommitHistoryCountCommands($siteBasePath, $apiDirName, $frontedDirName)
+    private static function getCommitHistoryCountCommands($apiDirName, $frontedDirName)
     {
         //前台暂无
 
