@@ -30,12 +30,12 @@ class CommonController extends Controller
         $data['roles'] = $res['code'];
         $rule_ids = $res['rule'];
         $RuleModel = new Rule();
-        $where = $siteId > 0 ? ['category' => 2,'status' => 1] : ['category' => 1,'status' => 1];
+        $where = $siteId > 0 ? ['category' => 2] : ['category' => 1];
         $NameFiled = $request->HeaderLanguage == 'en' ? 'english_name as name' : 'name';
         if($is_super > 0){            
             $perms = $RuleModel->where('type','BUTTON')->where($where)->select([$NameFiled,'perm'])->get()->toArray();
         } else {
-            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->select([$NameFiled,'perm'])->get('perm')->toArray();
+            $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->where('status',1)->select([$NameFiled,'perm'])->get('perm')->toArray();
         }
         if($siteId > 0){
             // Why do you do this? Ask your leader the reason

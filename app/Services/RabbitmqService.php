@@ -173,8 +173,8 @@ class RabbitmqService
     {
         $data = json_encode(['class' => $controller,'method' => $method, 'data' => $data]);
         $this->channel->queue_declare($this->queueName, false, false, false, false);
-        $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'devlivery_mode' => AMQPMessage::DELIVERY_MODE_NON_PERSISTENT]);
+        $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $this->channel->basic_publish($message, '',$this->queueName);
-        // $this->channel->wait_for_pending_acks();
+        $this->channel->wait_for_pending_acks();
     }
 }
