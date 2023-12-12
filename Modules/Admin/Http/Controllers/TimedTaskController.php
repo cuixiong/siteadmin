@@ -1,6 +1,8 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
+use App\Services\RabbitmqService;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,9 @@ class TimedTaskController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            $command = $this->CreateCommand($input['type'],$input['content']);
+            // 定义日志文件路径
+            $input['log_path'] = $log_path = '/var/www/html/logs/'.time() . rand(10000, 99999).'.log 2>&1';
+            $command = $this->CreateCommand($input['type'],$input['content'],$log_path);
             if($command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
@@ -24,8 +28,6 @@ class TimedTaskController extends CrudController
             // 事务开启
             DB::beginTransaction();
             try {
-                // 定义日志文件路径
-                $input['log_path'] = '/var/www/html/logs/'.time() . rand(10000, 99999).'.log';
                 $record = (new TimedTask())->create($input);
                 if (!$record) {
                     DB::rollBack();
@@ -48,7 +50,7 @@ class TimedTaskController extends CrudController
                             'command' => $command,
                             'category' => $input['category'],
                             'time_type' => $input['time_type'],
-                            'log_path' => '/var/www/html/logs/'.time() . rand(10000, 99999).'.log',// 定义日志文件路径
+                            'log_path' => $log_path,// 定义日志文件路径
                         ];
                     }
                     $record = $this->ModelInstance()->insert($childrenTask);
@@ -84,16 +86,23 @@ class TimedTaskController extends CrudController
         }
     }
 
-    public function CreateCommand($type, $content)
+    public function CreateCommand($type, $content,$log_path)
     {
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
-            return $content;
+            return $content . " >> " .$log_path;
         } else if($type == 'http'){
-            return 'curl '.$content;
+            return 'curl '.$content . " >> " .$log_path;
         } else {
             return false;
         }
+    }
+
+    public function TimedTaskQueue($id,$action)
+    {
+        $RabbitMQ = new RabbitmqService();
+        $RabbitMQ->setQueueName('timed_task');
+        $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
     }
 
     public function CrateLiunxTime($timeType,$day,$hour,$minute,$week_day)
