@@ -135,7 +135,7 @@ class SiteController extends CrudController
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
         if (!$output['result']) {
-            ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+            ReturnJson(FALSE, $output['output']);
         }
         ReturnJson(TRUE, trans('lang.request_success'));
     }
@@ -167,7 +167,7 @@ class SiteController extends CrudController
             $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first();
             if (!$database) {
                 DB::rollBack();
-                ReturnJson(TRUE, trans('lang.update_error') . ' database is not exist');
+                ReturnJson(TRUE, trans('lang.update_error') . ' '.trans('lang.database_model_empty'));
             } else {
                 $database = $database->toArray();
             }
@@ -214,6 +214,9 @@ class SiteController extends CrudController
         try {
             $output = Site::executeRemoteCommand($siteId, 'pull_code', ['created_by' => $created_by]);
 
+            if (!$output['result']) {
+                ReturnJson(FALSE, $output['output']);
+            }
             ReturnJson(TRUE, trans('lang.request_success'), $output);
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
@@ -253,7 +256,7 @@ class SiteController extends CrudController
             $commitOutput['count'] = $commitCount;
 
             if (!$commitOutput['result']) {
-                ReturnJson(FALSE, trans('lang.request_error'), $commitOutput['output']);
+                ReturnJson(FALSE, $commitOutput['output']);
             }
             ReturnJson(TRUE, trans('lang.request_success'), $commitOutput);
         } catch (\Throwable $th) {
@@ -278,7 +281,7 @@ class SiteController extends CrudController
             $output = Site::executeRemoteCommand($siteId, 'available_pull', ['created_by' => $created_by]);
 
             if (!$output['result']) {
-                ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+                ReturnJson(FALSE, $output['output']);
             }
             ReturnJson(TRUE, trans('lang.request_success'), $output);
         } catch (\Throwable $th) {
@@ -306,7 +309,7 @@ class SiteController extends CrudController
             $output = Site::executeRemoteCommand($siteId, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
 
             if (!$output['result']) {
-                ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+                ReturnJson(FALSE, $output['output']);
             }
             ReturnJson(TRUE, trans('lang.request_success'), $output);
         } catch (\Throwable $th) {
