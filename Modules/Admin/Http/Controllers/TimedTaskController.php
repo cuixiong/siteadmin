@@ -109,6 +109,7 @@ class TimedTaskController extends CrudController
             $command = $CronTime.$command;// 组合命令
             $input['command'] = $command;
             $record = $this->ModelInstance()->findOrFail($request->id);
+            $OldCommand = $record->command;
             // 更新父任务
             if (!$record->update($input)) {                                                                                                                                                                                                                                                
                 ReturnJson(FALSE, trans('lang.update_error'));
@@ -166,10 +167,19 @@ class TimedTaskController extends CrudController
                     foreach ($childrenDeleteIds as $key => $id) {
                         $deleteIds[] = $childrenTasks[$id]['id'];
                     }
-                    // var_dump($deleteIds);die;
-                    // $this->TimedTaskQueue($deleteIds,'delete');
-                    $this->ModelInstance()->whereIn('id',$deleteIds)->delete();
+                    // $this->ModelInstance()->whereIn('id',$deleteIds)->delete();
                 }
+
+                if($updateIds){
+                    $this->TimedTaskQueue($updateIds,'update',$OldCommand);
+                }
+                if($insertIds){
+                    $this->TimedTaskQueue($insertIds,'add');
+                }
+                if($deleteIds){
+                    $this->TimedTaskQueue($deleteIds,'delete');
+                }
+
             } else {
                 $this->ModelInstance()->where('parent_id',$record->id)->update($data);
                 $task = $childrenTasks[0];
@@ -217,20 +227,20 @@ class TimedTaskController extends CrudController
         }
     }
 
-    public function TimedTaskQueue($ids,$action)
+    public function TimedTaskQueue($ids,$action,$OldCommand = '')
     {
-        // try {
-        //     $RabbitMQ = new RabbitmqService();
-        //     $RabbitMQ->setQueueName('timed_task');
-        //     foreach ($ids as $id) {
-        //         $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
-        //     }
-        //     $RabbitMQ->close();
-        //     return true;
-        // } catch (\Exception $e) {
-        //     file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
-        //     return false;
-        // }
+        try {
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('timed_task');
+            foreach ($ids as $id) {
+                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action,'OldCommand' => $OldCommand]);
+            }
+            $RabbitMQ->close();
+            return true;
+        } catch (\Exception $e) {
+            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            return false;
+        }
     }
 
     public function CrateLiunxTime($timeType,$day,$hour,$minute,$week_day)
@@ -354,12 +364,12 @@ class TimedTaskController extends CrudController
         if($doAction == 'add'){
             $taskListArr = array_filter(explode('\n',$taskList));
             if (!in_array($command, $taskListArr)){
-                $command = 'echo "'.trim($command).'" | crontab -';
+                $command = 'echo "'.trim($command,'').'" | crontab -';
                 $ssh->exec($command);
             }
         } else if($doAction == 'update') {
             $taskList = str_replace($OldCommand, $command, $taskList);
-            $result = $ssh->exec('echo "'.trim($taskList).'" | crontab -');
+            $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
             if($result === null){
                 return true;
             } else {
@@ -367,7 +377,7 @@ class TimedTaskController extends CrudController
             }
         } else if($doAction == 'delete') {
             $taskList = str_replace($command, '', $taskList);
-            $result = $ssh->exec('echo "'.trim($taskList).'" | crontab -');
+            $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
             if($result === null){
                 return true;
             } else {
