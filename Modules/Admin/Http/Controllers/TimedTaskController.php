@@ -14,13 +14,11 @@ class TimedTaskController extends CrudController
 {
     public function store(Request $request)
     {
-        // $this->DoTimedTask(['data' => ['id'=>2,'action' => 'add']]);
-        // return false;
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
             // 定义日志文件路径
-            $input['log_path'] = $log_path = '/www/wwwroot/cron/logs/'.time() . rand(10000, 99999).'.log 2>&1';
+            $input['log_path'] = $log_path = '/www/wwwroot/yadmin/admin/'.time() . rand(10000, 99999).'.log 2>&1';
             $command = $this->CreateCommand($input['type'],$input['content'],$log_path);
             if($command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
@@ -110,6 +108,26 @@ class TimedTaskController extends CrudController
         }
     }
 
+
+    public function destroy(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            $res = $this->TimedTaskQueue($ids,'delete');
+            if($res === true){
+                ReturnJson(TRUE, trans('lang.delete_success'));
+            } else {
+                ReturnJson(FALSE,trans('lang.delete_error'));
+            }
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
     public function CreateCommand($type, $content,$log_path)
     {
         // 根据类型进行生成liunx命令
@@ -124,12 +142,19 @@ class TimedTaskController extends CrudController
 
     public function TimedTaskQueue($ids,$action)
     {
-        $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('timed_task');
-        foreach ($ids as $id) {
-            $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+        try {
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('timed_task');
+            foreach ($ids as $id) {
+                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+            }
+            $RabbitMQ->close();
+            return true;
+        } catch (\Exception $e) {
+            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            return false;
         }
-        $RabbitMQ->close();
+
     }
 
     public function CrateLiunxTime($timeType,$day,$hour,$minute,$week_day)
@@ -172,13 +197,22 @@ class TimedTaskController extends CrudController
                 file_put_contents('test.txt', "\r".json_encode($params), FILE_APPEND);
                 $task = TimedTask::find($params['id']);
                 file_put_contents('test.txt', "\r".json_encode($task), FILE_APPEND);
+                $res = false;
                 if($task->category == 'admin'){
                     $params['command'] = '';
-                    $this->LocalHostTask($params['action'],$task->command,$params['command']);
+                    file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
+                    $res = $this->LocalHostTask($params['action'],$task->command,$params['command']);
                 // } else if($task->category == 'index') {
                 //     $site = Site::find($params['site_id']);
                 //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
                 }
+                if($params['action'] == 'delete' && $res === true){
+                    // 先删除子任务
+                    TimedTask::where('parent_id',$params['id'])->delete();
+                    // 删除自身任务
+                    TimedTask::where('id',$params['id'])->delete();
+                }
+                file_put_contents('test.txt', "\r admin no", FILE_APPEND);
                 return true;
             }
         } catch (\Exception $e) {
@@ -189,31 +223,42 @@ class TimedTaskController extends CrudController
 
     public function LocalHostTask($doAction,$command,$OldCommand = '')
     {
+        file_put_contents('error_log.txt', "\r".$command."\r".$doAction."\r".$OldCommand, FILE_APPEND);
         try {
             $taskList = shell_exec('crontab -l');
             if($doAction == 'add'){
+                file_put_contents('test.txt', "\r add yes", FILE_APPEND);
                 $taskListArr = array_filter(explode('\n',$taskList));
+                file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
+                
                 if (!in_array($command, $taskListArr)){
-                    $command = 'echo "'.trim($command).'" | crontab -';
+                    file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
                     shell_exec($command);
                 }
             } else if($doAction == 'update') {
+                file_put_contents('test.txt', "\r update yes", FILE_APPEND);
                 $taskList = str_replace($OldCommand, $command, $taskList);
-                $result = shell_exec('echo "'.trim($taskList).'" | crontab -');
+                $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
                 if($result === null){
                     return true;
                 } else {
                     return false;
                 }
             } else if($doAction == 'delete') {
-                $taskList = str_replace($OldCommand, '', $taskList);
-                $result = shell_exec('echo "'.trim($taskList).'" | crontab -');
-                if($result === null){
+                file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
+                file_put_contents('test.txt', "\r old = ".$taskList, FILE_APPEND);
+                $taskList = str_replace($command, '', $taskList);
+                file_put_contents('test.txt', "\r new = ".$taskList, FILE_APPEND);
+                $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
+                if($result === null || $result == ''){
                     return true;
                 } else {
                     return false;
                 }
             } else {
+                file_put_contents('test.txt', "\r type error", FILE_APPEND);
                 return false;
             }
         } catch (\Exception $e) {
