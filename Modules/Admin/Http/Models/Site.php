@@ -207,6 +207,8 @@ class Site extends Base
             'site_name_empty' => $site->name ?? '',
             'site_api_repository_empty' => $site->api_repository ?? '',
             'site_frontend_repository_empty' => $site->frontend_repository ?? '',
+            'site_api_path_empty' => $site->api_path ?? '',
+            'site_frontend_path_empty' => $site->frontend_path ?? '',
             'server_ip_empty' => $server->ip ?? '',
             'server_username_empty' => $server->username ?? '',
             'server_password_empty' => $server->password ?? '',
@@ -230,7 +232,7 @@ class Site extends Base
         if (!$ssh->login($server->username, $server->password)) {
             return [
                 'result' => false,
-                'output' => 'Login Failed 服务器登录失败',
+                'output' => trans('lang.server_login_fail'),
             ];
         }
 

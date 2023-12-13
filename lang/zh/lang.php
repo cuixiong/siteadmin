@@ -42,12 +42,15 @@ return [
     'site_name_empty' => '站点名称为空',
     'site_api_repository_empty' => '后台/接口仓库地址为空',
     'site_frontend_repository_empty' => '前台/网站仓库地址为空',
+    'site_api_path_empty' => '后台/接口项目路径为空',
+    'site_frontend_path_empty' => '前台/网站项目路径为空',
     'server_ip_empty' => '服务器ip为空',
     'server_username_empty' => '服务器用户名为空',
     'server_password_empty' => '服务器密码为空',
     'database_ip_empty' => '数据库ip为空',
     'database_username_empty' => '数据库用户名为空',
     'database_password_empty' => '数据库密码为空',
+    'server_login_fail' => '服务器登录失败',
 
     
     /**分站点 */

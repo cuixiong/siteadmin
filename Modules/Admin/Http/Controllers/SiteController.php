@@ -135,7 +135,7 @@ class SiteController extends CrudController
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
         if (!$output['result']) {
-            ReturnJson(FALSE, trans('lang.request_error'), $output['output']);
+            ReturnJson(FALSE, trans('lang.request_error').' '.$output['output']);
         }
         ReturnJson(TRUE, trans('lang.request_success'));
     }

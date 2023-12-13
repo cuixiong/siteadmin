@@ -35,4 +35,28 @@ return [
     'upload_successful' => 'Upload successful',
     'site_undefined' => 'site undefined',
     'aliyun_oss_config_exist'   =>  'The current site is already bound to another OSS configuration. Please select another site',
+    
+    //站点
+    'server_model_empty' => 'server is not exist',
+    'database_model_empty' => 'database is not exist',
+    'site_name_empty' => 'site_name is empty',
+    'site_api_repository_empty' => 'api_repository is empty',
+    'site_frontend_repository_empty' => 'frontend_repository is empty',
+    'site_api_path_empty' => 'api_path is empty',
+    'site_frontend_path_empty' => 'frontend_path is empty',
+    'server_ip_empty' => 'server ip is empty',
+    'server_username_empty' => 'server username is empty',
+    'server_password_empty' => 'server password is empty',
+    'database_ip_empty' => 'database ip is empty',
+    'database_username_empty' => 'database usename is empty',
+    'database_password_empty' => 'database passsword is empty',
+    'server_login_fail' => 'login fail',
+
+    
+    /**分站点 */
+    // 上传报告
+    'category_empty'=>'The category is empty',
+    'price_empty'=>'The peice is empty',
+    'published_date_empty'=>'published date is empty',
+    'author_level'=>'The author cannot be overwritten ',
 ];
