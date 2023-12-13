@@ -101,7 +101,7 @@ class Products extends Base
         
         // sort 
         if (isset($search->status) && $search->status != '') {
-            $model = $model->where('status', $search->status);
+            $model = $model->where('sort', $search->sort);
         }
 
         // author
