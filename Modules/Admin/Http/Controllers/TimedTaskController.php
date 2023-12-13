@@ -114,7 +114,7 @@ class TimedTaskController extends CrudController
     {
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
-            return ' '.$content . " >> " .$log_path;
+            return ' '.$content . "  >> " .$log_path;
         } else if($type == 'http'){
             return ' curl '.$content . " >> " .$log_path;
         } else {
