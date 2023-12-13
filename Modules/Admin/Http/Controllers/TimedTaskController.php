@@ -369,7 +369,11 @@ class TimedTaskController extends CrudController
                 $ssh->exec($command);
             }
         } else if($doAction == 'update') {
+            file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
+            file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
+            file_put_contents('test.txt', "\r taskList=".$taskList, FILE_APPEND);
             $taskList = str_replace($OldCommand, $command, $taskList);
+            file_put_contents('test.txt', "\r NewTaskList=".$taskList, FILE_APPEND);
             $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
             if($result === null){
                 return true;
