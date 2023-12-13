@@ -194,12 +194,13 @@ class TimedTaskController extends CrudController
             if($doAction == 'add'){
                 $taskListArr = array_filter(explode('\n',$taskList));
                 if (!in_array($command, $taskListArr)){
-                    $command = 'echo "'.trim($command).'" | crontab -';
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
                     shell_exec($command);
                 }
             } else if($doAction == 'update') {
                 $taskList = str_replace($OldCommand, $command, $taskList);
-                $result = shell_exec('echo "'.trim($taskList).'" | crontab -');
+                $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
                 if($result === null){
                     return true;
                 } else {
@@ -207,7 +208,7 @@ class TimedTaskController extends CrudController
                 }
             } else if($doAction == 'delete') {
                 $taskList = str_replace($OldCommand, '', $taskList);
-                $result = shell_exec('echo "'.trim($taskList).'" | crontab -');
+                $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
                 if($result === null){
                     return true;
                 } else {
