@@ -174,11 +174,13 @@ class TimedTaskController extends CrudController
                 file_put_contents('test.txt', "\r".json_encode($task), FILE_APPEND);
                 if($task->category == 'admin'){
                     $params['command'] = '';
+                    file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
                     $this->LocalHostTask($params['action'],$task->command,$params['command']);
                 // } else if($task->category == 'index') {
                 //     $site = Site::find($params['site_id']);
                 //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
                 }
+                file_put_contents('test.txt', "\r admin no", FILE_APPEND);
                 return true;
             }
         } catch (\Exception $e) {
@@ -193,15 +195,18 @@ class TimedTaskController extends CrudController
         try {
             $taskList = shell_exec('crontab -l');
             if($doAction == 'add'){
+                file_put_contents('test.txt', "\r add yes", FILE_APPEND);
                 $taskListArr = array_filter(explode('\n',$taskList));
-                file_put_contents('error_log.txt', "\r".json_encode($taskListArr), FILE_APPEND);
-                file_put_contents('error_log.txt', "\r是否在数组中".in_array($command, $taskListArr), FILE_APPEND);
+                file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
+                
                 if (!in_array($command, $taskListArr)){
+                    file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
                     file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
                     shell_exec($command);
                 }
             } else if($doAction == 'update') {
+                file_put_contents('test.txt', "\r update yes", FILE_APPEND);
                 $taskList = str_replace($OldCommand, $command, $taskList);
                 $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
                 if($result === null){
@@ -210,6 +215,7 @@ class TimedTaskController extends CrudController
                     return false;
                 }
             } else if($doAction == 'delete') {
+                file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
                 $taskList = str_replace($OldCommand, '', $taskList);
                 $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
                 if($result === null){
@@ -218,6 +224,7 @@ class TimedTaskController extends CrudController
                     return false;
                 }
             } else {
+                file_put_contents('test.txt', "\r type error", FILE_APPEND);
                 return false;
             }
         } catch (\Exception $e) {
