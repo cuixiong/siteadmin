@@ -656,6 +656,9 @@ class ProductsController extends CrudController
                 } catch (\Throwable $th) {
                     //throw $th;
                 }
+                if (!isset($item['published_date']) || $item['published_date'] < 0) {
+                    $item['published_date'] = strtotime($row['published_date']);
+                }
                 file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
 
                 // 报告分类
@@ -699,13 +702,10 @@ class ProductsController extends CrudController
                     $errorCount++;
                     continue;
                 }
-                // 忽略出版时间的数据
-                if ($item['published_date'] < 0) {
-                    $item['published_date'] = strtotime($row['published_date']);
-                    if (empty($item['published_date']) || $item['published_date'] < 0) {
-                        $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.published_date_empty') . "\r\n";
-                        continue;
-                    }
+                // 忽略出版时间为空或转化失败的数据
+                if (empty($item['published_date']) || $item['published_date'] < 0) {
+                    $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.published_date_empty') . "\r\n";
+                    continue;
                 }
                 // 忽略分类为空的数据
                 if (empty($item['category_id'])) {
@@ -713,7 +713,7 @@ class ProductsController extends CrudController
                     $errorCount++;
                     continue;
                 }
-                // 过滤不符合作者策略的数据无法更新
+                // 过滤不符合作者策略的数据
                 if ($product) {
                     if (
                         !($item['author'] == '完成报告'
@@ -768,9 +768,9 @@ class ProductsController extends CrudController
                 //code...
             } catch (\Throwable $th) {
                 //throw $th;
-                // $details .= '【' . ($row['name'] ?? '') . '】' . $th->getMessage() . "\r\n";
+                $details .= '【' . ($row['name'] ?? '') . '】' . $th->getMessage() . "\r\n";
                 // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
-                $details = json_encode($row) . "\r\n";
+                // $details = json_encode($row) . "\r\n";
                 $errorCount++;
             }
         }
