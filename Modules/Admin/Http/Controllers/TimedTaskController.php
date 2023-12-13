@@ -20,7 +20,7 @@ class TimedTaskController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             // 定义日志文件路径
-            $input['log_path'] = $log_path = '/www/wwwroot/cron/logs/'.time() . rand(10000, 99999).'.log 2>&1';
+            $input['log_path'] = $log_path = '/www/wwwroot/yadmin/admin/'.time() . rand(10000, 99999).'.log 2>&1';
             $command = $this->CreateCommand($input['type'],$input['content'],$log_path);
             if($command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
