@@ -6,6 +6,8 @@ use App\Services\RabbitmqService;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Admin\Http\Models\Server;
+use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\TimedTask;
 use phpseclib3\Net\SSH2;
 
@@ -37,9 +39,10 @@ class TimedTaskController extends CrudController
                     if(empty($input['site_id'])){
                         DB::commit();
                     } else {
-                        $childrenTask = [];
+                        $model = $this->ModelInstance();
+                        $AutoIds = [];
                         foreach (explode(',', $input['site_id']) as $key => $value) {
-                            $childrenTask[] = [
+                            $data = [
                                 'parent_id' => $record->id,
                                 'name' => $input['name'],
                                 'site_id' => $value,
@@ -55,13 +58,15 @@ class TimedTaskController extends CrudController
                                 'time_type' => $input['time_type'],
                                 'log_path' => $log_path,// 定义日志文件路径
                             ];
-                        }
-                        $record = $this->ModelInstance()->insert($childrenTask);
-                        if (!$record) {
-                            DB::rollBack();
-                            ReturnJson(FALSE, trans('lang.add_error'));
+                            $id = $model->insertGetId($data);
+                            if($id){
+                                $AutoIds[] = $id;
+                            }
                         }
                         DB::commit();
+                        if($AutoIds){
+                            $this->TimedTaskQueue($AutoIds,'add');
+                        }
                     }
                 } else {
                     $childrenTask = [
@@ -156,11 +161,15 @@ class TimedTaskController extends CrudController
                 }
                 // 子任务新增（对应站点的定时任务）
                 if(!empty($childrenInsertIds)){
-                    $childrenInsertData = [];
+                    $model = $this->ModelInstance();
+                    $insertIds = [];
                     foreach ($childrenInsertIds as $key => $id) {
-                        $childrenInsertData[] = array_merge(['site_id' => $id],$data);
+                        $InsertData = array_merge(['site_id' => $id],$data);
+                        $id = $model->insertGetId($InsertData);
+                        if($id){
+                            $insertIds[] = $id;
+                        }
                     }
-                    $insertIds = $this->ModelInstance()->insert($childrenInsertData);
                 }
                 // 子任务删除（对应站点的定时任务）
                 if(!empty($childrenDeleteIds)){
@@ -168,7 +177,6 @@ class TimedTaskController extends CrudController
                     foreach ($childrenDeleteIds as $key => $id) {
                         $deleteIds[] = $childrenTasks[$id]['id'];
                     }
-                    // $this->ModelInstance()->whereIn('id',$deleteIds)->delete();
                 }
 
                 if($updateIds){
@@ -288,9 +296,10 @@ class TimedTaskController extends CrudController
                 if($task->category == 'admin'){
                     file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
                     $res = $this->LocalHostTask($params['action'],$task->command,$params['OldCommand']);
-                // } else if($task->category == 'index') {
-                //     $site = Site::find($params['site_id']);
-                //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
+                } else if($task->category == 'index') {
+                    $serverId = Site::where('id',$task->site_id)->value('server_id');
+                    $server = Server::where('id',$serverId)->first();
+                    $this->ShhTask($server->ip,$server->username,$server->password,$params['action'],$task->command,$params['OldCommand']);
                 }
                 if($params['action'] == 'delete' && $res === true){
                     // 先删除子任务
@@ -316,7 +325,6 @@ class TimedTaskController extends CrudController
                 file_put_contents('test.txt', "\r add yes", FILE_APPEND);
                 $taskListArr = array_filter(explode('\n',$taskList));
                 file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
-                
                 if (!in_array($command, $taskListArr)){
                     file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
@@ -359,24 +367,34 @@ class TimedTaskController extends CrudController
 
     public function ShhTask($ip,$username,$password,$doAction,$command,$OldCommand = '')
     {
+        file_put_contents('test.txt', "\r ssh ip =".$ip, FILE_APPEND);
+        file_put_contents('test.txt', "\r ssh username =".$username, FILE_APPEND);
+        file_put_contents('test.txt', "\r ssh password =".$password, FILE_APPEND);
+        file_put_contents('test.txt', "\r ssh doAction =".$doAction, FILE_APPEND);
+        file_put_contents('test.txt', "\r ssh command =".$command, FILE_APPEND);
+        file_put_contents('test.txt', "\r ssh OldCommand =".$OldCommand, FILE_APPEND);
         $ssh = new SSH2($ip);
         $res = $ssh->login($username,$password);
         if(!$res){
             return false;
         }
         $taskList = $ssh->exec('crontab -l');
+        file_put_contents('test.txt', "\r totalTask=".$taskList, FILE_APPEND);
         if($doAction == 'add'){
+            file_put_contents('test.txt', "\r add=yes", FILE_APPEND);
             $taskListArr = array_filter(explode('\n',$taskList));
             if (!in_array($command, $taskListArr)){
+                file_put_contents('test.txt', "\r add in_array=yes", FILE_APPEND);
                 $command = 'echo "'.trim($command,'').'" | crontab -';
+                file_put_contents('test.txt', "\r add shh command=".$command, FILE_APPEND);
                 $ssh->exec($command);
             }
         } else if($doAction == 'update') {
-            file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
-            file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
-            file_put_contents('test.txt', "\r taskList=".$taskList, FILE_APPEND);
+            file_put_contents('test.txt', "\r update shh OldCommand=".$OldCommand, FILE_APPEND);
+            file_put_contents('test.txt', "\r update shh command=".$command, FILE_APPEND);
+            file_put_contents('test.txt', "\r update shh taskList=".$taskList, FILE_APPEND);
             $taskList = str_replace($OldCommand, $command, $taskList);
-            file_put_contents('test.txt', "\r NewTaskList=".$taskList, FILE_APPEND);
+            file_put_contents('test.txt', "\r update shh NewTaskList=".$taskList, FILE_APPEND);
             $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
             if($result === null){
                 return true;
@@ -384,8 +402,12 @@ class TimedTaskController extends CrudController
                 return false;
             }
         } else if($doAction == 'delete') {
+            file_put_contents('test.txt', "\r delete shh command=".$command, FILE_APPEND);
+            file_put_contents('test.txt', "\r delete shh taskList=".$taskList, FILE_APPEND);
             $taskList = str_replace($command, '', $taskList);
+            file_put_contents('test.txt', "\r delete shh NewTaskList=".$taskList, FILE_APPEND);
             $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
+            file_put_contents('test.txt', "\r delete shh result=".$result, FILE_APPEND);
             if($result === null){
                 return true;
             } else {
