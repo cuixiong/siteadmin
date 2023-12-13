@@ -6,7 +6,6 @@ use App\Services\RabbitmqService;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\TimedTask;
 use phpseclib3\Net\SSH2;
 
@@ -26,7 +25,6 @@ class TimedTaskController extends CrudController
             $CronTime = $this->CrateLiunxTime($input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $command = $CronTime.$command;// 组合命令
             $input['command'] = $command;
-            // var_dump($command);die;
             // 事务开启
             DB::beginTransaction();
             try {
@@ -35,32 +33,36 @@ class TimedTaskController extends CrudController
                     DB::rollBack();
                     ReturnJson(FALSE, trans('lang.add_error'));
                 }
-                if(!empty($input['site_id']) && $input['category'] == 'index'){
-                    $childrenTask = [];
-                    foreach (explode(',', $input['site_id']) as $key => $value) {
-                        $childrenTask[] = [
-                            'parent_id' => $record->id,
-                            'name' => $input['name'],
-                            'site_id' => $value,
-                            'type' => $input['type'],
-                            'content' => $input['content'],
-                            'status' => $input['status'],
-                            'day' => $input['day'],
-                            'hour' => $input['hour'],
-                            'minute' => $input['minute'],
-                            'week_day' => $input['week_day'],
-                            'command' => $command,
-                            'category' => $input['category'],
-                            'time_type' => $input['time_type'],
-                            'log_path' => $log_path,// 定义日志文件路径
-                        ];
+                if($input['category'] == 'index'){
+                    if(empty($input['site_id'])){
+                        DB::commit();
+                    } else {
+                        $childrenTask = [];
+                        foreach (explode(',', $input['site_id']) as $key => $value) {
+                            $childrenTask[] = [
+                                'parent_id' => $record->id,
+                                'name' => $input['name'],
+                                'site_id' => $value,
+                                'type' => $input['type'],
+                                'content' => $input['content'],
+                                'status' => $input['status'],
+                                'day' => $input['day'],
+                                'hour' => $input['hour'],
+                                'minute' => $input['minute'],
+                                'week_day' => $input['week_day'],
+                                'command' => $command,
+                                'category' => $input['category'],
+                                'time_type' => $input['time_type'],
+                                'log_path' => $log_path,// 定义日志文件路径
+                            ];
+                        }
+                        $record = $this->ModelInstance()->insert($childrenTask);
+                        if (!$record) {
+                            DB::rollBack();
+                            ReturnJson(FALSE, trans('lang.add_error'));
+                        }
+                        DB::commit();
                     }
-                    $record = $this->ModelInstance()->insert($childrenTask);
-                    if (!$record) {
-                        DB::rollBack();
-                        ReturnJson(FALSE, trans('lang.add_error'));
-                    }
-                    DB::commit();
                 } else {
                     $childrenTask = [
                         'parent_id' => $record->id,
@@ -86,7 +88,6 @@ class TimedTaskController extends CrudController
                 DB::rollBack();
                 ReturnJson(FALSE, $e->getMessage());
             }
-            // 执行命令
             ReturnJson(TRUE, trans('lang.add_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -98,16 +99,97 @@ class TimedTaskController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            // 定义日志文件路径
+            $input['log_path'] = $log_path = '/www/wwwroot/yadmin/admin/'.time() . rand(10000, 99999).'.log 2>&1';
+            $command = $this->CreateCommand($input['type'],$input['content'],$log_path);
+            if($command == false){
+                ReturnJson(FALSE, trans('lang.add_error'));
+            }
+            $CronTime = $this->CrateLiunxTime($input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
+            $command = $CronTime.$command;// 组合命令
+            $input['command'] = $command;
             $record = $this->ModelInstance()->findOrFail($request->id);
-            if (!$record->update($input)) {
+            $OldCommand = $record->command;
+            // 更新父任务
+            if (!$record->update($input)) {                                                                                                                                                                                                                                                
                 ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            $data = [
+                'parent_id' => $record->id,
+                'name' => $record->name,
+                'type' => $record->type,
+                'content' => $record->content,
+                'status' => $record->status,
+                'day' => $record->day,
+                'hour' => $record->hour,
+                'minute' => $record->minute,
+                'week_day' => $record->week_day,
+                'command' => $record->command,
+                'category' => $record->category,
+                'time_type' => $record->time_type,
+                'log_path' => $record->log_path,
+            ];
+            $childrenTasks = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
+            // 更新子任务
+            if($record->category == 'index'){
+                $siteIds = explode(',', $record->site_id);
+                $childrenTasks = array_column($childrenTasks,null,'site_id');
+                $childrenSiteIds = array_keys($childrenTasks);
+                // var_dump($childrenSiteIds);die;
+                $childrenUpdateIds = array_intersect($childrenSiteIds,$siteIds);
+                // var_dump($childrenUpdateIds);die;
+                $childrenInsertIds = array_diff($siteIds,$childrenSiteIds,);
+                // var_dump($childrenInsertIds);die;
+                $childrenDeleteIds = array_diff($childrenSiteIds,$siteIds);
+                // var_dump($childrenDeleteIds);die;
+                
+                // 子任务编辑（对应站点的定时任务）
+                if(!empty($childrenUpdateIds)){
+                    $childrenUpdateData = [];
+                    $updateIds = [];
+                    foreach ($childrenUpdateIds as $key => $id) {
+                        $updateIds[] = $childrenTasks[$id]['id'];
+                        $childrenUpdateData[] = array_merge(['site_id' => $id,'id' => $childrenTasks[$id]['id']],$data);
+                    }
+                    $this->ModelInstance()->upsert($childrenUpdateData,['id'],array_keys($childrenUpdateData[0]));
+                }
+                // 子任务新增（对应站点的定时任务）
+                if(!empty($childrenInsertIds)){
+                    $childrenInsertData = [];
+                    foreach ($childrenInsertIds as $key => $id) {
+                        $childrenInsertData[] = array_merge(['site_id' => $id],$data);
+                    }
+                    $insertIds = $this->ModelInstance()->insert($childrenInsertData);
+                }
+                // 子任务删除（对应站点的定时任务）
+                if(!empty($childrenDeleteIds)){
+                    $deleteIds = [];
+                    foreach ($childrenDeleteIds as $key => $id) {
+                        $deleteIds[] = $childrenTasks[$id]['id'];
+                    }
+                    // $this->ModelInstance()->whereIn('id',$deleteIds)->delete();
+                }
+
+                if($updateIds){
+                    $this->TimedTaskQueue($updateIds,'update',$OldCommand);
+                }
+                if($insertIds){
+                    $this->TimedTaskQueue($insertIds,'add');
+                }
+                if($deleteIds){
+                    $this->TimedTaskQueue($deleteIds,'delete');
+                }
+
+            } else {
+                $this->ModelInstance()->where('parent_id',$record->id)->update($data);
+                $task = $childrenTasks[0];
+                $this->TimedTaskQueue([$task['id']],'update');
             }
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-
 
     public function destroy(Request $request)
     {
@@ -117,7 +199,12 @@ class TimedTaskController extends CrudController
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            $res = $this->TimedTaskQueue($ids,'delete');
+            $childrenIds = $this->ModelInstance()->whereIn('parent_id', $ids)->pluck('id')->toArray();
+            // var_dump($childrenIds);die;
+            $ids = array_merge($ids, $childrenIds);
+            // $res = $this->ModelInstance()->whereIn('id',$ids)->delete();
+            // $res = $this->TimedTaskQueue($ids,'delete');
+            $res = true;
             if($res === true){
                 ReturnJson(TRUE, trans('lang.delete_success'));
             } else {
@@ -140,13 +227,13 @@ class TimedTaskController extends CrudController
         }
     }
 
-    public function TimedTaskQueue($ids,$action)
+    public function TimedTaskQueue($ids,$action,$OldCommand = '')
     {
         try {
             $RabbitMQ = new RabbitmqService();
             $RabbitMQ->setQueueName('timed_task');
             foreach ($ids as $id) {
-                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action,'OldCommand' => $OldCommand]);
             }
             $RabbitMQ->close();
             return true;
@@ -154,7 +241,6 @@ class TimedTaskController extends CrudController
             file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
             return false;
         }
-
     }
 
     public function CrateLiunxTime($timeType,$day,$hour,$minute,$week_day)
@@ -278,20 +364,20 @@ class TimedTaskController extends CrudController
         if($doAction == 'add'){
             $taskListArr = array_filter(explode('\n',$taskList));
             if (!in_array($command, $taskListArr)){
-                $command = 'echo "'.trim($command).'" | crontab -';
+                $command = 'echo "'.trim($command,'').'" | crontab -';
                 $ssh->exec($command);
             }
         } else if($doAction == 'update') {
             $taskList = str_replace($OldCommand, $command, $taskList);
-            $result = $ssh->exec('echo "'.trim($taskList).'" | crontab -');
+            $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
             if($result === null){
                 return true;
             } else {
                 return false;
             }
         } else if($doAction == 'delete') {
-            $taskList = str_replace($OldCommand, '', $taskList);
-            $result = $ssh->exec('echo "'.trim($taskList).'" | crontab -');
+            $taskList = str_replace($command, '', $taskList);
+            $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
             if($result === null){
                 return true;
             } else {
