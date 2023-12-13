@@ -104,11 +104,16 @@ class ProductsCategory extends Base
             $model = $model->where('discount_type', $search->discount_type);
         }
 
+        // sort 排序
+        if (isset($search->sort) && $search->sort != '') {
+            $model = $model->where('sort', $search->sort);
+        }
+
         //status 状态
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
         }
-
+        
         //show_home 状态
         if (isset($search->show_home) && $search->show_home != '') {
             $model = $model->where('show_home', $search->show_home);

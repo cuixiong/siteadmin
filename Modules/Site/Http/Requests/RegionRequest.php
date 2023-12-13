@@ -7,14 +7,15 @@ class RegionRequest extends BaseRequest
     /**
      * 新增数据验证
      * @param  \Illuminate\Http\Request  $request
-     */
+     */ 
     public function store($request)
     {
         $rules = [
-            'name' => 'required',
+            'name' => 'required|unique:regions,name',
         ];
         $message = [
             'name.required' => '名称不能为空',
+            'name.unique' => '名称不能重复',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -26,11 +27,15 @@ class RegionRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
-            'name' => 'required',
+            'name' => [
+                'required',
+                \Illuminate\Validation\Rule::unique('regions')->ignore($request->input('id')),
+            ],
         ];
         $message = [
             'id.required' => 'ID不能为空',
             'name.required' => '名称不能为空',
+            'name.unique' => '名称不能重复',
         ];
         return $this->validateRequest($request, $rules,$message);
     }

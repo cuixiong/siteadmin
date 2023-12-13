@@ -124,5 +124,21 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'destroy'])->name('报告字段:删除字段');
 
     });
+
+    // SearchRank 控制器
+    Route::prefix('search-rank')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SearchRankController::class, 'list'])->name('搜索排行:搜索列表');
+        Route::get('option', [Modules\Site\Http\Controllers\SearchRankController::class, 'option'])->name('搜索排行:下拉列表数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SearchRankController::class, 'searchDroplist'])->name('搜索排行:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SearchRankController::class, 'changeStatus'])->name('搜索排行:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\SearchRankController::class, 'changeSort'])->name('搜索排行:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\SearchRankController::class, 'store'])->name('搜索排行:新增字段');
+        Route::post('update', [Modules\Site\Http\Controllers\SearchRankController::class, 'update'])->name('搜索排行:修改字段');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SearchRankController::class, 'destroy'])->name('搜索排行:删除字段');
+
+    });
+
 });
+
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
