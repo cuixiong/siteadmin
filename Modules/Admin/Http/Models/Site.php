@@ -202,24 +202,24 @@ class Site extends Base
 
 
         $checkParamEmpty = [
-            'server-model' => $server,
-            'database-model' => $database,
-            'site-name' => $site->name ?? '',
-            'site-api_repository' => $site->api_repository ?? '',
-            'site-frontend_repository' => $site->frontend_repository ?? '',
-            'server-ip' => $server->ip ?? '',
-            'server-username' => $server->username ?? '',
-            'server-password' => $server->password ?? '',
-            'database-ip' => $database->ip ?? '',
-            'database-username' => $database->username ?? '',
-            'database-password' => $database->password ?? '',
+            'server_model_empty' => $server,
+            'database_model_empty' => $database,
+            'site_name_empty' => $site->name ?? '',
+            'site_api_repository_empty' => $site->api_repository ?? '',
+            'site_frontend_repository_empty' => $site->frontend_repository ?? '',
+            'server_ip_empty' => $server->ip ?? '',
+            'server_username_empty' => $server->username ?? '',
+            'server_password_empty' => $server->password ?? '',
+            'database_ip_empty' => $database->ip ?? '',
+            'database_username_empty' => $database->username ?? '',
+            'database_password_empty' => $database->password ?? '',
         ];
         //判断参数是否为空
         foreach ($checkParamEmpty as $key => $value) {
             if (empty($value)) {
                 return [
                     'result' => false,
-                    'output' => trans('lang.param_empty') . ': ' . $key,
+                    'output' => !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty'),
                 ];
             }
         }

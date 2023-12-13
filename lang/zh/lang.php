@@ -35,10 +35,25 @@ return [
     'upload_successful' => '上传成功',
     'site_undefined' => '站点不存在',
     'aliyun_oss_config_exist'   =>  '当前站点已绑定其他OSS配置，请选择其他站点',
+    
+    //站点
+    'server_model_empty' => '服务器不存在',
+    'database_model_empty' => '数据库不存在',
+    'site_name_empty' => '站点名称为空',
+    'site_api_repository_empty' => '后台/接口仓库地址为空',
+    'site_frontend_repository_empty' => '前台/网站仓库地址为空',
+    'server_ip_empty' => '服务器ip为空',
+    'server_username_empty' => '服务器用户名为空',
+    'server_password_empty' => '服务器密码为空',
+    'database_ip_empty' => '数据库ip为空',
+    'database_username_empty' => '数据库用户名为空',
+    'database_password_empty' => '数据库密码为空',
 
+    
+    /**分站点 */
+    // 上传报告
     'category_empty'=>'分类不存在',
     'price_empty'=>'基础价为空',
     'published_date_empty'=>'出版时间为空',
     'author_level'=>'该作者无法覆盖',
-
 ];
