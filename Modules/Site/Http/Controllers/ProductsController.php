@@ -54,7 +54,8 @@ class ProductsController extends CrudController
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+                $model = $model->orderBy('id', $sort)->orderBy('created_at', 'DESC');
+                // $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
 
             $record = $model->get();
