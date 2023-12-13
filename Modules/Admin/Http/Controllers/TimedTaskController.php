@@ -197,15 +197,16 @@ class TimedTaskController extends CrudController
                 file_put_contents('test.txt', "\r".json_encode($params), FILE_APPEND);
                 $task = TimedTask::find($params['id']);
                 file_put_contents('test.txt', "\r".json_encode($task), FILE_APPEND);
+                $res = false;
                 if($task->category == 'admin'){
                     $params['command'] = '';
                     file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
-                    $this->LocalHostTask($params['action'],$task->command,$params['command']);
+                    $res = $this->LocalHostTask($params['action'],$task->command,$params['command']);
                 // } else if($task->category == 'index') {
                 //     $site = Site::find($params['site_id']);
                 //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
                 }
-                if($params['action'] == 'delete'){
+                if($params['action'] == 'delete' && $res === true){
                     // 先删除子任务
                     TimedTask::where('parent_id',$params['id'])->delete();
                     // 删除自身任务
@@ -247,9 +248,11 @@ class TimedTaskController extends CrudController
                 }
             } else if($doAction == 'delete') {
                 file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
-                $taskList = str_replace($OldCommand, '', $taskList);
+                file_put_contents('test.txt', "\r old = ".$taskList, FILE_APPEND);
+                $taskList = str_replace($command, '', $taskList);
+                file_put_contents('test.txt', "\r new = ".$taskList, FILE_APPEND);
                 $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
-                if($result === null){
+                if($result === null || $result == ''){
                     return true;
                 } else {
                     return false;
