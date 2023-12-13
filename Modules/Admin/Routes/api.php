@@ -432,6 +432,13 @@ Route::middleware([
     Route::get('admin/database/phpmyadmin/{id}', [Modules\Admin\Http\Controllers\DatabaseController::class, 'HrefMyAdmin'])->name('数据库管理:打开PHPMYADMIN');
     Route::get('admin/file-management/download', [Modules\Admin\Http\Controllers\FileManagement::class, 'download'])->name('文件管理:文件下载');
 
+    // 下面定时任务模块做完后可删除
+    Route::get('admin/test/task1', 'TestController@task1')->name('测试接口');
+    Route::get('admin/test/task2', 'TestController@task2')->name('测试接口');
+    Route::get('admin/test/task3', 'TestController@task3')->name('测试接口');
+    Route::get('admin/test/task4', 'TestController@task4')->name('测试接口');
+    Route::get('admin/test/task5', 'TestController@task5')->name('测试接口');
+    Route::get('admin/test/task6', 'TestController@task6')->name('测试接口');
 });
 
 // 暂时测试路由

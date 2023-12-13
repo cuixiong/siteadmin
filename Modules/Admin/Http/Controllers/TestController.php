@@ -74,4 +74,22 @@ class TestController extends CrudController
         }
 
     }
+    public function task1(Request $request){
+        file_put_contents('1.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+    }
+    public function task2(Request $request){
+        file_put_contents('2.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+    }
+    public function task3(Request $request){
+        file_put_contents('3.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+    }
+    public function task4(Request $request){
+        file_put_contents('4.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+    }
+    public function task5(Request $request){
+        file_put_contents('5.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+    }
+    public function task6(Request $request){
+        file_put_contents('6.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+    }
 }
