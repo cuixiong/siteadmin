@@ -286,9 +286,8 @@ class TimedTaskController extends CrudController
                 file_put_contents('test.txt', "\r".json_encode($task), FILE_APPEND);
                 $res = false;
                 if($task->category == 'admin'){
-                    $params['command'] = '';
                     file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
-                    $res = $this->LocalHostTask($params['action'],$task->command,$params['command']);
+                    $res = $this->LocalHostTask($params['action'],$task->command,$params['OldCommand']);
                 // } else if($task->category == 'index') {
                 //     $site = Site::find($params['site_id']);
                 //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
