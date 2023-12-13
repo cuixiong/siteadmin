@@ -2,7 +2,7 @@
 
 namespace Modules\Site\Http\Models;
 
-use Modules\Admin\Http\Models\Country;
+use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
 
 class Products extends Base
@@ -101,7 +101,7 @@ class Products extends Base
         
         // sort 
         if (isset($search->status) && $search->status != '') {
-            $model = $model->where('status', $search->status);
+            $model = $model->where('sort', $search->sort);
         }
 
         // author
@@ -219,7 +219,7 @@ class Products extends Base
     {
         $text = '';
         if (isset($this->attributes['country_id'])) {
-            $text = Country::whereIn('id', $this->attributes['country_id'])->value('name');
+            $text = Region::where('id', $this->attributes['country_id'])->value('name')??'';
         }
         return $text;
     }

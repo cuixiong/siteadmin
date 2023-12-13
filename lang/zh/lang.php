@@ -35,4 +35,10 @@ return [
     'upload_successful' => '上传成功',
     'site_undefined' => '站点不存在',
     'aliyun_oss_config_exist'   =>  '当前站点已绑定其他OSS配置，请选择其他站点',
+
+    'category_empty'=>'分类不存在',
+    'price_empty'=>'基础价为空',
+    'published_date_empty'=>'出版时间为空',
+    'author_level'=>'该作者无法覆盖',
+
 ];

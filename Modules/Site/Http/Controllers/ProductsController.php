@@ -54,7 +54,7 @@ class ProductsController extends CrudController
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
             }
 
             $record = $model->get();
@@ -561,6 +561,7 @@ class ProductsController extends CrudController
         $fieldSort = array_keys($fieldData);
         $reader = ReaderEntityFactory::createXLSXReader($path);
         $reader->setShouldPreserveEmptyRows(true);
+        $reader->setShouldFormatDates(true);
         $reader->open($path);
         $excelData = [];
 
@@ -580,7 +581,7 @@ class ProductsController extends CrudController
                         $row[$fieldData[$tempKey]] = $tempValue;
                     }
                 }
-                if(count($row)>0){
+                if (count($row) > 0) {
                     $excelData[] = $row;
                 }
             }
@@ -635,31 +636,101 @@ class ProductsController extends CrudController
         foreach ($params['data'] as $row) {
             $count++;
             try {
-                //表头
+                // 表头
                 $item = [];
+                // 报告名称
                 isset($row['name']) && $item['name'] = $row['name'];
+                // 报告名称(英)
+                isset($row['english_name']) && $item['english_name'] = $row['english_name'];
+                // 页数
                 isset($row['pages']) && $item['pages'] = $row['pages'];
+                // 图表数
                 isset($row['tables']) && $item['tables'] = $row['tables'];
+                // 基础价
                 isset($row['price']) && $item['price'] = $row['price'];
-                isset($row['published_date']) && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row['published_date']);
 
+                try {
+                    // 出版时间
+                    isset($row['published_date']) && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row['published_date']); //转为 时间戳
+                } catch (\Throwable $th) {
+                    //throw $th;
+                }
+                if (!isset($item['published_date']) || $item['published_date'] < 0) {
+                    $item['published_date'] = strtotime($row['published_date']);
+                }
+                // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
+
+                // 报告分类
                 isset($row['category_id']) && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
-
+                //报告所属区域
+                isset($row['country_id']) && $item['country_id'] = Region::where('name', trim($row['country_id']))->value('id') ?? 0;
+                //作者
                 isset($row['author']) && $item['author'] = $row['author'];
+                //关键词
                 isset($row['keywords']) && $item['keywords'] = $row['keywords'];
+                //自定义链接
+                isset($row['url']) && $item['url'] = $row['url'];
+                // 如果链接为空，则用关键词做链接
+                if (!empty($row['keywords']) && empty($row['url'])) {
+                    $item['url'] = $row['keywords'];
+                    $item['url'] = strtolower(preg_replace('/%[0-9A-Fa-f]{2}/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
+                    $item['url'] = strtolower(preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
+                    $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
+                }
 
-
+                //详情数据
                 $itemDescription = [];
                 isset($row['description']) && $itemDescription['description'] = str_replace('_x000D_', '', $row['description']);
                 isset($row['table_of_content']) && $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row['table_of_content']);
                 isset($row['tables_and_figures']) && $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row['tables_and_figures']);
+                isset($row['description_en']) && $itemDescription['description_en'] = str_replace('_x000D_', '', $row['description_en']);
+                isset($row['table_of_content_en']) && $itemDescription['table_of_content_en'] = str_replace('_x000D_', '', $row['table_of_content_en']);
+                isset($row['tables_and_figures_en']) && $itemDescription['tables_and_figures_en'] = str_replace('_x000D_', '', $row['tables_and_figures_en']);
                 isset($row['companies_mentioned']) && $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row['companies_mentioned']);
+
+
+                // 查询单个报告数据/去重
+                $product = Products::where('name', trim($item['name']))->orWhere('name', isset($row['english_name']) ? trim($row['name']) : '')->first();
+
+                /** 
+                 * 不合格的数据过滤
+                 */
+                // 忽略基础价为空的数据
+                if (empty($item['price'])) {
+                    $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.price_empty') . "\r\n";
+                    $errorCount++;
+                    continue;
+                }
+                // 忽略出版时间为空或转化失败的数据
+                if (empty($item['published_date']) || $item['published_date'] < 0) {
+                    $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.published_date_empty') . "\r\n";
+                    continue;
+                }
+                // 忽略分类为空的数据
+                if (empty($item['category_id'])) {
+                    $details .= '【' . ($row['name'] ?? '') . '】' . $row['category_id'] . trans('lang.category_empty') . "\r\n";
+                    $errorCount++;
+                    continue;
+                }
+                // 过滤不符合作者策略的数据
+                if ($product) {
+                    if (
+                        !($item['author'] == '完成报告'
+                            || ($item['author'] == '报告翻新' && $product->author != '完成报告')
+                            || ($product->author != '完成报告' && $product->author != '报告翻新'))
+                    ) {
+                        $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . trans('lang.author_level') . ($product->author) . "\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                }
+
 
                 //新纪录年份
                 $newYear = Products::publishedDateFormatYear($item['published_date']);
-
-                // 处理每行数据
-                $product = Products::where('name', trim($row['name']))->first();
+                /** 
+                 * 数据库操作
+                 */
                 if ($product) {
                     $itemDescription['product_id'] = $product->id;
                     //旧纪录年份
@@ -696,8 +767,9 @@ class ProductsController extends CrudController
                 //code...
             } catch (\Throwable $th) {
                 //throw $th;
-                $details .= '【'.$row['name']??''.'】'.$th->getMessage() . "\r\n";
+                $details .= '【' . ($row['name'] ?? '') . '】' . $th->getMessage() . "\r\n";
                 // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
+                // $details = json_encode($row) . "\r\n";
                 $errorCount++;
             }
         }
