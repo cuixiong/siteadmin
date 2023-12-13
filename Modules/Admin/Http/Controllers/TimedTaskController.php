@@ -189,10 +189,13 @@ class TimedTaskController extends CrudController
 
     public function LocalHostTask($doAction,$command,$OldCommand = '')
     {
+        file_put_contents('error_log.txt', "\r".$command."\r".$doAction."\r".$OldCommand, FILE_APPEND);
         try {
             $taskList = shell_exec('crontab -l');
             if($doAction == 'add'){
                 $taskListArr = array_filter(explode('\n',$taskList));
+                file_put_contents('error_log.txt', "\r".json_encode($taskListArr), FILE_APPEND);
+                file_put_contents('error_log.txt', "\r是否在数组中".in_array($command, $taskListArr), FILE_APPEND);
                 if (!in_array($command, $taskListArr)){
                     $command = 'echo "'.trim($command,'').'" | crontab -';
                     file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
