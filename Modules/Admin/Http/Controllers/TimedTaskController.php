@@ -204,8 +204,8 @@ class TimedTaskController extends CrudController
             // var_dump($childrenIds);die;
             $ids = array_merge($ids, $childrenIds);
             // $res = $this->ModelInstance()->whereIn('id',$ids)->delete();
-            // $res = $this->TimedTaskQueue($ids,'delete');
-            $res = true;
+            $res = $this->TimedTaskQueue($ids,'delete');
+            // $res = true;
             if($res === true){
                 ReturnJson(TRUE, trans('lang.delete_success'));
             } else {
