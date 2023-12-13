@@ -2,7 +2,7 @@
 
 namespace Modules\Site\Http\Models;
 
-use Modules\Admin\Http\Models\Country;
+use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
 
 class Products extends Base
@@ -219,7 +219,7 @@ class Products extends Base
     {
         $text = '';
         if (isset($this->attributes['country_id'])) {
-            $text = Country::where('id', $this->attributes['country_id'])->value('name')??'';
+            $text = Region::where('id', $this->attributes['country_id'])->value('name')??'';
         }
         return $text;
     }

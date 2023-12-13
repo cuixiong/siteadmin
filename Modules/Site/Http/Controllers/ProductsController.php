@@ -659,7 +659,7 @@ class ProductsController extends CrudController
                 if (!isset($item['published_date']) || $item['published_date'] < 0) {
                     $item['published_date'] = strtotime($row['published_date']);
                 }
-                file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
+                // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
 
                 // 报告分类
                 isset($row['category_id']) && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
