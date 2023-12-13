@@ -118,12 +118,18 @@ class TimedTaskCommand extends Command
      */
     protected function CallFuncBack()
     {
-        return function (AMQPMessage $message) {
+        $channel = $this->channel;
+        return function (AMQPMessage $message) use ($channel) {
             $data = json_decode($message->body, true);
             $class = $data['class'];
             $method = $data['method'];
             $instance = new $class();
-            call_user_func([$instance, $method],$data);
+            $res = call_user_func([$instance, $method],$data);
+            if($res === true){
+                $channel->basic_ack($message->delivery_info['delivery_tag']);
+            } else {
+                $channel->basic_nack($message->delivery_info['delivery_tag']);
+            }
         };
     }
 
@@ -134,8 +140,9 @@ class TimedTaskCommand extends Command
     {
         $this->connect(); // Establishing a connection
         $this->initChannel();// initialization channel
+        $this->channel->basic_qos(null, 1, null); // Receive only one unconfirmed message at a time
         $callback = $this->CallFuncBack();
-        $this->channel->basic_consume($this->QueueName, '', false, true, false, false, $callback);
+        $this->channel->basic_consume($this->QueueName, '', false, false, false, false, $callback);
         while (true) {
             $this->channel->wait();
         }
