@@ -14,8 +14,6 @@ class TimedTaskController extends CrudController
 {
     public function store(Request $request)
     {
-        // $this->DoTimedTask(['data' => ['id'=>2,'action' => 'add']]);
-        // return false;
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -110,6 +108,26 @@ class TimedTaskController extends CrudController
         }
     }
 
+
+    public function destroy(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            $res = $this->TimedTaskQueue($ids,'delete');
+            if($res === true){
+                ReturnJson(TRUE, trans('lang.delete_success'));
+            } else {
+                ReturnJson(FALSE,trans('lang.delete_error'));
+            }
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
     public function CreateCommand($type, $content,$log_path)
     {
         // 根据类型进行生成liunx命令
@@ -124,12 +142,19 @@ class TimedTaskController extends CrudController
 
     public function TimedTaskQueue($ids,$action)
     {
-        $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('timed_task');
-        foreach ($ids as $id) {
-            $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+        try {
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('timed_task');
+            foreach ($ids as $id) {
+                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+            }
+            $RabbitMQ->close();
+            return true;
+        } catch (\Exception $e) {
+            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            return false;
         }
-        $RabbitMQ->close();
+
     }
 
     public function CrateLiunxTime($timeType,$day,$hour,$minute,$week_day)
@@ -179,6 +204,12 @@ class TimedTaskController extends CrudController
                 // } else if($task->category == 'index') {
                 //     $site = Site::find($params['site_id']);
                 //     $this->ShhTask($site->ip,$site->username,$site->password,$params['action'],$task->command,$params['command']);
+                }
+                if($params['action'] == 'delete'){
+                    // 先删除子任务
+                    TimedTask::where('parent_id',$params['id'])->delete();
+                    // 删除自身任务
+                    TimedTask::where('id',$params['id'])->delete();
                 }
                 file_put_contents('test.txt', "\r admin no", FILE_APPEND);
                 return true;
