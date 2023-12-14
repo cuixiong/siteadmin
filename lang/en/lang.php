@@ -35,6 +35,7 @@ return [
     'upload_successful' => 'Upload successful',
     'site_undefined' => 'site undefined',
     'aliyun_oss_config_exist'   =>  'The current site is already bound to another OSS configuration. Please select another site',
+    'task_is_undefined' => 'Task does not exist',
     
     //站点
     'server_model_empty' => 'server is not exist',
@@ -60,4 +61,6 @@ return [
     'price_empty'=>'The price is empty',
     'published_date_empty'=>'published date is empty',
     'author_level'=>'The author cannot be overwritten ',
+
+
 ];
