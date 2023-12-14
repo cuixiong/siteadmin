@@ -471,7 +471,7 @@ class TimedTaskController extends CrudController
 
     public function changeStatus(Request $request)
     {
-        DB::transaction();
+        DB::beginTransaction();
         try {
             $id = $request->id;
             $status = $request->status;
@@ -489,6 +489,7 @@ class TimedTaskController extends CrudController
                 $ids[] = $id;
             }
             $action = $status == 0 ? 'stop' : 'add';
+            DB::commit();
             $this->TimedTaskQueue($ids,$action);
         } catch (\Exception $e) {
             DB::rollBack();
