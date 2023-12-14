@@ -14,6 +14,11 @@ class TimedTaskController extends CrudController
 {
     public function store(Request $request)
     {
+        $taskList = shell_exec('crontab -l');
+        $taskList2 = explode('\n',$taskList);
+        $taskListArr = array_filter($taskList2);
+        $taskListArr2 = implode("\r",$taskListArr);
+        var_dump($taskList,$taskList2,$taskListArr,$taskListArr2);die;
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -492,7 +497,8 @@ class TimedTaskController extends CrudController
             }
             $action = $status == 0 ? 'stop' : 'add';
             DB::commit();
-            $this->TimedTaskQueue($ids,$action);
+            $res = $this->TimedTaskQueue($ids,$action);
+            $res ? ReturnJson(true,trans('lang.request_success')) : ReturnJson(true,trans('lang.request_error'));
         } catch (\Exception $e) {
             DB::rollBack();
             ReturnJson(false,$e->getMessage());
