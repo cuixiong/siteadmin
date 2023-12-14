@@ -225,6 +225,7 @@ class TimedTaskController extends CrudController
         } else {
             $ids[] = $task->id;
         }
+        file_put_contents('test.txt',"\r".json_encode($ids),FILE_APPEND);
         $res = $this->TimedTaskQueue($ids,'do');
         $res ? ReturnJson(TRUE, trans('lang.request_success')) : ReturnJson(FALSE, trans('lang.request_error'));
     }
@@ -379,6 +380,15 @@ class TimedTaskController extends CrudController
                 } else {
                     return false;
                 }
+            } else if($doAction == 'do'){
+                file_put_contents('test.txt', "\r do yes", FILE_APPEND);
+                file_put_contents('test.txt', "\r do command=".$command, FILE_APPEND);
+                $result = shell_exec($command);
+                if($result === null){
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
                 file_put_contents('test.txt', "\r type error", FILE_APPEND);
                 return false;
@@ -439,6 +449,8 @@ class TimedTaskController extends CrudController
                 return false;
             }
         } else if($doAction == 'do') {
+            file_put_contents('test.txt', "\r ssh do yes", FILE_APPEND);
+            file_put_contents('test.txt', "\r ssh do command=".$command, FILE_APPEND);
             $result = $ssh->exec($command);
             if($result === null){
                 return true;
