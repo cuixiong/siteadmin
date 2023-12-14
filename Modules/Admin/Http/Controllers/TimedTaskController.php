@@ -21,7 +21,7 @@ class TimedTaskController extends CrudController
             $log_name = time(). rand(10000, 99999).'.log 2>&1';
             $input['log_path'] = $log_path = public_path().'/'.$log_name;// 本地服务器Log
             $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
-            $input['command'] = $command.$log_path;
+            $input['command'] = $command. " >> " . $log_path;
             DB::beginTransaction();
             try {
                 $record = (new TimedTask())->create($input);
@@ -57,7 +57,7 @@ class TimedTaskController extends CrudController
                             $data = [
                                 'site_id' => $value,
                                 'do_command' => $this->MakeApiCommand($input['do_command'],$site->api_path,$site->domain),
-                                'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain).$ApiLogPath,
+                                'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain). " >> " . $ApiLogPath,
                                 'log_path' => $ApiLogPath,
                             ];
                             $data = array_merge($data,$CommonData);
@@ -89,7 +89,7 @@ class TimedTaskController extends CrudController
             $log_name = time(). rand(10000, 99999).'.log 2>&1';
             $input['log_path'] = $log_path = public_path().'/'.$log_name;// 本地服务器Log
             $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
-            $input['command'] = $command.$log_path;
+            $input['command'] = $command. " >> " . $log_path;
             $record = $this->ModelInstance()->findOrFail($request->id);
             $input['old_command'] = $record->command;
             // 更新父任务
@@ -137,7 +137,7 @@ class TimedTaskController extends CrudController
                             'site_id' => $id,
                             'id' => $childrenTasks[$id]['id'],
                             'do_command' => $this->MakeApiCommand($record->do_command,$site->api_path,$site->domain),
-                            'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain).$ApiLogPath,
+                            'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain). " >> " . $ApiLogPath,
                             'old_command' => $childrenTasks[$id]['command'],
                             'log_path' => $ApiLogPath,
                         ],$data);
@@ -153,7 +153,7 @@ class TimedTaskController extends CrudController
                         $InsertData = array_merge([
                             'site_id' => $id,
                             'do_command' => $this->MakeApiCommand($record->do_command,$site->api_path,$site->domain),
-                            'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain).$ApiLogPath,
+                            'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain). " >> " . $ApiLogPath,
                             'old_command' => "",
                             'log_path' => $ApiLogPath,
                         ],$data);
@@ -248,9 +248,9 @@ class TimedTaskController extends CrudController
     {
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
-            return ' '.$content . "  >> ";
+            return ' '.$content;
         } else if($type == 'http'){
-            return ' curl '.$content . " >> ";
+            return ' curl '.$content;
         } else {
             return false;
         }
