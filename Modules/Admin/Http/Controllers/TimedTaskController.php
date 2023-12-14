@@ -14,11 +14,6 @@ class TimedTaskController extends CrudController
 {
     public function store(Request $request)
     {
-        $taskList = shell_exec('crontab -l');
-        $taskList2 = explode('\n',$taskList);
-        $taskListArr = array_filter($taskList2);
-        $taskListArr2 = implode("\r",$taskListArr);
-        var_dump($taskList,$taskList2,$taskListArr,$taskListArr2);die;
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -350,54 +345,121 @@ class TimedTaskController extends CrudController
     {
         file_put_contents('error_log.txt', "\r".$command."\r".$doAction."\r".$OldCommand, FILE_APPEND);
         try {
-            $taskList = shell_exec('crontab -l');
-            if($doAction == 'add'){
-                file_put_contents('test.txt', "\r add yes", FILE_APPEND);
-                $taskListArr = array_filter(explode('\n',$taskList));
-                file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
-                if (!in_array($command, $taskListArr)){
-                    file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
-                    $command = 'echo "'.$taskList.PHP_EOL.trim($command,'').'" | crontab -';
-                    file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
-                    shell_exec($command);
-                }
-            } else if($doAction == 'update') {
-                file_put_contents('test.txt', "\r update yes", FILE_APPEND);
-                file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
-                file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
-                file_put_contents('test.txt', "\r taskList=".$taskList, FILE_APPEND);
-                $taskList = str_replace($OldCommand, $command, $taskList);
-                file_put_contents('test.txt', "\r NewTaskList=".$taskList, FILE_APPEND);
-                $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
-                if($result === null){
-                    return true;
-                } else {
+            $CrontabList = shell_exec('crontab -l');
+            file_put_contents('test.txt', "\r CrontabList = ".$CrontabList, FILE_APPEND);
+            $CrontabList = trim($CrontabList,'');
+            file_put_contents('test.txt', "\r CrontabList trim = ".$CrontabList, FILE_APPEND);
+
+            $CrontabList = array_filter(explode('\n',$CrontabList));
+            file_put_contents('test.txt', "\r CrontabList array_filter = ".json_encode($CrontabList), FILE_APPEND);
+
+            $CrontabList = array_map(function($v){
+                return trim($v,'');
+            },$CrontabList);
+            file_put_contents('test.txt', "\r CrontabList array_map = ".json_encode($CrontabList), FILE_APPEND);
+
+            switch ($doAction) {
+                case 'add':
+                    file_put_contents('test.txt', "\r add yes", FILE_APPEND);
+                    if (!in_array($command, $CrontabList)){
+                        file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
+                        $CrontabList = implode("\n",$CrontabList);
+                        file_put_contents('test.txt', "\r CrontabList impolde".$CrontabList, FILE_APPEND);
+                        $command = 'echo "'.$CrontabList.PHP_EOL.trim($command,'').'" | crontab -';
+                        file_put_contents('error_log.txt', "\r add command".$command, FILE_APPEND);
+                    }
+                break;
+                case 'update':
+                    $CrontabList = implode("\n",$CrontabList);
+                    file_put_contents('test.txt', "\r CrontabList impolde".$CrontabList, FILE_APPEND);
+                    file_put_contents('test.txt', "\r update yes", FILE_APPEND);
+                    file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
+                    file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
+                    $command = str_replace($OldCommand, $command, $CrontabList);
+                    file_put_contents('test.txt', "\r command str_replace=".$command, FILE_APPEND);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    file_put_contents('test.txt', "\r command do=".$command, FILE_APPEND);
+                break;
+                case 'delete':
+                case 'stop':
+                    $CrontabList = implode("\n",$CrontabList);
+                    file_put_contents('test.txt', "\r CrontabList impolde".$CrontabList, FILE_APPEND);
+                    file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
+                    file_put_contents('test.txt', "\r command = ".$command, FILE_APPEND);
+                    $command = str_replace($command, '', $CrontabList);
+                    file_put_contents('test.txt', "\r command str_replace=".$command, FILE_APPEND);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    file_put_contents('test.txt', "\r command do=".$command, FILE_APPEND);
+                break;
+                case 'do':
+                    file_put_contents('test.txt', "\r do yes", FILE_APPEND);
+                    file_put_contents('test.txt', "\r do command=".$command, FILE_APPEND);
+                break;
+                
+                default:
                     return false;
-                }
-            } else if($doAction == 'delete' || $doAction == 'stop') {
-                file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
-                file_put_contents('test.txt', "\r old = ".$taskList, FILE_APPEND);
-                $taskList = str_replace($command, '', $taskList);
-                file_put_contents('test.txt', "\r new = ".$taskList, FILE_APPEND);
-                $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
-                if($result === null || $result == ''){
-                    return true;
-                } else {
-                    return false;
-                }
-            } else if($doAction == 'do'){
-                file_put_contents('test.txt', "\r do yes", FILE_APPEND);
-                file_put_contents('test.txt', "\r do command=".$command, FILE_APPEND);
-                $result = shell_exec($command);
-                if($result === null){
-                    return true;
-                } else {
-                    return false;
-                }
+                break;
+            }
+            $result = shell_exec($command);
+            if($result === null){
+                return true;
             } else {
-                file_put_contents('test.txt', "\r type error", FILE_APPEND);
                 return false;
             }
+            // $taskList = shell_exec('crontab -l');
+            // $taskList = trim($taskList,'');
+            // $taskListArr = array_filter(explode('\n',$taskList));
+            // $taskListArr = array_map(function($v){
+            //     return trim($v,'');
+            // },$taskListArr);
+            // if($doAction == 'add'){
+            //     file_put_contents('test.txt', "\r add yes", FILE_APPEND);
+            //     file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
+            //     if (!in_array($command, $taskListArr)){
+            //         file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
+            //         $taskListArr = implode("\n",$taskListArr);
+            //         file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
+            //         $command = 'echo "'.$taskListArr.PHP_EOL.trim($command,'').'" | crontab -';
+            //         file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
+            //         shell_exec($command);
+            //     }
+            // } else if($doAction == 'update') {
+            //     file_put_contents('test.txt', "\r update yes", FILE_APPEND);
+            //     file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
+            //     file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
+            //     file_put_contents('test.txt', "\r taskList=".$taskList, FILE_APPEND);
+            //     $taskList = str_replace($OldCommand, $command, $taskList);
+            //     file_put_contents('test.txt', "\r NewTaskList=".$taskList, FILE_APPEND);
+            //     $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
+            //     if($result === null){
+            //         return true;
+            //     } else {
+            //         return false;
+            //     }
+            // } else if($doAction == 'delete' || $doAction == 'stop') {
+            //     file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
+            //     file_put_contents('test.txt', "\r old = ".$taskList, FILE_APPEND);
+            //     $taskList = str_replace($command, '', $taskList);
+            //     file_put_contents('test.txt', "\r new = ".$taskList, FILE_APPEND);
+            //     $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
+            //     if($result === null || $result == ''){
+            //         return true;
+            //     } else {
+            //         return false;
+            //     }
+            // } else if($doAction == 'do'){
+            //     file_put_contents('test.txt', "\r do yes", FILE_APPEND);
+            //     file_put_contents('test.txt', "\r do command=".$command, FILE_APPEND);
+            //     $result = shell_exec($command);
+            //     if($result === null){
+            //         return true;
+            //     } else {
+            //         return false;
+            //     }
+            // } else {
+            //     file_put_contents('test.txt', "\r type error", FILE_APPEND);
+            //     return false;
+            // }
         } catch (\Exception $e) {
             file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
             return false;
@@ -406,63 +468,130 @@ class TimedTaskController extends CrudController
 
     public function ShhTask($ip,$username,$password,$doAction,$command,$OldCommand = '')
     {
-        file_put_contents('test.txt', "\r ssh ip =".$ip, FILE_APPEND);
-        file_put_contents('test.txt', "\r ssh username =".$username, FILE_APPEND);
-        file_put_contents('test.txt', "\r ssh password =".$password, FILE_APPEND);
-        file_put_contents('test.txt', "\r ssh doAction =".$doAction, FILE_APPEND);
-        file_put_contents('test.txt', "\r ssh command =".$command, FILE_APPEND);
-        file_put_contents('test.txt', "\r ssh OldCommand =".$OldCommand, FILE_APPEND);
-        $ssh = new SSH2($ip);
-        $res = $ssh->login($username,$password);
-        if(!$res){
-            return false;
-        }
-        $taskList = $ssh->exec('crontab -l');
-        file_put_contents('test.txt', "\r totalTask=".$taskList, FILE_APPEND);
-        if($doAction == 'add'){
-            file_put_contents('test.txt', "\r add=yes", FILE_APPEND);
-            $taskListArr = array_filter(explode('\n',$taskList));
-            if (!in_array($command, $taskListArr)){
-                file_put_contents('test.txt', "\r add in_array=yes", FILE_APPEND);
-                $command = 'echo "'.$taskList.PHP_EOL.trim($command,'').'" | crontab -';
-                file_put_contents('test.txt', "\r add shh command=".$command, FILE_APPEND);
-                $ssh->exec($command);
-            }
-            return true;
-        } else if($doAction == 'update') {
-            file_put_contents('test.txt', "\r update shh OldCommand=".$OldCommand, FILE_APPEND);
-            file_put_contents('test.txt', "\r update shh command=".$command, FILE_APPEND);
-            file_put_contents('test.txt', "\r update shh taskList=".$taskList, FILE_APPEND);
-            $taskList = str_replace($OldCommand, $command, $taskList);
-            file_put_contents('test.txt', "\r update shh NewTaskList=".$taskList, FILE_APPEND);
-            $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
-            if($result === null){
-                return true;
-            } else {
+        try {
+            file_put_contents('test.txt', "\r ssh ip =".$ip, FILE_APPEND);
+            file_put_contents('test.txt', "\r ssh username =".$username, FILE_APPEND);
+            file_put_contents('test.txt', "\r ssh password =".$password, FILE_APPEND);
+            file_put_contents('test.txt', "\r ssh doAction =".$doAction, FILE_APPEND);
+            file_put_contents('test.txt', "\r ssh command =".$command, FILE_APPEND);
+            file_put_contents('test.txt', "\r ssh OldCommand =".$OldCommand, FILE_APPEND);
+            $ssh = new SSH2($ip);
+            $res = $ssh->login($username,$password);
+            if(!$res){
                 return false;
             }
-        } else if($doAction == 'delete' || $doAction == 'stop') {
-            file_put_contents('test.txt', "\r delete shh command=".$command, FILE_APPEND);
-            file_put_contents('test.txt', "\r delete shh taskList=".$taskList, FILE_APPEND);
-            $taskList = str_replace($command, '', $taskList);
-            file_put_contents('test.txt', "\r delete shh NewTaskList=".$taskList, FILE_APPEND);
-            $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
-            file_put_contents('test.txt', "\r delete shh result=".$result, FILE_APPEND);
-            if($result === null){
-                return true;
-            } else {
-                return false;
+
+            $CrontabList = shell_exec('crontab -l');
+            file_put_contents('test.txt', "\r shh CrontabList = ".$CrontabList, FILE_APPEND);
+            $CrontabList = trim($CrontabList,'');
+            file_put_contents('test.txt', "\r shh CrontabList trim = ".$CrontabList, FILE_APPEND);
+
+            $CrontabList = array_filter(explode('\n',$CrontabList));
+            file_put_contents('test.txt', "\r shh CrontabList array_filter = ".json_encode($CrontabList), FILE_APPEND);
+
+            $CrontabList = array_map(function($v){
+                return trim($v,'');
+            },$CrontabList);
+            file_put_contents('test.txt', "\r shh CrontabList array_map = ".json_encode($CrontabList), FILE_APPEND);
+
+            switch ($doAction) {
+                case 'add':
+                    file_put_contents('test.txt', "\r shh add yes", FILE_APPEND);
+                    if (!in_array($command, $CrontabList)){
+                        file_put_contents('test.txt', "\r shh add to in array yes", FILE_APPEND);
+                        $CrontabList = implode("\n",$CrontabList);
+                        file_put_contents('test.txt', "\r shh CrontabList impolde".$CrontabList, FILE_APPEND);
+                        $command = 'echo "'.$CrontabList.PHP_EOL.trim($command,'').'" | crontab -';
+                        file_put_contents('error_log.txt', "\r shh add command".$command, FILE_APPEND);
+                    }
+                break;
+                case 'update':
+                    $CrontabList = implode("\n",$CrontabList);
+                    file_put_contents('test.txt', "\r shh CrontabList impolde".$CrontabList, FILE_APPEND);
+                    file_put_contents('test.txt', "\r shh update yes", FILE_APPEND);
+                    file_put_contents('test.txt', "\r shh OldCommand=".$OldCommand, FILE_APPEND);
+                    file_put_contents('test.txt', "\r shh command=".$command, FILE_APPEND);
+                    $command = str_replace($OldCommand, $command, $CrontabList);
+                    file_put_contents('test.txt', "\r shh command str_replace=".$command, FILE_APPEND);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    file_put_contents('test.txt', "\r shh command do=".$command, FILE_APPEND);
+                break;
+                case 'delete':
+                case 'stop':
+                    $CrontabList = implode("\n",$CrontabList);
+                    file_put_contents('test.txt', "\r shh CrontabList impolde".$CrontabList, FILE_APPEND);
+                    file_put_contents('test.txt', "\r shh delete yes", FILE_APPEND);
+                    file_put_contents('test.txt', "\r shh command = ".$command, FILE_APPEND);
+                    $command = str_replace($command, '', $CrontabList);
+                    file_put_contents('test.txt', "\r shh command str_replace=".$command, FILE_APPEND);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    file_put_contents('test.txt', "\r shh command do=".$command, FILE_APPEND);
+                break;
+                case 'do':
+                    file_put_contents('test.txt', "\r shh do yes", FILE_APPEND);
+                    file_put_contents('test.txt', "\r shh do command=".$command, FILE_APPEND);
+                break;
+                
+                default:
+                    return false;
+                break;
             }
-        } else if($doAction == 'do') {
-            file_put_contents('test.txt', "\r ssh do yes", FILE_APPEND);
-            file_put_contents('test.txt', "\r ssh do command=".$command, FILE_APPEND);
             $result = $ssh->exec($command);
             if($result === null){
                 return true;
             } else {
                 return false;
             }
-        } else {
+            // $taskList = $ssh->exec('crontab -l');
+            // file_put_contents('test.txt', "\r totalTask=".$taskList, FILE_APPEND);
+            // if($doAction == 'add'){
+            //     file_put_contents('test.txt', "\r add=yes", FILE_APPEND);
+            //     $taskListArr = array_filter(explode('\n',$taskList));
+            //     if (!in_array($command, $taskListArr)){
+            //         file_put_contents('test.txt', "\r add in_array=yes", FILE_APPEND);
+            //         $command = 'echo "'.$taskList.PHP_EOL.trim($command,'').'" | crontab -';
+            //         file_put_contents('test.txt', "\r add shh command=".$command, FILE_APPEND);
+            //         $ssh->exec($command);
+            //     }
+            //     return true;
+            // } else if($doAction == 'update') {
+            //     file_put_contents('test.txt', "\r update shh OldCommand=".$OldCommand, FILE_APPEND);
+            //     file_put_contents('test.txt', "\r update shh command=".$command, FILE_APPEND);
+            //     file_put_contents('test.txt', "\r update shh taskList=".$taskList, FILE_APPEND);
+            //     $taskList = str_replace($OldCommand, $command, $taskList);
+            //     file_put_contents('test.txt', "\r update shh NewTaskList=".$taskList, FILE_APPEND);
+            //     $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
+            //     if($result === null){
+            //         return true;
+            //     } else {
+            //         return false;
+            //     }
+            // } else if($doAction == 'delete' || $doAction == 'stop') {
+            //     file_put_contents('test.txt', "\r delete shh command=".$command, FILE_APPEND);
+            //     file_put_contents('test.txt', "\r delete shh taskList=".$taskList, FILE_APPEND);
+            //     $taskList = str_replace($command, '', $taskList);
+            //     file_put_contents('test.txt', "\r delete shh NewTaskList=".$taskList, FILE_APPEND);
+            //     $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
+            //     file_put_contents('test.txt', "\r delete shh result=".$result, FILE_APPEND);
+            //     if($result === null){
+            //         return true;
+            //     } else {
+            //         return false;
+            //     }
+            // } else if($doAction == 'do') {
+            //     file_put_contents('test.txt', "\r ssh do yes", FILE_APPEND);
+            //     file_put_contents('test.txt', "\r ssh do command=".$command, FILE_APPEND);
+            //     $result = $ssh->exec($command);
+            //     if($result === null){
+            //         return true;
+            //     } else {
+            //         return false;
+            //     }
+            // } else {
+            //     return false;
+            // }
+        } catch (\Exception $e) {
+            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
             return false;
         }
     }
