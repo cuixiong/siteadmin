@@ -480,6 +480,8 @@ class TimedTaskController extends CrudController
                 ReturnJson(false,trans('lang.request_error'));
             }
             $task = $this->ModelInstance()->find($id);
+            $task->status = $status;
+            $task->save();
             $ids = [];
             if($task->category == 'index' && $task->parent_id == '0'){
                 $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->pluck('id')->toArray();
