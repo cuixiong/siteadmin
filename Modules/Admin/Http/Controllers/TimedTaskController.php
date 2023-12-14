@@ -297,8 +297,10 @@ class TimedTaskController extends CrudController
                     file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
                     $res = $this->LocalHostTask($params['action'],$task->command,$params['OldCommand']);
                 } else if($task->category == 'index') {
+                    file_put_contents('test.txt', "\r index yes", FILE_APPEND);
                     $serverId = Site::where('id',$task->site_id)->value('server_id');
                     $server = Server::where('id',$serverId)->first();
+                    file_put_contents('test.txt', "\r server yes".$server->ip.$server->username.$server->password, FILE_APPEND);
                     $this->ShhTask($server->ip,$server->username,$server->password,$params['action'],$task->command,$params['OldCommand']);
                 }
                 if($params['action'] == 'delete' && $res === true){
