@@ -239,7 +239,6 @@ class TimedTaskController extends CrudController
 
     public function TimedTaskQueue($ids,$action)
     {
-        return true;
         try {
             $RabbitMQ = new RabbitmqService();
             $RabbitMQ->setQueueName('timed_task');
