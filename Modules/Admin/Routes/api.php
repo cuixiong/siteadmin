@@ -235,7 +235,7 @@ Route::middleware([
     Route::prefix('timed-task')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'list'])->name('定时任务:数据列表');
         Route::post('change-status', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'changeStatus'])->name('定时任务:修改状态');
-        Route::post('execute-task/{id}', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'ExecuteTask'])->name('定时任务:执行任务');
+        Route::get('execute-task/{id}', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'ExecuteTask'])->name('定时任务:执行任务');
     });
     
 });
