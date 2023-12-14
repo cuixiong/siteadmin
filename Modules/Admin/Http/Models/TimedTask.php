@@ -25,6 +25,7 @@ class TimedTask extends Base
         'created_by',
         'category',
         'command',
-        'parent_id'
+        'parent_id',
+        'old_command',
     ];
 }
