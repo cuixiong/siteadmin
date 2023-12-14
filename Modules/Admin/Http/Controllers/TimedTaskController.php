@@ -492,7 +492,9 @@ class TimedTaskController extends CrudController
             file_put_contents('test.txt', "\r shh CrontabList array_filter = ".json_encode($CrontabList), FILE_APPEND);
 
             $CrontabList = array_map(function($v){
-                return trim($v,'');
+                $v = trim($v,' ');
+                $v = trim($v,"\n");
+                return $v;
             },$CrontabList);
             file_put_contents('test.txt', "\r shh CrontabList array_map = ".json_encode($CrontabList), FILE_APPEND);
 
