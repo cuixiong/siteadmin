@@ -83,6 +83,7 @@ class User extends Base
         if(isset($this->attributes['role_id']))
         {
             $value = explode(',',$this->attributes['role_id']);
+            $value = Role::whereIn('id',$value)->pluck('id')->toArray();
             foreach ($value as &$map) {
                 $map = intval($map);
             }

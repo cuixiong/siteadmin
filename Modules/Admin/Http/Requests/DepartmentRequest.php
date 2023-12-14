@@ -11,10 +11,13 @@ class DepartmentRequest extends BaseRequest
     {
         $rules = [
             'parent_id' => 'required',
-            'name' => 'required',
+            'name' => 'required|unique:departments',
             'default_role' => 'required',
         ];
-        return $this->validateRequest($request, $rules);
+        $message = [
+            'name.unique' => trans('lang.name_exists'),
+        ];
+        return $this->validateRequest($request, $rules,$message);
     }
     /**
      * 更新数据验证
