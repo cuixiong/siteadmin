@@ -68,8 +68,7 @@ class TimedTaskController extends CrudController
                     }
                 }
                 DB::commit();
-                // $res = $this->TimedTaskQueue($ids,'add');
-                $res = true;
+                $res = $this->TimedTaskQueue($ids,'add');
                 $res ? ReturnJson(true, trans('lang.add_success')) : ReturnJson(FALSE, trans('lang.add_error'));
             } catch (\Exception $e) {
                 DB::rollBack();
