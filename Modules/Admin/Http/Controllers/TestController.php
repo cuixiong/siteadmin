@@ -90,6 +90,7 @@ class TestController extends CrudController
         file_put_contents('5.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
     }
     public function task6(Request $request){
-        file_put_contents('6.txt',"\r".date('Y-m-d H:i:s',time()),FILE_APPEND);
+        $ip = $request->ip();
+        file_put_contents('6.txt',"\r".date('Y-m-d H:i:s',time())."   |  ".$ip,FILE_APPEND);
     }
 }
