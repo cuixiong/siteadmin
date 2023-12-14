@@ -36,7 +36,13 @@ return [
     'site_undefined' => 'site undefined',
     'aliyun_oss_config_exist'   =>  'The current site is already bound to another OSS configuration. Please select another site',
     'task_is_undefined' => 'Task does not exist',
-    
+    'role_name_empty' => 'role is name empty',
+    'role_name_exists' => 'Role name already exists',
+    'status_empty' => 'status is empty',
+    'data_scope_empty' => 'data_scope is empty',
+    'sort_empty' => 'sort is empty',
+    'is_super' => 'is_super is empty',
+    'name_exists' => 'name already exists',
     //站点
     'server_model_empty' => 'server is not exist',
     'database_model_empty' => 'database is not exist',

@@ -10,7 +10,7 @@ class RoleRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'name' => 'required',
+            'name' => 'required|unique:roles',
             'status' => 'required',
             'data_scope' => 'required',
             'code' => 'required|unique:roles',
@@ -18,7 +18,14 @@ class RoleRequest extends BaseRequest
             'is_super' => 'required', 
         ];
         $message = [
-            'code.unique' => '编码已存在，请更换其他编码',
+            'name.required' => trans('lang.role_name_empty'),
+            'name.unique' => trans('lang.role_name_exists'),
+            'status.required' => trans('lang.status_empty'),
+            'data_scope.required' => trans('lang.data_scope_empty'),
+            'sort.required' => trans('lang.sort_empty'),
+            'is_super.required' => trans('lang.is_super_empty'),
+            'code.required' => trans('lang.code_empty'),
+            'code.unique' => trans('lang.code_no_pass'),
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -38,6 +45,16 @@ class RoleRequest extends BaseRequest
             'sort' => 'required',
             'is_super' => 'required',
         ];
-        return $this->validateRequest($request, $rules);
+        $message = [
+            'id.required' => trans('lang.id_empty'),
+            'name.required' => trans('lang.role_name_empty'),
+            'status.required' => trans('lang.status_empty'),
+            'data_scope.required' => trans('lang.data_scope_empty'),
+            'sort.required' => trans('lang.sort_empty'),
+            'is_super.required' => trans('lang.is_super_empty'),
+            'code.required' => trans('lang.code_empty'),
+            'code.unique' => trans('lang.code_no_pass'),
+        ];
+        return $this->validateRequest($request, $rules,$message);
     }
 }

@@ -124,6 +124,10 @@ class RoleController extends CrudController
             if($count > 0){
                 ReturnJson(FALSE,trans('lang.code_exists'));
             }
+            $count = $this->ModelInstance()->where('id','<>', $request->id)->where('name',$request->name)->count();
+            if($count > 0){
+                ReturnJson(FALSE,trans('lang.role_name_exists'));
+            }
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
