@@ -92,7 +92,7 @@ class TimedTaskController extends CrudController
             $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['command'] = $command.$log_path;
             $record = $this->ModelInstance()->findOrFail($request->id);
-            $OldCommand = $record->command;
+            $input['old_command'] = $record->command;
             // 更新父任务
             if (!$record->update($input)) {                                                                                                                                             
                 ReturnJson(FALSE, trans('lang.update_error'));
@@ -170,7 +170,7 @@ class TimedTaskController extends CrudController
                 }
                 DB::commit();
                 if($updateIds){
-                    $this->TimedTaskQueue($updateIds,'update',$OldCommand);
+                    $this->TimedTaskQueue($updateIds,'update');
                 }
                 if($insertIds){
                     $this->TimedTaskQueue($insertIds,'add');
@@ -180,7 +180,7 @@ class TimedTaskController extends CrudController
                 }
             } else {
                 DB::commit();
-                $this->TimedTaskQueue([$record->id],'update',$OldCommand);
+                $this->TimedTaskQueue([$record->id],'update');
             }
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
