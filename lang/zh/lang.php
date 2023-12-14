@@ -55,6 +55,7 @@ return [
     
     /**分站点 */
     // 上传报告
+    'name_empty'=>'报告名为空',
     'category_empty'=>'分类不存在',
     'price_empty'=>'基础价为空',
     'published_date_empty'=>'出版时间为空',

@@ -55,8 +55,9 @@ return [
     
     /**分站点 */
     // 上传报告
+    'name_empty'=>'Report Name is blank',
     'category_empty'=>'The category is empty',
-    'price_empty'=>'The peice is empty',
+    'price_empty'=>'The price is empty',
     'published_date_empty'=>'published date is empty',
     'author_level'=>'The author cannot be overwritten ',
 ];

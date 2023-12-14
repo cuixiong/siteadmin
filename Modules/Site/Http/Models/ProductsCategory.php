@@ -12,6 +12,7 @@ class ProductsCategory extends Base
     protected $fillable = [
         'name',
         'link',
+        'pid',
         'thumb',
         'home_thumb',
         'icon',
@@ -49,6 +50,11 @@ class ProductsCategory extends Base
         //id 
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
+        }
+
+        //pid 
+        if (isset($search->pid) && !empty($search->pid)) {
+            $model = $model->where('pid', $search->pid);
         }
 
         //name

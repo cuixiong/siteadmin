@@ -480,322 +480,41 @@ class ProductsController extends CrudController
             ReturnJson(TRUE, trans('lang.update_success'));
         }
     }
-
-
-
+    
     /**
-     * 批量上传报告
+     * 批量删除
      * @param $request 请求信息
      */
-    public function uploadProducts(Request $request)
+    public function batchDelete(Request $request)
     {
-        $basePath = public_path() . '/site';
-        $basePath .= '/' . $request->header('Site');
 
-        $pathsStr = $request->path;
-        //上传记录初始化
-        $logModel = ProductsUploadLog::create([
-            'file' => $pathsStr
-        ]);
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
 
-        $paths = explode(',', $pathsStr);
-        // return $paths;
-        // $productsImport = new ProductsImport();
-        // $productsImport->site = $request->header('Site') ?? '';
-        // $productsImport->log_id = $logModel->id;
-        // foreach ($paths as $key => $value) {
-        //     $path = $basePath . $value;
-        //     // return $path;
-        //     Excel::import($productsImport, $path);
-        // }
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
 
-        //获取表头与字段关系
-        $fieldData = ProductsExcelField::where(['status' => 1])->where('field', '<>', '')->where('sort', '>', 0)->select(['field', 'sort'])->distinct()->get()->toArray();
-        $fieldData = array_map(function ($item) {
-            $item['sort'] =  $item['sort'] - 1;
-            return $item;
-        }, $fieldData);
-        $fieldData = array_column($fieldData, 'field', 'sort');
-        // $fieldSort = array_keys($fieldData);
-
-        // return $fieldSort;
-        foreach ($paths as $key => $value) {
-            $path = $basePath . $value;
-            $data = [
-                'class' => 'Modules\Site\Http\Controllers\ProductsController',
-                'method' => 'handleExcelFile',
-                'site' => $request->header('Site') ?? '',
-                'log_id' => $logModel->id,
-                'data' => $path,
-                'fieldData' => $fieldData,
-
-            ];
-            $data = json_encode($data);
-            $RabbitMQ = new RabbitmqService();
-            $RabbitMQ->setQueueName('products-file-queue'); // 设置队列名称
-            $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-            $RabbitMQ->setRoutingKey('productsKey1');
-            $RabbitMQ->push($data); // 推送数据
-        }
-
-        ReturnJson(TRUE, trans('lang.request_success'));
-    }
-
-    /**
-     * 批量上传报告/队列处理文件
-     * @param $params 
-     */
-    public function handleExcelFile($params = null)
-    {
-        ini_set('memory_limit', '4096M');
-        if (empty($params)) {
-            throw new \Exception("filepath is empty", 1);
-        }
-
-
-
-        //读取文件
-        $path = $params['data'];
-        $fieldData = $params['fieldData'];
-        $fieldSort = array_keys($fieldData);
-        $reader = ReaderEntityFactory::createXLSXReader($path);
-        $reader->setShouldPreserveEmptyRows(true);
-        $reader->setShouldFormatDates(true);
-        $reader->open($path);
-        $excelData = [];
-
-        foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
-            // if ($sheetKey != 1) {
-            //     continue;
-            // }
-            foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
-                if ($rowKey == 1) {
-                    //表头跳过
-                    continue;
-                }
-                $tempRow =  $sheetRow->toArray();
-                $row = [];
-                foreach ($tempRow as $tempKey => $tempValue) {
-                    if (in_array($tempKey, $fieldSort)) {
-                        $row[$fieldData[$tempKey]] = $tempValue;
-                    }
-                }
-                if (count($row) > 0) {
-                    $excelData[] = $row;
-                }
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(TRUE, trans('lang.param_empty') . ':ids');
             }
+            $model = $ModelInstance->whereIn('id', $ids);
+        } else {
+            //筛选
+            $model = $ModelInstance->HandleWhere($model, $request);
         }
-
-        //加入队列
-        if ($excelData && count($excelData) > 0) {
-            $groupData = array_chunk($excelData, 100);
-            foreach ($groupData as $item) {
-
-                $data = [
-                    'class' => 'Modules\Site\Http\Controllers\ProductsController',
-                    'method' => 'handleProducts',
-                    'site' => $params['site'],
-                    'log_id' => $params['log_id'],
-                    'data' => $item
-                ];
-                $data = json_encode($data);
-                $RabbitMQ = new RabbitmqService();
-                $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
-                $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-                $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                $RabbitMQ->setRoutingKey('productsKey2');
-                $RabbitMQ->push($data); // 推送数据
-            }
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $data['count'] = $model->count();
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } else {
+            $data['result_count'] = $model->delete();
+            ReturnJson(TRUE, trans('lang.delete_success'));
         }
     }
 
-
-    /**
-     * 批量上传报告/队列消费
-     * @param $params['data'] 报告数据
-     * @param $params['site'] 站点
-     */
-    public function handleProducts($params = null)
-    {
-        // exit;
-        if (empty($params['site'])) {
-            throw new \Exception("site is empty", 1);
-        }
-
-        // 设置当前租户
-        tenancy()->initialize($params['site']);
-        // tenancy()->initialize('QY_EN');
-
-        $count = 0;
-        $insertCount = 0;
-        $updateCount = 0;
-        $errorCount = 0;
-        $details = '';
-
-        foreach ($params['data'] as $row) {
-            $count++;
-            try {
-                // 表头
-                $item = [];
-                // 报告名称
-                isset($row['name']) && $item['name'] = $row['name'];
-                // 报告名称(英)
-                isset($row['english_name']) && $item['english_name'] = $row['english_name'];
-                // 页数
-                isset($row['pages']) && $item['pages'] = $row['pages'];
-                // 图表数
-                isset($row['tables']) && $item['tables'] = $row['tables'];
-                // 基础价
-                isset($row['price']) && $item['price'] = $row['price'];
-
-                try {
-                    // 出版时间
-                    isset($row['published_date']) && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row['published_date']); //转为 时间戳
-                } catch (\Throwable $th) {
-                    //throw $th;
-                }
-                if (!isset($item['published_date']) || $item['published_date'] < 0) {
-                    $item['published_date'] = strtotime($row['published_date']);
-                }
-                // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
-
-                // 报告分类
-                isset($row['category_id']) && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
-                //报告所属区域
-                isset($row['country_id']) && $item['country_id'] = Region::where('name', trim($row['country_id']))->value('id') ?? 0;
-                //作者
-                isset($row['author']) && $item['author'] = $row['author'];
-                //关键词
-                isset($row['keywords']) && $item['keywords'] = $row['keywords'];
-                //自定义链接
-                isset($row['url']) && $item['url'] = $row['url'];
-                // 如果链接为空，则用关键词做链接
-                if (!empty($row['keywords']) && empty($row['url'])) {
-                    $item['url'] = $row['keywords'];
-                    $item['url'] = strtolower(preg_replace('/%[0-9A-Fa-f]{2}/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
-                    $item['url'] = strtolower(preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
-                    $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
-                }
-
-                //详情数据
-                $itemDescription = [];
-                isset($row['description']) && $itemDescription['description'] = str_replace('_x000D_', '', $row['description']);
-                isset($row['table_of_content']) && $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row['table_of_content']);
-                isset($row['tables_and_figures']) && $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row['tables_and_figures']);
-                isset($row['description_en']) && $itemDescription['description_en'] = str_replace('_x000D_', '', $row['description_en']);
-                isset($row['table_of_content_en']) && $itemDescription['table_of_content_en'] = str_replace('_x000D_', '', $row['table_of_content_en']);
-                isset($row['tables_and_figures_en']) && $itemDescription['tables_and_figures_en'] = str_replace('_x000D_', '', $row['tables_and_figures_en']);
-                isset($row['companies_mentioned']) && $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row['companies_mentioned']);
-
-
-                // 查询单个报告数据/去重
-                $product = Products::where('name', trim($item['name']))->orWhere('name', isset($row['english_name']) ? trim($row['name']) : '')->first();
-
-                /** 
-                 * 不合格的数据过滤
-                 */
-                // 忽略基础价为空的数据
-                if (empty($item['price'])) {
-                    $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.price_empty') . "\r\n";
-                    $errorCount++;
-                    continue;
-                }
-                // 忽略出版时间为空或转化失败的数据
-                if (empty($item['published_date']) || $item['published_date'] < 0) {
-                    $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.published_date_empty') . "\r\n";
-                    continue;
-                }
-                // 忽略分类为空的数据
-                if (empty($item['category_id'])) {
-                    $details .= '【' . ($row['name'] ?? '') . '】' . $row['category_id'] . trans('lang.category_empty') . "\r\n";
-                    $errorCount++;
-                    continue;
-                }
-                // 过滤不符合作者策略的数据
-                if ($product) {
-                    if (
-                        !($item['author'] == '完成报告'
-                            || ($item['author'] == '报告翻新' && $product->author != '完成报告')
-                            || ($product->author != '完成报告' && $product->author != '报告翻新'))
-                    ) {
-                        $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . trans('lang.author_level') . ($product->author) . "\r\n";
-                        $errorCount++;
-                        continue;
-                    }
-                }
-
-
-                //新纪录年份
-                $newYear = Products::publishedDateFormatYear($item['published_date']);
-                /** 
-                 * 数据库操作
-                 */
-                if ($product) {
-                    $itemDescription['product_id'] = $product->id;
-                    //旧纪录年份
-                    $oldPublishedDate = $product->published_date;
-                    $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
-                    //更新报告
-                    $product->update($item);
-
-                    $newProductDescription = (new ProductsDescription($newYear));
-                    //出版时间年份更改
-                    if ($oldYear != $newYear) {
-                        //删除旧详情
-                        if ($oldYear) {
-                            $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
-                            $oldProductDescription->delete();
-                        }
-                        //然后新增
-                        $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
-                    } else {
-                        //直接更新
-                        $newProductDescription = $newProductDescription->where('product_id', $product->id)->first();
-                        $descriptionRecord = $newProductDescription->updateWithAttributes($itemDescription);
-                    }
-                    $updateCount++;
-                } else {
-                    //新增报告
-                    $product = Products::create($item);
-                    //新增报告详情
-                    $newProductDescription = (new ProductsDescription($newYear));
-                    $itemDescription['product_id'] = $product->id;
-                    $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
-                    $insertCount++;
-                }
-                //code...
-            } catch (\Throwable $th) {
-                //throw $th;
-                $details .= '【' . ($row['name'] ?? '') . '】' . $th->getMessage() . "\r\n";
-                // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
-                // $details = json_encode($row) . "\r\n";
-                $errorCount++;
-            }
-        }
-        try {
-            DB::beginTransaction();
-            $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
-            $logData = [
-                'count' => ($logModel->count ?? 0) + $count,
-                'insert_count' => ($logModel->insert_count ?? 0) + $insertCount,
-                'update_count' => ($logModel->update_count ?? 0) + $updateCount,
-                'error_count' => ($logModel->error_count ?? 0) + $errorCount,
-                'details' => ($logModel->details ?? '') . "\r\n" . $details,
-
-            ];
-            $logFlag = $logModel->update($logData);
-
-            if ($logFlag) {
-                DB::commit();
-            } else {
-                DB::rollBack();
-                // 处理更新失败的情况
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            // 处理异常，例如日志记录
-            throw $e;
-        }
-    }
 }

@@ -17,6 +17,7 @@ class Products extends Base
         'name', //报告名称
         'english_name', //报告名称
         'thumb',    //图片,无则显示分类图片
+        'publisher_id',  //出版商id
         'category_id',  //行业id
         'country_id', //国家区域id
         'price',    //基础价
@@ -87,6 +88,11 @@ class Products extends Base
         // status 状态
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
+        }
+
+        // publisher_id
+        if (isset($search->publisher_id) && $search->publisher_id != '') {
+            $model = $model->where('publisher_id', $search->publisher_id);
         }
         
         // keywords

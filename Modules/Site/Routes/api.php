@@ -88,11 +88,21 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\ProductsController::class, 'update'])->name('报告管理:修改报告');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsController::class, 'destroy'])->name('报告管理:删除报告');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsController::class, 'discount'])->name('报告管理:设置折扣');
-        Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsController::class, 'uploadProducts'])->name('报告管理:上传报告');
 
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdateParam'])->name('报告管理:批量修改参数');
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdateOption'])->name('报告管理:批量修改参数子项');
         Route::post('batch-update', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdate'])->name('报告管理:批量修改');
+    });
+    
+    // ProductsUploadLog 控制器
+    Route::prefix('products-upload-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'list'])->name('报告管理:报告列表');
+        Route::get('get-publisher', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'getPublisher'])->name('报告管理:出版商数据');
+
+        Route::post('destroy', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'destroy'])->name('报告管理:删除报告');
+        
+        Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('报告管理:上传报告');
+        
     });
 
     // ProductsCategory 控制器
