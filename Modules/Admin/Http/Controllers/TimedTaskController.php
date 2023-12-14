@@ -215,7 +215,7 @@ class TimedTaskController extends CrudController
     {
         $id = $request->id;
         $task = $this->ModelInstance()->find($id);
-        if(!empty($task)){
+        if(empty($task)){
             ReturnJson(FALSE, trans('lang.task_is_undefined'));
         }
         $ids = [];
