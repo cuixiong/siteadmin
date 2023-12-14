@@ -90,7 +90,7 @@ class ProductsUploadLogController extends CrudController
         $logIds = [];
         foreach ($paths as $key => $value) {
             $path = $basePath . $value;
-            
+
             //上传记录初始化,每个文件单独一条记录
             $logModel = ProductsUploadLog::create([
                 'file' => $value
@@ -124,7 +124,7 @@ class ProductsUploadLogController extends CrudController
             // // 关闭文件
             // $reader->close();
         }
-        $logIds = implode(',',$logIds);
+        $logIds = implode(',', $logIds);
         // return $totalRows;
         ReturnJson(TRUE, trans('lang.request_success'), $logIds);
     }
@@ -136,60 +136,72 @@ class ProductsUploadLogController extends CrudController
     public function handleExcelFile($params = null)
     {
         ini_set('memory_limit', '4096M');
+        try {
+            //读取文件
+            $path = $params['data'];
+            $fieldData = $params['fieldData'];
+            $fieldSort = array_keys($fieldData);
+            $reader = ReaderEntityFactory::createXLSXReader($path);
+            $reader->setShouldPreserveEmptyRows(true);
+            $reader->setShouldFormatDates(true);
+            $reader->open($path);   //读取文件
+            $excelData = [];
 
-        //读取文件
-        $path = $params['data'];
-        $fieldData = $params['fieldData'];
-        $fieldSort = array_keys($fieldData);
-        $reader = ReaderEntityFactory::createXLSXReader($path);
-        $reader->setShouldPreserveEmptyRows(true);
-        $reader->setShouldFormatDates(true);
-        $reader->open($path);   //读取文件
-        $excelData = [];
-
-        foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
-            // if ($sheetKey != 1) {
-            //     continue;
-            // }
-            foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
-                if ($rowKey == 1) {
-                    //表头跳过
-                    continue;
-                }
-                $tempRow =  $sheetRow->toArray(); //单行数据
-                $row = [];
-                foreach ($tempRow as $tempKey => $tempValue) {
-                    if (in_array($tempKey, $fieldSort)) {
-                        $row[$fieldData[$tempKey]] = $tempValue;
+            foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
+                // if ($sheetKey != 1) {
+                //     continue;
+                // }
+                foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
+                    if ($rowKey == 1) {
+                        //表头跳过
+                        continue;
+                    }
+                    $tempRow =  $sheetRow->toArray(); //单行数据
+                    $row = [];
+                    foreach ($tempRow as $tempKey => $tempValue) {
+                        if (in_array($tempKey, $fieldSort)) {
+                            $row[$fieldData[$tempKey]] = $tempValue;
+                        }
+                    }
+                    if (count($row) > 0) {
+                        $excelData[] = $row;
                     }
                 }
-                if (count($row) > 0) {
-                    $excelData[] = $row;
+            }
+            // 设置当前租户
+            tenancy()->initialize($params['site']);
+            //记录任务状态、总数量
+            $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
+            $logData = [
+                'count' => count($excelData),
+                'state' => ProductsUploadLog::UPLOAD_READY,
+            ];
+            $logModel->update($logData);
+            //加入队列
+            if ($excelData && count($excelData) > 0) {
+                $groupData = array_chunk($excelData, 100);
+                foreach ($groupData as $item) {
+                    $data = [
+                        'class' => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+                        'method' => 'handleProducts',
+                        'site' => $params['site'],
+                        'log_id' => $params['log_id'],
+                        'pulisher_id' => $params['pulisher_id'],
+                        'data' => $item
+                    ];
+                    $data = json_encode($data);
+                    $RabbitMQ = new RabbitmqService();
+                    $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
+                    $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+                    $RabbitMQ->setRoutingKey('productsKey2');
+                    $RabbitMQ->push($data); // 推送数据
                 }
             }
-        }
 
-        //加入队列
-        if ($excelData && count($excelData) > 0) {
-            $groupData = array_chunk($excelData, 100);
-            foreach ($groupData as $item) {
-
-                $data = [
-                    'class' => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
-                    'method' => 'handleProducts',
-                    'site' => $params['site'],
-                    'log_id' => $params['log_id'],
-                    'pulisher_id' => $params['pulisher_id'],
-                    'data' => $item
-                ];
-                $data = json_encode($data);
-                $RabbitMQ = new RabbitmqService();
-                $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
-                $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-                $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                $RabbitMQ->setRoutingKey('productsKey2');
-                $RabbitMQ->push($data); // 推送数据
-            }
+            //code...
+        } catch (\Throwable $th) {
+            // file_put_contents('C:\\Users\\Administrator\\Desktop\\ddddddddddd.txt', $params['log_id'], FILE_APPEND);
         }
     }
 
@@ -211,14 +223,14 @@ class ProductsUploadLogController extends CrudController
         // tenancy()->initialize('QY_EN');
         $pulisher_id = $params['pulisher_id'];
 
-        $count = 0;
+        // $count = 0;
         $insertCount = 0;
         $updateCount = 0;
         $errorCount = 0;
         $details = '';
 
         foreach ($params['data'] as $row) {
-            $count++;
+            // $count++;
             try {
                 // 表头
                 $item = [];
@@ -281,7 +293,7 @@ class ProductsUploadLogController extends CrudController
                 /** 
                  * 不合格的数据过滤
                  */
-                
+
                 // 忽略报告名为空的数据
                 if (empty($item['name'])) {
                     $details .= trans('lang.name_empty') . "\r\n";
@@ -370,24 +382,28 @@ class ProductsUploadLogController extends CrudController
             DB::beginTransaction();
             $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
             $logData = [
-                'count' => ($logModel->count ?? 0) + $count,
+                // 'count' => ($logModel->count ?? 0) + $count,
                 'insert_count' => ($logModel->insert_count ?? 0) + $insertCount,
                 'update_count' => ($logModel->update_count ?? 0) + $updateCount,
                 'error_count' => ($logModel->error_count ?? 0) + $errorCount,
                 'details' => ($logModel->details ?? '')  . $details,
 
             ];
+            //如果数量吻合，则证明上传完成了
+            if ($logModel->count == $logData['insert_count'] + $logData['update_count'] + $logData['error_count']) {
+                $logData['state'] = ProductsUploadLog::UPLOAD_COMPLETE;
+            } else {
+                $logData['state'] = ProductsUploadLog::UPLOAD_RUNNING;
+            }
             $logFlag = $logModel->update($logData);
 
             if ($logFlag) {
                 DB::commit();
             } else {
                 DB::rollBack();
-                // 处理更新失败的情况
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            // 处理异常，例如日志记录
             throw $e;
         }
     }
@@ -399,8 +415,47 @@ class ProductsUploadLogController extends CrudController
      */
     public function uploadProcess(Request $request)
     {
-        $logId = $request->id;
+        $logIds = $request->ids;
+        if (empty($logIds)) {
+            ReturnJson(TRUE, trans('lang.param_empty'));
+        }
+        $logIdsArray = explode(',', $logIds);
+        // return $logIdsArray;
+        $logData = ProductsUploadLog::whereIn('id', $logIdsArray)->get();
+        $data = [
+            'result' => true,
+            'msg' => '',
+        ];
+        $text = '';
+        foreach ($logData as $key => $value) {
+            if ($value['state'] != ProductsUploadLog::UPLOAD_COMPLETE) {
+                $data['result'] = false;
+            }
+            switch ($value['state']) {
+                case ProductsUploadLog::UPLOAD_INIT:
+                    $text .= '【'.$value['file'].'】'.'正在打开文件'."\r\n";
+                    break;
 
-        
+                case ProductsUploadLog::UPLOAD_READY:
+                    $text .= '【'.$value['file'].'】'.'正在处理'."\r\n";
+                    break;
+
+                case ProductsUploadLog::UPLOAD_RUNNING:
+                    $text .= '【'.$value['file'].'】'.'进度：'.($value['insert_count']+$value['update_count']+$value['error_count']).'/'.$value['count']."\r\n";
+                    break;
+
+                case ProductsUploadLog::UPLOAD_COMPLETE:
+                    $text .= '【'.$value['file'].'】'.'完成'."\r\n";
+                    break;
+
+                default:
+                    # code...
+                    break;
+            }
+        }
+        $data['msg'] = $text;
+
+
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }

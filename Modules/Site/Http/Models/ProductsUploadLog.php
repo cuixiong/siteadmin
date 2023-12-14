@@ -8,6 +8,11 @@ class ProductsUploadLog extends Base
 {
     protected $table = 'product_upload_log';
 
+    const UPLOAD_INIT = 0;  //上传未开始
+    const UPLOAD_READY = 1; // 文件加载好了
+    const UPLOAD_RUNNING = 2;  //正在运行
+    const UPLOAD_COMPLETE = 3;  //上传结束
+
     // 设置允许入库字段,数组形式
     protected $fillable = [
         'file',
@@ -16,6 +21,7 @@ class ProductsUploadLog extends Base
         'update_count',
         'error_count',
         'details',
+        'state',
     ];
 
     protected $attributes = [
@@ -23,7 +29,9 @@ class ProductsUploadLog extends Base
         'insert_count' => 0,
         'update_count' => 0,
         'error_count' => 0,
+        'state' => self::UPLOAD_INIT,
     ];
+
 
     
     /**
@@ -41,7 +49,12 @@ class ProductsUploadLog extends Base
 
         //file
         if (isset($search->file) && !empty($search->file)) {
-            $model = $model->where('name', 'like', '%' . $search->file . '%');
+            $model = $model->where('file', 'like', '%' . $search->file . '%');
+        }
+
+        //state 
+        if (isset($search->state) && $search->state != '') {
+            $model = $model->where('state', $search->state);
         }
 
         //count 

@@ -102,6 +102,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'destroy'])->name('报告管理:删除报告');
         
         Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('报告管理:上传报告');
+        Route::post('upload-process', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProcess'])->name('报告管理:上传进度');
         
     });
 
