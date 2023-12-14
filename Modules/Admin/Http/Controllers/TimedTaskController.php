@@ -19,15 +19,10 @@ class TimedTaskController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             // 定义日志文件路径
-            $input['log_path'] = $log_path = '/www/wwwroot/yadmin/admin/'.time() . rand(10000, 99999).'.log 2>&1';
-            $command = $this->CreateCommand($input['type'],$input['content'],$log_path);
-            if($command == false){
-                ReturnJson(FALSE, trans('lang.add_error'));
-            }
-            $CronTime = $this->CrateLiunxTime($input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
-            $command = $CronTime.$command;// 组合命令
-            $input['command'] = $command;
-            // 事务开启
+            $log_name = time(). rand(10000, 99999).'.log 2>&1';
+            $input['log_path'] = $log_path = public_path().'/'.$log_name;// 本地服务器Log
+            $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
+            $input['command'] = $command.$log_path;
             DB::beginTransaction();
             try {
                 $record = (new TimedTask())->create($input);
@@ -35,60 +30,47 @@ class TimedTaskController extends CrudController
                     DB::rollBack();
                     ReturnJson(FALSE, trans('lang.add_error'));
                 }
-                if($input['category'] == 'index'){
-                    if(empty($input['site_id'])){
-                        DB::commit();
-                    } else {
+                $ids = [];
+                if($input['category'] == 'admin'){
+                    $ids[] = $record->id;
+                } else {
+                    if(!empty($input['site_id'])){
+                        $CommonData = [
+                            'parent_id' => $record->id,
+                            'name' => $input['name'],
+                            'type' => $input['type'],
+                            'status' => $input['status'],
+                            'day' => $input['day'],
+                            'hour' => $input['hour'],
+                            'minute' => $input['minute'],
+                            'week_day' => $input['week_day'],
+                            'category' => $input['category'],
+                            'time_type' => $input['time_type'],
+                            'created_by' => $request->user->id,
+                            'updated_by' => $request->user->id,
+                            'updated_at' => time(),
+                            'created_at' => time(),
+                        ];
                         $model = $this->ModelInstance();
-                        $AutoIds = [];
                         foreach (explode(',', $input['site_id']) as $key => $value) {
+                            $site = Site::select(['id','api_path','domain'])->find($value);
+                            $ApiLogPath = rtrim($site->api_path,'/').'/'.$log_name;// 定义日志文件路径
                             $data = [
-                                'parent_id' => $record->id,
-                                'name' => $input['name'],
                                 'site_id' => $value,
-                                'type' => $input['type'],
-                                'content' => $input['content'],
-                                'status' => $input['status'],
-                                'day' => $input['day'],
-                                'hour' => $input['hour'],
-                                'minute' => $input['minute'],
-                                'week_day' => $input['week_day'],
-                                'command' => $command,
-                                'category' => $input['category'],
-                                'time_type' => $input['time_type'],
-                                'log_path' => $log_path,// 定义日志文件路径
+                                'do_command' => $this->MakeApiCommand($input['do_command'],$site->api_path,$site->domain),
+                                'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain).$ApiLogPath,
+                                'log_path' => $ApiLogPath,
                             ];
+                            $data = array_merge($data,$CommonData);
                             $id = $model->insertGetId($data);
-                            if($id){
-                                $AutoIds[] = $id;
-                            }
-                        }
-                        DB::commit();
-                        if($AutoIds){
-                            $this->TimedTaskQueue($AutoIds,'add');
+                            if($id){ $ids[] = $id; }
                         }
                     }
-                } else {
-                    $childrenTask = [
-                        'parent_id' => $record->id,
-                        'name' => $input['name'],
-                        'site_id' => "",
-                        'type' => $input['type'],
-                        'content' => $input['content'],
-                        'status' => $input['status'],
-                        'day' => $input['day'],
-                        'hour' => $input['hour'],
-                        'minute' => $input['minute'],
-                        'week_day' => $input['week_day'],
-                        'command' => $command,
-                        'category' => $input['category'],
-                        'time_type' => $input['time_type'],
-                        'log_path' => $log_path,// 定义日志文件路径
-                    ];
-                    $record = (new TimedTask())->create($childrenTask);
-                    DB::commit();
-                    $res = $this->TimedTaskQueue([$record->id],'add');
                 }
+                DB::commit();
+                // $res = $this->TimedTaskQueue($ids,'add');
+                $res = true;
+                $res ? ReturnJson(true, trans('lang.add_success')) : ReturnJson(FALSE, trans('lang.add_error'));
             } catch (\Exception $e) {
                 DB::rollBack();
                 ReturnJson(FALSE, $e->getMessage());
@@ -102,43 +84,38 @@ class TimedTaskController extends CrudController
     public function update(Request $request)
     {
         try {
+            DB::beginTransaction();
             $this->ValidateInstance($request);
             $input = $request->all();
             // 定义日志文件路径
-            $input['log_path'] = $log_path = '/www/wwwroot/yadmin/admin/'.time() . rand(10000, 99999).'.log 2>&1';
-            $command = $this->CreateCommand($input['type'],$input['content'],$log_path);
-            if($command == false){
-                ReturnJson(FALSE, trans('lang.add_error'));
-            }
-            $CronTime = $this->CrateLiunxTime($input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
-            $command = $CronTime.$command;// 组合命令
-            $input['command'] = $command;
+            $log_name = time(). rand(10000, 99999).'.log 2>&1';
+            $input['log_path'] = $log_path = public_path().'/'.$log_name;// 本地服务器Log
+            $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
+            $input['command'] = $command.$log_path;
             $record = $this->ModelInstance()->findOrFail($request->id);
             $OldCommand = $record->command;
-            // var_dump($OldCommand);die;
             // 更新父任务
-            if (!$record->update($input)) {                                                                                                                                                                                                                                                
+            if (!$record->update($input)) {                                                                                                                                             
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-            $data = [
-                'parent_id' => $record->id,
-                'name' => $record->name,
-                'type' => $record->type,
-                'content' => $record->content,
-                'status' => $record->status,
-                'day' => $record->day,
-                'hour' => $record->hour,
-                'minute' => $record->minute,
-                'week_day' => $record->week_day,
-                'command' => $record->command,
-                'category' => $record->category,
-                'time_type' => $record->time_type,
-                'log_path' => $record->log_path,
-            ];
-            $childrenTasks = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
             // 更新子任务
             if($record->category == 'index'){
-                $siteIds = explode(',', $record->site_id);
+                $data = [
+                    'parent_id' => $record->id,
+                    'name' => $record->name,
+                    'type' => $record->type,
+                    'status' => $record->status,
+                    'day' => $record->day,
+                    'hour' => $record->hour,
+                    'minute' => $record->minute,
+                    'week_day' => $record->week_day,
+                    'category' => $record->category,
+                    'time_type' => $record->time_type,
+                    'updated_by' => $request->user->id,
+                    'updated_at' => time(),
+                ];
+                $childrenTasks = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
+                $siteIds = $record->site_id ? explode(',', $record->site_id) : [];
                 $childrenTasks = array_column($childrenTasks,null,'site_id');
                 $childrenSiteIds = array_keys($childrenTasks);
                 // var_dump($childrenSiteIds);die;
@@ -147,38 +124,52 @@ class TimedTaskController extends CrudController
                 $childrenInsertIds = array_diff($siteIds,$childrenSiteIds,);
                 // var_dump($childrenInsertIds);die;
                 $childrenDeleteIds = array_diff($childrenSiteIds,$siteIds);
-                // var_dump($childrenDeleteIds);die;
+                $updateIds = [];
+                $insertIds = [];
+                $deleteIds = [];
                 
                 // 子任务编辑（对应站点的定时任务）
                 if(!empty($childrenUpdateIds)){
                     $childrenUpdateData = [];
-                    $updateIds = [];
                     foreach ($childrenUpdateIds as $key => $id) {
+                        $site = Site::select(['api_path','domain'])->find($id);
+                        $ApiLogPath = rtrim($site->api_path,'/').'/'.$log_name;// 定义日志文件路径
                         $updateIds[] = $childrenTasks[$id]['id'];
-                        $childrenUpdateData[] = array_merge(['site_id' => $id,'id' => $childrenTasks[$id]['id']],$data);
+                        $childrenUpdateData[] = array_merge([
+                            'site_id' => $id,
+                            'id' => $childrenTasks[$id]['id'],
+                            'do_command' => $this->MakeApiCommand($record->do_command,$site->api_path,$site->domain),
+                            'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain).$ApiLogPath,
+                            'old_command' => $childrenTasks[$id]['command'],
+                            'log_path' => $ApiLogPath,
+                        ],$data);
                     }
                     $this->ModelInstance()->upsert($childrenUpdateData,['id'],array_keys($childrenUpdateData[0]));
                 }
                 // 子任务新增（对应站点的定时任务）
                 if(!empty($childrenInsertIds)){
                     $model = $this->ModelInstance();
-                    $insertIds = [];
                     foreach ($childrenInsertIds as $key => $id) {
-                        $InsertData = array_merge(['site_id' => $id],$data);
+                        $site = Site::select(['api_path','domain'])->find($id);
+                        $ApiLogPath = rtrim($site->api_path,'/').'/'.$log_name;// 定义日志文件路径
+                        $InsertData = array_merge([
+                            'site_id' => $id,
+                            'do_command' => $this->MakeApiCommand($record->do_command,$site->api_path,$site->domain),
+                            'command' => $this->MakeApiCommand($command,$site->api_path,$site->domain).$ApiLogPath,
+                            'old_command' => "",
+                            'log_path' => $ApiLogPath,
+                        ],$data);
                         $id = $model->insertGetId($InsertData);
-                        if($id){
-                            $insertIds[] = $id;
-                        }
+                        $insertIds[] = $id;
                     }
                 }
                 // 子任务删除（对应站点的定时任务）
                 if(!empty($childrenDeleteIds)){
-                    $deleteIds = [];
                     foreach ($childrenDeleteIds as $key => $id) {
                         $deleteIds[] = $childrenTasks[$id]['id'];
                     }
                 }
-
+                DB::commit();
                 if($updateIds){
                     $this->TimedTaskQueue($updateIds,'update',$OldCommand);
                 }
@@ -188,11 +179,9 @@ class TimedTaskController extends CrudController
                 if($deleteIds){
                     $this->TimedTaskQueue($deleteIds,'delete');
                 }
-
             } else {
-                $this->ModelInstance()->where('parent_id',$record->id)->update($data);
-                $task = $childrenTasks[0];
-                $this->TimedTaskQueue([$task['id']],'update',$OldCommand);
+                DB::commit();
+                $this->TimedTaskQueue([$record->id],'update',$OldCommand);
             }
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
@@ -224,25 +213,39 @@ class TimedTaskController extends CrudController
         }
     }
 
-    public function CreateCommand($type, $content,$log_path)
+    public function MakeCommand($type,$doCommand,$time_type,$day,$hour,$minute,$week_day){
+        $command = $this->CreateCommand($type,$doCommand);
+        if($command == false){
+            ReturnJson(FALSE, trans('lang.add_error'));
+        }
+        $CronTime = $this->CrateLiunxTime($time_type,$day,$hour,$minute,$week_day);
+        if($CronTime == false){
+            ReturnJson(FALSE, trans('lang.add_error'));
+        }
+        $command = $CronTime.$command;// 组合命令
+        return $command;
+    }
+
+    public function CreateCommand($type, $content)
     {
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
-            return ' '.$content . "  >> " .$log_path;
+            return ' '.$content . "  >> ";
         } else if($type == 'http'){
-            return ' curl '.$content . " >> " .$log_path;
+            return ' curl '.$content . " >> ";
         } else {
             return false;
         }
     }
 
-    public function TimedTaskQueue($ids,$action,$OldCommand = '')
+    public function TimedTaskQueue($ids,$action)
     {
+        return true;
         try {
             $RabbitMQ = new RabbitmqService();
             $RabbitMQ->setQueueName('timed_task');
             foreach ($ids as $id) {
-                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action,'OldCommand' => $OldCommand]);
+                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
             }
             $RabbitMQ->close();
             return true;
@@ -295,13 +298,13 @@ class TimedTaskController extends CrudController
                 $res = false;
                 if($task->category == 'admin'){
                     file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
-                    $res = $this->LocalHostTask($params['action'],$task->command,$params['OldCommand']);
+                    $res = $this->LocalHostTask($params['action'],$task->command,$task->old_command);
                 } else if($task->category == 'index') {
                     file_put_contents('test.txt', "\r index yes", FILE_APPEND);
                     $serverId = Site::where('id',$task->site_id)->value('server_id');
                     $server = Server::where('id',$serverId)->first();
                     file_put_contents('test.txt', "\r server yes".$server->ip.$server->username.$server->password, FILE_APPEND);
-                    $this->ShhTask($server->ip,$server->username,$server->password,$params['action'],$task->command,$params['OldCommand']);
+                    $this->ShhTask($server->ip,$server->username,$server->password,$params['action'],$task->command,$task->old_command);
                 }
                 if($params['action'] == 'delete' && $res === true){
                     // 先删除子任务
@@ -418,5 +421,12 @@ class TimedTaskController extends CrudController
         } else {
             return false;
         }
+    }
+
+    public function MakeApiCommand($command,$path,$domain)
+    {
+        $command = str_replace('{$path}',$path,$command);
+        $command = str_replace('{$domain}',$domain,$command);
+        return $command;
     }
 }

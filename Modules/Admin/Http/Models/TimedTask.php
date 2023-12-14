@@ -10,7 +10,7 @@ class TimedTask extends Base
     protected $fillable = [
         'name', 
         'type', 
-        'content',
+        'do_command',
         'status',
         'sort',
         'log_path',
