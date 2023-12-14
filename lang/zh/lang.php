@@ -35,7 +35,7 @@ return [
     'upload_successful' => '上传成功',
     'site_undefined' => '站点不存在',
     'aliyun_oss_config_exist'   =>  '当前站点已绑定其他OSS配置，请选择其他站点',
-    
+    'task_is_undefined' => '定时任务不存在！',
     //站点
     'server_model_empty' => '服务器不存在',
     'database_model_empty' => '数据库不存在',
