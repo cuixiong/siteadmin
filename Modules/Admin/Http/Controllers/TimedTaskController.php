@@ -338,11 +338,16 @@ class TimedTaskController extends CrudController
 
     public function CreateCommand($type, $content)
     {
+        $CommonCommand = ' && echo "----------------------------------------------------------------------------"';
+        $CommonCommand .= ' && endDate=`date +"%Y-%m-%d %H:%M:%S"`';
+        $CommonCommand .= ' && echo "★[$endDate] Successful"';
+        $CommonCommand .= ' && echo "----------------------------------------------------------------------------"';
+
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
-            return ' '.$content;
+            return ' '.$content .$CommonCommand;
         } else if($type == 'http'){
-            return ' curl '.$content;
+            return ' curl '.$content.$CommonCommand;
         } else {
             return false;
         }
@@ -514,5 +519,22 @@ class TimedTaskController extends CrudController
             file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             return false;
         }
+    }
+
+    public function Logs(Request $request){
+        $id = $request->id;
+        $task = $this->ModelInstance()->find($id);
+        $command = "cat $task->log_path";
+        if($task->category == 'index'){
+            $serverId = Site::where('id',$task->site_id)->value('server_id');
+            $server = Server::where('id',$serverId)->first();
+            $ssh = new SSH2($server->ip);
+            $res = $ssh->login($server->username,$server->password);
+            if(!$res){
+                ReturnJson(false,'');
+            }
+        }
+        $content = shell_exec($command);
+        ReturnJson(true,'',$content);
     }
 }
