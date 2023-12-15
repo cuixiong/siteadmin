@@ -12,7 +12,7 @@ class AliyuncsOss
 
     private function GetUploadsExt()
     {
-        $arr = ["png","jpg","jpeg","webp","svg","pdf","txt","doc","docx"];
+        $arr = ["png","jpg","jpeg","webp","svg","pdf","txt","doc","docx",".ico"];
         return [];
     }
 

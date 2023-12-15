@@ -97,7 +97,7 @@ class TimedTaskController extends CrudController
                         $model = $this->ModelInstance();
                         foreach (explode(',', $input['site_id']) as $key => $value) {
                             $site = Site::select(['id','api_path','domain'])->find($value);
-                            $ApiLogPath = rtrim($site->api_path,'/').'/storage/log/'.$log_name;// 定义日志文件路径
+                            $ApiLogPath = rtrim($site->api_path,'/').'/storage/logs/'.$log_name;// 定义日志文件路径
                             $data = [
                                 'site_id' => $value,
                                 'do_command' => $this->MakeApiCommand($input['do_command'],$site->api_path,$site->domain),
@@ -173,7 +173,7 @@ class TimedTaskController extends CrudController
                     $childrenUpdateData = [];
                     foreach ($childrenUpdateIds as $key => $id) {
                         $site = Site::select(['api_path','domain'])->find($id);
-                        $ApiLogPath = rtrim($site->api_path,'/').'/storage/log/'.$log_name;// 定义日志文件路径
+                        $ApiLogPath = rtrim($site->api_path,'/').'/storage/logs/'.$log_name;// 定义日志文件路径
                         $updateIds[] = $childrenTasks[$id]['id'];
                         $childrenUpdateData[] = array_merge([
                             'site_id' => $id,
@@ -191,7 +191,7 @@ class TimedTaskController extends CrudController
                     $model = $this->ModelInstance();
                     foreach ($childrenInsertIds as $key => $id) {
                         $site = Site::select(['api_path','domain'])->find($id);
-                        $ApiLogPath = rtrim($site->api_path,'/').'/storage/log/'.$log_name;// 定义日志文件路径
+                        $ApiLogPath = rtrim($site->api_path,'/').'/storage/logs/'.$log_name;// 定义日志文件路径
                         $InsertData = array_merge([
                             'site_id' => $id,
                             'do_command' => $this->MakeApiCommand($record->do_command,$site->api_path,$site->domain),
