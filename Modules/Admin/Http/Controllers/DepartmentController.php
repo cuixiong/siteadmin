@@ -76,6 +76,10 @@ class DepartmentController extends CrudController
     {
         try {
             $this->ValidateInstance($request);
+            $count = $this->ModelInstance()->where('id','<>', $request->id)->where('name',$request->name)->count();
+            if($count > 0){
+                ReturnJson(FALSE,trans('lang.name_exists'));
+            }
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
             if (!$record->update($input)) {

@@ -35,7 +35,14 @@ return [
     'upload_successful' => '上传成功',
     'site_undefined' => '站点不存在',
     'aliyun_oss_config_exist'   =>  '当前站点已绑定其他OSS配置，请选择其他站点',
-    
+    'task_is_undefined' => '定时任务不存在！',
+    'role_name_empty' => '角色名称为空',
+    'role_name_exists' => '角色名称已存在',
+    'status_empty' => '状态为空',
+    'data_scope_empty' => '部门数据为空',
+    'sort_empty' => '排序为空',
+    'is_super' => '是否是超级管理员选项为空',
+    'name_exists' => '名称已存在',
     //站点
     'server_model_empty' => '服务器不存在',
     'database_model_empty' => '数据库不存在',
