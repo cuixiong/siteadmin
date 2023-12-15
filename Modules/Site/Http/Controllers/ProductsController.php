@@ -2,7 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
-use App\Imports\ProductsImport;
+use App\Exports\ProductsExport;
 use App\Services\RabbitmqService;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
@@ -480,7 +480,7 @@ class ProductsController extends CrudController
             ReturnJson(TRUE, trans('lang.update_success'));
         }
     }
-    
+
     /**
      * 批量删除
      * @param $request 请求信息
@@ -517,4 +517,188 @@ class ProductsController extends CrudController
         }
     }
 
+
+    /**
+     * 批量导出
+     * @param $request 请求信息
+     */
+    public function export(Request $request)
+    {
+
+        // return Excel::download(new ProductsExport, 'products.xlsx');
+
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
+
+        // if ($ids) {
+        //     //选中
+        //     $ids = explode(',', $ids);
+        //     if (!(count($ids) > 0)) {
+        //         ReturnJson(TRUE, trans('lang.param_empty') . ':ids');
+        //     }
+        //     $model = $ModelInstance->whereIn('id', $ids);
+        // } else {
+        //     //筛选
+        //     $model = $ModelInstance->HandleWhere($model, $request);
+        // }
+        // $data = [];
+        // if ($type == 1) {
+        //     // 总数量
+        //     $data['count'] = $model->count();
+        //     ReturnJson(TRUE, trans('lang.request_success'), $data);
+        // } else {
+        // $data['result_count'] = $model->delete();
+        //查询出涉及的id，并分割加入队列
+        $idsData = $model->select('id')->pluck('id')->toArray();
+        if (!(count($idsData) > 0)) {
+            ReturnJson(TRUE, trans('lang.data_empty'));
+        }
+
+        //加入队列
+        $dirName = time() . rand(10000, 99999);
+        $dirPath = 'C:\\Users\\Administrator\\Desktop\\zqy\\' . $dirName;
+        //创建目录
+        if (!is_dir($dirPath)) {
+            @mkdir($dirPath, 0777, true);
+        }
+        $groupData = array_chunk($idsData, 100);
+        foreach ($groupData as $key => $item) {
+
+            $data = [
+                'class' => 'Modules\Site\Http\Controllers\ProductsController',
+                'method' => 'handleExport',
+                'site' => $request->header('Site') ?? '',   //站点名称
+                'data' => $item,    //传递文件路径
+                'dirPath' => $dirPath,
+                'chip' => $key,
+                // 'log_id' => $logModel->id,  //写入日志的id
+                // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
+                // 'pulisher_id' => $pulisher_id,  //出版商id
+            ];
+            $data = json_encode($data);
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('products-export'); // 设置队列名称
+            $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
+            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+            $RabbitMQ->push($data); // 推送数据
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'));
+        // }
+    }
+
+    /**
+     * 批量导出分块文件
+     * @param $params 
+     */
+    public function handleExport($params = null)
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '2048M');
+
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+
+        try {
+            //读取数据
+            $record = Products::select(['id', 'name', 'published_date'])->whereIn('id', $params['data'])->get()->makeHidden((new Products())->getAppends())->toArray();
+
+            $dirPath = $params['dirPath'];
+            $chip = $params['chip'];
+            $writer = WriterEntityFactory::createXLSXWriter();
+            $writer->openToFile($dirPath . '/' . $chip . '.xlsx');
+            foreach ($record as $key => $item) {
+                $year = date('Y', $item['published_date']);
+                if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+                    continue;
+                }
+                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
+                $record[$key]['description'] = $descriptionData['description'] ?? '';
+                $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
+                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+
+
+                $rowFromValues = WriterEntityFactory::createRowFromArray($record[$key]);
+                $writer->addRow($rowFromValues);
+            }
+            // $writer->addRows($record);
+            $writer->close();
+            // $title = array_keys($data[0]);
+            //code...
+        } catch (\Throwable $th) {
+            // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt', $th->getMessage(), FILE_APPEND);
+        }
+        if ($chip == 2) {
+
+            $data = [
+                'class' => 'Modules\Site\Http\Controllers\ProductsController',
+                'method' => 'handleMergeFile',
+                'data' => $dirPath,
+                // 'log_id' => $logModel->id,  //写入日志的id
+                // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
+                // 'pulisher_id' => $pulisher_id,  //出版商id
+            ];
+            $data = json_encode($data);
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('products-export'); // 设置队列名称
+            $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
+            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+            $RabbitMQ->push($data); // 推送数据
+        }
+    }
+
+
+    /**
+     * 批量导出合并文件
+     * @param $params 
+     */
+    public function handleMergeFile($params = null)
+    {
+        try {
+            set_time_limit(0);
+            ini_set('memory_limit', '2048M');
+
+            $existingFilePath = ['0.xlsx', '1.xlsx', '2.xlsx'];
+            $dirPath = $params['data'];
+
+            $writer = WriterEntityFactory::createXLSXWriter();
+            $writer->openToFile($dirPath . '.xlsx');
+            $style = (new StyleBuilder())->setShouldWrapText(false)->build();
+
+            foreach ($existingFilePath as $key => $path) {
+                // we need a reader to read the existing file...
+                $reader = ReaderEntityFactory::createXLSXReader();
+                $reader->setShouldPreserveEmptyRows(true);
+                $reader->open($dirPath . '/' . $path);
+
+                // let's read the entire spreadsheet...
+                foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
+                    // Add sheets in the new file, as we read new sheets in the existing one
+
+                    foreach ($sheet->getRowIterator() as $row) {
+                        // ... and copy each row into the new spreadsheet
+                        $row = WriterEntityFactory::createRowFromArray($row->toArray(), $style);
+                        $writer->addRow($row);
+                    }
+                }
+
+
+                $reader->close();
+            }
+            $writer->close();
+        } catch (\Throwable $th) {
+            // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt', $th->getTraceAsString(), FILE_APPEND);
+        }
+    }
 }

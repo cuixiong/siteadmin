@@ -9,6 +9,7 @@ return [
     'delete_error'   =>  'Delete failed',
     'update_success'   =>  'update success',
     'update_error'   =>  'Update failed',
+    'data_empty'   =>  'Data is empty',
     'eamail_success'   =>  'Eamail Successfully added',
     'eamail_error'   =>  'Eamail Update failed',
     'eamail_empty' => 'Email is empty',

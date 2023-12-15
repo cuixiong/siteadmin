@@ -10,7 +10,7 @@ class Products extends Base
     protected $table = 'product_routine';
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['category', 'country','published_date_format'];
+    protected $appends = ['category', 'country', 'published_date_format'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -46,7 +46,7 @@ class Products extends Base
     ];
 
 
-    
+
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
@@ -94,7 +94,7 @@ class Products extends Base
         if (isset($search->publisher_id) && $search->publisher_id != '') {
             $model = $model->where('publisher_id', $search->publisher_id);
         }
-        
+
         // keywords
         if (isset($search->keywords) && !empty($search->keywords)) {
             $model = $model->where('keywords', 'like', '%' . $search->keywords . '%');
@@ -104,7 +104,7 @@ class Products extends Base
         if (isset($search->url) && !empty($search->url)) {
             $model = $model->where('url', 'like', '%' . $search->url . '%');
         }
-        
+
         // sort 
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('sort', $search->sort);
@@ -159,7 +159,7 @@ class Products extends Base
         if (isset($search->show_hot) && $search->show_hot != '') {
             $model = $model->where('show_hot', $search->show_hot);
         }
-        
+
         // show_recommend 状态
         if (isset($search->show_recommend) && $search->show_recommend != '') {
             $model = $model->where('show_recommend', $search->show_recommend);
@@ -187,14 +187,14 @@ class Products extends Base
             $model = $model->where('published_date', '<=', $publishedTime[1]);
         }
 
-        
+
         // 折扣开始时间
         if (isset($search->discount_time_begin) && !empty($search->discount_time_begin)) {
             $discountTimeBegin = $search->discount_time_begin;
             $model = $model->where('discount_time_begin', '>=', $discountTimeBegin[0]);
             $model = $model->where('discount_time_begin', '<=', $discountTimeBegin[1]);
         }
-        
+
         // 折扣结束时间
         if (isset($search->discount_time_end) && !empty($search->discount_time_end)) {
             $discountTimeEnd = $search->discount_time_end;
@@ -205,7 +205,7 @@ class Products extends Base
         return $model;
     }
 
-    
+
     /**
      * 分类获取器
      */
@@ -213,7 +213,7 @@ class Products extends Base
     {
         $text = '';
         if (isset($this->attributes['category_id'])) {
-            $text = ProductsCategory::where('id', $this->attributes['category_id'])->value('name')??'';
+            $text = ProductsCategory::where('id', $this->attributes['category_id'])->value('name') ?? '';
         }
         return $text;
     }
@@ -225,20 +225,24 @@ class Products extends Base
     {
         $text = '';
         if (isset($this->attributes['country_id'])) {
-            $text = Region::where('id', $this->attributes['country_id'])->value('name')??'';
+            $text = Region::where('id', $this->attributes['country_id'])->value('name') ?? '';
         }
         return $text;
     }
-    
+
     /**
      * 出版时间获取器
      */
     public function getPublishedDateFormatAttribute()
     {
-        return date('Y-m-d H:i:s',$this->attributes['published_date']);
+        $text = '';
+        if (isset($this->attributes['country_id'])) {
+            $text = date('Y-m-d H:i:s', $this->attributes['published_date']);
+        }
+        return $text;
     }
 
-    
+
     public static function publishedDateFormatYear($timestamp)
     {
 
@@ -249,7 +253,7 @@ class Products extends Base
         return $year;
     }
 
-    
+
     //可修改的字段
     public static function getBatchUpdateField()
     {

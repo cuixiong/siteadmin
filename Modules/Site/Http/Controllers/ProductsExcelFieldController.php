@@ -10,5 +10,13 @@ use Illuminate\Support\Facades\Validator;
 class ProductsExcelFieldController extends CrudController
 {
 
+
+    /**
+     * 调整排序
+     * @param Request $request
+     */
+    protected function resetSort(Request $request){
+
+    }
     
 }

@@ -76,12 +76,13 @@ class ProductsUploadLogController extends CrudController
         // }
 
         //获取表头与字段关系
-        $fieldData = ProductsExcelField::where(['status' => 1])->where('field', '<>', '')->where('sort', '>', 0)->select(['field', 'sort'])->distinct()->get()->toArray();
-        $fieldData = array_map(function ($item) {
-            $item['sort'] =  $item['sort'] - 1;
-            return $item;
-        }, $fieldData);
-        $fieldData = array_column($fieldData, 'field', 'sort');
+        $fieldData = ProductsExcelField::where(['status' => 1])->where('field', '<>', '')->select(['field'])->orderBy('sort','asc')->get()->toArray();
+        // $fieldData = array_map(function ($item) {
+        //     $item['sort'] =  $item['sort'] - 1;
+        //     return $item;
+        // }, $fieldData);
+
+        // $fieldData = array_column($fieldData, 'field', 'sort');
         // $fieldSort = array_keys($fieldData);
 
         // return $fieldSort;

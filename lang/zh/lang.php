@@ -9,6 +9,7 @@ return [
     'delete_error'   =>  '删除失败',
     'update_success'   =>  '更新成功',
     'update_error'   =>  '更新失败',
+    'data_empty'   =>  '数据不存在',
     'eamail_success'   =>  '邮箱发送成功',
     'eamail_error'   =>  '邮箱发送失败',
     'eamail_empty' => '邮箱为空',
