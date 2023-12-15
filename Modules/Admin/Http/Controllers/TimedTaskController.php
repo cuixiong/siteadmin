@@ -12,6 +12,49 @@ use phpseclib3\Net\SSH2;
 
 class TimedTaskController extends CrudController
 {
+    public $ErrorLog;
+    public function __construct()
+    {
+        $this->ErrorLog = storage_path('log').'/'.'Timed_Taks_Error.log';
+    }
+    public function list(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $model = $model->where('parent_id',0);
+            $record = $model->get();
+
+            $data = [
+                'total' => $total,
+                'list' => $record
+            ];
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
     public function store(Request $request)
     {
         try {
@@ -19,7 +62,7 @@ class TimedTaskController extends CrudController
             $input = $request->all();
             // 定义日志文件路径
             $log_name = time(). rand(10000, 99999).'.log 2>&1';
-            $input['log_path'] = $log_path = public_path().'/'.$log_name;// 本地服务器Log
+            $input['log_path'] = $log_path = storage_path('log').'/'.$log_name;// 本地服务器Log
             $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['command'] = $command. " >> " . $log_path;
             DB::beginTransaction();
@@ -53,7 +96,7 @@ class TimedTaskController extends CrudController
                         $model = $this->ModelInstance();
                         foreach (explode(',', $input['site_id']) as $key => $value) {
                             $site = Site::select(['id','api_path','domain'])->find($value);
-                            $ApiLogPath = rtrim($site->api_path,'/').'/'.$log_name;// 定义日志文件路径
+                            $ApiLogPath = rtrim($site->api_path,'/').'/storage/log/'.$log_name;// 定义日志文件路径
                             $data = [
                                 'site_id' => $value,
                                 'do_command' => $this->MakeApiCommand($input['do_command'],$site->api_path,$site->domain),
@@ -75,6 +118,7 @@ class TimedTaskController extends CrudController
             }
             ReturnJson(TRUE, trans('lang.add_success'));
         } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -87,7 +131,7 @@ class TimedTaskController extends CrudController
             $input = $request->all();
             // 定义日志文件路径
             $log_name = time(). rand(10000, 99999).'.log 2>&1';
-            $input['log_path'] = $log_path = public_path().'/'.$log_name;// 本地服务器Log
+            $input['log_path'] = $log_path = storage_path('log').'/'.$log_name;// 本地服务器Log
             $command = $this->MakeCommand($input['type'],$input['do_command'],$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['command'] = $command. " >> " . $log_path;
             $record = $this->ModelInstance()->findOrFail($request->id);
@@ -116,11 +160,8 @@ class TimedTaskController extends CrudController
                 $siteIds = $record->site_id ? explode(',', $record->site_id) : [];
                 $childrenTasks = array_column($childrenTasks,null,'site_id');
                 $childrenSiteIds = array_keys($childrenTasks);
-                // var_dump($childrenSiteIds);die;
                 $childrenUpdateIds = array_intersect($childrenSiteIds,$siteIds);
-                // var_dump($childrenUpdateIds);die;
                 $childrenInsertIds = array_diff($siteIds,$childrenSiteIds,);
-                // var_dump($childrenInsertIds);die;
                 $childrenDeleteIds = array_diff($childrenSiteIds,$siteIds);
                 $updateIds = [];
                 $insertIds = [];
@@ -131,7 +172,7 @@ class TimedTaskController extends CrudController
                     $childrenUpdateData = [];
                     foreach ($childrenUpdateIds as $key => $id) {
                         $site = Site::select(['api_path','domain'])->find($id);
-                        $ApiLogPath = rtrim($site->api_path,'/').'/'.$log_name;// 定义日志文件路径
+                        $ApiLogPath = rtrim($site->api_path,'/').'/storage/log/'.$log_name;// 定义日志文件路径
                         $updateIds[] = $childrenTasks[$id]['id'];
                         $childrenUpdateData[] = array_merge([
                             'site_id' => $id,
@@ -149,7 +190,7 @@ class TimedTaskController extends CrudController
                     $model = $this->ModelInstance();
                     foreach ($childrenInsertIds as $key => $id) {
                         $site = Site::select(['api_path','domain'])->find($id);
-                        $ApiLogPath = rtrim($site->api_path,'/').'/'.$log_name;// 定义日志文件路径
+                        $ApiLogPath = rtrim($site->api_path,'/').'/storage/log/'.$log_name;// 定义日志文件路径
                         $InsertData = array_merge([
                             'site_id' => $id,
                             'do_command' => $this->MakeApiCommand($record->do_command,$site->api_path,$site->domain),
@@ -183,6 +224,7 @@ class TimedTaskController extends CrudController
             }
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -204,29 +246,81 @@ class TimedTaskController extends CrudController
                 ReturnJson(FALSE,trans('lang.delete_error'));
             }
         } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             ReturnJson(FALSE, $e->getMessage());
         }
     }
 
     public function ExecuteTask(Request $request)
     {
-        $id = $request->id;
-        $task = $this->ModelInstance()->find($id);
-        if(empty($task)){
-            ReturnJson(FALSE, trans('lang.task_is_undefined'));
+        try {
+            $id = $request->id;
+            $task = $this->ModelInstance()->find($id);
+            if(empty($task)){
+                ReturnJson(FALSE, trans('lang.task_is_undefined'));
+            }
+            $ids = [];
+            if($task->category == 'index' && $task->parent_id == '0'){
+                $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->where('status',1)->pluck('id')->toArray();
+                $ids = array_merge($ids,$childrenTaskIds);
+            } else {
+                $ids[] = $task->id;
+            }
+            $res = $this->TimedTaskQueue($ids,'do');
+            $res ? ReturnJson(TRUE, trans('lang.request_success')) : ReturnJson(FALSE, trans('lang.request_error'));
+        } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
+            ReturnJson(FALSE, $e->getMessage());
         }
-        $ids = [];
-        if($task->category == 'index' && $task->parent_id == '0'){
-            $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->where('status',1)->pluck('id')->toArray();
-            $ids = array_merge($ids,$childrenTaskIds);
-        } else {
-            $ids[] = $task->id;
-        }
-        file_put_contents('test.txt',"\r".json_encode($ids),FILE_APPEND);
-        $res = $this->TimedTaskQueue($ids,'do');
-        $res ? ReturnJson(TRUE, trans('lang.request_success')) : ReturnJson(FALSE, trans('lang.request_error'));
     }
 
+    public function changeStatus(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $id = $request->id;
+            $status = $request->status;
+            if(!in_array($status,[0,1])){
+                DB::rollBack();
+                ReturnJson(false,trans('lang.request_error'));
+            }
+            $task = $this->ModelInstance()->find($id);
+            $task->status = $status;
+            $task->save();
+            $ids = [];
+            if($task->category == 'index' && $task->parent_id == '0'){
+                $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->pluck('id')->toArray();
+                $ids = array_merge($ids,$childrenTaskIds);
+                $this->ModelInstance()->where('parent_id',$id)->update(['status' => $status]);
+            } else {
+                $ids[] = $id;
+            }
+            $action = $status == 0 ? 'stop' : 'add';
+            DB::commit();
+            $res = $this->TimedTaskQueue($ids,$action);
+            $res ? ReturnJson(true,trans('lang.request_success')) : ReturnJson(true,trans('lang.request_error'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
+            ReturnJson(false,$e->getMessage());
+        }
+    }
+
+    public function TimedTaskQueue($ids,$action)
+    {
+        try {
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('timed_task');
+            foreach ($ids as $id) {
+                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
+            }
+            $RabbitMQ->close();
+            return true;
+        } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
+            return false;
+        }
+    }
 
     public function MakeCommand($type,$doCommand,$time_type,$day,$hour,$minute,$week_day){
         $command = $this->CreateCommand($type,$doCommand);
@@ -249,22 +343,6 @@ class TimedTaskController extends CrudController
         } else if($type == 'http'){
             return ' curl '.$content;
         } else {
-            return false;
-        }
-    }
-
-    public function TimedTaskQueue($ids,$action)
-    {
-        try {
-            $RabbitMQ = new RabbitmqService();
-            $RabbitMQ->setQueueName('timed_task');
-            foreach ($ids as $id) {
-                $RabbitMQ->SimpleModePush('Modules\Admin\Http\Controllers\TimedTaskController','DoTimedTask',['id' => $id, 'action' => $action]);
-            }
-            $RabbitMQ->close();
-            return true;
-        } catch (\Exception $e) {
-            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
             return false;
         }
     }
@@ -301,99 +379,76 @@ class TimedTaskController extends CrudController
         return $CronTime;
     }
 
+    public function MakeApiCommand($command,$path,$domain)
+    {
+        $command = str_replace('{$path}',$path,$command);
+        $command = str_replace('{$domain}',$domain,$command);
+        return $command;
+    }
+
     public function DoTimedTask($params = null)
     {
         try {
             if($params){
                 $params = $params['data'];
-                file_put_contents('test.txt', "\r".json_encode($params), FILE_APPEND);
                 $task = TimedTask::find($params['id']);
-                file_put_contents('test.txt', "\r".json_encode($task), FILE_APPEND);
-                $res = false;
                 if($task->category == 'admin'){
-                    file_put_contents('test.txt', "\r admin yes", FILE_APPEND);
                     $command = $params['action'] == 'do' ? $this->CreateCommand($task->type,$task->do_command) : $task->command;
-                    $res = $this->LocalHostTask($params['action'],$command,$task->old_command);
+                    $this->LocalHostTask($params['action'],$command,$task->old_command);
                 } else if($task->category == 'index' && $task->parent_id != '0') {
-                    file_put_contents('test.txt', "\r index yes", FILE_APPEND);
                     $serverId = Site::where('id',$task->site_id)->value('server_id');
                     $server = Server::where('id',$serverId)->first();
-                    file_put_contents('test.txt', "\r server yes".$server->ip.$server->username.$server->password, FILE_APPEND);
                     $site = Site::select(['api_path','domain'])->where('id',$task->site_id)->first();
                     $command = $params['action'] == 'do' ? $this->MakeApiCommand($this->CreateCommand($task->type,$task->do_command),$site->api_path,$site->domain) : $task->command;
-                    $res = $this->ShhTask($server->ip,$server->username,$server->password,$params['action'],$command,$task->old_command);
+                    $this->ShhTask($server->ip,$server->username,$server->password,$params['action'],$command,$task->old_command);
                 }
-                file_put_contents('test.txt', "\r action res = ".$res, FILE_APPEND);
-                if($params['action'] == 'delete' && $res === true){
+                if($params['action'] == 'delete'){
                     // 先删除子任务
                     TimedTask::where('parent_id',$params['id'])->delete();
                     // 删除自身任务
                     TimedTask::where('id',$params['id'])->delete();
                 }
-                file_put_contents('test.txt', "\r admin no", FILE_APPEND);
                 return true;
             }
         } catch (\Exception $e) {
-            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             return false;
         }
     }
 
     public function LocalHostTask($doAction,$command,$OldCommand = '')
     {
-        file_put_contents('error_log.txt', "\r".$command."\r".$doAction."\r".$OldCommand, FILE_APPEND);
         try {
             $CrontabList = shell_exec('crontab -l');
-            file_put_contents('test.txt', "\r CrontabList = ".$CrontabList, FILE_APPEND);
             $CrontabList = trim($CrontabList,'');
-            file_put_contents('test.txt', "\r CrontabList trim = ".$CrontabList, FILE_APPEND);
 
             $CrontabList = array_filter(explode('\n',$CrontabList));
-            file_put_contents('test.txt', "\r CrontabList array_filter = ".json_encode($CrontabList), FILE_APPEND);
 
             $CrontabList = array_map(function($v){
                 $v = trim($v,' ');
                 $v = trim($v,"\n");
                 return $v;
             },$CrontabList);
-            file_put_contents('test.txt', "\r CrontabList array_map = ".json_encode($CrontabList), FILE_APPEND);
 
             switch ($doAction) {
                 case 'add':
-                    file_put_contents('test.txt', "\r add yes", FILE_APPEND);
                     if (!in_array($command, $CrontabList)){
-                        file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
                         $CrontabList = implode("\n",$CrontabList);
-                        file_put_contents('test.txt', "\r CrontabList impolde".$CrontabList, FILE_APPEND);
                         $command = 'echo "'.$CrontabList.PHP_EOL.trim($command,'').'" | crontab -';
-                        file_put_contents('error_log.txt', "\r add command".$command, FILE_APPEND);
                     }
                 break;
                 case 'update':
                     $CrontabList = implode("\n",$CrontabList);
-                    file_put_contents('test.txt', "\r CrontabList impolde".$CrontabList, FILE_APPEND);
-                    file_put_contents('test.txt', "\r update yes", FILE_APPEND);
-                    file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
-                    file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
                     $command = str_replace($OldCommand, $command, $CrontabList);
-                    file_put_contents('test.txt', "\r command str_replace=".$command, FILE_APPEND);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
-                    file_put_contents('test.txt', "\r command do=".$command, FILE_APPEND);
                 break;
                 case 'delete':
                 case 'stop':
                     $CrontabList = implode("\n",$CrontabList);
-                    file_put_contents('test.txt', "\r CrontabList impolde".$CrontabList, FILE_APPEND);
-                    file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
-                    file_put_contents('test.txt', "\r command = ".$command, FILE_APPEND);
                     $command = str_replace($command, '', $CrontabList);
-                    file_put_contents('test.txt', "\r command str_replace=".$command, FILE_APPEND);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
-                    file_put_contents('test.txt', "\r command do=".$command, FILE_APPEND);
                 break;
                 case 'do':
-                    file_put_contents('test.txt', "\r do yes", FILE_APPEND);
-                    file_put_contents('test.txt', "\r do command=".$command, FILE_APPEND);
                 break;
                 
                 default:
@@ -402,62 +457,8 @@ class TimedTaskController extends CrudController
             }
             $result = shell_exec($command);
             return true;
-            // $taskList = shell_exec('crontab -l');
-            // $taskList = trim($taskList,'');
-            // $taskListArr = array_filter(explode('\n',$taskList));
-            // $taskListArr = array_map(function($v){
-            //     return trim($v,'');
-            // },$taskListArr);
-            // if($doAction == 'add'){
-            //     file_put_contents('test.txt', "\r add yes", FILE_APPEND);
-            //     file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
-            //     if (!in_array($command, $taskListArr)){
-            //         file_put_contents('test.txt', "\r add to in array yes", FILE_APPEND);
-            //         $taskListArr = implode("\n",$taskListArr);
-            //         file_put_contents('test.txt', "\r".json_encode($taskListArr), FILE_APPEND);
-            //         $command = 'echo "'.$taskListArr.PHP_EOL.trim($command,'').'" | crontab -';
-            //         file_put_contents('error_log.txt', "\r".$command, FILE_APPEND);
-            //         shell_exec($command);
-            //     }
-            // } else if($doAction == 'update') {
-            //     file_put_contents('test.txt', "\r update yes", FILE_APPEND);
-            //     file_put_contents('test.txt', "\r OldCommand=".$OldCommand, FILE_APPEND);
-            //     file_put_contents('test.txt', "\r command=".$command, FILE_APPEND);
-            //     file_put_contents('test.txt', "\r taskList=".$taskList, FILE_APPEND);
-            //     $taskList = str_replace($OldCommand, $command, $taskList);
-            //     file_put_contents('test.txt', "\r NewTaskList=".$taskList, FILE_APPEND);
-            //     $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
-            //     if($result === null){
-            //         return true;
-            //     } else {
-            //         return false;
-            //     }
-            // } else if($doAction == 'delete' || $doAction == 'stop') {
-            //     file_put_contents('test.txt', "\r delete yes", FILE_APPEND);
-            //     file_put_contents('test.txt', "\r old = ".$taskList, FILE_APPEND);
-            //     $taskList = str_replace($command, '', $taskList);
-            //     file_put_contents('test.txt', "\r new = ".$taskList, FILE_APPEND);
-            //     $result = shell_exec('echo "'.trim($taskList,'').'" | crontab -');
-            //     if($result === null || $result == ''){
-            //         return true;
-            //     } else {
-            //         return false;
-            //     }
-            // } else if($doAction == 'do'){
-            //     file_put_contents('test.txt', "\r do yes", FILE_APPEND);
-            //     file_put_contents('test.txt', "\r do command=".$command, FILE_APPEND);
-            //     $result = shell_exec($command);
-            //     if($result === null){
-            //         return true;
-            //     } else {
-            //         return false;
-            //     }
-            // } else {
-            //     file_put_contents('test.txt', "\r type error", FILE_APPEND);
-            //     return false;
-            // }
         } catch (\Exception $e) {
-            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             return false;
         }
     }
@@ -465,68 +466,41 @@ class TimedTaskController extends CrudController
     public function ShhTask($ip,$username,$password,$doAction,$command,$OldCommand = '')
     {
         try {
-            file_put_contents('test.txt', "\r ssh ip =".$ip, FILE_APPEND);
-            file_put_contents('test.txt', "\r ssh username =".$username, FILE_APPEND);
-            file_put_contents('test.txt', "\r ssh password =".$password, FILE_APPEND);
-            file_put_contents('test.txt', "\r ssh doAction =".$doAction, FILE_APPEND);
-            file_put_contents('test.txt', "\r ssh command =".$command, FILE_APPEND);
-            file_put_contents('test.txt', "\r ssh OldCommand =".$OldCommand, FILE_APPEND);
             $ssh = new SSH2($ip);
             $res = $ssh->login($username,$password);
             if(!$res){
                 return false;
             }
             $CrontabList = $ssh->exec('crontab -l');
-            file_put_contents('test.txt', "\r shh CrontabList = ".$CrontabList, FILE_APPEND);
             $CrontabList = trim($CrontabList,'');
-            file_put_contents('test.txt', "\r shh CrontabList trim = ".$CrontabList, FILE_APPEND);
 
             $CrontabList = array_filter(explode('\n',$CrontabList));
-            file_put_contents('test.txt', "\r shh CrontabList array_filter = ".json_encode($CrontabList), FILE_APPEND);
 
             $CrontabList = array_map(function($v){
                 $v = trim($v,' ');
                 $v = trim($v,"\n");
                 return $v;
             },$CrontabList);
-            file_put_contents('test.txt', "\r shh CrontabList array_map = ".json_encode($CrontabList), FILE_APPEND);
 
             switch ($doAction) {
                 case 'add':
-                    file_put_contents('test.txt', "\r shh add yes", FILE_APPEND);
                     if (!in_array($command, $CrontabList)){
-                        file_put_contents('test.txt', "\r shh add to in array yes", FILE_APPEND);
                         $CrontabList = implode("\n",$CrontabList);
-                        file_put_contents('test.txt', "\r shh CrontabList impolde".$CrontabList, FILE_APPEND);
                         $command = 'echo "'.$CrontabList.PHP_EOL.trim($command,'').'" | crontab -';
-                        file_put_contents('error_log.txt', "\r shh add command".$command, FILE_APPEND);
                     }
                 break;
                 case 'update':
                     $CrontabList = implode("\n",$CrontabList);
-                    file_put_contents('test.txt', "\r shh CrontabList impolde".$CrontabList, FILE_APPEND);
-                    file_put_contents('test.txt', "\r shh update yes", FILE_APPEND);
-                    file_put_contents('test.txt', "\r shh OldCommand=".$OldCommand, FILE_APPEND);
-                    file_put_contents('test.txt', "\r shh command=".$command, FILE_APPEND);
                     $command = str_replace($OldCommand, $command, $CrontabList);
-                    file_put_contents('test.txt', "\r shh command str_replace=".$command, FILE_APPEND);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
-                    file_put_contents('test.txt', "\r shh command do=".$command, FILE_APPEND);
                 break;
                 case 'delete':
                 case 'stop':
                     $CrontabList = implode("\n",$CrontabList);
-                    file_put_contents('test.txt', "\r shh CrontabList impolde".$CrontabList, FILE_APPEND);
-                    file_put_contents('test.txt', "\r shh delete yes", FILE_APPEND);
-                    file_put_contents('test.txt', "\r shh command = ".$command, FILE_APPEND);
                     $command = str_replace($command, '', $CrontabList);
-                    file_put_contents('test.txt', "\r shh command str_replace=".$command, FILE_APPEND);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
-                    file_put_contents('test.txt', "\r shh command do=".$command, FILE_APPEND);
                 break;
                 case 'do':
-                    file_put_contents('test.txt', "\r shh do yes", FILE_APPEND);
-                    file_put_contents('test.txt', "\r shh do command=".$command, FILE_APPEND);
                 break;
                 
                 default:
@@ -535,133 +509,9 @@ class TimedTaskController extends CrudController
             }
             $result = $ssh->exec($command);
             return true;
-            // $taskList = $ssh->exec('crontab -l');
-            // file_put_contents('test.txt', "\r totalTask=".$taskList, FILE_APPEND);
-            // if($doAction == 'add'){
-            //     file_put_contents('test.txt', "\r add=yes", FILE_APPEND);
-            //     $taskListArr = array_filter(explode('\n',$taskList));
-            //     if (!in_array($command, $taskListArr)){
-            //         file_put_contents('test.txt', "\r add in_array=yes", FILE_APPEND);
-            //         $command = 'echo "'.$taskList.PHP_EOL.trim($command,'').'" | crontab -';
-            //         file_put_contents('test.txt', "\r add shh command=".$command, FILE_APPEND);
-            //         $ssh->exec($command);
-            //     }
-            //     return true;
-            // } else if($doAction == 'update') {
-            //     file_put_contents('test.txt', "\r update shh OldCommand=".$OldCommand, FILE_APPEND);
-            //     file_put_contents('test.txt', "\r update shh command=".$command, FILE_APPEND);
-            //     file_put_contents('test.txt', "\r update shh taskList=".$taskList, FILE_APPEND);
-            //     $taskList = str_replace($OldCommand, $command, $taskList);
-            //     file_put_contents('test.txt', "\r update shh NewTaskList=".$taskList, FILE_APPEND);
-            //     $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
-            //     if($result === null){
-            //         return true;
-            //     } else {
-            //         return false;
-            //     }
-            // } else if($doAction == 'delete' || $doAction == 'stop') {
-            //     file_put_contents('test.txt', "\r delete shh command=".$command, FILE_APPEND);
-            //     file_put_contents('test.txt', "\r delete shh taskList=".$taskList, FILE_APPEND);
-            //     $taskList = str_replace($command, '', $taskList);
-            //     file_put_contents('test.txt', "\r delete shh NewTaskList=".$taskList, FILE_APPEND);
-            //     $result = $ssh->exec('echo "'.trim($taskList,'').'" | crontab -');
-            //     file_put_contents('test.txt', "\r delete shh result=".$result, FILE_APPEND);
-            //     if($result === null){
-            //         return true;
-            //     } else {
-            //         return false;
-            //     }
-            // } else if($doAction == 'do') {
-            //     file_put_contents('test.txt', "\r ssh do yes", FILE_APPEND);
-            //     file_put_contents('test.txt', "\r ssh do command=".$command, FILE_APPEND);
-            //     $result = $ssh->exec($command);
-            //     if($result === null){
-            //         return true;
-            //     } else {
-            //         return false;
-            //     }
-            // } else {
-            //     return false;
-            // }
         } catch (\Exception $e) {
-            file_put_contents('error_log.txt', "\r".json_encode($e->getMessage()), FILE_APPEND);
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
             return false;
-        }
-    }
-
-    public function MakeApiCommand($command,$path,$domain)
-    {
-        $command = str_replace('{$path}',$path,$command);
-        $command = str_replace('{$domain}',$domain,$command);
-        return $command;
-    }
-
-    public function changeStatus(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-            $id = $request->id;
-            $status = $request->status;
-            if(!in_array($status,[0,1])){
-                DB::rollBack();
-                ReturnJson(false,trans('lang.request_error'));
-            }
-            $task = $this->ModelInstance()->find($id);
-            $task->status = $status;
-            $task->save();
-            $ids = [];
-            if($task->category == 'index' && $task->parent_id == '0'){
-                $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->pluck('id')->toArray();
-                $ids = array_merge($ids,$childrenTaskIds);
-                $this->ModelInstance()->where('parent_id',$id)->update(['status' => $status]);
-            } else {
-                $ids[] = $id;
-            }
-            $action = $status == 0 ? 'stop' : 'add';
-            DB::commit();
-            $res = $this->TimedTaskQueue($ids,$action);
-            $res ? ReturnJson(true,trans('lang.request_success')) : ReturnJson(true,trans('lang.request_error'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            ReturnJson(false,$e->getMessage());
-        }
-    }
-
-    public function list(Request $request)
-    {
-        try {
-            $this->ValidateInstance($request);
-            $ModelInstance = $this->ModelInstance();
-            $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request);
-            // 总数量
-            $total = $model->count();
-            // 查询偏移量
-            if (!empty($request->pageNum) && !empty($request->pageSize)) {
-                $model->offset(($request->pageNum - 1) * $request->pageSize);
-            }
-            // 查询条数
-            if (!empty($request->pageSize)) {
-                $model->limit($request->pageSize);
-            }
-            $model = $model->select($ModelInstance->ListSelect);
-            // 数据排序
-            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
-            } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
-            }
-            $model = $model->where('parent_id',0);
-            $record = $model->get();
-
-            $data = [
-                'total' => $total,
-                'list' => $record
-            ];
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
-        } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
         }
     }
 }
