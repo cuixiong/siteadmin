@@ -197,8 +197,6 @@ class TimedTaskController extends CrudController
             }
             $childrenIds = $this->ModelInstance()->whereIn('parent_id', $ids)->pluck('id')->toArray();
             $ids = array_merge($ids, $childrenIds);
-            // index类型的父级定时任务此处删除
-            $this->ModelInstance()->whereIn('id',$ids)->where('category','index')->where('parent_id',0)->delete();
             $res = $this->TimedTaskQueue($ids,'delete');
             if($res === true){
                 ReturnJson(TRUE, trans('lang.delete_success'));
@@ -327,7 +325,6 @@ class TimedTaskController extends CrudController
                 }
                 file_put_contents('test.txt', "\r action res = ".$res, FILE_APPEND);
                 if($params['action'] == 'delete' && $res === true){
-                    // index类型的父级定时任务不在此处删除，因为会导致数据错乱
                     // 先删除子任务
                     TimedTask::where('parent_id',$params['id'])->delete();
                     // 删除自身任务
@@ -404,11 +401,7 @@ class TimedTaskController extends CrudController
                 break;
             }
             $result = shell_exec($command);
-            if($result === null){
-                return true;
-            } else {
-                return false;
-            }
+            return true;
             // $taskList = shell_exec('crontab -l');
             // $taskList = trim($taskList,'');
             // $taskListArr = array_filter(explode('\n',$taskList));
@@ -541,11 +534,7 @@ class TimedTaskController extends CrudController
                 break;
             }
             $result = $ssh->exec($command);
-            if($result === null){
-                return true;
-            } else {
-                return false;
-            }
+            return true;
             // $taskList = $ssh->exec('crontab -l');
             // file_put_contents('test.txt', "\r totalTask=".$taskList, FILE_APPEND);
             // if($doAction == 'add'){
