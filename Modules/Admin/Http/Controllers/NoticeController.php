@@ -1,6 +1,7 @@
 <?php
 namespace Modules\Admin\Http\Controllers;
 use Modules\Admin\Http\Controllers\CrudController;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Notice;
 use Modules\Admin\Http\Models\User;
@@ -37,5 +38,19 @@ class NoticeController extends CrudController{
     public function NewsNotice(Request $request){
         $notice = Notice::where('status',1)->select(['id','name','created_at','created_by'])->orderBy('created_at','desc')->first();
         ReturnJson(true,trans('lang.request_success'),$notice);
+    }
+
+    public function options(Request $request){
+        $options = [];
+        $codes = ['Switch_State'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        $options['User'] = (new User)->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
+        ReturnJson(TRUE,'', $options);
     }
 }
