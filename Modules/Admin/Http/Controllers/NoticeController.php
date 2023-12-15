@@ -10,7 +10,7 @@ class NoticeController extends CrudController{
 
     public function UserGetNotice(Request $request)
     {
-        $notices = Notice::where('status',1)->select(['id','name','created_at','created_by'])->orderBy('sort','asc')->orderBy('created_at','desc')->get()->toArray();
+        $notices = Notice::where('status',1)->orderBy('sort','asc')->orderBy('created_at','desc')->get()->toArray();
         $user = User::find($request->user->id);
         $noticeIds = explode(',',$user->notice_ids);
         foreach ($notices as &$notice) {
