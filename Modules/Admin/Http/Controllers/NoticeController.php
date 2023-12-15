@@ -14,7 +14,9 @@ class NoticeController extends CrudController{
         $user = User::find($request->user->id);
         $noticeIds = explode(',',$user->notice_ids);
         foreach ($notices as &$notice) {
+            $notice['time_txt'] = $this->GetDaysAgo($notice['created_at']);
             $notice['is_read'] = in_array($notice['id'],$noticeIds) ? 1 : 0;
+            $notice['created_day'] = date('Y-m-d',strtotime($notice['created_at']));
         }
         ReturnJson(true,trans('lang.request_success'),$notices);
     }
@@ -52,5 +54,20 @@ class NoticeController extends CrudController{
         }
         $options['User'] = (new User)->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
+    }
+
+    public function GetDaysAgo($time){
+        $timestamp = strtotime($time);
+        $DaysAgo = ($timestamp - time()) / (60 * 60 * 24);
+        return $DaysAgo;
+    }
+
+    public function AllRead(Request $request)
+    {
+        $notices = Notice::pluck('id')->toArray();
+        $user = User::find($request->user->id);
+        $user->notice_ids = implode(',',$notices);
+        $user->save();
+        ReturnJson(true,trans('lang.request_success'));
     }
 }
