@@ -60,9 +60,7 @@ class FileManagement extends Controller{
                         $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
                     }
                     $info['is_file'] = ['name' => $v];
-                    if($info['type'] == 'image'){
-                        $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. $path. '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
-                    }
+                    $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. $path. '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
                     $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
@@ -124,6 +122,7 @@ class FileManagement extends Controller{
                     case 'bmp':
                     case 'webp':
                     case 'svg':
+                    case 'ico':
                         return 'image';
                     case'zip':
                         return 'zip';
