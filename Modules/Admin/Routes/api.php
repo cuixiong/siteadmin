@@ -229,6 +229,7 @@ Route::middleware([
         Route::get('user-notice', [Modules\Admin\Http\Controllers\NoticeController::class, 'UserGetNotice'])->name('公告通知:用户公告列表');
         Route::post('read', [Modules\Admin\Http\Controllers\NoticeController::class, 'read'])->name('公告通知:阅读公告');
         Route::get('news-notice', [Modules\Admin\Http\Controllers\NoticeController::class, 'NewsNotice'])->name('公告通知:最新一条公告');
+        Route::get('options', [Modules\Admin\Http\Controllers\NoticeController::class, 'options'])->name('公告通知:字典数据');
     });
 
     // TimedTask 控制器
