@@ -57,8 +57,13 @@ class NoticeController extends CrudController{
     }
 
     public function GetDaysAgo($time){
-        $timestamp = strtotime($time);
+        $timestamp = strtotime(date('Y-m-d',strtotime($time)));
         $DaysAgo = ($timestamp - time()) / (60 * 60 * 24);
+        if($DaysAgo < 1){
+            return '今天';
+        } else {
+            return $DaysAgo.'天前';
+        }
         return $DaysAgo;
     }
 
