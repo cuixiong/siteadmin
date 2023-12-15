@@ -15,6 +15,7 @@ class TimedTaskController extends CrudController
     public $ErrorLog;
     public function __construct()
     {
+        parent::__construct();
         $this->ErrorLog = storage_path('log').'/'.'Timed_Taks_Error.log';
     }
     public function list(Request $request)
