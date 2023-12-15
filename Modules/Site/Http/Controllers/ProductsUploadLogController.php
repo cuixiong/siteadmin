@@ -313,7 +313,7 @@ class ProductsUploadLogController extends CrudController
                 }
                 // 忽略分类为空的数据
                 if (empty($item['category_id'])) {
-                    $details .= '【' . ($row['name'] ?? '') . '】' . $row['category_id'] . trans('lang.category_empty') . "\r\n";
+                    $details .= '【' . ($row['name'] ?? '') . '】' . $row['category_id'] . '-' . trans('lang.category_empty') . "\r\n";
                     $errorCount++;
                     continue;
                 }
@@ -324,7 +324,7 @@ class ProductsUploadLogController extends CrudController
                             || ($item['author'] == '报告翻新' && $product->author != '完成报告')
                             || ($product->author != '完成报告' && $product->author != '报告翻新'))
                     ) {
-                        $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . trans('lang.author_level') . ($product->author) . "\r\n";
+                        $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . '-' . trans('lang.author_level') . ($product->author) . "\r\n";
                         $errorCount++;
                         continue;
                     }
@@ -421,31 +421,36 @@ class ProductsUploadLogController extends CrudController
         }
         $logIdsArray = explode(',', $logIds);
         // return $logIdsArray;
-        $logData = ProductsUploadLog::whereIn('id', $logIdsArray)->get();
+        $logData = ProductsUploadLog::whereIn('id', $logIdsArray)->get()->toArray();
         $data = [
             'result' => true,
             'msg' => '',
         ];
         $text = '';
+        $updateTime = 0;
         foreach ($logData as $key => $value) {
             if ($value['state'] != ProductsUploadLog::UPLOAD_COMPLETE) {
                 $data['result'] = false;
             }
+            $updatedTimestamp = strtotime($value['updated_at']);
+            if ($updatedTimestamp > $updateTime) {
+                $updateTime = $updatedTimestamp;
+            }
             switch ($value['state']) {
                 case ProductsUploadLog::UPLOAD_INIT:
-                    $text .= '【'.$value['file'].'】'.'正在打开文件'."\r\n";
+                    $text .= '【' . $value['file'] . '】' . '正在加载中...' . "\r\n";
                     break;
 
                 case ProductsUploadLog::UPLOAD_READY:
-                    $text .= '【'.$value['file'].'】'.'正在处理'."\r\n";
+                    $text .= '【' . $value['file'] . '】' . '正在等待执行...' . "\r\n";
                     break;
 
                 case ProductsUploadLog::UPLOAD_RUNNING:
-                    $text .= '【'.$value['file'].'】'.'进度：'.($value['insert_count']+$value['update_count']+$value['error_count']).'/'.$value['count']."\r\n";
+                    $text .= '【' . $value['file'] . '】' . '运行中,进度：' . ($value['insert_count'] + $value['update_count'] + $value['error_count']) . '/' . $value['count'] . "\r\n";
                     break;
 
                 case ProductsUploadLog::UPLOAD_COMPLETE:
-                    $text .= '【'.$value['file'].'】'.'完成'."\r\n";
+                    $text .= '【' . $value['file'] . '】' . '完成' . "\r\n";
                     break;
 
                 default:
@@ -454,6 +459,14 @@ class ProductsUploadLogController extends CrudController
             }
         }
         $data['msg'] = $text;
+        //五分钟没反应则提示
+        if (time() > $updateTime + 60 * 5) {
+
+            $data = [
+                'result' => true,
+                'msg' => '超时',
+            ];
+        }
 
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);

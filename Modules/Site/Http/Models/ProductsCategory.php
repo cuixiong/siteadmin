@@ -157,4 +157,5 @@ class ProductsCategory extends Base
 
         return $model;
     }
+
 }

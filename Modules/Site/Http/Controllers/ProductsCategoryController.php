@@ -13,6 +13,7 @@ use Modules\Admin\Http\Models\ListStyle;
 class ProductsCategoryController extends CrudController
 {
 
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -27,7 +28,7 @@ class ProductsCategoryController extends CrudController
                 $filed = ['name as label', 'value'];
             }
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
-            
+
             $data['show_home'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
 
             $data['discount_type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
@@ -69,7 +70,7 @@ class ProductsCategoryController extends CrudController
             } elseif ($type == 2) {
                 $record->discount = 100;
                 $record->discount_amount = $value;
-            } 
+            }
             // else {
             //     throw new \Exception(trans('lang.update_error') . ':discount_type is out of range');
             // }
@@ -97,9 +98,9 @@ class ProductsCategoryController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
 
-            
+
+
     /**
      * 查询列表页
      * @param $request 请求信息
@@ -114,8 +115,9 @@ class ProductsCategoryController extends CrudController
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
+            $modelCount = clone $model;
             // 总数量
-            $total = $model->count();
+            $total = $modelCount->where('pid', 0)->count();
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -132,10 +134,49 @@ class ProductsCategoryController extends CrudController
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
+            $modelLevel2 = clone $model;
+            $modelLevel3 = clone $model;
 
-            $record = $model->get();
+            $model = $model->where('pid', 0);
+            $record = $model->get()->toArray();
+            //有空再改成递归= =
+            //第二级数据
+            $recordLevel2 = [];
+            if (count($record) > 0) {
+                $pidLevel2Array = array_column($record, 'id');
+                $recordLevel2 = $modelLevel2->whereIn('pid', $pidLevel2Array)->get()->toArray();
+            }
+            //第三级数据
+            $recordLevel3 = [];
+            if (count($recordLevel2) > 0) {
+                $pidLevel3Array = array_column($recordLevel2, 'pid');
+                $recordLevel3 = $modelLevel3->whereIn('pid', $pidLevel3Array)->get()->toArray();
+            }
 
+            //转化以pid为下标
+            $recordLevel3 = collect($recordLevel3)->groupBy('pid');
+
+            if (count($recordLevel2) > 0) {
+                foreach ($recordLevel2 as $key => $item) {
+                    $recordLevel2[$key]['children'] = [];
+                    if (isset($recordLevel3[$item['id']])) {
+                        $recordLevel2[$key]['children'] = $recordLevel3[$item['id']];
+                    }
+                }
+            }
             
+            //转化以pid为下标
+            $recordLevel2 = collect($recordLevel2)->groupBy('pid');
+            if (count($record) > 0) {
+                foreach ($record as $key => $item) {
+                    $record[$key]['children'] = [];
+                    if (isset($recordLevel2[$item['id']])) {
+                        $record[$key]['children'] = $recordLevel2[$item['id']];
+                    }
+                }
+            }
+
+
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
