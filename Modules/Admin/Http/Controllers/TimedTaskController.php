@@ -139,13 +139,13 @@ class TimedTaskController extends CrudController
             DB::beginTransaction();
             $this->ValidateInstance($request);
             $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
             // 随机生成任务ID
-            $input['task_id'] = $task_id = $this->generateRandomString();
+            $task_id = $record->task_id;
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
             $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
-            $record = $this->ModelInstance()->findOrFail($request->id);
             $input['old_command'] = $record->command;
             // 更新父任务
             if (!$record->update($input)) {   
@@ -185,7 +185,7 @@ class TimedTaskController extends CrudController
                     foreach ($childrenUpdateIds as $key => $id) {
                         $site = Site::select(['api_path','domain'])->find($id);
                         $updateIds[] = $childrenTasks[$id]['id'];
-                        $childTaskId = $this->generateRandomString();
+                        $childTaskId = $childrenTasks[$id]['task_id'];
                         $childDoCommand = $this->MakeApiCommand($do_command,$site->api_path,$site->domain);
                         $childLogPath = $this->TaskPath.$childTaskId.'.log 2>&1';
                         $childrenUpdateData[] = array_merge([
@@ -209,6 +209,7 @@ class TimedTaskController extends CrudController
                         $childDoCommand = $this->MakeApiCommand($do_command,$site->api_path,$site->domain);
                         $childLogPath = $this->TaskPath.$childTaskId.'.log 2>&1';
                         $InsertData = array_merge([
+                            'task_id' => $childTaskId,
                             'site_id' => $id,
                             'old_command' => "",
                             'do_command' => $childDoCommand,
