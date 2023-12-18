@@ -66,6 +66,9 @@ class TimedTaskController extends CrudController
             $input['task_id'] = $task_id = $this->generateRandomString();
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
             $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
+            if($do_command == false){
+                ReturnJson(FALSE, trans('lang.add_error'));
+            }
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
             DB::beginTransaction();
@@ -142,11 +145,11 @@ class TimedTaskController extends CrudController
             $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
-            DB::beginTransaction();
             $record = $this->ModelInstance()->findOrFail($request->id);
             $input['old_command'] = $record->command;
             // 更新父任务
-            if (!$record->update($input)) {                                                                                                                                             
+            if (!$record->update($input)) {   
+                DB::rollback();                                                                                                                                          
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
             // 更新子任务
@@ -240,6 +243,7 @@ class TimedTaskController extends CrudController
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
+            DB::rollback();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -563,12 +567,16 @@ class TimedTaskController extends CrudController
                         file_put_contents($this->ErrorLog,"\r".$command,FILE_APPEND);
                         $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
                         shell_exec($FileCommand);
+                        // 设置文件权限
+                        $command = "chmod 700 $this->TaskPath.$task->task_id";
+                        shell_exec($command);
                     }
                 break;
                 case 'update':
                     $CrontabList = implode("\n",$CrontabList);
                     $command = str_replace($task->OldCommand, $task->command, $CrontabList);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
+                    shell_exec("cat /dev/null > $this->TaskPath.$task->task_id");
                     $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
                     shell_exec($FileCommand);
                 break;
