@@ -22,7 +22,7 @@ class ProductsCategoryController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            if(empty($input['pid'])){
+            if (empty($input['pid'])) {
                 $input['pid'] = 0;
             }
             $record = $this->ModelInstance()->create($input);
@@ -34,7 +34,7 @@ class ProductsCategoryController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
+
     /**
      * AJax单个更新
      * @param $request 请求信息
@@ -44,7 +44,7 @@ class ProductsCategoryController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            if(empty($input['pid'])){
+            if (empty($input['pid'])) {
                 $input['pid'] = 0;
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
@@ -177,48 +177,16 @@ class ProductsCategoryController extends CrudController
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-            $modelLevel2 = clone $model;
-            $modelLevel3 = clone $model;
 
             $model = $model->where('pid', 0);
             $record = $model->get()->toArray();
-            //有空再改成递归= =
-            //第二级数据
-            $recordLevel2 = [];
-            if (count($record) > 0) {
-                $pidLevel2Array = array_column($record, 'id');
-                $recordLevel2 = $modelLevel2->whereIn('pid', $pidLevel2Array)->get()->toArray();
-            }
-            //第三级数据
-            $recordLevel3 = [];
-            if (count($recordLevel2) > 0) {
-                $pidLevel3Array = array_column($recordLevel2, 'id');
-                $recordLevel3 = $modelLevel3->whereIn('pid', $pidLevel3Array)->get()->toArray();
-            }
 
-            //转化以pid为下标
-            $recordLevel3 = collect($recordLevel3)->groupBy('pid');
 
-            if (count($recordLevel2) > 0) {
-                foreach ($recordLevel2 as $key => $item) {
-                    $recordLevel2[$key]['children'] = [];
-                    if (isset($recordLevel3[$item['id']])) {
-                        $recordLevel2[$key]['children'] = $recordLevel3[$item['id']];
-                    }
-                }
+            //pid需要改成多级结构
+            foreach ($record as $key => $item) {
+                $record[$key]['pid_array'] = [$item['pid']];
             }
-
-            //转化以pid为下标
-            $recordLevel2 = collect($recordLevel2)->groupBy('pid');
-            if (count($record) > 0) {
-                foreach ($record as $key => $item) {
-                    $record[$key]['children'] = [];
-                    if (isset($recordLevel2[$item['id']])) {
-                        $record[$key]['children'] = $recordLevel2[$item['id']];
-                    }
-                }
-            }
-
+            $record = (new ProductsCategory())->tree($record, 'pid', []);
 
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
@@ -246,12 +214,12 @@ class ProductsCategoryController extends CrudController
         $model = $ModelInstance->query();
         $modelLevel2 = clone $model;
         $model = $model->where('pid', $id);
-        $data = $model->select(['id as value','name as label'])->orderby('sort', 'asc')->get()->toArray();
+        $data = $model->select(['id as value', 'name as label'])->orderby('sort', 'asc')->get()->toArray();
         //第二级数据
         $recordLevel2 = [];
         if (count($data) > 0) {
             $pidLevel2Array = array_column($data, 'value');
-            $recordLevel2 = $modelLevel2->select(['id as value','name as label','pid'])->whereIn('pid', $pidLevel2Array)->orderby('sort', 'asc')->get()->toArray();
+            $recordLevel2 = $modelLevel2->select(['id as value', 'name as label', 'pid'])->whereIn('pid', $pidLevel2Array)->orderby('sort', 'asc')->get()->toArray();
             $recordLevel2 = collect($recordLevel2)->groupBy('pid');
         }
         if (count($data) > 0) {

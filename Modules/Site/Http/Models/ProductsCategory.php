@@ -38,7 +38,7 @@ class ProductsCategory extends Base
         'sort' => 100,
     ];
 
-    
+
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
@@ -119,7 +119,7 @@ class ProductsCategory extends Base
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
         }
-        
+
         //show_home 状态
         if (isset($search->show_home) && $search->show_home != '') {
             $model = $model->where('show_home', $search->show_home);
@@ -140,14 +140,14 @@ class ProductsCategory extends Base
             $model = $model->where('updated_at', '<=', $updateTime[1]);
         }
 
-        
+
         //折扣开始时间
         if (isset($search->discount_time_begin) && !empty($search->discount_time_begin)) {
             $discountTimeBegin = $search->discount_time_begin;
             $model = $model->where('discount_time_begin', '>=', $discountTimeBegin[0]);
             $model = $model->where('discount_time_begin', '<=', $discountTimeBegin[1]);
         }
-        
+
         //折扣结束时间
         if (isset($search->discount_time_end) && !empty($search->discount_time_end)) {
             $discountTimeEnd = $search->discount_time_end;
@@ -158,4 +158,52 @@ class ProductsCategory extends Base
         return $model;
     }
 
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function tree($list, $key, $data = [])
+    {
+        $list = array_column($list, null, 'id');
+        $childrenPids = array_keys($list);
+
+        $childrenList = self::whereIn('pid', $childrenPids)->get()->toArray();
+        if (count($childrenList) > 0) {
+            foreach ($childrenList as $key => $item) {
+                $childrenList[$key]['pid_array'] = $list[$item['pid']]['pid_array'];
+                $childrenList[$key]['pid_array'][] = $item['id'];
+            }
+        }
+        $data[] = array_values($list);
+
+        if (count($childrenList) == 0) {
+            return self::handleTree($data);
+        }
+        return self::tree($childrenList, $key, $data);
+    }
+
+    public function handleTree($data)
+    {
+
+        $temp = [];
+        // return $newData;
+        for ($i = count($data) - 1; $i > 0; $i--) {
+            $temp = $data[$i - 1];
+            $children = collect($data[$i])->groupBy('pid');
+            // $newData[] = $i;
+            if (count($children) > 0) {
+                foreach ($temp as $key => $item) {
+                    $temp[$key]['children'] = [];
+                    if (isset($children[$item['id']])) {
+                        $temp[$key]['children'] = $children[$item['id']];
+                    }
+                }
+            }
+            $data[$i - 1] = $temp;
+        }
+        return $data[0];
+    }
 }
