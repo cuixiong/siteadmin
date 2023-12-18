@@ -149,7 +149,7 @@ class ProductsCategoryController extends CrudController
             //第三级数据
             $recordLevel3 = [];
             if (count($recordLevel2) > 0) {
-                $pidLevel3Array = array_column($recordLevel2, 'pid');
+                $pidLevel3Array = array_column($recordLevel2, 'id');
                 $recordLevel3 = $modelLevel3->whereIn('pid', $pidLevel3Array)->get()->toArray();
             }
 
@@ -164,7 +164,7 @@ class ProductsCategoryController extends CrudController
                     }
                 }
             }
-            
+
             //转化以pid为下标
             $recordLevel2 = collect($recordLevel2)->groupBy('pid');
             if (count($record) > 0) {
@@ -188,5 +188,21 @@ class ProductsCategoryController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
+    }
+
+
+    /**
+     * 查询某级分类列表
+     * @param $request 请求信息
+     */
+    public function getCategory(Request $request)
+    {
+
+        $id = !empty($request->id) ? $request->id : 0;
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
+        $model = $model->where('pid', $id);
+        $data = $model->select(['id as value','name as label'])->orderby('sort', 'asc')->get();
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }

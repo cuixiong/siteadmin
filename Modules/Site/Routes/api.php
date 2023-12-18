@@ -116,7 +116,8 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'changeStatus'])->name('报告分类:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'changeSort'])->name('报告分类:排序修改');
         Route::post('set-header-title', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'setHeaderTitle'])->name('报告分类:设置自定义表头');
-
+        Route::get('get-category', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'getCategory'])->name('报告分类:获取某层分类');
+        
 
         Route::post('store', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'store'])->name('报告分类:新增分类');
         Route::post('update', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'update'])->name('报告分类:修改分类');
