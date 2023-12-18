@@ -569,7 +569,7 @@ class TimedTaskController extends CrudController
                         $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
                         shell_exec($FileCommand);
                         // 设置文件权限
-                        $command = "chmod 700 $this->TaskPath.$task->task_id";
+                        $command = "chmod 700 ".$this->TaskPath.$task->task_id;
                         shell_exec($command);
                     }
                 break;
