@@ -574,6 +574,9 @@ class TimedTaskController extends CrudController
                 break;
                 case 'update':
                     $CrontabList = implode("\n",$CrontabList);
+                    file_put_contents($this->ErrorLog,"\r".$CrontabList,FILE_APPEND);
+                    file_put_contents($this->ErrorLog,"\r".$task->OldCommand,FILE_APPEND);
+                    file_put_contents($this->ErrorLog,"\r".$task->command,FILE_APPEND);
                     $command = str_replace($task->OldCommand, $task->command, $CrontabList);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
                     shell_exec("cat /dev/null > ".$this->TaskPath.$task->task_id);
