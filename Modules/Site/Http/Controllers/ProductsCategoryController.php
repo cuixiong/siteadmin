@@ -13,7 +13,6 @@ use Modules\Admin\Http\Models\ListStyle;
 class ProductsCategoryController extends CrudController
 {
 
-
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -192,7 +191,7 @@ class ProductsCategoryController extends CrudController
 
 
     /**
-     * 查询某级分类列表
+     * 获取一二级分类
      * @param $request 请求信息
      */
     public function getCategory(Request $request)
@@ -201,8 +200,24 @@ class ProductsCategoryController extends CrudController
         $id = !empty($request->id) ? $request->id : 0;
         $ModelInstance = $this->ModelInstance();
         $model = $ModelInstance->query();
+        $modelLevel2 = clone $model;
         $model = $model->where('pid', $id);
-        $data = $model->select(['id as value','name as label'])->orderby('sort', 'asc')->get();
+        $data = $model->select(['id as value','name as label'])->orderby('sort', 'asc')->get()->toArray();
+        //第二级数据
+        $recordLevel2 = [];
+        if (count($data) > 0) {
+            $pidLevel2Array = array_column($data, 'value');
+            $recordLevel2 = $modelLevel2->select(['id as value','name as label','pid'])->whereIn('pid', $pidLevel2Array)->orderby('sort', 'asc')->get()->toArray();
+            $recordLevel2 = collect($recordLevel2)->groupBy('pid');
+        }
+        if (count($data) > 0) {
+            foreach ($data as $key => $item) {
+                $data[$key]['children'] = [];
+                if (isset($recordLevel2[$item['value']])) {
+                    $data[$key]['children'] = $recordLevel2[$item['value']];
+                }
+            }
+        }
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }
