@@ -560,8 +560,10 @@ class TimedTaskController extends CrudController
             if(!$res){
                 ReturnJson(false,'');
             }
+            $content = $ssh->exec($command);
+        } else {
+            $content = shell_exec($command);
         }
-        $content = shell_exec($command);
         ReturnJson(true,'',$content);
     }
 
