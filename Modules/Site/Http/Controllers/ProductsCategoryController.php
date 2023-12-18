@@ -14,6 +14,50 @@ class ProductsCategoryController extends CrudController
 {
 
     /**
+     * 单个新增
+     * @param $request 请求信息
+     */
+    protected function store(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            if(empty($input['pid'])){
+                $input['pid'] = 0;
+            }
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                ReturnJson(FALSE, trans('lang.add_error'));
+            }
+            ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+    
+    /**
+     * AJax单个更新
+     * @param $request 请求信息
+     */
+    protected function update(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            if(empty($input['pid'])){
+                $input['pid'] = 0;
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    /**
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
