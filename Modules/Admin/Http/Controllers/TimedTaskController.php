@@ -576,7 +576,7 @@ class TimedTaskController extends CrudController
                     $CrontabList = implode("\n",$CrontabList);
                     $command = str_replace($task->OldCommand, $task->command, $CrontabList);
                     $command = 'echo "'.trim($command,'').'" | crontab -';
-                    shell_exec("cat /dev/null > $this->TaskPath.$task->task_id");
+                    shell_exec("cat /dev/null > ".$this->TaskPath.$task->task_id);
                     $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
                     shell_exec($FileCommand);
                 break;
