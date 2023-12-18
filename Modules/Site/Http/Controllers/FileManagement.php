@@ -8,9 +8,14 @@ use App\Helper\SiteUploads;
 class FileManagement extends Controller{
     private $RootPath;
     public function __construct()
-    {
+    {   
+        $request = request();
+        $action = $request->route()->getActionName();
+        list($class, $action) = explode('@', $action);
         $this->RootPath = SiteUploads::GetRootPath();
-        $client = SiteUploads::OssClient();
+        if($action != 'download'){
+            $client = SiteUploads::OssClient();
+        }
     }
 
     public function FileList(Request $request)
