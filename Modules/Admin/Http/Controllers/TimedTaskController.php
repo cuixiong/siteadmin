@@ -551,7 +551,8 @@ class TimedTaskController extends CrudController
     public function Logs(Request $request){
         $id = $request->id;
         $task = $this->ModelInstance()->find($id);
-        $command = "cat $task->log_path";
+        $task->log_path = str_replace(" 2>&1",'',$task->log_path);
+        $command = "cat ".$task->log_path;
         if($task->category == 'index'){
             $serverId = Site::where('id',$task->site_id)->value('server_id');
             $server = Server::where('id',$serverId)->first();
