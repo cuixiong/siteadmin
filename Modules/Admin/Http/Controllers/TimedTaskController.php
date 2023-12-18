@@ -565,12 +565,11 @@ class TimedTaskController extends CrudController
                     if (!in_array($task->command, $CrontabList)){
                         $CrontabList = implode("\n",$CrontabList);
                         $command = 'echo "'.$CrontabList.PHP_EOL.trim($task->command,'').'" | crontab -';
-                        file_put_contents($this->ErrorLog,"\r".$command,FILE_APPEND);
                         $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
                         shell_exec($FileCommand);
                         // 设置文件权限
-                        $command = "chmod 700 ".$this->TaskPath.$task->task_id;
-                        shell_exec($command);
+                        file_put_contents($this->ErrorLog,"\r"."chmod 700 ".$this->TaskPath.$task->task_id,FILE_APPEND);
+                        shell_exec("chmod 700 ".$this->TaskPath.$task->task_id);
                     }
                 break;
                 case 'update':
@@ -596,6 +595,7 @@ class TimedTaskController extends CrudController
                     return false;
                 break;
             }
+            file_put_contents($this->ErrorLog,"\r".$command,FILE_APPEND);
             $result = shell_exec($command);
             file_put_contents($this->ErrorLog,"\r res=".$result,FILE_APPEND);
             return true;
