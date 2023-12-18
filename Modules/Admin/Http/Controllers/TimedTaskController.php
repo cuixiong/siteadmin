@@ -404,7 +404,9 @@ class TimedTaskController extends CrudController
             if($params){
                 $params = $params['data'];
                 $task = TimedTask::find($params['id']);
-                $res = $this->LiunxTimedTask($params['action'],$task);
+                if($task->category == 'admin' || ($task->category == 'index' && $task->parent_id != '0')){
+                    $res = $this->LiunxTimedTask($params['action'],$task);
+                }
                 // if($task->category == 'admin'){
                 //     $command = $params['action'] == 'do' ? $this->CreateCommand($task->type,$task->do_command) : $task->command;
                 //     $this->LocalHostTask($params['action'],$command,$task->old_command);
@@ -584,6 +586,7 @@ class TimedTaskController extends CrudController
                 break;
             }
             $result = shell_exec($command);
+            file_put_contents($this->ErrorLog,"\r res=".$result,FILE_APPEND);
             return true;
         } catch (\Exception $e) {
             file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
