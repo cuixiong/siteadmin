@@ -409,9 +409,11 @@ class TimedTaskController extends CrudController
             if($params){
                 $params = $params['data'];
                 $task = TimedTask::find($params['id']);
-                if($task->category == 'admin' || ($task->category == 'index' && $task->parent_id != '0')){
+                if($task->category == 'admin'){
                     file_put_contents($this->ErrorLog,"\r".$params['action'],FILE_APPEND);
-                    $res = $this->LiunxTimedTask($params['action'],$task);
+                    $res = $this->LocalLiunxTimedTask($params['action'],$task);
+                } else if($task->category == 'index' && $task->parent_id != '0') {
+                    $res = $this->SshLiunxTimedTask($params['action'],$task);
                 }
                 if($params['action'] == 'delete'){
                     // 先删除子任务
@@ -427,19 +429,9 @@ class TimedTaskController extends CrudController
         }
     }
 
-    public function LiunxTimedTask($doAction,$task)
+    public function LocalLiunxTimedTask($doAction,$task)
     {
         try {
-            if($task->category == 'index'){
-                $serverId = Site::where('id',$task->site_id)->value('server_id');
-                $server = Server::where('id',$serverId)->first();
-                $ssh = new SSH2($server->ip);
-                $res = $ssh->login($server->username,$server->password);
-                if(!$res){
-                    return false;
-                }
-            }
-
             $CrontabList = shell_exec('crontab -l');
             $CrontabList = trim($CrontabList,'');
 
@@ -485,14 +477,70 @@ class TimedTaskController extends CrudController
                     return false;
                 break;
             }
-            if($task->category == 'index'){
-                if(!$ssh){
-                    return false;
-                }
-                $ssh->exec($command);
-            } else {
-                shell_exec($command);
+            shell_exec($command);
+            return true;
+        } catch (\Exception $e) {
+            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
+            return false;
+        }
+    }
+
+    public function SshLiunxTimedTask($doAction,$task)
+    {
+        try {
+            $serverId = Site::where('id',$task->site_id)->value('server_id');
+            $server = Server::where('id',$serverId)->first();
+            $ssh = new SSH2($server->ip);
+            $res = $ssh->login($server->username,$server->password);
+            if(!$res){
+                return false;
             }
+            $CrontabList = $ssh->exec('crontab -l');
+            $CrontabList = trim($CrontabList,'');
+
+            $CrontabList = array_filter(explode('\n',$CrontabList));
+
+            $CrontabList = array_map(function($v){
+                $v = trim($v,' ');
+                $v = trim($v,"\n");
+                return $v;
+            },$CrontabList);
+            switch ($doAction) {
+                case 'add':
+                    if (!in_array($task->command, $CrontabList)){
+                        $CrontabList = implode("\n",$CrontabList);
+                        $command = 'echo "'.$CrontabList.PHP_EOL.trim($task->command,'').'" | crontab -';
+                        $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
+                        $ssh->exec($FileCommand);
+                        // 设置文件权限
+                        file_put_contents($this->ErrorLog,"\r"."chmod 700 ".$this->TaskPath.$task->task_id,FILE_APPEND);
+                        $ssh->exec("chmod 700 ".$this->TaskPath.$task->task_id);
+                    }
+                break;
+                case 'update':
+                    $CrontabList = implode("\n",$CrontabList);
+                    $command = str_replace($task->old_command, $task->command, $CrontabList);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    $ssh->exec("cat /dev/null > ".$this->TaskPath.$task->task_id);
+                    $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
+                    $ssh->exec($FileCommand);
+                break;
+                case 'delete':
+                case 'stop':
+                    $CrontabList = implode("\n",$CrontabList);
+                    $command = str_replace($task->command, '', $CrontabList);
+                    $command = 'echo "'.trim($command,'').'" | crontab -';
+                    $FileCommand = 'rm '.$this->TaskPath.$task->task_id;
+                    $ssh->exec($FileCommand);
+                break;
+                case 'do':
+                break;
+                    $command = $task->do_command;
+                default:
+                    return false;
+                break;
+            }
+            $ssh->exec($command);
             return true;
         } catch (\Exception $e) {
             file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
