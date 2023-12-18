@@ -405,6 +405,7 @@ class TimedTaskController extends CrudController
                 $params = $params['data'];
                 $task = TimedTask::find($params['id']);
                 if($task->category == 'admin' || ($task->category == 'index' && $task->parent_id != '0')){
+                    file_put_contents($this->ErrorLog,"\r".$params['action'],FILE_APPEND);
                     $res = $this->LiunxTimedTask($params['action'],$task);
                 }
                 // if($task->category == 'admin'){
@@ -553,12 +554,13 @@ class TimedTaskController extends CrudController
                 $v = trim($v,"\n");
                 return $v;
             },$CrontabList);
-
+            file_put_contents($this->ErrorLog,"\r".json_encode($CrontabList),FILE_APPEND);
             switch ($doAction) {
                 case 'add':
                     if (!in_array($task->command, $CrontabList)){
                         $CrontabList = implode("\n",$CrontabList);
                         $command = 'echo "'.$CrontabList.PHP_EOL.trim($task->command,'').'" | crontab -';
+                        file_put_contents($this->ErrorLog,"\r".$command,FILE_APPEND);
                         $FileCommand = 'echo -e "'.$task->body.'" >> '.$this->TaskPath.$task->task_id;
                         shell_exec($FileCommand);
                     }
