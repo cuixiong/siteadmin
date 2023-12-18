@@ -15,6 +15,12 @@ class RuleController extends CrudController
     public function list(Request $request) {
         try {
             $search = $request->input('search');
+            if(isset($request->category) && !empty($request->category)){
+                if(!is_array($search)){
+                    $search = json_decode($search,true);
+                    $search['category'] = $request->category;
+                }
+            }
             $list = (new Rule)->GetList('*',false,'parent_id',$search);
             $list = array_column($list,null,'id');
             $childNode = array(); // 储存已递归的ID
