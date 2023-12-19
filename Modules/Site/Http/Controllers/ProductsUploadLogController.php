@@ -50,6 +50,7 @@ class ProductsUploadLogController extends CrudController
     {
         // $basePath = public_path() . '/site';
         // $basePath .= '/' . $request->header('Site');
+
         $basePath = public_path();
         //检验目录是否存在
         if (!is_dir($basePath)) {
@@ -76,13 +77,16 @@ class ProductsUploadLogController extends CrudController
         // }
 
         //获取表头与字段关系
-        $fieldData = ProductsExcelField::where(['status' => 1])->where('field', '<>', '')->select(['field'])->orderBy('sort','asc')->get()->toArray();
-        // $fieldData = array_map(function ($item) {
-        //     $item['sort'] =  $item['sort'] - 1;
-        //     return $item;
-        // }, $fieldData);
-
-        // $fieldData = array_column($fieldData, 'field', 'sort');
+        $fieldData = ProductsExcelField::where(['status' => 1])->select(['field'])->orderBy('sort','asc')->get()->toArray();
+        
+        foreach ($fieldData as $key => $value) {
+            if(!empty($value['field'])){
+                $fieldData[$key]['sort'] = $key;
+            }else{
+                unset($fieldData[$key]);
+            }
+        }
+        $fieldData = array_column($fieldData, 'field', 'sort');
         // $fieldSort = array_keys($fieldData);
 
         // return $fieldSort;
@@ -202,7 +206,7 @@ class ProductsUploadLogController extends CrudController
 
             //code...
         } catch (\Throwable $th) {
-            // file_put_contents('C:\\Users\\Administrator\\Desktop\\ddddddddddd.txt', $params['log_id'], FILE_APPEND);
+            // file_put_contents('C:\\Users\\Administrator\\Desktop\\ddddddddddd.txt', $th->getLine().$th->getMessage().$th->getTraceAsString(), FILE_APPEND);
         }
     }
 
