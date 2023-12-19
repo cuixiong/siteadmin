@@ -707,10 +707,10 @@ class FileManagement extends Controller{
         $RootPath = AdminUploads::getRootPath();
         $path = $path ? rtrim($RootPath, '/') . '/'.trim($path,'/').'/'. $name : rtrim($RootPath, '/') . '/'. $name;
         if(file_exists($path)){
-            ReturnJson(201, '文件存在');
+            ReturnJson(false, '文件存在');
         }
         if(is_dir($path)){
-            ReturnJson(201, '目录存在');
+            ReturnJson(false, '目录存在');
         }
     }
 }

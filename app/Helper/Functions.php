@@ -6,8 +6,8 @@
  * @param $data 需要返回的数据数组
  */
 function ReturnJson($code,$message = '请求成功',$data = []){
-    $code = ($code == TRUE) ? "200" : $code;
-    $code = ($code == FALSE) ? 'B001' : $code;
+    $code = ($code === TRUE) ? "200" : $code;
+    $code = ($code === FALSE) ? 'B001' : $code;
     echo json_encode(
         [
             'code' => $code,

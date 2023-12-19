@@ -17,7 +17,7 @@ class TimedTask extends Base
         'site_id',
         'day',
         'hour',
-        'minutes',
+        'minute',
         'week_day',
         'log_path',
         'time_type', 
