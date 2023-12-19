@@ -19,42 +19,17 @@ class TimedTaskController extends CrudController
         parent::__construct();
         $this->ErrorLog = storage_path('logs').'/'.'Timed_Taks_Error.log';
     }
-    public function list(Request $request)
-    {
+    /**
+     * 查询列表页
+     * @param use Illuminate\Http\Request;
+     */
+    public function list(Request $request) {
         try {
-            $this->ValidateInstance($request);
-            $ModelInstance = $this->ModelInstance();
-            $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request);
-            // 总数量
-            $total = $model->count();
-            // 查询偏移量
-            if (!empty($request->pageNum) && !empty($request->pageSize)) {
-                $model->offset(($request->pageNum - 1) * $request->pageSize);
-            }
-            // 查询条数
-            if (!empty($request->pageSize)) {
-                $model->limit($request->pageSize);
-            }
-            $model = $model->select($ModelInstance->ListSelect);
-            // 数据排序
-            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
-            } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
-            }
-            $model = $model->where('parent_id',0);
-            $record = $model->get();
-
-            $data = [
-                'total' => $total,
-                'list' => $record
-            ];
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            $search = $request->input('search');
+            $list = $this->ModelInstance()->GetList('*',true,'parent_id',$search);
+            ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
-            file_put_contents($this->ErrorLog,"\r".$e->getMessage(),FILE_APPEND);
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(FALSE,$e->getMessage());
         }
     }
     public function store(Request $request)
