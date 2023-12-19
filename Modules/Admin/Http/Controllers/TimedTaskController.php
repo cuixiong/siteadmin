@@ -9,6 +9,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\TimedTask;
+use Modules\Admin\Http\Models\User;
 use phpseclib3\Net\SSH2;
 
 class TimedTaskController extends CrudController
@@ -591,6 +592,7 @@ class TimedTaskController extends CrudController
             }
         }
         $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
+        $options['user'] = (new User())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
 }
