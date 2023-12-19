@@ -48,9 +48,9 @@ class ProductsUploadLogController extends CrudController
      */
     public function uploadProducts(Request $request)
     {
-        $basePath = public_path() . '/site';
-        $basePath .= '/' . $request->header('Site');
-
+        // $basePath = public_path() . '/site';
+        // $basePath .= '/' . $request->header('Site');
+        $basePath = public_path();
         //检验目录是否存在
         if (!is_dir($basePath)) {
             @mkdir($basePath, 0777, true);

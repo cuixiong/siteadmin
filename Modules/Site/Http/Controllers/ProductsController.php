@@ -534,61 +534,63 @@ class ProductsController extends CrudController
         $ModelInstance = $this->ModelInstance();
         $model = $ModelInstance->query();
 
-        // if ($ids) {
-        //     //选中
-        //     $ids = explode(',', $ids);
-        //     if (!(count($ids) > 0)) {
-        //         ReturnJson(TRUE, trans('lang.param_empty') . ':ids');
-        //     }
-        //     $model = $ModelInstance->whereIn('id', $ids);
-        // } else {
-        //     //筛选
-        //     $model = $ModelInstance->HandleWhere($model, $request);
-        // }
-        // $data = [];
-        // if ($type == 1) {
-        //     // 总数量
-        //     $data['count'] = $model->count();
-        //     ReturnJson(TRUE, trans('lang.request_success'), $data);
-        // } else {
-        // $data['result_count'] = $model->delete();
-        //查询出涉及的id，并分割加入队列
-        $idsData = $model->select('id')->pluck('id')->toArray();
-        if (!(count($idsData) > 0)) {
-            ReturnJson(TRUE, trans('lang.data_empty'));
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(TRUE, trans('lang.param_empty') . ':ids');
+            }
+            $model = $ModelInstance->whereIn('id', $ids);
+        } else {
+            //筛选
+            $model = $ModelInstance->HandleWhere($model, $request);
         }
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $data['count'] = $model->count();
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } else {
+            //查询出涉及的id，并分割加入队列
+            $idsData = $model->select('id')->pluck('id')->toArray();
+            if (!(count($idsData) > 0)) {
+                ReturnJson(TRUE, trans('lang.data_empty'));
+            }
 
-        //加入队列
-        $dirName = time() . rand(10000, 99999);
-        $dirPath = 'C:\\Users\\Administrator\\Desktop\\zqy\\' . $dirName;
-        //创建目录
-        if (!is_dir($dirPath)) {
-            @mkdir($dirPath, 0777, true);
+            //加入队列
+            $dirName = time() . rand(10000, 99999);
+            $basePath = public_path() . '/site';
+            $basePath .= '/' . $request->header('Site').'/exportDir/';
+            $dirPath = $basePath . $dirName;
+            //创建目录
+            if (!is_dir($dirPath)) {
+                @mkdir($dirPath, 0777, true);
+            }
+            $groupData = array_chunk($idsData, 100);
+            $jobCount = count($groupData);
+            foreach ($groupData as $key => $item) {
+
+                $data = [
+                    'class' => 'Modules\Site\Http\Controllers\ProductsController',
+                    'method' => 'handleExport',
+                    'site' => $request->header('Site') ?? '',   //站点名称
+                    'data' => $item,    //要导出的报告id数据
+                    'dirPath' => $dirPath,
+                    'chip' => $key,
+                    // 'log_id' => $logModel->id,  //写入日志的id
+                    // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
+                    // 'pulisher_id' => $pulisher_id,  //出版商id
+                ];
+                $data = json_encode($data);
+                $RabbitMQ = new RabbitmqService();
+                $RabbitMQ->setQueueName('products-export'); // 设置队列名称
+                $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
+                $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+                $RabbitMQ->push($data); // 推送数据
+            }
+
+            ReturnJson(TRUE, trans('lang.request_success'));
         }
-        $groupData = array_chunk($idsData, 100);
-        foreach ($groupData as $key => $item) {
-
-            $data = [
-                'class' => 'Modules\Site\Http\Controllers\ProductsController',
-                'method' => 'handleExport',
-                'site' => $request->header('Site') ?? '',   //站点名称
-                'data' => $item,    //传递文件路径
-                'dirPath' => $dirPath,
-                'chip' => $key,
-                // 'log_id' => $logModel->id,  //写入日志的id
-                // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
-                // 'pulisher_id' => $pulisher_id,  //出版商id
-            ];
-            $data = json_encode($data);
-            $RabbitMQ = new RabbitmqService();
-            $RabbitMQ->setQueueName('products-export'); // 设置队列名称
-            $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
-            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-            $RabbitMQ->push($data); // 推送数据
-        }
-
-        ReturnJson(TRUE, trans('lang.request_success'));
-        // }
     }
 
     /**
