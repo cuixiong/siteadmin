@@ -1,5 +1,7 @@
 <?php
 namespace App\Helper;
+
+use Modules\Admin\Http\Models\SystemValue;
 use OSS\OssClient;
 use OSS\Core\OssException;
 class AliyuncsOss
@@ -12,8 +14,9 @@ class AliyuncsOss
 
     private function GetUploadsExt()
     {
-        $arr = ["png","jpg","jpeg","webp","svg","pdf","txt","doc","docx",".ico"];
-        return [];
+        $value = SystemValue::where('key','OSS_UPLOADS_TYPE')->value('value');
+        $arr = $value ? explode(",",$value) : [];
+        return $arr;
     }
 
     public function __construct($accessKeyId = '',$accessKeySecret = '',$endpoint = '',$bucket = '')
