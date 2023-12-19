@@ -66,6 +66,11 @@ class FileManagement extends Controller{
                     }
                     $info['is_file'] = ['name' => $v];
                     $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. trim($path,'/'). '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
+                    if($info['type'] == 'image'){
+                        $ImageSize = getimagesize($filename . '/' . $v);
+                        $info['is_file']['width'] = $ImageSize[0] .' px';
+                        $info['is_file']['height'] = $ImageSize[1].' px';
+                    }
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
                     $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
