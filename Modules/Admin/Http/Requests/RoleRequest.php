@@ -25,7 +25,7 @@ class RoleRequest extends BaseRequest
             'sort.required' => trans('lang.sort_empty'),
             'is_super.required' => trans('lang.is_super_empty'),
             'code.required' => trans('lang.code_empty'),
-            'code.unique' => trans('lang.code_no_pass'),
+            'code.unique' => trans('lang.code_exists'),
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -53,7 +53,6 @@ class RoleRequest extends BaseRequest
             'sort.required' => trans('lang.sort_empty'),
             'is_super.required' => trans('lang.is_super_empty'),
             'code.required' => trans('lang.code_empty'),
-            'code.unique' => trans('lang.code_no_pass'),
         ];
         return $this->validateRequest($request, $rules,$message);
     }

@@ -46,7 +46,7 @@ class SiteUploads
         if(env('OSS_ACCESS_IS_OPEN') == true){
             $ossClient = self::OssClient();
             $res = $ossClient->uploads($path.'/'. $name, $FilePath.$name);
-            if(!is_array($res)){
+            if($res !== true){
                 ReturnJson(false,$res);
             }
         }

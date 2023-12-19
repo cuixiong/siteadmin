@@ -8,9 +8,14 @@ use App\Helper\SiteUploads;
 class FileManagement extends Controller{
     private $RootPath;
     public function __construct()
-    {
+    {   
+        $request = request();
+        $action = $request->route()->getActionName();
+        list($class, $action) = explode('@', $action);
         $this->RootPath = SiteUploads::GetRootPath();
-        $client = SiteUploads::OssClient();
+        if($action != 'download'){
+            $client = SiteUploads::OssClient();
+        }
     }
 
     public function FileList(Request $request)
@@ -241,6 +246,9 @@ class FileManagement extends Controller{
 
         $old_full_path = $base_param . $old_path . '/' . $name;
         $new_full_path = $base_param . $new_path . '/' . $name;
+        if($overwrite == 2){
+            $this->IsExists($new_path,$name);
+        }
         if (empty($name)) {
             ReturnJson(false,'旧文件/文件夹名未传入');
         } elseif ($old_path == '..') {
@@ -612,6 +620,18 @@ class FileManagement extends Controller{
             ReturnJson(true, '文件解压成功');
         } else {
             ReturnJson(false, $res);
+        }
+    }
+
+    public function IsExists($path,$name)
+    {
+        $RootPath = SiteUploads::getRootPath();
+        $path = $path ? rtrim($RootPath, '/') . '/'.trim($path,'/').'/'. $name : rtrim($RootPath, '/') . '/'. $name;
+        if(file_exists($path)){
+            ReturnJson(201, '文件存在');
+        }
+        if(is_dir($path)){
+            ReturnJson(201, '目录存在');
         }
     }
 }

@@ -232,7 +232,7 @@ class OperationLogController extends CrudController
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
         foreach ($dirty as $field => $value) {
-            if(!in_array($field,['created_by','updated_by','created_at','updated_at'])){
+            if(!in_array($field,['created_by','updated_by','created_at','updated_at','notice_ids'])){
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
