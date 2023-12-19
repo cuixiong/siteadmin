@@ -491,7 +491,7 @@ class FileManagement extends Controller{
         $path = $request->path ?? '';
         $name = $request->name ?? '';
         $full_path = $path ? $base_param . $path . '/' . $name : $base_param . $name;
-
+  
         if (empty($name)) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..' || $name == '..') {
@@ -499,6 +499,12 @@ class FileManagement extends Controller{
             ReturnJson(false,'超过文件管理范围');
         } elseif (!file_exists($full_path)) {
             ReturnJson(false,'选择路径不存在');
+        } else if (is_file($full_path)) {
+            $files[] = $full_path;
+            $rand = rand(10000, 99999);
+            $fileData = pathinfo($full_path);
+            $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'_' . $rand . '.zip';
+            $res = self::zipDir($files, $zipFileName);
         } else {
             $rand = rand(10000, 99999);
             $zipFileName = $full_path . '_' . $rand . '.zip';
@@ -643,6 +649,7 @@ class FileManagement extends Controller{
         $res = array_map(function ($v) use ($RootPath) {
             return str_replace($RootPath, '', $v);
         }, $DirList);
+        array_unshift($res,['value' => '','label' => '根目录']);
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
