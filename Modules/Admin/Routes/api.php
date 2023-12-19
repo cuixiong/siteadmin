@@ -239,6 +239,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'changeStatus'])->name('定时任务:修改状态');
         Route::get('execute-task/{id}', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'ExecuteTask'])->name('定时任务:执行任务');
         Route::get('logs/{id}', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'Logs'])->name('定时任务:获取日志');
+        Route::get('options', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'options'])->name('定时任务:字典数据');
     });
     
 });

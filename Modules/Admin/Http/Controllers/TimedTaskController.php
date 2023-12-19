@@ -5,6 +5,7 @@ use App\Services\RabbitmqService;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\TimedTask;
@@ -572,5 +573,23 @@ class TimedTaskController extends CrudController
             ';
             $body = str_replace('    ','',$body);
         return $body;
+    }
+
+    /**
+     * get dict options
+     * @return Array
+     */
+    public function options(Request $request)
+    {
+        $options = [];
+        $codes = ['Switch_State','Timed_Task_Time_Type','Timed_Task_Category','Timed_Task_Type'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        ReturnJson(TRUE,'', $options);
     }
 }
