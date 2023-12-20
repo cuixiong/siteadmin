@@ -210,6 +210,7 @@ Route::middleware([
         Route::get('dir_list', [Modules\Admin\Http\Controllers\FileManagement::class, 'DirList'])->name('文件管理:文件夹列表(下拉)');
         Route::post('dir_size', [Modules\Admin\Http\Controllers\FileManagement::class, 'DirSize'])->name('文件管理:文件夹大小计算');
         Route::post('unzip', [Modules\Admin\Http\Controllers\FileManagement::class, 'unzip'])->name('文件管理:文件解压');
+        Route::post('force-file-overwrite', [Modules\Admin\Http\Controllers\FileManagement::class, 'ForceFileOverwrite'])->name('文件管理:强制覆盖文件');
     });
 
     // AliyunOssConfig 控制器

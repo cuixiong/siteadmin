@@ -242,19 +242,13 @@ class FileManagement extends Controller{
     public function CopyAndMove(Request $request)
     {
         $base_param = $this->RootPath;
-
+        $names = $request->names;
+        $copy_or_move = $request->copy_or_move ?? ''; //1:复制;2:移动
         $old_path = $request->old_path ?? '';
         $new_path = $request->new_path ?? '';
-        $name = $request->name ?? '';
-        $copy_or_move = $request->copy_or_move ?? ''; //1:复制;2:移动
-        $overwrite = $request->overwrite ?? ''; //1:覆盖;2:不覆盖
+        $overwrite = false;//1:覆盖;2:不覆盖
 
-        $old_full_path = $base_param . $old_path . '/' . $name;
-        $new_full_path = $base_param . $new_path . '/' . $name;
-        if($overwrite == 2){
-            $this->IsExists($new_path,$name);
-        }
-        if (empty($name)) {
+        if (empty($names)) {
             ReturnJson(false,'旧文件/文件夹名未传入');
         } elseif ($old_path == '..') {
             //不能进去基本路径的上层
@@ -262,52 +256,119 @@ class FileManagement extends Controller{
         } elseif ($new_path == '..') {
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
-        } elseif (!file_exists($old_full_path)) {
-            ReturnJson(false,'选择的文件不存在');
         } elseif ($old_path == $new_path) {
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
-        } else {
-            if ($overwrite == 1) {
-                $overwrite = true;
-            } elseif ($overwrite == 2) {
-                $overwrite = false;
-            } else {
-                ReturnJson(false,'未选择覆盖模式');
+        }
+
+        $IsExistsFiles = [];
+        foreach ($names as $name) {
+            $old_full_path = $base_param . $old_path . '/' . $name;
+            $new_full_path = $base_param . $new_path . '/' . $name;
+
+            if (!file_exists($old_full_path)) {
+                ReturnJson(false,'选择的文件不存在');
             }
             if (is_dir($old_full_path)) {
-                if ($copy_or_move == 1) {
-                    $this->copyDir($old_full_path, $new_full_path, $overwrite);
-                } elseif ($copy_or_move == 2) {
-                    $this->moveDir($old_full_path, $new_full_path, $overwrite);
-                    // moveDir();
+                switch ($copy_or_move) {
+                    case 1:
+                        $res = $this->copyDir($old_full_path, $new_full_path, $overwrite);
+                    break;
+                    case 2:
+                        $res = $this->moveDir($old_full_path, $new_full_path, $overwrite);
+                    break;
+                    default:
+                    
+                    break;
                 }
-            } elseif (is_file($old_full_path)) {
-                if (!$overwrite) {
-                    // return 
-                    //文件存在并且不覆盖，则不进行任何处理
-                    if (!file_exists($new_full_path)) {
-
-                        if ($copy_or_move == 1) {
+                // 把移动/复制文件夹中存在相同文件的合并放入到$IsExistsFiles容器中返回给前端
+                if($res !== false){
+                    $IsExistsFiles = array_merge($IsExistsFiles,$res);
+                }
+            } else if (is_file($old_full_path)) {
+                //文件不存在则进行移动/复制，存在则放入到$IsExistsFiles容器中返回给前端
+                if (!file_exists($new_full_path)) {
+                    switch ($copy_or_move) {
+                        case 1:
                             SiteUploads::copyFile($old_full_path, $new_full_path, $overwrite);
-                        } elseif ($copy_or_move == 2) {
+                        break;
+                        case 2:
                             SiteUploads::moveFile($old_full_path, $new_full_path, $overwrite);
-                        }
+                        break;
+                        default:
+                        
+                        break;
                     }
-                } elseif ($overwrite) {
-
-                    if ($copy_or_move == 1) {
-                        SiteUploads::copyFile($old_full_path, $new_full_path, $overwrite);
-                    } elseif ($copy_or_move == 2) {
-                        SiteUploads::moveFile($old_full_path, $new_full_path, $overwrite);
-                    }
+                } else {
+                    $IsExistsFiles[] = [
+                        'old_path' => $old_full_path,
+                        'new_path' => $new_full_path,
+                        'name' => $name,
+                    ];
                 }
             }
         }
+        ReturnJson(true,trans('lang.request_success'),$IsExistsFiles);
+    }
 
-        if (file_exists($new_full_path)) {
-            ReturnJson(true,trans('lang.request_success'));
-        } else {
-            ReturnJson(true,trans('lang.request_error'));
+
+    // 强制覆盖文件（移动/复制操作，用户确认覆盖操作之后请求的方法）
+    public function ForceFileOverwrite(Request $request)
+    {
+        $old_path = $request->old_path ?? '';
+        $copy_or_move = $request->copy_or_move ?? ''; //1:复制;2:移动
+        $names = $request->names;
+        $datas = $request->data;
+        foreach ($datas as $data) {
+            $data = json_decode($data, true);
+            switch ($copy_or_move) {
+                case 1:
+                    SiteUploads::copyFile($data['old_path'], $data['new_path'], true);
+                break;
+                    
+                case '2':
+                    SiteUploads::moveFile($data['old_path'], $data['new_path'], true);
+                break;
+                
+                default:
+                    
+                break;
+            }
+        }
+        // 如果是移动操作，把文件夹进行移除
+        if($copy_or_move == 2){
+            foreach ($names as $name) {
+                $CleanDir = rtrim($this->RootPath,'/').'/'.trim($old_path,'/').'/'.$name;
+                $this->TreeDeleteDir($CleanDir);
+            }
+        }
+        ReturnJson(true,trans('lang.request_success'));
+    }
+
+    // 递归删除空文件夹
+    private function TreeDeleteDir($dir){
+        if (is_dir($dir) === true && is_readable($dir) === true) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object !== '.' && $object !== '..') {
+                    $object = $dir . '/' . $object;
+                    if (is_dir($object) === true) {
+                        if ($this->isFolderEmpty($object) === true) {
+                            rmdir($object);
+                        }
+                    }
+                }
+            }
+            $res = true;
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object !== '.' && $object !== '..') {
+                    $res = false;
+                }
+            }
+            if($res){
+                rmdir($dir);
+            }
+            return true;
         }
     }
 
@@ -323,6 +384,7 @@ class FileManagement extends Controller{
      */
     public function moveDir($oldDir, $aimDir, $overWrite = false)
     {
+        $IsExistsFiles = [];
         $aimDir = str_replace('', '/', $aimDir);
         $aimDir = substr($aimDir, -1) == '/' ? $aimDir : $aimDir . '/';
         $oldDir = str_replace('', '/', $oldDir);
@@ -330,6 +392,7 @@ class FileManagement extends Controller{
         if (!is_dir($oldDir)) {
             return false;
         }
+
         if (!file_exists($aimDir)) {
             mkdir($aimDir, 0755, true);
             chmod($aimDir, 0755);
@@ -341,13 +404,27 @@ class FileManagement extends Controller{
             if ($file == '.' || $file == '..') {
                 continue;
             }
+
             if (!is_dir($oldDir . $file)) {
-                SiteUploads::moveFile($oldDir . $file, $aimDir . $file, $overWrite);
+                if(file_exists($aimDir . $file) && !$overWrite){
+                    $IsExistsFiles[] = [
+                        'old_path' => $oldDir . $file,
+                        'new_path' => $aimDir . $file,
+                    ];
+                } else {
+                    SiteUploads::moveFile($oldDir . $file, $aimDir . $file, $overWrite);
+                }
             } else {
-                $this->moveDir($oldDir . $file, $aimDir . $file, $overWrite);
+                $res = $this->moveDir($oldDir . $file, $aimDir . $file, $overWrite);
+                if($res !== false){
+                    $IsExistsFiles = array_merge($IsExistsFiles,$res);
+                }
             }
         }
-        return rmdir($oldDir);
+        if(empty($IsExistsFiles)){
+            rmdir($oldDir);
+        }
+        return $IsExistsFiles;
     }
 
     /**
@@ -360,6 +437,7 @@ class FileManagement extends Controller{
      */
     function copyDir($oldDir, $aimDir, $overWrite = false)
     {
+        $IsExistsFiles = [];
         $aimDir = str_replace('', '/', $aimDir);
         $aimDir = substr($aimDir, -1) == '/' ? $aimDir : $aimDir . '/';
         $oldDir = str_replace('', '/', $oldDir);
@@ -379,11 +457,23 @@ class FileManagement extends Controller{
                 continue;
             }
             if (!is_dir($oldDir . $file)) {
-                SiteUploads::copyFile($oldDir . $file, $aimDir . $file, $overWrite);
+                if(file_exists($aimDir . $file) && !$overWrite){
+                    $IsExistsFiles[] = [
+                        'old_path' => $oldDir . $file,
+                        'new_path' => $aimDir . $file,
+                        'name' => $file,
+                    ];
+                } else {
+                    SiteUploads::copyFile($oldDir . $file, $aimDir . $file, $overWrite);
+                }
             } else {
-                $this->copyDir($oldDir . $file, $aimDir . $file, $overWrite);
+                $res = $this->copyDir($oldDir . $file, $aimDir . $file, $overWrite);
+                if($res !== false){
+                    $IsExistsFiles = array_merge($IsExistsFiles,$res);
+                }
             }
         }
+        return $IsExistsFiles;
     }
 
     //递归函数
