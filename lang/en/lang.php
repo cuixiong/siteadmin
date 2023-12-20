@@ -62,6 +62,7 @@ return [
 
     
     /**分站点 */
+    'time_out'=>'Time Out',
     // 上传报告
     'name_empty'=>'Report Name is blank',
     'category_empty'=>'Category is empty',
@@ -69,5 +70,23 @@ return [
     'published_date_empty'=>'Published date is empty',
     'author_level'=>'The author cannot be overwritten ',
 
+    'upload_init' => 'Init',
+    'upload_ready' => 'Ready',
+    'upload_running' => 'Running',
+    'upload_complete' => 'Complete',
+    'upload_init_msg' => 'Ready to load file...',
+    'upload_ready_msg' => 'Ready to handle data...',
+    'upload_running_msg' => 'Running, the progress is：',
+    'upload_complete_msg' => 'Complete',
+
+    // 导出报告
+    'export_init' => 'Ready',
+    'export_running' => 'Running',
+    'export_merging' => 'Merging',
+    'export_complete' => 'Complete',
+    'export_init_msg' => 'Ready to load data...',
+    'export_running_msg' => 'Running, the progress is：',
+    'export_merging_msg' => 'Merging file...',
+    'export_complete_msg' => 'Complete',
 
 ];

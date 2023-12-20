@@ -20,6 +20,7 @@ use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Modules\Site\Http\Models\ProductsExcelField;
+use Modules\Site\Http\Models\ProductsExportLog;
 
 class ProductsController extends CrudController
 {
@@ -551,7 +552,7 @@ class ProductsController extends CrudController
             $data['count'] = $model->count();
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } else {
-            //查询出涉及的id，并分割加入队列
+            //查询出涉及的id
             $idsData = $model->select('id')->pluck('id')->toArray();
             if (!(count($idsData) > 0)) {
                 ReturnJson(TRUE, trans('lang.data_empty'));
@@ -559,13 +560,29 @@ class ProductsController extends CrudController
 
             //加入队列
             $dirName = time() . rand(10000, 99999);
-            $basePath = public_path() . '/site';
-            $basePath .= '/' . $request->header('Site').'/exportDir/';
-            $dirPath = $basePath . $dirName;
+            $basePath = public_path();
+            $dirMiddlePath = '/site/' . $request->header('Site') . '/exportDir/';
+            $dirPath = $basePath . $dirMiddlePath . $dirName;
             //创建目录
             if (!is_dir($dirPath)) {
                 @mkdir($dirPath, 0777, true);
             }
+
+            //导出记录初始化,每个文件单独一条记录
+            $logModel = ProductsExportLog::create([
+                'file' => $dirMiddlePath . $dirName . '.xlsx',
+                'count' => count($idsData),
+            ]);
+
+            //获取表头与字段关系
+            $fieldData = ProductsExcelField::where(['status' => 1])->select(['name', 'field'])->orderBy('sort', 'asc')->get()->toArray();
+            $titleData = array_column($fieldData, 'name');
+            foreach ($fieldData as $key => $value) {
+                $fieldData[$key]['sort'] = $key;
+            }
+            $fieldData = array_column($fieldData, 'field', 'sort');
+            // return $fieldData;
+            //查询出的id数据分割加入队列
             $groupData = array_chunk($idsData, 100);
             $jobCount = count($groupData);
             foreach ($groupData as $key => $item) {
@@ -576,9 +593,11 @@ class ProductsController extends CrudController
                     'site' => $request->header('Site') ?? '',   //站点名称
                     'data' => $item,    //要导出的报告id数据
                     'dirPath' => $dirPath,
-                    'chip' => $key,
-                    // 'log_id' => $logModel->id,  //写入日志的id
-                    // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
+                    'jobCount' => $jobCount,
+                    'chip' => $key + 1,
+                    'title' => $titleData,  //标题
+                    'field' => $fieldData,  //字段
+                    'log_id' => $logModel->id,  //写入日志的id
                     // 'pulisher_id' => $pulisher_id,  //出版商id
                 ];
                 $data = json_encode($data);
@@ -589,12 +608,12 @@ class ProductsController extends CrudController
                 $RabbitMQ->push($data); // 推送数据
             }
 
-            ReturnJson(TRUE, trans('lang.request_success'));
+            ReturnJson(TRUE, trans('lang.request_success'), $logModel->id);
         }
     }
 
     /**
-     * 批量导出分块文件
+     * 批量导出-导出到多个文件
      * @param $params 
      */
     public function handleExport($params = null)
@@ -602,18 +621,23 @@ class ProductsController extends CrudController
         set_time_limit(0);
         ini_set('memory_limit', '2048M');
 
+        $dirPath = $params['dirPath'];
+        $chip = $params['chip'];
+        $jobCount = $params['jobCount'];
+
         if (empty($params['site'])) {
             throw new \Exception("site is empty", 1);
         }
         // 设置当前租户
         tenancy()->initialize($params['site']);
 
+        $title = $params['title'];
+        $field = $params['field'];
+
         try {
             //读取数据
-            $record = Products::select(['id', 'name', 'published_date'])->whereIn('id', $params['data'])->get()->makeHidden((new Products())->getAppends())->toArray();
+            $record = Products::whereIn('id', $params['data'])->get()->makeHidden((new Products())->getAppends())->toArray();
 
-            $dirPath = $params['dirPath'];
-            $chip = $params['chip'];
             $writer = WriterEntityFactory::createXLSXWriter();
             $writer->openToFile($dirPath . '/' . $chip . '.xlsx');
             foreach ($record as $key => $item) {
@@ -622,16 +646,24 @@ class ProductsController extends CrudController
                     continue;
                 }
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
-                $record[$key]['description'] = $descriptionData['description'] ?? '';
-                $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
-                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
-                $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
-                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
-                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
-                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+                $item['description'] = $descriptionData['description'] ?? '';
+                $item['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                $item['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                $item['description_en'] = $descriptionData['description_en'] ?? '';
+                $item['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                $item['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                $item['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
 
+                $row = [];
+                foreach ($field as $value) {
+                    if (empty($value) || !isset($item[$value])) {
+                        $row[] = '';
+                    } else {
+                        $row[] = $item[$value];
+                    }
+                }
 
-                $rowFromValues = WriterEntityFactory::createRowFromArray($record[$key]);
+                $rowFromValues = WriterEntityFactory::createRowFromArray($row);
                 $writer->addRow($rowFromValues);
             }
             // $writer->addRows($record);
@@ -640,14 +672,40 @@ class ProductsController extends CrudController
             //code...
         } catch (\Throwable $th) {
             // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt', $th->getMessage(), FILE_APPEND);
+            // return ;
+            $details = $th->getMessage();
         }
-        if ($chip == 2) {
+
+        //记录任务状态
+        $logModel = ProductsExportLog::where(['id' => $params['log_id']])->first();
+        $logData = [
+            'state' => ProductsExportLog::EXPORT_RUNNING,
+        ];
+        if (isset($details)) {
+            $logData['error_count'] = $logModel->error_count + count($record);
+            $logData['details'] = $logModel->details . $details;
+        } else {
+            $logData['success_count'] = $logModel->success_count + count($record);
+        }
+        $logModel->update($logData);
+
+        //到达了最后一个
+        if ($chip == $jobCount) {
+            //记录任务状态
+            $logModel = ProductsExportLog::where(['id' => $params['log_id']])->first();
+            $logData = [
+                'state' => ProductsExportLog::EXPORT_MERGING,
+            ];
+            $logModel->update($logData);
 
             $data = [
                 'class' => 'Modules\Site\Http\Controllers\ProductsController',
                 'method' => 'handleMergeFile',
                 'data' => $dirPath,
-                // 'log_id' => $logModel->id,  //写入日志的id
+                'dirPath' => $dirPath,
+                'title' => $params['title'],
+                'field' => $params['field'],
+                'log_id' => $logModel->id,  //写入日志的id
                 // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
                 // 'pulisher_id' => $pulisher_id,  //出版商id
             ];
@@ -662,7 +720,7 @@ class ProductsController extends CrudController
 
 
     /**
-     * 批量导出合并文件
+     * 批量导出-合并文件
      * @param $params 
      */
     public function handleMergeFile($params = null)
@@ -671,13 +729,25 @@ class ProductsController extends CrudController
             set_time_limit(0);
             ini_set('memory_limit', '2048M');
 
-            $existingFilePath = ['0.xlsx', '1.xlsx', '2.xlsx'];
+
+            $dirPath = $params['dirPath'];
+            // 扫描目录下的所有文件
+            $existingFilePath = scandir($dirPath);
+            $existingFilePath = array_values(array_filter($existingFilePath, function ($item) {
+                return $item !== '.' && $item !== '..';
+            }));
+
+            // $existingFilePath = ['0.xlsx', '1.xlsx', '2.xlsx'];
             $dirPath = $params['data'];
 
             $writer = WriterEntityFactory::createXLSXWriter();
             $writer->openToFile($dirPath . '.xlsx');
             $style = (new StyleBuilder())->setShouldWrapText(false)->build();
-
+            //写入标题
+            $title = $params['title'];
+            $row = WriterEntityFactory::createRowFromArray($title, $style);
+            $writer->addRow($row);
+            //循环读取文件，写入excel
             foreach ($existingFilePath as $key => $path) {
                 // we need a reader to read the existing file...
                 $reader = ReaderEntityFactory::createXLSXReader();
@@ -695,12 +765,98 @@ class ProductsController extends CrudController
                     }
                 }
 
-
                 $reader->close();
             }
             $writer->close();
         } catch (\Throwable $th) {
-            // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt', $th->getTraceAsString(), FILE_APPEND);
+            // file_put_contents('C:\\Users\\Administrator\\Desktop\\aaaaa.txt', $th->getLine().$th->getMessage().$th->getTraceAsString(), FILE_APPEND);
+
+            $details = $th->getMessage();
         }
+
+        //记录任务状态
+        $logModel = ProductsExportLog::where(['id' => $params['log_id']])->first();
+        $logData = [
+            'state' => ProductsExportLog::EXPORT_COMPLETE,
+        ];
+        if (isset($details)) {
+            $logData['details'] = $logModel->details . $details;
+        }
+        $logModel->update($logData);
+        //删除临时文件夹
+        if ($existingFilePath) {
+
+            foreach ($existingFilePath as $path) {
+                @unlink($dirPath . '/' . $path);
+            }
+            @rmdir($dirPath);
+        }
+    }
+
+
+    /**
+     * 导出进度
+     * @param $request 请求信息
+     */
+    public function exportProcess(Request $request)
+    {
+        $logId = $request->id;
+        if (empty($logId)) {
+            ReturnJson(TRUE, trans('lang.param_empty'));
+        }
+        $logData = ProductsExportLog::where('id', $logId)->first();
+        if ($logData) {
+            $logData = $logData->toArray();
+        } else {
+            ReturnJson(TRUE, trans('lang.data_empty'));
+        }
+        $data = [
+            'result' => true,
+            'msg' => '',
+            'file' => $logData['file'],
+        ];
+        $text = '';
+        $updateTime = 0;
+        if ($logData['state'] != ProductsUploadLog::UPLOAD_COMPLETE) {
+            $data['result'] = false;
+        }
+        $updatedTimestamp = strtotime($logData['updated_at']);
+        if ($updatedTimestamp > $updateTime) {
+            $updateTime = $updatedTimestamp;
+        }
+        
+        switch ($logData['state']) {
+            case ProductsExportLog::EXPORT_INIT:
+                $text = trans('lang.export_init_msg');
+                break;
+
+            case ProductsExportLog::EXPORT_RUNNING:
+                $text = trans('lang.export_running_msg') . ($logData['success_count'] + $logData['error_count']) . '/' . $logData['count'];
+                break;
+
+            case ProductsExportLog::EXPORT_MERGING:
+                $text = trans('lang.export_merging_msg');
+                break;
+
+            case ProductsExportLog::EXPORT_COMPLETE:
+                $text = trans('lang.export_complete_msg');
+                break;
+
+            default:
+                # code...
+                break;
+        }
+
+        $data['msg'] = $text;
+        //五分钟没反应则提示
+        if (time() > $updateTime + 60 * 5) {
+
+            $data = [
+                'result' => true,
+                'msg' => trans('lang.time_out'),
+            ];
+        }
+
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }

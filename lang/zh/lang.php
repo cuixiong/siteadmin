@@ -60,12 +60,31 @@ return [
     'database_password_empty' => '数据库密码为空',
     'server_login_fail' => '服务器登录失败',
 
-    
     /**分站点 */
+    'time_out' => '超时',
     // 上传报告
-    'name_empty'=>'报告名为空',
-    'category_empty'=>'分类不存在',
-    'price_empty'=>'基础价为空',
-    'published_date_empty'=>'出版时间为空',
-    'author_level'=>'该作者无法覆盖',
+    'name_empty' => '报告名为空',
+    'category_empty' => '分类不存在',
+    'price_empty' => '基础价为空',
+    'published_date_empty' => '出版时间为空',
+    'author_level' => '该作者无法覆盖',
+
+    'upload_init' => '加载文件',
+    'upload_ready' => '准备执行',
+    'upload_running' => '运行中',
+    'upload_complete' => '完成',
+    'upload_init_msg' => '正在加载中...',
+    'upload_ready_msg' => '正在处理文件...',
+    'upload_running_msg' => '运行中,进度：',
+    'upload_complete_msg' => '完成',
+
+    // 导出报告
+    'export_init' => '准备中',
+    'export_running' => '导出中',
+    'export_merging' => '合并中',
+    'export_complete' => '完成',
+    'export_init_msg' => '正在读取相关数据...',
+    'export_running_msg' => '运行中,进度：',
+    'export_merging_msg' => '正在合并文件',
+    'export_complete_msg' => '完成',
 ];

@@ -4,21 +4,20 @@ namespace Modules\Site\Http\Models;
 
 use Modules\Site\Http\Models\Base;
 
-class ProductsUploadLog extends Base
+class ProductsExportLog extends Base
 {
-    protected $table = 'product_upload_log';
+    protected $table = 'product_export_log';
 
-    const UPLOAD_INIT = 0;  //上传未开始
-    const UPLOAD_READY = 1; // 文件加载好了
-    const UPLOAD_RUNNING = 2;  //正在运行
-    const UPLOAD_COMPLETE = 3;  //上传结束
+    const EXPORT_INIT = 0;  // 导出未开始
+    const EXPORT_RUNNING = 1;  //正在运行
+    const EXPORT_MERGING = 2;  //合并中
+    const EXPORT_COMPLETE = 3;  //导出结束
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
         'file',
         'count',
-        'insert_count',
-        'update_count',
+        'success_count',
         'error_count',
         'details',
         'state',
@@ -29,13 +28,10 @@ class ProductsUploadLog extends Base
 
     protected $attributes = [
         'count' => 0,
-        'insert_count' => 0,
-        'update_count' => 0,
+        'success_count' => 0,
         'error_count' => 0,
-        'state' => self::UPLOAD_INIT,
+        'state' => self::EXPORT_INIT,
     ];
-
-
 
     /**
      * 处理查询列表条件数组
@@ -65,16 +61,10 @@ class ProductsUploadLog extends Base
             $model = $model->where('count', $search->count);
         }
 
-        //insert_count 
-        if (isset($search->insert_count) && $search->insert_count != '') {
-            $model = $model->where('insert_count', $search->insert_count);
+        //success_count 
+        if (isset($search->success_count) && $search->success_count != '') {
+            $model = $model->where('success_count', $search->success_count);
         }
-
-        //update_count 
-        if (isset($search->update_count) && $search->update_count != '') {
-            $model = $model->where('update_count', $search->update_count);
-        }
-
         //error_count
         if (isset($search->error_count) && $search->error_count != '') {
             $model = $model->where('error_count', $search->error_count);
@@ -98,6 +88,7 @@ class ProductsUploadLog extends Base
 
         return $model;
     }
+    
 
     /**
      * 状态文字获取器
@@ -107,20 +98,20 @@ class ProductsUploadLog extends Base
         $text = '';
         if (isset($this->attributes['state'])) {
             switch ($this->attributes['state']) {
-                case self::UPLOAD_INIT:
-                    $text = trans('lang.upload_init');
+                case self::EXPORT_INIT:
+                    $text = trans('lang.export_init');
                     break;
 
-                case self::UPLOAD_READY:
-                    $text = trans('lang.upload_ready');
+                case self::EXPORT_RUNNING:
+                    $text = trans('lang.export_running');
                     break;
 
-                case self::UPLOAD_RUNNING:
-                    $text = trans('lang.upload_running');
+                case self::EXPORT_MERGING:
+                    $text = trans('lang.export_merging');
                     break;
 
-                case self::UPLOAD_COMPLETE:
-                    $text = trans('lang.upload_complete');
+                case self::EXPORT_COMPLETE:
+                    $text = trans('lang.export_complete');
                     break;
 
                 default:

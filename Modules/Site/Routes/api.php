@@ -89,6 +89,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsController::class, 'destroy'])->name('报告管理:删除报告');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsController::class, 'discount'])->name('报告管理:设置折扣');
         Route::post('export', [Modules\Site\Http\Controllers\ProductsController::class, 'export'])->name('报告管理:批量导出');
+        Route::post('export-process', [Modules\Site\Http\Controllers\ProductsController::class, 'exportProcess'])->name('报告管理:导出进度');
 
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdateParam'])->name('报告管理:批量修改参数');
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdateOption'])->name('报告管理:批量修改参数子项');
@@ -98,13 +99,19 @@ Route::middleware([
     
     // ProductsUploadLog 控制器
     Route::prefix('products-upload-log')->group(function () {
-        Route::get('list', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'list'])->name('报告管理:报告列表');
-        Route::get('get-publisher', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'getPublisher'])->name('报告管理:出版商数据');
+        Route::get('list', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'list'])->name('上传记录:记录列表');
+        Route::get('get-publisher', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'getPublisher'])->name('上传记录:出版商数据');
 
-        Route::post('destroy', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'destroy'])->name('报告管理:删除报告');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'destroy'])->name('上传记录:删除记录');
+        Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('上传记录:上传报告');
+        Route::post('upload-process', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProcess'])->name('上传记录:上传进度');
         
-        Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('报告管理:上传报告');
-        Route::post('upload-process', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProcess'])->name('报告管理:上传进度');
+    });
+    
+    // ProductsExportLog 控制器
+    Route::prefix('products-export-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ProductsExportLogController::class, 'list'])->name('导出记录:导出列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ProductsExportLogController::class, 'destroy'])->name('导出记录:删除记录');
         
     });
 
@@ -131,7 +138,8 @@ Route::middleware([
         Route::get('option', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'option'])->name('报告字段:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'searchDroplist'])->name('报告字段:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'changeStatus'])->name('报告字段:状态修改');
-        Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'changeSort'])->name('报告字段:排序修改');
+        // Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'changeSort'])->name('报告字段:排序修改');
+        Route::post('reset-sort', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'resetSort'])->name('报告字段:调整排序');
 
         Route::post('store', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'store'])->name('报告字段:新增字段');
         Route::post('update', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'update'])->name('报告字段:修改字段');

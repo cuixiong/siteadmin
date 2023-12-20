@@ -16,7 +16,8 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Site\Http\Models\ProductsUploadLog;
 use Modules\Site\Http\Models\Region;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+// use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use App\xlsx\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Modules\Admin\Http\Models\Publisher;
@@ -77,12 +78,12 @@ class ProductsUploadLogController extends CrudController
         // }
 
         //获取表头与字段关系
-        $fieldData = ProductsExcelField::where(['status' => 1])->select(['field'])->orderBy('sort','asc')->get()->toArray();
-        
+        $fieldData = ProductsExcelField::where(['status' => 1])->select(['field'])->orderBy('sort', 'asc')->get()->toArray();
+
         foreach ($fieldData as $key => $value) {
-            if(!empty($value['field'])){
+            if (!empty($value['field'])) {
                 $fieldData[$key]['sort'] = $key;
-            }else{
+            } else {
                 unset($fieldData[$key]);
             }
         }
@@ -206,7 +207,7 @@ class ProductsUploadLogController extends CrudController
 
             //code...
         } catch (\Throwable $th) {
-            // file_put_contents('C:\\Users\\Administrator\\Desktop\\ddddddddddd.txt', $th->getLine().$th->getMessage().$th->getTraceAsString(), FILE_APPEND);
+            file_put_contents('C:\\Users\\Administrator\\Desktop\\ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
         }
     }
 
@@ -443,19 +444,19 @@ class ProductsUploadLogController extends CrudController
             }
             switch ($value['state']) {
                 case ProductsUploadLog::UPLOAD_INIT:
-                    $text .= '【' . $value['file'] . '】' . '正在加载中...' . "\r\n";
+                    $text .= '【' . $value['file'] . '】' . trans('lang.upload_init_msg') . "\r\n";
                     break;
 
                 case ProductsUploadLog::UPLOAD_READY:
-                    $text .= '【' . $value['file'] . '】' . '正在等待执行...' . "\r\n";
+                    $text .= '【' . $value['file'] . '】' . trans('lang.upload_ready_msg') . "\r\n";
                     break;
 
                 case ProductsUploadLog::UPLOAD_RUNNING:
-                    $text .= '【' . $value['file'] . '】' . '运行中,进度：' . ($value['insert_count'] + $value['update_count'] + $value['error_count']) . '/' . $value['count'] . "\r\n";
+                    $text .= '【' . $value['file'] . '】' . trans('lang.upload_running_msg') . ($value['insert_count'] + $value['update_count'] + $value['error_count']) . '/' . $value['count'] . "\r\n";
                     break;
 
                 case ProductsUploadLog::UPLOAD_COMPLETE:
-                    $text .= '【' . $value['file'] . '】' . '完成' . "\r\n";
+                    $text .= '【' . $value['file'] . '】' . trans('lang.upload_complate_msg') . "\r\n";
                     break;
 
                 default:
@@ -469,7 +470,7 @@ class ProductsUploadLogController extends CrudController
 
             $data = [
                 'result' => true,
-                'msg' => '超时',
+                'msg' => trans('lang.time_out'),
             ];
         }
 
