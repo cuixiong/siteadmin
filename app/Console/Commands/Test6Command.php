@@ -1,7 +1,7 @@
 <?php
 namespace App\Console\Commands;
 use Illuminate\Console\Command;
-class Test3Command extends Command
+class Test6Command extends Command
 {
     protected $signature = 'Test6';
     /**
