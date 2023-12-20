@@ -9,6 +9,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\TimedTask;
+use Modules\Admin\Http\Models\User;
 use phpseclib3\Net\SSH2;
 
 class TimedTaskController extends CrudController
@@ -582,7 +583,7 @@ class TimedTaskController extends CrudController
     public function options(Request $request)
     {
         $options = [];
-        $codes = ['Switch_State','Timed_Task_Time_Type','Timed_Task_Category','Timed_Task_Type'];
+        $codes = ['Switch_State','Timed_Task_Time_Type','Timed_Task_Category','Timed_Task_Type','Timed_Task_Week'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
         $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
         if(!empty($data)){
@@ -590,6 +591,8 @@ class TimedTaskController extends CrudController
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
             }
         }
+        $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
+        $options['user'] = (new User())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
 }
