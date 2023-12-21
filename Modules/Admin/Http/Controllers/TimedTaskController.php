@@ -449,8 +449,8 @@ class TimedTaskController extends CrudController
                     shell_exec($FileCommand);
                 break;
                 case 'do':
+                    $command = trim($task->do_command,'');
                 break;
-                    $command = $task->do_command;
                 default:
                     return false;
                 break;
@@ -512,8 +512,8 @@ class TimedTaskController extends CrudController
                     $ssh->exec($FileCommand);
                 break;
                 case 'do':
+                    $command = trim($task->do_command,'');
                 break;
-                    $command = $task->do_command;
                 default:
                     return false;
                 break;
