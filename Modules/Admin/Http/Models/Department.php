@@ -25,6 +25,7 @@ class Department extends Base
         if(isset($this->attributes['default_role']))
         {
             $value = explode(',',$this->attributes['default_role']);
+            $value = Role::whereIn('id',$value)->pluck('id')->toArray();
             foreach ($value as &$map) {
                 $map = intval($map);
             }
