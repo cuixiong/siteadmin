@@ -432,7 +432,7 @@ class ProductsController extends CrudController
         $data = [];
         if ($keyword == 'category_id') {
             //分类
-            $data = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            $data = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1], ['sort' => 'ASC', 'pid' => 0]);
         } elseif ($keyword == 'status') {
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
@@ -440,6 +440,9 @@ class ProductsController extends CrudController
                 $filed = ['name as label', 'value'];
             }
             $data = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
+        } elseif ($keyword == 'country_id') {
+
+            $data = (new Region())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1], ['sort' => 'ASC']);
         }
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);

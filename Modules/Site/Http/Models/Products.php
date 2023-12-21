@@ -106,7 +106,7 @@ class Products extends Base
         }
 
         // sort 
-        if (isset($search->status) && $search->status != '') {
+        if (isset($search->sort) && $search->sort != '') {
             $model = $model->where('sort', $search->sort);
         }
 
@@ -263,11 +263,11 @@ class Products extends Base
                 'value' => 'category_id',
                 'type' => '2',
             ],
-            // [
-            //     'name' => '国家地区',
-            //     'value' => 'country_id',
-            //     'type' => '2',
-            // ],
+            [
+                'name' => '国家地区',
+                'value' => 'country_id',
+                'type' => '2',
+            ],
             [
                 'name' => '价格',
                 // 'name' => trans('lang.price'),
