@@ -257,6 +257,10 @@ class TimedTaskController extends CrudController
             if(empty($task)){
                 ReturnJson(FALSE, trans('lang.task_is_undefined'));
             }
+            if($task->status == 0){
+                ReturnJson(FALSE, "任务状态处于禁用中，请先开启任务");
+            }
+
             $ids = [];
             if($task->category == 'index' && $task->parent_id == '0'){
                 $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->where('status',1)->pluck('id')->toArray();
