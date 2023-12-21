@@ -43,10 +43,8 @@ class ProductsCategory extends Base
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
      */
-    public function HandleWhere($model, $request)
+    public function HandleWhere($model, $search)
     {
-
-        $search = json_decode($request->input('search'));
         //id 
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
@@ -158,6 +156,34 @@ class ProductsCategory extends Base
         return $model;
     }
 
+    
+    /**
+     * 列表数据
+     * @param array/string $filed 字段，全部则不传
+     * @param $isTree 是否返回递归类型
+     * @param $treeKey 递归类型的key
+     * @param array $where 查询条件
+     * @return array $res
+     */
+    public function GetList($filed = '*', $isTree = false, $treeKey = 'parent_id', $search = [])
+    {
+        $model = self::query();
+        if (!empty($search)) {
+            $model = $this->HandleWhere($model, $search);
+        }
+        $list = $model->select($filed)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
+        if (!empty($list)) {
+
+            if ($isTree) {
+                $minPid = array_column($list, $treeKey);
+                $minPid = min($minPid);
+                $list = array_column($list, null, 'id');
+                $list = $this->tree($list, $treeKey, $minPid);
+            }
+        }
+        return $list;
+    }
+
     /**
      * 递归获取树状列表数据
      * @param $list
@@ -165,45 +191,73 @@ class ProductsCategory extends Base
      * @param $parentId 父级默认值
      * @return array $res
      */
-    public function tree($list, $key, $data = [])
-    {
-        $list = array_column($list, null, 'id');
-        $childrenPids = array_keys($list);
-
-        $childrenList = self::whereIn('pid', $childrenPids)->get()->toArray();
-        if (count($childrenList) > 0) {
-            foreach ($childrenList as $key => $item) {
-                $childrenList[$key]['pid_array'] = $list[$item['pid']]['pid_array'];
-                $childrenList[$key]['pid_array'][] = $item['id'];
-            }
-        }
-        $data[] = array_values($list);
-
-        if (count($childrenList) == 0) {
-            return self::handleTree($data);
-        }
-        return self::tree($childrenList, $key, $data);
-    }
-
-    public function handleTree($data)
+    public function tree($list, $key, $parentId = 0)
     {
 
-        $temp = [];
-        // return $newData;
-        for ($i = count($data) - 1; $i > 0; $i--) {
-            $temp = $data[$i - 1];
-            $children = collect($data[$i])->groupBy('pid');
-            // $newData[] = $i;
-            if (count($children) > 0) {
-                foreach ($temp as $key => $item) {
-                    $temp[$key]['children'] = [];
-                    if (isset($children[$item['id']])) {
-                        $temp[$key]['children'] = $children[$item['id']];
-                    }
+        $tree = [];
+        foreach ($list as $index => $item) {
+            if ($item[$key] == $parentId) {
+                $list[$index]['pid_array'] = [];
+                $list[$index]['pid_array'] = $list[$item[$key]]['pid_array'] ?? [];
+                array_push($list[$index]['pid_array'],$item['id']);
+                
+                $item['pid_array'] = $list[$index]['pid_array'];
+                $children = $this->tree($list, $key, $item['id']);
+                if (!empty($children)) {
+                    $item['children'] = $children;
                 }
+                $tree[] = $item;
             }
-            $data[$i - 1] = $temp;
         }
-        return $data[0];
+        return $tree;
     }
+
+    // /**
+    //  * 递归获取树状列表数据
+    //  * @param $list
+    //  * @param $key 需要递归的键值，这个键值的值必须为整数型
+    //  * @param $parentId 父级默认值
+    //  * @return array $res
+    //  */
+    // public function tree($list, $key, $data = [])
+    // {
+    //     $list = array_column($list, null, 'id');
+    //     $childrenPids = array_keys($list);
+
+    //     $childrenList = self::whereIn('pid', $childrenPids)->get()->toArray();
+    //     if (count($childrenList) > 0) {
+    //         foreach ($childrenList as $key => $item) {
+    //             $childrenList[$key]['pid_array'] = $list[$item['pid']]['pid_array'];
+    //             $childrenList[$key]['pid_array'][] = $item['id'];
+    //         }
+    //     }
+    //     $data[] = array_values($list);
+
+    //     if (count($childrenList) == 0) {
+    //         return self::handleTree($data);
+    //     }
+    //     return self::tree($childrenList, $key, $data);
+    // }
+
+    // public function handleTree($data)
+    // {
+
+    //     $temp = [];
+    //     // return $newData;
+    //     for ($i = count($data) - 1; $i > 0; $i--) {
+    //         $temp = $data[$i - 1];
+    //         $children = collect($data[$i])->groupBy('pid');
+    //         // $newData[] = $i;
+    //         if (count($children) > 0) {
+    //             foreach ($temp as $key => $item) {
+    //                 $temp[$key]['children'] = [];
+    //                 if (isset($children[$item['id']])) {
+    //                     $temp[$key]['children'] = $children[$item['id']];
+    //                 }
+    //             }
+    //         }
+    //         $data[$i - 1] = $temp;
+    //     }
+    //     return $data[0];
+    // }
 }
