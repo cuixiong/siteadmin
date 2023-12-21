@@ -42,7 +42,7 @@ class TimedTaskController extends CrudController
             // 随机生成任务ID
             $input['task_id'] = $task_id = $this->generateRandomString();
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
-            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
+            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],trim($input['do_command'],''));
             if($do_command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
@@ -120,7 +120,7 @@ class TimedTaskController extends CrudController
             // 随机生成任务ID
             $task_id = $record->task_id;
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
-            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
+            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],trim($input['do_command'],''));
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
             $input['old_command'] = $record->command;

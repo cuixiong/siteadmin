@@ -20,7 +20,7 @@ class Test4Command extends Command
      */
     public function handle()
     {
-        $RootPath = public_path().'/'.'5.txt';
+        $RootPath = public_path().'/'.'4.txt';
         file_put_contents($RootPath,"\r".date('Y-m-d H:i:s',time())."=====command",FILE_APPEND);
     }
 }
