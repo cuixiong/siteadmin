@@ -236,7 +236,7 @@ class Products extends Base
     public function getPublishedDateFormatAttribute()
     {
         $text = '';
-        if (isset($this->attributes['country_id'])) {
+        if (isset($this->attributes['published_date'])) {
             $text = date('Y-m-d H:i:s', $this->attributes['published_date']);
         }
         return $text;

@@ -9,18 +9,19 @@ use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\ListStyle;
+use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\ProductsCategory;
-use Modules\Admin\Http\Models\DictionaryValue;
-use Modules\Admin\Http\Models\ListStyle;
 use Modules\Site\Http\Models\ProductsUploadLog;
 use Modules\Site\Http\Models\Region;
+use Modules\Site\Http\Models\ProductsExcelField;
+use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
-use Modules\Site\Http\Models\ProductsExcelField;
-use Modules\Site\Http\Models\ProductsExportLog;
 
 class ProductsController extends CrudController
 {
@@ -531,6 +532,7 @@ class ProductsController extends CrudController
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+        $exportType = (!isset($input['export_type']) || empty($input['export_type'])) ? 'txt' : $input['export_type']; //导出
 
         $ModelInstance = $this->ModelInstance();
         $model = $ModelInstance->query();
@@ -563,49 +565,85 @@ class ProductsController extends CrudController
             $basePath = public_path();
             $dirMiddlePath = '/site/' . $request->header('Site') . '/exportDir/';
             $dirPath = $basePath . $dirMiddlePath . $dirName;
-            //创建目录
-            if (!is_dir($dirPath)) {
-                @mkdir($dirPath, 0777, true);
-            }
 
-            //导出记录初始化,每个文件单独一条记录
-            $logModel = ProductsExportLog::create([
-                'file' => $dirMiddlePath . $dirName . '.xlsx',
-                'count' => count($idsData),
-            ]);
+            if ($exportType == 'txt') {
 
-            //获取表头与字段关系
-            $fieldData = ProductsExcelField::where(['status' => 1])->select(['name', 'field'])->orderBy('sort', 'asc')->get()->toArray();
-            $titleData = array_column($fieldData, 'name');
-            foreach ($fieldData as $key => $value) {
-                $fieldData[$key]['sort'] = $key;
-            }
-            $fieldData = array_column($fieldData, 'field', 'sort');
-            // return $fieldData;
-            //查询出的id数据分割加入队列
-            $groupData = array_chunk($idsData, 100);
-            $jobCount = count($groupData);
-            foreach ($groupData as $key => $item) {
+                //导出记录初始化,每个文件单独一条记录
+                $logModel = ProductsExportLog::create([
+                    'file' => $dirMiddlePath . $dirName . '.txt',
+                    'count' => count($idsData),
+                ]);
+                //域名
+                $domain = Site::where('name', $request->header('Site'))->value('domain') ?? '';
+                //查询出的id数据分割加入队列
+                $groupData = array_chunk($idsData, 100000);
+                $jobCount = count($groupData);
+                foreach ($groupData as $key => $item) {
 
-                $data = [
-                    'class' => 'Modules\Site\Http\Controllers\ProductsController',
-                    'method' => 'handleExport',
-                    'site' => $request->header('Site') ?? '',   //站点名称
-                    'data' => $item,    //要导出的报告id数据
-                    'dirPath' => $dirPath,
-                    'jobCount' => $jobCount,
-                    'chip' => $key + 1,
-                    'title' => $titleData,  //标题
-                    'field' => $fieldData,  //字段
-                    'log_id' => $logModel->id,  //写入日志的id
-                    // 'pulisher_id' => $pulisher_id,  //出版商id
-                ];
-                $data = json_encode($data);
-                $RabbitMQ = new RabbitmqService();
-                $RabbitMQ->setQueueName('products-export'); // 设置队列名称
-                $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
-                $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                $RabbitMQ->push($data); // 推送数据
+                    $data = [
+                        'class' => 'Modules\Site\Http\Controllers\ProductsController',
+                        'method' => 'handleExportTxt',
+                        'site' => $request->header('Site') ?? '',   //站点名称
+                        'data' => $item,    //要导出的报告id数据
+                        'dirPath' => $dirPath,
+                        'jobCount' => $jobCount,
+                        'chip' => $key + 1,
+                        'log_id' => $logModel->id,  //写入日志的id
+                        'domain' => $domain,  // 传入域名，用于拼接链接
+                    ];
+                    $data = json_encode($data);
+                    $RabbitMQ = new RabbitmqService();
+                    $RabbitMQ->setQueueName('products-export'); // 设置队列名称
+                    $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
+                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+                    $RabbitMQ->push($data); // 推送数据
+                }
+            } elseif ($exportType == 'excel') {
+
+                //导出记录初始化,每个文件单独一条记录
+                $logModel = ProductsExportLog::create([
+                    'file' => $dirMiddlePath . $dirName . '.xlsx',
+                    'count' => count($idsData),
+                ]);
+
+
+                //创建目录
+                if (!is_dir($dirPath)) {
+                    @mkdir($dirPath, 0777, true);
+                }
+
+                //获取表头与字段关系
+                $fieldData = ProductsExcelField::where(['status' => 1])->select(['name', 'field'])->orderBy('sort', 'asc')->get()->toArray();
+                $titleData = array_column($fieldData, 'name');
+                foreach ($fieldData as $key => $value) {
+                    $fieldData[$key]['sort'] = $key;
+                }
+                $fieldData = array_column($fieldData, 'field', 'sort');
+                // return $fieldData;
+                //查询出的id数据分割加入队列
+                $groupData = array_chunk($idsData, 100);
+                $jobCount = count($groupData);
+                foreach ($groupData as $key => $item) {
+
+                    $data = [
+                        'class' => 'Modules\Site\Http\Controllers\ProductsController',
+                        'method' => 'handleExportExcel',
+                        'site' => $request->header('Site') ?? '',   //站点名称
+                        'data' => $item,    //要导出的报告id数据
+                        'dirPath' => $dirPath,
+                        'jobCount' => $jobCount,
+                        'chip' => $key + 1,
+                        'title' => $titleData,  //标题
+                        'field' => $fieldData,  //字段
+                        'log_id' => $logModel->id,  //写入日志的id
+                    ];
+                    $data = json_encode($data);
+                    $RabbitMQ = new RabbitmqService();
+                    $RabbitMQ->setQueueName('products-export'); // 设置队列名称
+                    $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
+                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+                    $RabbitMQ->push($data); // 推送数据
+                }
             }
 
             ReturnJson(TRUE, trans('lang.request_success'), $logModel->id);
@@ -613,10 +651,10 @@ class ProductsController extends CrudController
     }
 
     /**
-     * 批量导出-导出到多个文件
+     * 批量导出excel-导出到多个文件
      * @param $params 
      */
-    public function handleExport($params = null)
+    public function handleExportExcel($params = null)
     {
         set_time_limit(0);
         ini_set('memory_limit', '2048M');
@@ -793,6 +831,63 @@ class ProductsController extends CrudController
         }
     }
 
+    /**
+     * 批量导出-导出txt
+     * @param $params 
+     */
+    public function handleExportTxt($params = null)
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '2048M');
+
+        $dirPath = $params['dirPath'];
+        $chip = $params['chip'];
+        $jobCount = $params['jobCount'];
+        $domain = $params['domain'] ?? '';
+
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+
+        try {
+            //读取数据
+            $record = Products::whereIn('id', $params['data'])->select(['id', 'url'])->get()->makeHidden((new Products())->getAppends())->toArray();
+            $urls = [];
+            foreach ($record as $key => $item) {
+                $urls[] = $domain . '/reports/' . $item['id'] . '/' . $item['url'];
+            }
+            $urlsStr = implode("\r\n", $urls) ?? '';
+            file_put_contents($dirPath . '.txt', $urlsStr, FILE_APPEND);
+        } catch (\Throwable $th) {
+            $details = $th->getMessage();
+        }
+
+        //记录任务状态
+        $logModel = ProductsExportLog::where(['id' => $params['log_id']])->first();
+        $logData = [
+            'state' => ProductsExportLog::EXPORT_RUNNING,
+        ];
+        if (isset($details)) {
+            $logData['error_count'] = $logModel->error_count + count($record);
+            $logData['details'] = $logModel->details . $details;
+        } else {
+            $logData['success_count'] = $logModel->success_count + count($record);
+        }
+        $logModel->update($logData);
+
+        //到达了最后一个
+        if ($chip == $jobCount) {
+            //记录任务状态
+            $logModel = ProductsExportLog::where(['id' => $params['log_id']])->first();
+            $logData = [
+                'state' => ProductsExportLog::EXPORT_COMPLETE,
+            ];
+            $logModel->update($logData);
+        }
+    }
+
 
     /**
      * 导出进度
@@ -824,7 +919,7 @@ class ProductsController extends CrudController
         if ($updatedTimestamp > $updateTime) {
             $updateTime = $updatedTimestamp;
         }
-        
+
         switch ($logData['state']) {
             case ProductsExportLog::EXPORT_INIT:
                 $text = trans('lang.export_init_msg');
