@@ -167,6 +167,7 @@ class TimedTaskController extends CrudController
                         $childLogPath = $this->TaskPath.$childTaskId.'.log 2>&1';
                         $childrenUpdateData[] = array_merge([
                             'id' => $childrenTasks[$id]['id'],
+                            'task_id' => $childTaskId,
                             'site_id' => $id,
                             'old_command' => $childrenTasks[$id]['command'],
                             'do_command' => $childDoCommand,
