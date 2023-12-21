@@ -42,7 +42,7 @@ class TimedTaskController extends CrudController
             // 随机生成任务ID
             $input['task_id'] = $task_id = $this->generateRandomString();
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
-            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
+            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],trim($input['do_command'],''));
             if($do_command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
@@ -120,7 +120,7 @@ class TimedTaskController extends CrudController
             // 随机生成任务ID
             $task_id = $record->task_id;
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
-            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],$input['do_command']);
+            $input['do_command'] = $do_command = $this->CreateCommand($input['type'],trim($input['do_command'],''));
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
             $input['old_command'] = $record->command;
@@ -167,6 +167,7 @@ class TimedTaskController extends CrudController
                         $childLogPath = $this->TaskPath.$childTaskId.'.log 2>&1';
                         $childrenUpdateData[] = array_merge([
                             'id' => $childrenTasks[$id]['id'],
+                            'task_id' => $childTaskId,
                             'site_id' => $id,
                             'old_command' => $childrenTasks[$id]['command'],
                             'do_command' => $childDoCommand,
@@ -256,6 +257,10 @@ class TimedTaskController extends CrudController
             if(empty($task)){
                 ReturnJson(FALSE, trans('lang.task_is_undefined'));
             }
+            if($task->status == 0){
+                ReturnJson(FALSE, "任务状态处于禁用中，请先开启任务");
+            }
+
             $ids = [];
             if($task->category == 'index' && $task->parent_id == '0'){
                 $childrenTaskIds = $this->ModelInstance()->where('parent_id',$id)->where('status',1)->pluck('id')->toArray();
@@ -448,8 +453,8 @@ class TimedTaskController extends CrudController
                     shell_exec($FileCommand);
                 break;
                 case 'do':
+                    $command = trim($task->do_command,'');
                 break;
-                    $command = $task->do_command;
                 default:
                     return false;
                 break;
@@ -511,8 +516,8 @@ class TimedTaskController extends CrudController
                     $ssh->exec($FileCommand);
                 break;
                 case 'do':
+                    $command = trim($task->do_command,'');
                 break;
-                    $command = $task->do_command;
                 default:
                     return false;
                 break;

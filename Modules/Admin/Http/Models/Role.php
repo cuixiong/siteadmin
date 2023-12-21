@@ -99,6 +99,7 @@ class Role extends Base
     {
         if(!empty($value)){
             $value = explode(",",$value);// 切割成数组
+            $value = Site::whereIn('id',$value)->pluck('id')->toArray();
             $value = array_map('intval',$value);
         }
         return $value;

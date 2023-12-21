@@ -30,4 +30,21 @@ class TimedTask extends Base
         'task_id',
         'body',
     ];
+
+    /**
+     * 站点ID获取器
+     */
+    public function getSiteIdAttribute($value)
+    {
+        if(isset($this->attributes['site_id']))
+        {
+            $value = explode(',',$this->attributes['site_id']);
+            $value = Site::whereIn('id',$value)->pluck('id')->toArray();
+            foreach ($value as &$map) {
+                $map = intval($map);
+            }
+            return $value;
+        }
+        return null;
+    }
 }
