@@ -184,7 +184,7 @@ class TimedTaskController extends CrudController
                     'updated_at' => time(),
                 ];
                 $childrenTasks = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
-                $siteIds = $record->site_id ? explode(',', $record->site_id) : [];
+                $siteIds = $record->site_id ? $record->site_id : [];
                 $childrenTasks = array_column($childrenTasks,null,'site_id');
                 $childrenSiteIds = array_keys($childrenTasks);
                 $childrenUpdateIds = array_intersect($childrenSiteIds,$siteIds);
