@@ -47,4 +47,16 @@ class TimedTask extends Base
         }
         return null;
     }
+
+    /**
+     * 站点ID修改器
+     */
+    public function setSiteIdAttribute($value)
+    {
+        if(!empty($value) && is_array($value)){
+            $value = implode(",",$value);// 转换成字符串
+        }
+        $value = empty($value)? "" : $value;
+        $this->attributes['site_id'] = $value;
+    }
 }
