@@ -81,6 +81,10 @@ class TimedTaskController extends CrudController
             $input['task_id'] = $task_id = $this->generateRandomString();
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
             $input['do_command'] = $do_command = $this->CreateCommand($input['type'],trim($input['do_command'],''));
+            $input['day'] = $input['day'] ?? "";
+            $input['hour'] = $input['hour'] ?? "";
+            $input['minute'] = $input['minute'] ?? "";
+            $input['week_day'] = $input['week_day'] ?? "";
             if($do_command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
@@ -155,6 +159,10 @@ class TimedTaskController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
+            $input['day'] = $input['day'] ?? "";
+            $input['hour'] = $input['hour'] ?? "";
+            $input['minute'] = $input['minute'] ?? "";
+            $input['week_day'] = $input['week_day'] ?? "";
             // 随机生成任务ID
             $task_id = $record->task_id;
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
