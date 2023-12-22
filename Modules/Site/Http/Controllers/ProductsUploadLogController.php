@@ -207,7 +207,7 @@ class ProductsUploadLogController extends CrudController
 
             //code...
         } catch (\Throwable $th) {
-            file_put_contents('C:\\Users\\Administrator\\Desktop\\ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
+            // file_put_contents('ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
         }
     }
 
@@ -315,6 +315,7 @@ class ProductsUploadLogController extends CrudController
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
                     $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.published_date_empty') . "\r\n";
+                    $errorCount++;
                     continue;
                 }
                 // 忽略分类为空的数据
@@ -456,7 +457,7 @@ class ProductsUploadLogController extends CrudController
                     break;
 
                 case ProductsUploadLog::UPLOAD_COMPLETE:
-                    $text .= '【' . $value['file'] . '】' . trans('lang.upload_complate_msg') . "\r\n";
+                    $text .= '【' . $value['file'] . '】' . trans('lang.upload_complete_msg') . "\r\n";
                     break;
 
                 default:
