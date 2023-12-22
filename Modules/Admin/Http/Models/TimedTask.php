@@ -43,6 +43,7 @@ class TimedTask extends Base
             foreach ($value as &$map) {
                 $map = intval($map);
             }
+            $value = implode(",",$value);
             return $value;
         }
         return null;
