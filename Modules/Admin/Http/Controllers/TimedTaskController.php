@@ -646,4 +646,20 @@ class TimedTaskController extends CrudController
         $options['user'] = (new User())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
+
+    /**
+     * 根据站点ID进行删除定时任务
+     * 在删除站点时同时也要进行删除站点下面的定时任务
+     * @param $ids
+     */
+    public function DeleteForSiteId($ids)
+    {
+        if(!empty($ids)){
+            $ids = $this->ModelInstance()->whereIn('site_id',$ids)->where('parent_id',0)->pluck('id')->toArray();
+            if($ids){
+                $res = $this->TimedTaskQueue($ids,'delete');
+            }
+        }
+        return true;
+    }
 }
