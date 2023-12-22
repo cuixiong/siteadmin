@@ -28,11 +28,49 @@ class TimedTaskController extends CrudController
     public function list(Request $request) {
         try {
             $search = $request->input('search');
-            $list = $this->ModelInstance()->GetList('*',true,'parent_id',$search);
+            $list = $this->ModelInstance()->GetList('*',false,'parent_id',$search);
+            $list = array_column($list,null,'id');
+            $childNode = array(); // 储存已递归的ID
+            foreach ($list as &$map) {
+                $children = $this->tree($list,'parent_id',$map['id'],$childNode);
+                if($children){
+                    $map['children'] = $children;
+                }
+            }
+            foreach ($list as &$map) {
+                if (in_array($map['id'], $childNode)) {
+                    unset($list[$map['id']]);
+                }
+            }
+            $list = array_values($list);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function tree($list,$key,$parentId = 0,&$childNode) {
+
+        $tree = [];
+        foreach ($list as $item) {
+            if ($item[$key] == $parentId) {
+                $childNode[] = $item['id'];// 储存已递归的ID
+                $children = $this->tree($list,$key,$item['id'],$childNode);
+                if (!empty($children)) {
+                    $item['children'] = $children;
+                }
+                $tree[] = $item;
+            }
+
+        }
+        return $tree;
     }
     public function store(Request $request)
     {
@@ -43,6 +81,10 @@ class TimedTaskController extends CrudController
             $input['task_id'] = $task_id = $this->generateRandomString();
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
             $input['do_command'] = $do_command = $this->CreateCommand($input['type'],trim($input['do_command'],''));
+            $input['day'] = $input['day'] ?? "";
+            $input['hour'] = $input['hour'] ?? "";
+            $input['minute'] = $input['minute'] ?? "";
+            $input['week_day'] = $input['week_day'] ?? "";
             if($do_command == false){
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
@@ -117,6 +159,10 @@ class TimedTaskController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
+            $input['day'] = $input['day'] ?? "";
+            $input['hour'] = $input['hour'] ?? "";
+            $input['minute'] = $input['minute'] ?? "";
+            $input['week_day'] = $input['week_day'] ?? "";
             // 随机生成任务ID
             $task_id = $record->task_id;
             $input['log_path'] = $log_path = $this->TaskPath.$task_id.'.log 2>&1';
@@ -599,5 +645,21 @@ class TimedTaskController extends CrudController
         $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         $options['user'] = (new User())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
+    }
+
+    /**
+     * 根据站点ID进行删除定时任务
+     * 在删除站点时同时也要进行删除站点下面的定时任务
+     * @param $ids
+     */
+    public function DeleteForSiteId($ids)
+    {
+        if(!empty($ids)){
+            $ids = $this->ModelInstance()->whereIn('site_id',$ids)->where('parent_id',0)->pluck('id')->toArray();
+            if($ids){
+                $res = $this->TimedTaskQueue($ids,'delete');
+            }
+        }
+        return true;
     }
 }

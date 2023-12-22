@@ -18,10 +18,48 @@ class DepartmentController extends CrudController
             $search = $request->input('search');
             $filed = ['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'];
             $list = (new Department)->GetList($filed,true,'parent_id',$search);
+            $list = array_column($list,null,'id');
+            $childNode = array(); // 储存已递归的ID
+            foreach ($list as &$map) {
+                $children = $this->tree($list,'parent_id',$map['id'],$childNode);
+                if($children){
+                    $map['children'] = $children;
+                }
+            }
+            foreach ($list as &$map) {
+                if (in_array($map['id'], $childNode)) {
+                    unset($list[$map['id']]);
+                }
+            }
+            $list = array_values($list);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function tree($list,$key,$parentId = 0,&$childNode) {
+
+        $tree = [];
+        foreach ($list as $item) {
+            if ($item[$key] == $parentId) {
+                $childNode[] = $item['id'];// 储存已递归的ID
+                $children = $this->tree($list,$key,$item['id'],$childNode);
+                if (!empty($children)) {
+                    $item['children'] = $children;
+                }
+                $tree[] = $item;
+            }
+
+        }
+        return $tree;
     }
     /**
      * 递归树状value-label格式
