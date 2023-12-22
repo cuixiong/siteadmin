@@ -183,10 +183,10 @@ class TimedTaskController extends CrudController
                     'updated_by' => $request->user->id,
                     'updated_at' => time(),
                 ];
-                $childrenTasks = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
+                $childrenTasksArray = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
                 $siteIds = $record->site_id ? $record->site_id : [];
                 $childrenTasks = [];
-                foreach ($childrenTasks as $value) {
+                foreach ($childrenTasksArray as $value) {
                     $valueSiteId = $value['site_id'];
                     if ($valueSiteId) {
                         $valueSiteId = $valueSiteId[0];
