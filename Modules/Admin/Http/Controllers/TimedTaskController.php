@@ -642,7 +642,7 @@ class TimedTaskController extends CrudController
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
             }
         }
-        $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',[]);
+        $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         $options['user'] = (new User())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
