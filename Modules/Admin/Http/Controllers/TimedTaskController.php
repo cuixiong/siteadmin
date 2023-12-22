@@ -185,7 +185,14 @@ class TimedTaskController extends CrudController
                 ];
                 $childrenTasks = $this->ModelInstance()->where('parent_id',$record->id)->get()->toArray();
                 $siteIds = $record->site_id ? $record->site_id : [];
-                $childrenTasks = array_column($childrenTasks,null,'site_id');
+                $childrenTasks = [];
+                foreach ($childrenTasks as $value) {
+                    $valueSiteId = $value['site_id'];
+                    if ($valueSiteId) {
+                        $valueSiteId = $valueSiteId[0];
+                        $childrenTasks[$valueSiteId] = $value;
+                    }
+                }
                 $childrenSiteIds = array_keys($childrenTasks);
                 $childrenUpdateIds = array_intersect($childrenSiteIds,$siteIds);
                 $childrenInsertIds = array_diff($siteIds,$childrenSiteIds,);
