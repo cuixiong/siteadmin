@@ -28,11 +28,49 @@ class TimedTaskController extends CrudController
     public function list(Request $request) {
         try {
             $search = $request->input('search');
-            $list = $this->ModelInstance()->GetList('*',true,'parent_id',$search);
+            $list = $this->ModelInstance()->GetList('*',false,'parent_id',$search);
+            $list = array_column($list,null,'id');
+            $childNode = array(); // 储存已递归的ID
+            foreach ($list as &$map) {
+                $children = $this->tree($list,'parent_id',$map['id'],$childNode);
+                if($children){
+                    $map['children'] = $children;
+                }
+            }
+            foreach ($list as &$map) {
+                if (in_array($map['id'], $childNode)) {
+                    unset($list[$map['id']]);
+                }
+            }
+            $list = array_values($list);
             ReturnJson(TRUE,trans('lang.request_success'),$list);
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    /**
+     * 递归获取树状列表数据
+     * @param $list
+     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $parentId 父级默认值
+     * @return array $res
+     */
+    public function tree($list,$key,$parentId = 0,&$childNode) {
+
+        $tree = [];
+        foreach ($list as $item) {
+            if ($item[$key] == $parentId) {
+                $childNode[] = $item['id'];// 储存已递归的ID
+                $children = $this->tree($list,$key,$item['id'],$childNode);
+                if (!empty($children)) {
+                    $item['children'] = $children;
+                }
+                $tree[] = $item;
+            }
+
+        }
+        return $tree;
     }
     public function store(Request $request)
     {
@@ -596,7 +634,7 @@ class TimedTaskController extends CrudController
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
             }
         }
-        $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
+        $options['site'] = (new Site())->GetListLabel(['id as value','name as label'],false,'',[]);
         $options['user'] = (new User())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
