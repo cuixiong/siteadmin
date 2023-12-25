@@ -567,8 +567,13 @@ class ProductsController extends CrudController
             $dirName = time() . rand(10000, 99999);
             $basePath = public_path();
             $dirMiddlePath = '/site/' . $request->header('Site') . '/exportDir/';
+            
+            //检验目录是否存在
+            if (!is_dir($basePath.$dirMiddlePath)) {
+                @mkdir($basePath.$dirMiddlePath, 0777, true);
+            }
             $dirPath = $basePath . $dirMiddlePath . $dirName;
-
+            
             if ($exportType == 'txt') {
 
                 //导出记录初始化,每个文件单独一条记录
@@ -957,7 +962,7 @@ class ProductsController extends CrudController
         if ($data['result']) {
             $basePath = public_path();
 
-            return response()->download($basePath . '/' . $logData['file']);
+            return response()->download($basePath . $logData['file']);
         }
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);
