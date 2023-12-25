@@ -946,13 +946,18 @@ class ProductsController extends CrudController
         }
 
         $data['msg'] = $text;
-        //五分钟没反应则提示
-        if (time() > $updateTime + 60 * 5) {
+        // //五分钟没反应则提示
+        // if (time() > $updateTime + 60 * 5) {
 
-            $data = [
-                'result' => true,
-                'msg' => trans('lang.time_out'),
-            ];
+        //     $data = [
+        //         'result' => true,
+        //         'msg' => trans('lang.time_out'),
+        //     ];
+        // }
+        if ($data['result']) {
+            $basePath = public_path();
+
+            return response()->download($basePath . '/' . $logData['file']);
         }
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);
