@@ -29,6 +29,10 @@ class TimedTaskController extends CrudController
         try {
             $search = $request->input('search');
             $list = $this->ModelInstance()->GetList('*',false,'parent_id',$search);
+            foreach ($list as &$item) {
+                $item['site_id'] = $item['site_id'] ? explode(",",$item['site_id']) : [];
+                $item['site_id'] = array_map('intval', $item['site_id']);
+            }
             $list = array_column($list,null,'id');
             $childNode = array(); // 储存已递归的ID
             foreach ($list as &$map) {
