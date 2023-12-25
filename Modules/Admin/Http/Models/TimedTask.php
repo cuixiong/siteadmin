@@ -6,6 +6,7 @@ use Modules\Admin\Http\Models\Base;
 
 class TimedTask extends Base
 {
+    protected $appends = ['site_name'];
     // 设置允许入库字段,数组形式
     protected $fillable = [
         'name', 
@@ -59,5 +60,24 @@ class TimedTask extends Base
         }
         $value = empty($value)? "" : $value;
         $this->attributes['site_id'] = $value;
+    }
+
+    /**
+     * 站点名称获取器
+     */
+    public function getSiteNameAttribute($value)
+    {
+
+        if(isset($this->attributes['site_id']))
+        {
+            $value = [];
+            if(!empty($this->attributes['site_id'])){
+                $value = explode(',',$this->attributes['site_id']);
+                $value = Site::whereIn('id',$value)->pluck('name')->toArray();
+            }
+            $value = $value ? implode(",",$value) : "";
+            return $value;
+        }
+        return "";
     }
 }

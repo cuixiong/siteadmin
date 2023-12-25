@@ -593,6 +593,7 @@ class TimedTaskController extends CrudController
         } else {
             $content = shell_exec($command);
         }
+        $content = str_replace("\n",'<br/>',$content);
         ReturnJson(true,'',$content);
     }
 
