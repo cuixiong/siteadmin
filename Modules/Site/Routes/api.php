@@ -21,6 +21,7 @@ Route::middleware([
     'api',
     InitializeTenancyByRequestData::class,
     JwtMiddleware::class,
+    'language' // 语言中间件
 ])->prefix('site')->group(function () {
     Route::get('site/select', [\Modules\Site\Http\Controllers\SiteController::class, 'select']);
     Route::get('site/update', [\Modules\Site\Http\Controllers\SiteController::class, 'update']);

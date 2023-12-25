@@ -324,6 +324,20 @@ class ProductsUploadLogController extends CrudController
                     $errorCount++;
                     continue;
                 }
+                
+                // 忽略关键词为空的数据
+                if (empty($item['keywords'])) {
+                    $details .= '【' . ($row['name'] ?? '') . '】'  . trans('lang.keywords_empty') . "\r\n";
+                    $errorCount++;
+                    continue;
+                }
+                
+                // 忽略url为空的数据
+                if (empty($item['url'])) {
+                    $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.url_empty') . "\r\n";
+                    $errorCount++;
+                    continue;
+                }
                 // 过滤不符合作者策略的数据
                 if ($product) {
                     if (

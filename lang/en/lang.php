@@ -66,6 +66,8 @@ return [
     // 上传报告
     'name_empty'=>'Report Name is blank',
     'category_empty'=>'Category is empty',
+    'keywords_empty' => 'Keywords is empty',
+    'url_empty' => 'Url is empty',
     'price_empty'=>'price is empty',
     'published_date_empty'=>'Published date is empty',
     'author_level'=>'The author cannot be overwritten ',
