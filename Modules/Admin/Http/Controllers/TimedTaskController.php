@@ -119,7 +119,7 @@ class TimedTaskController extends CrudController
                             'created_at' => time(),
                         ];
                         $model = $this->ModelInstance();
-                        foreach (explode(',', $input['site_id']) as $key => $value) {
+                        foreach ($input['site_id'] as $key => $value) {
                             $site = Site::select(['id','api_path','domain'])->find($value);
                             $childTaskId = $this->generateRandomString();
                             $childDoCommand = $this->MakeApiCommand($do_command,$site->api_path,$site->domain);
