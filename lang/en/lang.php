@@ -90,5 +90,6 @@ return [
     'export_running_msg' => 'Running, the progress is：',
     'export_merging_msg' => 'Merging file...',
     'export_complete_msg' => 'Complete',
+    'file_not_exist' => 'File is not exist',
 
 ];

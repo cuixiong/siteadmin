@@ -567,13 +567,13 @@ class ProductsController extends CrudController
             $dirName = time() . rand(10000, 99999);
             $basePath = public_path();
             $dirMiddlePath = '/site/' . $request->header('Site') . '/exportDir/';
-            
+
             //检验目录是否存在
-            if (!is_dir($basePath.$dirMiddlePath)) {
-                @mkdir($basePath.$dirMiddlePath, 0777, true);
+            if (!is_dir($basePath . $dirMiddlePath)) {
+                @mkdir($basePath . $dirMiddlePath, 0777, true);
             }
             $dirPath = $basePath . $dirMiddlePath . $dirName;
-            
+
             if ($exportType == 'txt') {
 
                 //导出记录初始化,每个文件单独一条记录
@@ -951,20 +951,42 @@ class ProductsController extends CrudController
         }
 
         $data['msg'] = $text;
-        // //五分钟没反应则提示
-        // if (time() > $updateTime + 60 * 5) {
+        //五分钟没反应则提示
+        if (time() > $updateTime + 60 * 5) {
 
-        //     $data = [
-        //         'result' => true,
-        //         'msg' => trans('lang.time_out'),
-        //     ];
-        // }
-        if ($data['result']) {
-            $basePath = public_path();
-
-            return response()->download($basePath . $logData['file']);
+            $data = [
+                'result' => false,
+                'msg' => trans('lang.time_out'),
+            ];
         }
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);
+    }
+
+
+    /**
+     * 下载导出文件
+     * @param $request 请求信息
+     */
+    public function exportFileDownload(Request $request)
+    {
+        $logId = $request->id;
+        if (empty($logId)) {
+            ReturnJson(TRUE, trans('lang.param_empty'));
+        }
+        $logData = ProductsExportLog::where('id', $logId)->first();
+        if ($logData) {
+            $logData = $logData->toArray();
+        } else {
+            ReturnJson(TRUE, trans('lang.data_empty'));
+        }
+        if ($logData['state'] == ProductsExportLog::EXPORT_COMPLETE) {
+            $basePath = public_path();
+            return response()->download($basePath . $logData['file'], null, [
+                'Content-Type' => 'text/plain',
+                'Content-Disposition' => 'inline',
+            ]);
+        }
+        ReturnJson(TRUE, trans('lang.file_not_exist'));
     }
 }

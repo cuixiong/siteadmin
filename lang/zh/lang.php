@@ -89,4 +89,5 @@ return [
     'export_running_msg' => '运行中,进度：',
     'export_merging_msg' => '正在合并文件',
     'export_complete_msg' => '完成',
+    'file_not_exist' => '文件不存在',
 ];
