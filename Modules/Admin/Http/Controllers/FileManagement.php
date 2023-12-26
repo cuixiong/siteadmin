@@ -73,7 +73,7 @@ class FileManagement extends Controller{
                     $info['create_time'] = date('Y-m-d H:i:s', filectime($filename . '/' . $v)) ?? ''; //创建时间
                     clearstatcache();
                     $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
-
+                    $info['check'] = "";
                     $fileNameArray[] = $info;
                 }
             }
