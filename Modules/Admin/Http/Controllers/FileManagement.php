@@ -263,7 +263,7 @@ class FileManagement extends Controller{
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
         }
         foreach ($names as $name) {
-            if(rtrim($old_path,'/').'/' . $name = $new_path){
+            if(rtrim($old_path,'/').'/' . $name == $new_path){
                 return ReturnJson(false,'复制或移动的目标相同，请正确操作');
             }
         }
