@@ -322,7 +322,7 @@ class FileManagement extends Controller{
         $names = $request->names;
         $datas = $request->data;
         foreach ($datas as $data) {
-            $data = json_decode($data, true);
+            // $data = json_decode($data, true);
             switch ($copy_or_move) {
                 case 1:
                     $this->copyFile($data['old_path'], $data['new_path'], true);
