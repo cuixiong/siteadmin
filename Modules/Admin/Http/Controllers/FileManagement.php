@@ -204,8 +204,8 @@ class FileManagement extends Controller{
         $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
-        $nameArray = explode(",",$name);
-
+        $nameArray = is_array($name) ? $name : explode(",",$name);
+        
         if (!is_array($nameArray) || count($nameArray) <= 0) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..') {

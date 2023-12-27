@@ -188,6 +188,15 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\EmailSceneController::class, 'update'])->name('发邮场景:发邮编辑');
         Route::post('destroy', [Modules\Site\Http\Controllers\EmailSceneController::class, 'destroy'])->name('发邮场景:发邮删除');
     });
+
+    // Menu控制器
+    Route::prefix('menu')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\MenuController::class, 'list'])->name('导航菜单:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\MenuController::class, 'changeStatus'])->name('导航菜单:状态改变');
+        Route::post('store', [Modules\Site\Http\Controllers\MenuController::class, 'store'])->name('导航菜单:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\MenuController::class, 'update'])->name('导航菜单:数据编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据   删除');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
