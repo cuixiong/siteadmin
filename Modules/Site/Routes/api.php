@@ -195,7 +195,8 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\MenuController::class, 'changeStatus'])->name('导航菜单:状态改变');
         Route::post('store', [Modules\Site\Http\Controllers\MenuController::class, 'store'])->name('导航菜单:数据新增');
         Route::post('update', [Modules\Site\Http\Controllers\MenuController::class, 'update'])->name('导航菜单:数据编辑');
-        Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据   删除');
+        Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据删除');
+        Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
     });
 });
 

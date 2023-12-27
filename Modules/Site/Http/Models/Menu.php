@@ -7,6 +7,7 @@ class Menu extends Base
     // 设置允许入库字段,数组形式
     protected $fillable = [
         'name',
+        'parent_id',
         'is_single',
         'type',
         'banner_pc',
@@ -25,4 +26,16 @@ class Menu extends Base
         'created_by',
         'sort'
     ];
+    protected $appends = ['parent_name'];
+
+    public function getParentNameAttribute()
+    {
+        if(empty($this->attributes['parent_id'])){
+            return '';
+        }
+        $value = self::where('id',$this->attributes['parent_id'])
+            ->value('name');
+        $value = empty($value)? '' : $value;
+        return $value;
+    }
 }
