@@ -648,7 +648,7 @@ class FileManagement extends Controller{
     public function download(Request $request)
     {
         $path = $request->path;
-        $name = $request->name;
+        $name = base64_decode($request->name);
         $site = $request->site;
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
