@@ -586,28 +586,32 @@ class FileManagement extends Controller{
         $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
-        $full_path = $path ? $base_param . $path . '/' . $name : $base_param . $name;
+        $full_path = $path ? $base_param . $path . '/' : $base_param;
   
         if (empty($name)) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..' || $name == '..') {
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
-        } elseif (!file_exists($full_path)) {
-            ReturnJson(false,'选择路径不存在');
-        } else if (is_file($full_path)) {
-            $files[] = $full_path;
-            $rand = rand(10000, 99999);
-            $fileData = pathinfo($full_path);
-            $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'_' . $rand . '.zip';
-            $res = self::zipDir($files, $zipFileName);
-        } else {
-            $rand = rand(10000, 99999);
-            $zipFileName = $full_path . '_' . $rand . '.zip';
-            $res = self::zipDir(glob($full_path . '/*'), $zipFileName);
         }
+        $files = [];
+        foreach ($name as $map) {
+            if(!file_exists($full_path. $map)){
+                ReturnJson(false,'选择路径不存在');
+            }
+            if(is_file($full_path. $map)){
+                $files[] = $full_path. $map;
+            } else {
+                $files = array_merge($files, glob($full_path. $map. '/*'));
+            }
+        }
+        $rand = rand(10000, 99999);
+        $fileData = pathinfo($full_path);
+        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$rand . '.zip';
+        // var_dump($files, $zipFileName);die;
+        $res = self::zipDir($files, $zipFileName);
         if (file_exists($zipFileName)) {
-            ReturnJson(true,'压缩成功',['path' => trim($path . '/' . $name . '_' . $rand . '.zip', "/")]);
+            ReturnJson(true,'压缩成功',['path' => $zipFileName]);
         } else {
             ReturnJson(false,'压缩失败，请检查是否是空文件夹');
         }
