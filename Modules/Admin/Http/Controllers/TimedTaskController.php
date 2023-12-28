@@ -388,6 +388,8 @@ class TimedTaskController extends CrudController
 
     public function CreateCommand($type, $content)
     {
+        $content = str_replace('curl', '', $content);
+        $content = trim($content);
         // 根据类型进行生成liunx命令
         if($type == 'shell'){
             return ' '.$content;
