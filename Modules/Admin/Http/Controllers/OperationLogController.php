@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use App\Services\RabbitmqService;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\OperationLog;
@@ -37,15 +38,49 @@ class OperationLogController extends CrudController
 
         $model = new OperationLog();
 
-        $model->type = $type;
-        $model->category = $category;
-        $model->route = $route;
-        $model->title = $name;
-        $model->content = $content;
-        $model->site = $site;
-        $model->module = strtolower($ClassName);
-        $model->created_by = request()->user->id;
-        $model->save();
+        $data = [
+            'type' => $type,
+            'category' => $category,
+            'route' => $route,
+            'title' => $name,
+            'content' => $content,
+            'site' => $site,
+            'module' => strtolower($ClassName),
+            'created_by' => request()->user->id,
+            'created_at' => time(),
+        ];
+        $RabbmitMQ = new RabbitmqService;
+        $RabbmitMQ->setQueueName('OperationLog');
+        $RabbmitMQ->SimpleModePush("Modules\Admin\Http\Controllers\OperationLogController",'SaveLog',$data);
+        $RabbmitMQ->close();
+    }
+
+    /**
+     * 日志入库
+     * 通过MQ入库是在租户端新增日志会导致日志MYSQL按年份的分表出现错误，中央端则没任何问题
+     */
+    public function SaveLog($params = [])
+    {
+        file_put_contents('a.txt',json_encode($params),FILE_APPEND);
+        try {
+            if(!empty($params)){
+                $model = new OperationLog();
+                $model->type = $params['type'];
+                $model->category = $params['category'];
+                $model->route = $params['route'];
+                $model->title = $params['title'];
+                $model->content = $params['content'];
+                $model->site = $params['site'];
+                $model->module = $params['module'];
+                $model->created_by = $params['created_by'];
+                $model->created_at = $params['created_at'];
+                $model->save();
+                return true;
+            }
+        } catch (\Exception $e) {
+            file_put_contents(storage_path('logs').'/'.'operation_log_error.log',"\r".$e->getMessage(),FILE_APPEND);
+            return false;
+        }
     }
 
     private static function getContent($model)
