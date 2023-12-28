@@ -103,7 +103,8 @@ class ProductsController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             // 开启事务
-            DB::beginTransaction();
+            $currentTenant = tenancy()->tenant;
+            DB::connection($currentTenant->getConnectionName())->beginTransaction();
 
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
@@ -132,12 +133,12 @@ class ProductsController extends CrudController
             if (!$descriptionRecord) {
                 throw new \Exception(trans('lang.add_error'));
             }
-            DB::commit();
+            DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
             // 建表时无法回滚
-            DB::rollBack();
+            DB::connection($currentTenant->getConnectionName())->rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -152,7 +153,9 @@ class ProductsController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             // 开启事务
-            DB::beginTransaction();
+            $currentTenant = tenancy()->tenant;
+            DB::connection($currentTenant->getConnectionName())->beginTransaction();
+            // DB::beginTransaction();
             $model = $this->ModelInstance();
             $record = $model->findOrFail($input['id']);
 
@@ -202,11 +205,11 @@ class ProductsController extends CrudController
                 throw new \Exception(trans('lang.update_error'));
             }
 
-            DB::commit();
+            DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
-            DB::rollBack();
+            DB::connection($currentTenant->getConnectionName())->rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -231,11 +234,11 @@ class ProductsController extends CrudController
                 if ($year) {
                     $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
                 }
-                if ($record) {
-                    $record->delete();
-                }
                 if ($recordDescription) {
                     $recordDescription->delete();
+                }
+                if ($record) {
+                    $record->delete();
                 }
             }
             ReturnJson(TRUE, trans('lang.delete_success'));

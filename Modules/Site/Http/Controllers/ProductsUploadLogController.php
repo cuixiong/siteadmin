@@ -35,8 +35,12 @@ class ProductsUploadLogController extends CrudController
     {
 
         $site = $request->header('Site');
-        $publisherIdArray = Site::where('name', $site)->pluck('publisher_id')->toArray();
-        $data = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1, 'id' => $publisherIdArray]);
+        $publisherIds = Site::where('name', $site)->value('publisher_id');
+        $data = [];
+        if($publisherIds){
+            $publisherIdArray = explode(',',$publisherIds);
+            $data = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1, 'id' => $publisherIdArray]);
+        }
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
