@@ -44,6 +44,7 @@ return [
     'sort_empty' => '排序为空',
     'is_super' => '是否是超级管理员选项为空',
     'name_exists' => '名称已存在',
+    'user_rule_problem' => '当前账号的权限出现了问题，请检查此账号的权限是否正确',
     //站点
     'server_model_empty' => '服务器不存在',
     'database_model_empty' => '数据库不存在',

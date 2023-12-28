@@ -49,7 +49,7 @@ class Role extends Base
             $ids = explode(',',$ids);
         }
         // 查询角色信息
-        $roles = self::whereIn('id',$ids)->get();
+        $roles = self::whereIn('id',$ids)->where('status',1)->get();
         $rule_ids = [];// 当前账号的权限id
         $role_code = [];// 当前账号的归属角色code
         foreach ($roles as $role) {
