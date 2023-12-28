@@ -44,6 +44,7 @@ return [
     'sort_empty' => 'sort is empty',
     'is_super' => 'is_super is empty',
     'name_exists' => 'name already exists',
+    'user_rule_problem' => 'There is an issue with the permissions of the current account. Please check if the permissions of this account are correct',
     //站点
     'server_model_empty' => 'server is not exist',
     'database_model_empty' => 'database is not exist',
