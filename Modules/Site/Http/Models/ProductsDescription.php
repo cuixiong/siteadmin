@@ -61,7 +61,9 @@ class ProductsDescription extends Base
         // CREATE TABLE会引起隐式提交事务，导致新增修改报告事务失效报错There is no active transaction 
         // https://qa.1r1g.com/sf/ask/4703871091/ 
         // https://dev.mysql.com/doc/refman/8.0/en/implicit-commit.html
-        DB::beginTransaction();
+        // DB::beginTransaction();
+        $currentTenant = tenancy()->tenant;
+        DB::connection($currentTenant->getConnectionName())->beginTransaction();
         $res = DB::select("SHOW CREATE TABLE `product_description` ");
         $array = get_object_vars($res[0]);
         $createTableStatement = '';
