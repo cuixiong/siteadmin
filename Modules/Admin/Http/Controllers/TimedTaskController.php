@@ -94,6 +94,7 @@ class TimedTaskController extends CrudController
             }
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
+            var_dump($input);die;
             DB::beginTransaction();
             try {
                 $record = (new TimedTask())->create($input);
@@ -174,6 +175,7 @@ class TimedTaskController extends CrudController
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
             $input['old_command'] = $record->command;
+            DB::commit();var_dump($input);die;
             // 更新父任务
             if (!$record->update($input)) {   
                 DB::rollback();                                                                                                                                          
