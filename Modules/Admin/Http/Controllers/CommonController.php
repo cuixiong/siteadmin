@@ -45,7 +45,10 @@ class CommonController extends Controller
         $data['perms'] = array_column($perms,'perm');
         
         $data['button'] = $perms;
-
+        
+        if(empty($data['perms']) && empty($data['roles']) && empty($data['button'])){
+            ReturnJson(false,trans('lang.user_rule_problem'));
+        }
         ReturnJson(true,trans('lang.request_success'),$data);
     }
 
