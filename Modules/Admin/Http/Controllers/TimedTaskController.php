@@ -94,7 +94,7 @@ class TimedTaskController extends CrudController
             }
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
-            var_dump($input);die;
+            // var_dump($input);die;
             DB::beginTransaction();
             try {
                 $record = (new TimedTask())->create($input);
@@ -175,7 +175,7 @@ class TimedTaskController extends CrudController
             $input['command'] = $this->MakeCommand($task_id,$log_path,$input['time_type'],$input['day'],$input['hour'],$input['minute'],$input['week_day']);
             $input['body'] = $this->MakeBody($do_command);
             $input['old_command'] = $record->command;
-            DB::commit();var_dump($input);die;
+            // DB::commit();var_dump($input);die;
             // 更新父任务
             if (!$record->update($input)) {   
                 DB::rollback();                                                                                                                                          
@@ -402,26 +402,26 @@ class TimedTaskController extends CrudController
     {
         // 根据时间类型进行设置定时任务时间规则
         switch ($timeType) {
-            case 'every_day':// 每天
+            case 'every_day':// 每天 ok
                 $CronTime = "$minute $hour * * *";
             break;
-            case 'N_days':// N天
-                $CronTime = "0 $minute $hour */$day *";
+            case 'N_days':// N天 ok
+                $CronTime = "*/$minute $hour-23,*/$day * *";
             break;
-            case 'Every_hour':// 每小时
-                $CronTime = "0 $minute * * *";
+            case 'Every_hour':// 每小时 ok
+                $CronTime = "$minute */1 * *";
             break;
-            case 'N_hours':// N小时
-                $CronTime = "0 0/$minute $hour-4,8 * *";
+            case 'N_hours':// N小时 ok
+                $CronTime = "*/$minute */$hour * * *";
             break;
-            case 'N_minutes':// N分钟
+            case 'N_minutes':// N分钟 ok
                 $CronTime = "*/$minute * * * *";
             break;
-            case 'Every_week':// 每星期
-                $CronTime = "$hour $minute */$week_day * *";
+            case 'Every_week':// 每星期 ok
+                $CronTime = "$minute $hour * * $week_day";
             break;
-            case 'monthly':// 每月
-                $CronTime = "$hour $minute */1 $day */1";
+            case 'monthly':// 每月 ok
+                $CronTime = "$minute $hour $day * *";
             break;
             default:
                 return false;
