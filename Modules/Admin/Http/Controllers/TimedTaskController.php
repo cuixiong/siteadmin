@@ -414,7 +414,7 @@ class TimedTaskController extends CrudController
                 $CronTime = "$minute */1 * * *";
             break;
             case 'N_hours':// N小时 ok
-                $CronTime = "*/$minute */$hour * * *";
+                $CronTime = "$minute */$hour * * *";
             break;
             case 'N_minutes':// N分钟 ok
                 $CronTime = "*/$minute * * * *";
