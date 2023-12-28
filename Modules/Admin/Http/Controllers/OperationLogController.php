@@ -37,7 +37,7 @@ class OperationLogController extends CrudController
         $name = $request->route()->getName();
         $route = request()->path();
 
-        $model = new OperationLog();
+        // $model = new OperationLog();
 
         $data = [
             'type' => $type,
@@ -57,7 +57,7 @@ class OperationLogController extends CrudController
     }
 
     /**
-     * 日志入库
+     * 日志入库（废弃，因为MQ挂了这个日志搜集不到，而且在操作性能上会更差   ）
      * 通过MQ入库是在租户端新增日志会导致日志MYSQL按年份的分表出现错误，中央端则没任何问题
      */
     public function SaveLog($params = [])
