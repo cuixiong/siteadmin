@@ -164,6 +164,40 @@ Route::middleware([
 
     });
 
+    // EmailLog控制器
+    Route::prefix('email-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\EmailLogController::class, 'list'])->name('邮箱日志:日志列表');
+        Route::get('option', [Modules\Site\Http\Controllers\EmailLogController::class, 'option'])->name('邮箱日志:字典数据');
+    });
+
+    // Email控制器
+    Route::prefix('email')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\EmailController::class, 'list'])->name('邮箱管理:邮箱列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\EmailController::class, 'changeStatus'])->name('邮箱管理:状态改变');
+        Route::get('option', [Modules\Site\Http\Controllers\EmailController::class, 'option'])->name('邮箱管理:邮箱下拉数据');
+        Route::post('store', [Modules\Site\Http\Controllers\EmailController::class, 'store'])->name('邮箱管理:邮箱新增');
+        Route::post('destroy', [Modules\Site\Http\Controllers\EmailController::class, 'destroy'])->name('邮箱管理:邮箱删除');
+        Route::post('update', [Modules\Site\Http\Controllers\EmailController::class, 'update'])->name('邮箱管理:邮箱编辑');
+    });
+
+    // EmailScene控制器
+    Route::prefix('email-scene')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\EmailSceneController::class, 'list'])->name('发邮场景:发邮列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\EmailSceneController::class, 'changeStatus'])->name('发邮场景:状态改变');
+        Route::post('store', [Modules\Site\Http\Controllers\EmailSceneController::class, 'store'])->name('发邮场景:发邮新增');
+        Route::post('update', [Modules\Site\Http\Controllers\EmailSceneController::class, 'update'])->name('发邮场景:发邮编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\EmailSceneController::class, 'destroy'])->name('发邮场景:发邮删除');
+    });
+
+    // Menu控制器
+    Route::prefix('menu')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\MenuController::class, 'list'])->name('导航菜单:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\MenuController::class, 'changeStatus'])->name('导航菜单:状态改变');
+        Route::post('store', [Modules\Site\Http\Controllers\MenuController::class, 'store'])->name('导航菜单:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\MenuController::class, 'update'])->name('导航菜单:数据编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据删除');
+        Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

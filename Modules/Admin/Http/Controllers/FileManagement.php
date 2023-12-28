@@ -73,7 +73,7 @@ class FileManagement extends Controller{
                     $info['create_time'] = date('Y-m-d H:i:s', filectime($filename . '/' . $v)) ?? ''; //创建时间
                     clearstatcache();
                     $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
-
+                    $info['check'] = "";
                     $fileNameArray[] = $info;
                 }
             }
@@ -204,8 +204,8 @@ class FileManagement extends Controller{
         $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
-        $nameArray = explode(",",$name);
-
+        $nameArray = is_array($name) ? $name : explode(",",$name);
+        
         if (!is_array($nameArray) || count($nameArray) <= 0) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..') {
@@ -262,7 +262,11 @@ class FileManagement extends Controller{
         } elseif ($old_path == $new_path) {
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
         }
-
+        foreach ($names as $name) {
+            if(rtrim($old_path,'/').'/' . $name == $new_path){
+                return ReturnJson(false,'复制或移动的目标相同，请正确操作');
+            }
+        }
         $IsExistsFiles = [];
         foreach ($names as $name) {
             $old_full_path = $base_param . $old_path . '/' . $name;
@@ -322,7 +326,7 @@ class FileManagement extends Controller{
         $names = $request->names;
         $datas = $request->data;
         foreach ($datas as $data) {
-            $data = json_decode($data, true);
+            // $data = json_decode($data, true);
             switch ($copy_or_move) {
                 case 1:
                     $this->copyFile($data['old_path'], $data['new_path'], true);
@@ -582,28 +586,32 @@ class FileManagement extends Controller{
         $base_param = $this->RootPath;
         $path = $request->path ?? '';
         $name = $request->name ?? '';
-        $full_path = $path ? $base_param . $path . '/' . $name : $base_param . $name;
+        $full_path = $path ? $base_param . $path . '/' : $base_param;
   
         if (empty($name)) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..' || $name == '..') {
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
-        } elseif (!file_exists($full_path)) {
-            ReturnJson(false,'选择路径不存在');
-        } else if (is_file($full_path)) {
-            $files[] = $full_path;
-            $rand = rand(10000, 99999);
-            $fileData = pathinfo($full_path);
-            $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'_' . $rand . '.zip';
-            $res = self::zipDir($files, $zipFileName);
-        } else {
-            $rand = rand(10000, 99999);
-            $zipFileName = $full_path . '_' . $rand . '.zip';
-            $res = self::zipDir(glob($full_path . '/*'), $zipFileName);
         }
+        $files = [];
+        foreach ($name as $map) {
+            if(!file_exists($full_path. $map)){
+                ReturnJson(false,'选择路径不存在');
+            }
+            if(is_file($full_path. $map)){
+                $files[] = $full_path. $map;
+            } else {
+                $files = array_merge($files, glob($full_path. $map. '/*'));
+            }
+        }
+        $rand = rand(10000, 99999);
+        $fileData = pathinfo($full_path);
+        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$rand . '.zip';
+        // var_dump($files, $zipFileName);die;
+        $res = self::zipDir($files, $zipFileName);
         if (file_exists($zipFileName)) {
-            ReturnJson(true,'压缩成功',['path' => trim($path . '/' . $name . '_' . $rand . '.zip', "/")]);
+            ReturnJson(true,'压缩成功',['path' => $zipFileName]);
         } else {
             ReturnJson(false,'压缩失败，请检查是否是空文件夹');
         }
@@ -717,7 +725,7 @@ class FileManagement extends Controller{
     public function download(Request $request)
     {
         $path = $request->path;
-        $name = $request->name;
+        $name = base64_decode($request->name);
         if (empty($name)) {
             ReturnJson(false, '请选择下载文件名称');
         }

@@ -29,6 +29,10 @@ class TimedTaskController extends CrudController
         try {
             $search = $request->input('search');
             $list = $this->ModelInstance()->GetList('*',false,'parent_id',$search);
+            foreach ($list as &$item) {
+                $item['site_id'] = $item['site_id'] ? explode(",",$item['site_id']) : [];
+                $item['site_id'] = array_map('intval', $item['site_id']);
+            }
             $list = array_column($list,null,'id');
             $childNode = array(); // 储存已递归的ID
             foreach ($list as &$map) {
@@ -119,7 +123,7 @@ class TimedTaskController extends CrudController
                             'created_at' => time(),
                         ];
                         $model = $this->ModelInstance();
-                        foreach (explode(',', $input['site_id']) as $key => $value) {
+                        foreach ($input['site_id'] as $key => $value) {
                             $site = Site::select(['id','api_path','domain'])->find($value);
                             $childTaskId = $this->generateRandomString();
                             $childDoCommand = $this->MakeApiCommand($do_command,$site->api_path,$site->domain);
@@ -593,6 +597,7 @@ class TimedTaskController extends CrudController
         } else {
             $content = shell_exec($command);
         }
+        $content = str_replace("\n",'<br/>',$content);
         ReturnJson(true,'',$content);
     }
 

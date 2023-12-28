@@ -38,7 +38,7 @@ class NoticeController extends CrudController{
     }
 
     public function NewsNotice(Request $request){
-        $notice = Notice::where('status',1)->select(['id','name','created_at','created_by'])->orderBy('created_at','desc')->first();
+        $notice = Notice::where('status',1)->select(['id','name','body','created_at','created_by'])->orderBy('created_at','desc')->first();
         ReturnJson(true,trans('lang.request_success'),$notice);
     }
 
