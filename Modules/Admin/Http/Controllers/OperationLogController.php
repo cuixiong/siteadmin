@@ -62,8 +62,8 @@ class OperationLogController extends CrudController
      */
     public function SaveLog($params = [])
     {
-        file_put_contents('a.txt',json_encode($params),FILE_APPEND);
         try {
+            $params = $params['data'];
             if(!empty($params)){
                 $model = new OperationLog();
                 $model->type = $params['type'];
@@ -75,7 +75,7 @@ class OperationLogController extends CrudController
                 $model->module = $params['module'];
                 $model->created_by = $params['created_by'];
                 $model->created_at = $params['created_at'];
-                $model->save();
+                $res = $model->save();
                 return true;
             }
         } catch (\Exception $e) {

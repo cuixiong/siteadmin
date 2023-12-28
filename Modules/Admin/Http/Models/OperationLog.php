@@ -11,24 +11,24 @@ class OperationLog extends Base
 
     public function __construct()
     {
-        // 获取当前租户信息
-        $currentTenant = tenancy()->tenant;
-        if($currentTenant){
-            // 获取当前租户的标识
-            $tenantId = $currentTenant->getTenantKey();
-            // 如果当前处于租户则切换回中央数据库
-            tenancy()->end();
-        }
+        // // 获取当前租户信息
+        // $currentTenant = tenancy()->tenant;
+        // if($currentTenant){
+        //     // 获取当前租户的标识
+        //     $tenantId = $currentTenant->getTenantKey();
+        //     // 如果当前处于租户则切换回中央数据库
+        //     tenancy()->end();
+        // }
 
         $this->SetTableName();
         if(Schema::hasTable($this->table) == false){
             $this->CreateTable();
         }
 
-        if($currentTenant){
-            //再切换回租户
-            tenancy()->initialize($tenantId);
-        }
+        // if($currentTenant){
+        //     //再切换回租户
+        //     tenancy()->initialize($tenantId);
+        // }
     }
     
     public function getCategoryTextAttribute($value)
