@@ -498,7 +498,7 @@ class ProductsController extends CrudController
 
         $input = $request->all();
         $ids = $input['ids'] ?? '';
-        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+        $type = $input['type'] ?? 1; //1：获取数量;2：执行操作
 
         $ModelInstance = $this->ModelInstance();
         $model = $ModelInstance->query();
@@ -519,7 +519,7 @@ class ProductsController extends CrudController
             // 总数量
             $data['count'] = $model->count();
             ReturnJson(TRUE, trans('lang.request_success'), $data);
-        } else {
+        } elseif($type == 2) {
             $data['result_count'] = $model->delete();
             ReturnJson(TRUE, trans('lang.delete_success'));
         }
