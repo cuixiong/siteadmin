@@ -27,6 +27,60 @@ use Modules\Site\Http\Models\ProductsExcelField;
 class ProductsUploadLogController extends CrudController
 {
 
+
+    /**
+     * 查询列表页
+     * @param $request 请求信息
+     * @param int $page 页码
+     * @param int $pageSize 页数
+     * @param Array $where 查询条件数组 默认空数组
+     */
+    protected function list(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+
+            $record = $model->get();
+
+            foreach ($record as $key => $item) {
+                if ($item['details']) {
+                    $item['details'] = str_replace("\r\n", "<br />", $item['details']);
+                } else {
+                    $item['details'] = '';
+                }
+            }
+
+            $data = [
+                'total' => $total,
+                'list' => $record
+            ];
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
     /**
      * 获取该站点的出版商,下拉选择框数据
      * @param $request 请求信息
@@ -37,8 +91,8 @@ class ProductsUploadLogController extends CrudController
         $site = $request->header('Site');
         $publisherIds = Site::where('name', $site)->value('publisher_id');
         $data = [];
-        if($publisherIds){
-            $publisherIdArray = explode(',',$publisherIds);
+        if ($publisherIds) {
+            $publisherIdArray = explode(',', $publisherIds);
             $data = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1, 'id' => $publisherIdArray]);
         }
 
@@ -328,14 +382,14 @@ class ProductsUploadLogController extends CrudController
                     $errorCount++;
                     continue;
                 }
-                
+
                 // 忽略关键词为空的数据
                 if (empty($item['keywords'])) {
                     $details .= '【' . ($row['name'] ?? '') . '】'  . trans('lang.keywords_empty') . "\r\n";
                     $errorCount++;
                     continue;
                 }
-                
+
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
                     $details .= '【' . ($row['name'] ?? '') . '】' . trans('lang.url_empty') . "\r\n";

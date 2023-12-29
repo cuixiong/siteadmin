@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\Publisher;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\ProductsCategory;
@@ -143,6 +144,60 @@ class ProductsController extends CrudController
         }
     }
 
+
+    /**
+     * 判断已存在，返回id
+     * @param Request $request
+     */
+    protected function isExist(Request $request)
+    {
+
+        try {
+            $name = $request->name;
+            if (!isset($name) || empty(trim($name))) {
+                ReturnJson(TRUE, trans('lang.request_success'), '');
+            }
+            $id = $this->ModelInstance()->where(['name' => trim($name)])->value('id');
+            if ($id) {
+                ReturnJson(TRUE, trans('lang.request_success'), $id);
+            } else {
+                ReturnJson(TRUE, trans('lang.request_success'), '');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    /**
+     * AJax单个查询
+     * @param $request 请求信息
+     */
+    protected function form(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+
+            $year = date('Y', $record['published_date']);
+            if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+            } else {
+                $descriptionData = (new ProductsDescription($year))->where('product_id', $record['id'])->first();
+                $record['description'] = $descriptionData['description'] ?? '';
+                $record['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                $record['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                $record['description_en'] = $descriptionData['description_en'] ?? '';
+                $record['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                $record['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                $rrecord['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+            }
+
+            ReturnJson(TRUE, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+
     /**
      * 更新报告
      * @param $request 请求信息
@@ -257,9 +312,17 @@ class ProductsController extends CrudController
     {
         try {
             //分类
-            $data['category'] = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            $data['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
             //国家地区 region
             $data['country'] = (new Region())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            //出版商
+            $site = $request->header('Site');
+            $publisherIds = Site::where('name', $site)->value('publisher_id');
+            $data['publisher'] = [];
+            if ($publisherIds) {
+                $publisherIdArray = explode(',', $publisherIds);
+                $data['publisher'] = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1, 'id' => $publisherIdArray]);
+            }
 
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
@@ -519,7 +582,7 @@ class ProductsController extends CrudController
             // 总数量
             $data['count'] = $model->count();
             ReturnJson(TRUE, trans('lang.request_success'), $data);
-        } elseif($type == 2) {
+        } elseif ($type == 2) {
             $data['result_count'] = $model->delete();
             ReturnJson(TRUE, trans('lang.delete_success'));
         }
