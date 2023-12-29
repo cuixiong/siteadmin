@@ -40,7 +40,7 @@ class TimedTask extends Base
         if(isset($this->attributes['site_id']))
         {
             $value = explode(',',$this->attributes['site_id']);
-            $value = Site::whereIn('id',$value)->pluck('id')->toArray();
+            $value = Site::whereIn('id',$value)->where('status',1)->pluck('id')->toArray();
             foreach ($value as &$map) {
                 $map = intval($map);
             }
