@@ -1061,10 +1061,17 @@ class ProductsController extends CrudController
         }
         if ($logData['state'] == ProductsExportLog::EXPORT_COMPLETE) {
             $basePath = public_path();
-            return response()->download($basePath . $logData['file'], null, [
-                'Content-Type' => 'text/plain',
-                'Content-Disposition' => 'inline',
-            ]);
+            if(strpos($logData['file'],'txt')!==false){
+                return response()->download($basePath . $logData['file'], null, [
+                    'Content-Type' => 'text/plain',
+                    'Content-Disposition' => 'inline',
+                ]);
+            }elseif(strpos($logData['file'],'xlsx')!==false){
+                return response()->download($basePath . $logData['file'], null, [
+                    'Content-Type' => 'application/vnd.ms-excel',
+                    'Content-Disposition' => 'inline',
+                ]);
+            }
         }
         ReturnJson(TRUE, trans('lang.file_not_exist'));
     }
