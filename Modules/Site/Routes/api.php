@@ -201,6 +201,28 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据删除');
         Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
     });
+
+    // System控制器
+    Route::prefix('system')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'store'])->name('平台字段:父级新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'update'])->name('平台字段:父级编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SystemController::class, 'destroy'])->name('平台字段:父级删除');
+        Route::get('list', [Modules\Site\Http\Controllers\SystemController::class, 'list'])->name('平台字段:父级列表');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'form'])->name('平台字段:父级单查');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'changeStatus'])->name('平台字段:父级修改状态');
+        Route::get('option', [Modules\Site\Http\Controllers\SystemController::class, 'option'])->name('平台字段:父级下拉数据');
+        Route::get('value-list/{parent_id}', [Modules\Site\Http\Controllers\SystemController::class, 'valueList'])->name('平台字段:某个父级下的子级列表');
+    });
+
+    Route::prefix('system-value')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueStore'])->name('平台字段:子级新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueUpdate'])->name('平台字段:子级编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueDestroy'])->name('平台字段:子级删除');
+        Route::get('list', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueList'])->name('平台字段:全部子级列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeStatus'])->name('平台字段:子级修改状态');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'formValue'])->name('平台字段:子级单查');
+        Route::post('change-hidden', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeHidden'])->name('平台字段:子级显示状态');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
