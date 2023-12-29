@@ -202,24 +202,24 @@ Route::middleware([
 
     // System控制器
     Route::prefix('system')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'store'])->name('平台字段:父级新增');
-        Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'update'])->name('平台字段:父级编辑');
-        Route::post('destroy', [Modules\Site\Http\Controllers\SystemController::class, 'destroy'])->name('平台字段:父级删除');
-        Route::get('list', [Modules\Site\Http\Controllers\SystemController::class, 'list'])->name('平台字段:父级列表');
-        Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'form'])->name('平台字段:父级单查');
-        Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'changeStatus'])->name('平台字段:父级修改状态');
-        Route::get('option', [Modules\Site\Http\Controllers\SystemController::class, 'option'])->name('平台字段:父级下拉数据');
-        Route::get('value-list/{parent_id}', [Modules\Site\Http\Controllers\SystemController::class, 'valueList'])->name('平台字段:某个父级下的子级列表');
+        Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'store'])->name('网点配置:父级新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'update'])->name('网点配置:父级编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SystemController::class, 'destroy'])->name('网点配置:父级删除');
+        Route::get('list', [Modules\Site\Http\Controllers\SystemController::class, 'list'])->name('网点配置:父级列表');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'form'])->name('网点配置:父级单查');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'changeStatus'])->name('网点配置:父级修改状态');
+        Route::get('option', [Modules\Site\Http\Controllers\SystemController::class, 'option'])->name('网点配置:父级下拉数据');
+        Route::get('value-list/{parent_id}', [Modules\Site\Http\Controllers\SystemController::class, 'valueList'])->name('网点配置:某个父级下的子级列表');
     });
 
     Route::prefix('system-value')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueStore'])->name('平台字段:子级新增');
-        Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueUpdate'])->name('平台字段:子级编辑');
-        Route::post('destroy', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueDestroy'])->name('平台字段:子级删除');
-        Route::get('list', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueList'])->name('平台字段:全部子级列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeStatus'])->name('平台字段:子级修改状态');
-        Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'formValue'])->name('平台字段:子级单查');
-        Route::post('change-hidden', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeHidden'])->name('平台字段:子级显示状态');
+        Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueStore'])->name('网点配置:子级新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueUpdate'])->name('网点配置:子级编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueDestroy'])->name('网点配置:子级删除');
+        Route::get('list', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueList'])->name('网点配置:全部子级列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeStatus'])->name('网点配置:子级修改状态');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'formValue'])->name('网点配置:子级单查');
+        Route::post('change-hidden', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeHidden'])->name('网点配置:子级显示状态');
     });
 });
 
