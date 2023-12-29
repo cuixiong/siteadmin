@@ -4,13 +4,14 @@ namespace Modules\Site\Http\Models;
 
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
+use Modules\Admin\Http\Models\Publisher;
 
 class Products extends Base
 {
     protected $table = 'product_routine';
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['category', 'country', 'published_date_format'];
+    protected $appends = ['category', 'country', 'published_date_format', 'publisher'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -226,6 +227,18 @@ class Products extends Base
         $text = '';
         if (isset($this->attributes['country_id'])) {
             $text = Region::where('id', $this->attributes['country_id'])->value('name') ?? '';
+        }
+        return $text;
+    }
+
+    /**
+     * 出版商获取器
+     */
+    public function getPublisherAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['publisher_id'])) {
+            $text = Publisher::where('id', $this->attributes['publisher_id'])->value('name') ?? '';
         }
         return $text;
     }
