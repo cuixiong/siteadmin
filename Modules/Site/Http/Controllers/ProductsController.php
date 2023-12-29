@@ -104,9 +104,9 @@ class ProductsController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             // 开启事务
-            $currentTenant = tenancy()->tenant;
-            DB::connection($currentTenant->getConnectionName())->beginTransaction();
-
+            // $currentTenant = tenancy()->tenant;
+            // DB::connection($currentTenant->getConnectionName())->beginTransaction();
+            DB::beginTransaction();
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
             }
@@ -134,12 +134,14 @@ class ProductsController extends CrudController
             if (!$descriptionRecord) {
                 throw new \Exception(trans('lang.add_error'));
             }
-            DB::connection($currentTenant->getConnectionName())->commit();
+            // DB::connection($currentTenant->getConnectionName())->commit();
+            DB::commit();
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
+            DB::rollBack();
             // 建表时无法回滚
-            DB::connection($currentTenant->getConnectionName())->rollBack();
+            // DB::connection($currentTenant->getConnectionName())->rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -208,9 +210,9 @@ class ProductsController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             // 开启事务
-            $currentTenant = tenancy()->tenant;
-            DB::connection($currentTenant->getConnectionName())->beginTransaction();
-            // DB::beginTransaction();
+            // $currentTenant = tenancy()->tenant;
+            // DB::connection($currentTenant->getConnectionName())->beginTransaction();
+            DB::beginTransaction();
             $model = $this->ModelInstance();
             $record = $model->findOrFail($input['id']);
 
@@ -260,11 +262,13 @@ class ProductsController extends CrudController
                 throw new \Exception(trans('lang.update_error'));
             }
 
-            DB::connection($currentTenant->getConnectionName())->commit();
+            DB::commit();
+            // DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
-            DB::connection($currentTenant->getConnectionName())->rollBack();
+            DB::rollBack();
+            // DB::connection($currentTenant->getConnectionName())->rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
