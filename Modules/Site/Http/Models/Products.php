@@ -269,6 +269,11 @@ class Products extends Base
                 'type' => '2',
             ],
             [
+                'name' => '出版商',
+                'value' => 'publisher_id',
+                'type' => '2',
+            ],
+            [
                 'name' => '价格',
                 // 'name' => trans('lang.price'),
                 'value' => 'price',
