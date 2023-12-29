@@ -525,7 +525,7 @@ class FileManagement extends Controller{
         }
         $rand = rand(10000, 99999);
         $fileData = pathinfo($full_path);
-        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$rand . '.zip';
+        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$fileData['filename'].'_'.$rand . '.zip';
         // var_dump($files, $zipFileName);die;
         $res = self::zipDir($files, $zipFileName);
         if (file_exists($zipFileName)) {

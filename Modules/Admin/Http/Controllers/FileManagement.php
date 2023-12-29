@@ -607,7 +607,7 @@ class FileManagement extends Controller{
         }
         $rand = rand(10000, 99999);
         $fileData = pathinfo($full_path);
-        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$rand . '.zip';
+        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$fileData['filename'].'_'.$rand . '.zip';
         // var_dump($files, $zipFileName);die;
         $res = self::zipDir($files, $zipFileName);
         if (file_exists($zipFileName)) {
@@ -807,7 +807,6 @@ class FileManagement extends Controller{
         $RootPath = AdminUploads::getRootPath();
         $path = $path ? rtrim($RootPath, '/') . '/'.trim($path,'/').'/'. $name : rtrim($RootPath, '/') . '/'. $name;
         if(file_exists($path)){
-            var_dump($path);die;
             ReturnJson(false, '文件存在');
         }
         if(is_dir($path)){
