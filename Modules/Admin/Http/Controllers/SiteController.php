@@ -675,7 +675,7 @@ class SiteController extends CrudController
      */
     public function UserOption(Request $request)
     {
-        $res = Role::whereIn('id', explode(',', $request->user->role_id))->pluck('site_id')->where('status',1)->toArray();
+        $res = Role::whereIn('id', explode(',', $request->user->role_id))->where('status',1)->pluck('site_id')->toArray();
         $site_ids = [];
         foreach ($res as $key => $value) {
             if (is_array($value)) {
