@@ -1,6 +1,6 @@
 <?php
 namespace Modules\Site\Http\Requests;
-use Modules\Site\Http\Requests\BaseRequest;
+use Modules\Admin\Http\Requests\BaseRequest;
 class SystemRequest extends BaseRequest
 {
     /**
