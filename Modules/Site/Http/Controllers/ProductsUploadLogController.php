@@ -293,6 +293,10 @@ class ProductsUploadLogController extends CrudController
         $errorCount = 0;
         $details = '';
 
+        //移除事件监听
+        $dispatcher = Products::getEventDispatcher();
+        Products::unsetEventDispatcher();
+
         foreach ($params['data'] as $row) {
             // $count++;
             try {
@@ -429,14 +433,20 @@ class ProductsUploadLogController extends CrudController
                         //删除旧详情
                         if ($oldYear) {
                             $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
-                            $oldProductDescription->delete();
+                            if($oldProductDescription){
+                                $oldProductDescription->delete();
+                            }
                         }
                         //然后新增
                         $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     } else {
                         //直接更新
-                        $newProductDescription = $newProductDescription->where('product_id', $product->id)->first();
-                        $descriptionRecord = $newProductDescription->updateWithAttributes($itemDescription);
+                        $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product->id)->first();
+                        if($newProductDescriptionUpdate){
+                            $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
+                        }else{
+                            $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                        }
                     }
                     $updateCount++;
                 } else {
@@ -457,6 +467,9 @@ class ProductsUploadLogController extends CrudController
                 $errorCount++;
             }
         }
+
+        //恢复监听
+        Products:: setEventDispatcher($dispatcher);
         try {
             DB::beginTransaction();
             $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
