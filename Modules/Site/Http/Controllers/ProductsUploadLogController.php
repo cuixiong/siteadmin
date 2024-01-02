@@ -115,11 +115,19 @@ class ProductsUploadLogController extends CrudController
         if (!is_dir($basePath)) {
             @mkdir($basePath, 0777, true);
         }
-        //出版商id
-        $pulisher_id = $request->pulisher_id;
+        // 出版商id
+        $publisher_id = $request->pulisher_id;
+        // 操作者id
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if(isset($user->id)){
+            $userID = $user->id;
+        } else {
+            $userID = 0;
+        }
+
         //上传文件路径
         $pathsStr = $request->path;
-        if (empty($pulisher_id) || empty($pathsStr)) {
+        if (empty($publisher_id) || empty($pathsStr)) {
             ReturnJson(TRUE, trans('lang.param_empty'));
         }
 
@@ -167,7 +175,9 @@ class ProductsUploadLogController extends CrudController
                 'log_id' => $logModel->id,  //写入日志的id
                 'data' => $path,    //传递文件路径
                 'fieldData' => $fieldData,  //字段与excel表头的对应关系
-                'pulisher_id' => $pulisher_id,  //出版商id
+                'publisher_id' => $publisher_id,  //出版商id
+                'user_id' => $userID,  //用户id
+                
             ];
             $data = json_encode($data);
             $RabbitMQ = new RabbitmqService();
@@ -250,8 +260,9 @@ class ProductsUploadLogController extends CrudController
                         'method' => 'handleProducts',
                         'site' => $params['site'],
                         'log_id' => $params['log_id'],
-                        'pulisher_id' => $params['pulisher_id'],
-                        'data' => $item
+                        'publisher_id' => $params['publisher_id'],
+                        'data' => $item,
+                        'user_id' => $params['user_id'], 
                     ];
                     $data = json_encode($data);
                     $RabbitMQ = new RabbitmqService();
@@ -285,7 +296,8 @@ class ProductsUploadLogController extends CrudController
         // 设置当前租户
         tenancy()->initialize($params['site']);
         // tenancy()->initialize('QY_EN');
-        $pulisher_id = $params['pulisher_id'];
+        $publisher_id = $params['publisher_id'];
+        $user_id = $params['user_id'];
 
         // $count = 0;
         $insertCount = 0;
@@ -303,7 +315,10 @@ class ProductsUploadLogController extends CrudController
                 // 表头
                 $item = [];
                 //出版商
-                $item['pulisher_id'] = $pulisher_id;
+                $item['publisher_id'] = $publisher_id;
+                //操作用户
+                $item['created_by'] = $user_id;
+                $item['updated_by'] = $user_id;
                 // 报告名称
                 isset($row['name']) && $item['name'] = $row['name'];
                 // 报告名称(英)
