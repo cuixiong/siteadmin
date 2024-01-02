@@ -212,6 +212,7 @@ Route::middleware([
         Route::get('value-list/{parent_id}', [Modules\Site\Http\Controllers\SystemController::class, 'valueList'])->name('网点配置:某个父级下的子级列表');
     });
 
+    // System控制器
     Route::prefix('system-value')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueStore'])->name('网点配置:子级新增');
         Route::post('update', [Modules\Site\Http\Controllers\SystemController::class, 'systemValueUpdate'])->name('网点配置:子级编辑');
@@ -220,6 +221,14 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeStatus'])->name('网点配置:子级修改状态');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\SystemController::class, 'formValue'])->name('网点配置:子级单查');
         Route::post('change-hidden', [Modules\Site\Http\Controllers\SystemController::class, 'valueChangeHidden'])->name('网点配置:子级显示状态');
+    });
+    // User控制器
+    Route::prefix('user')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\UserController::class, 'store'])->name('用户列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\UserController::class, 'update'])->name('用户列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\UserController::class, 'destroy'])->name('用户列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\UserController::class, 'list'])->name('用户列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\UserController::class, 'changeStatus'])->name('用户列表:状态修改');
     });
 });
 
