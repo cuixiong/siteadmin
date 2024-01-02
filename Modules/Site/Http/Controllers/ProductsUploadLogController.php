@@ -550,4 +550,71 @@ class ProductsUploadLogController extends CrudController
 
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
+
+
+    /**
+     * 上传示例文件,根据设置excel字段生成
+     * @param $request 请求信息
+     */
+    public function exampleFile(Request $request)
+    {
+
+        // $site = $request->header('Site');
+        // if (empty($site)) {
+        //     ReturnJson(TRUE, trans('lang.param_empty'));
+        // }
+
+        $writer = WriterEntityFactory::createXLSXWriter();
+        $writer->openToBrowser('sample.xlsx'); // 将文件输出到浏览器并下载
+
+        //获取表头与字段关系
+        $fieldData = ProductsExcelField::where(['status' => 1])->select(['name', 'field'])->orderBy('sort', 'asc')->get()->toArray();
+        $title = array_column($fieldData, 'name');
+        foreach ($fieldData as $key => $value) {
+            $fieldData[$key]['sort'] = $key;
+        }
+        $fieldData = array_column($fieldData, 'field', 'sort');
+
+        //写入标题
+        $style = (new StyleBuilder())->setShouldWrapText(false)->build();
+        $row = WriterEntityFactory::createRowFromArray($title, $style);
+        $writer->addRow($row);
+
+        //读取几条数据当案例
+        $record = Products::orderBy('id', 'desc')->limit(5)->get()->makeHidden((new Products())->getAppends())->toArray();
+        if ($record && count($record) > 0) {
+
+            foreach ($record as $key => $item) {
+                $year = date('Y', $item['published_date']);
+                if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+                    continue;
+                }
+
+                $item['published_date'] = date('Y-m-d', $item['published_date'])?? '';
+
+                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
+                $item['description'] = $descriptionData['description'] ?? '';
+                $item['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                $item['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                $item['description_en'] = $descriptionData['description_en'] ?? '';
+                $item['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                $item['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                $item['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+
+                $row = [];
+                foreach ($fieldData as $value) {
+                    if (empty($value) || !isset($item[$value])) {
+                        $row[] = '';
+                    } else {
+                        $row[] = $item[$value];
+                    }
+                }
+
+                $rowFromValues = WriterEntityFactory::createRowFromArray($row, $style);
+                $writer->addRow($rowFromValues);
+            }
+        }
+
+        $writer->close();
+    }
 }

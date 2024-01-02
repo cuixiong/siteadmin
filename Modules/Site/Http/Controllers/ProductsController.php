@@ -770,6 +770,8 @@ class ProductsController extends CrudController
                 if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
                     continue;
                 }
+                $item['published_date'] = date('Y-m-d', $item['published_date']);
+
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
                 $item['description'] = $descriptionData['description'] ?? '';
                 $item['table_of_content'] = $descriptionData['table_of_content'] ?? '';
@@ -1061,12 +1063,12 @@ class ProductsController extends CrudController
         }
         if ($logData['state'] == ProductsExportLog::EXPORT_COMPLETE) {
             $basePath = public_path();
-            if(strpos($logData['file'],'txt')!==false){
+            if (strpos($logData['file'], 'txt') !== false) {
                 return response()->download($basePath . $logData['file'], null, [
                     'Content-Type' => 'text/plain',
                     'Content-Disposition' => 'inline',
                 ]);
-            }elseif(strpos($logData['file'],'xlsx')!==false){
+            } elseif (strpos($logData['file'], 'xlsx') !== false) {
                 return response()->download($basePath . $logData['file'], null, [
                     'Content-Type' => 'application/vnd.ms-excel',
                     'Content-Disposition' => 'inline',
