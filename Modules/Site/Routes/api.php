@@ -235,18 +235,26 @@ Route::middleware([
     });
     // Pay控制器
     Route::prefix('pay')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\PayController::class, 'store'])->name('用户列表:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\PayController::class, 'update'])->name('用户列表:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\PayController::class, 'destroy'])->name('用户列表:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\PayController::class, 'list'])->name('用户列表:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\PayController::class, 'changeStatus'])->name('用户列表:状态修改');
+        Route::post('store', [Modules\Site\Http\Controllers\PayController::class, 'store'])->name('支付列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PayController::class, 'update'])->name('支付列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PayController::class, 'destroy'])->name('支付列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PayController::class, 'list'])->name('支付列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PayController::class, 'changeStatus'])->name('支付列表:状态修改');
     });
-    // Pay控制器
+    // Applyfor控制器
     Route::prefix('applyfor')->group(function () {
-        Route::post('update', [Modules\Site\Http\Controllers\ApplyforController::class, 'update'])->name('用户列表:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('用户列表:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('用户列表:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\ApplyforController::class, 'changeStatus'])->name('用户列表:状态修改');
+        Route::post('update', [Modules\Site\Http\Controllers\ApplyforController::class, 'update'])->name('申请样本:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('申请样本:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('申请样本:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ApplyforController::class, 'changeStatus'])->name('申请样本:状态修改');
+    });
+    // MessageCategory控制器
+    Route::prefix('message-category')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PayController::class, 'store'])->name('留言分类:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\ApplyforController::class, 'update'])->name('留言分类:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('留言分类:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('留言分类:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ApplyforController::class, 'changeStatus'])->name('留言分类:状态修改');
     });
 });
 
