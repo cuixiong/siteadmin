@@ -674,7 +674,8 @@ class FileManagement extends Controller{
     {
         $RootPath = SiteUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res[] = ['id' => 1,'value' => '','label' => '根目录','chiildren' => $DirList];
+        $res = [];
+        $res[] = ['value' => '','label' => '根目录','chiildren' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
@@ -687,7 +688,7 @@ class FileManagement extends Controller{
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
                     $this->i = $this->i + 1;
-                    $result[] = ['id' => $this->i,'value'=>$value,'label' => $value,'chiildren' => $this->listFolderFiles($dir . '/' . $value)];
+                    $result[] = ['value'=>$this->i,'label' => $value,'chiildren' => $this->listFolderFiles($dir . '/' . $value)];
                 }
             }
         }
