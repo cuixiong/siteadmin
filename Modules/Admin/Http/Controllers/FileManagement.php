@@ -747,7 +747,7 @@ class FileManagement extends Controller{
     {
         $RootPath = AdminUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res = ['id' => 1 ,'value' => '','label' => '根目录','chiildren' => $DirList];
+        $res[] = ['id' => 1 ,'value' => '','label' => '根目录','chiildren' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 

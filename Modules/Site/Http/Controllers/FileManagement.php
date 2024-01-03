@@ -674,14 +674,14 @@ class FileManagement extends Controller{
     {
         $RootPath = SiteUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res = ['id' => 1,'value' => '','label' => '根目录','chiildren' => $DirList];
+        $res[] = ['id' => 1,'value' => '','label' => '根目录','chiildren' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
     // 递归查询文件夹
     public function listFolderFiles($dir){
         $dir = rtrim($dir, '/');
-        $result = array();
+        $result = [];
         $cdir = scandir($dir);
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
