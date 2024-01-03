@@ -686,7 +686,7 @@ class FileManagement extends Controller{
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
-                    $result[] = ['value'=>$value,'label' => $value,'chiild' => $this->listFolderFiles($dir . '/' . $value)];
+                    $result[] = ['value'=>$value,'label' => $value,'chiildren' => $this->listFolderFiles($dir . '/' . $value)];
                 }
             }
         }
