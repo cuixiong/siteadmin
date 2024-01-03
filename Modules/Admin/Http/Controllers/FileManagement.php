@@ -746,11 +746,9 @@ class FileManagement extends Controller{
     {
         $RootPath = AdminUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res = array_map(function ($v) use ($RootPath) {
-            return str_replace($RootPath, '', $v);
-        }, $DirList);
-        array_unshift($res,['value' => '','label' => '根目录']);
-        ReturnJson(true, trans('lang.request_success'), $res);
+        $res = ['value' => '','label' => '根目录','chiildren' => $DirList];
+        array_unshift($DirList,);
+        ReturnJson(true, trans('lang.request_success'), $DirList);
     }
 
     // 递归查询文件夹
@@ -761,8 +759,7 @@ class FileManagement extends Controller{
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
-                    $result[] = ['value'=>$dir . '/' . $value,'label' => $dir . '/' . $value];
-                    $result = array_merge($result, $this->listFolderFiles($dir . '/' . $value));
+                    $result[] = ['value'=>$value,'label' => $value,'chiild' => $this->listFolderFiles($dir . '/' . $value)];
                 }
             }
         }
