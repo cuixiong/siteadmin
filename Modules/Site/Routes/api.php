@@ -241,6 +241,13 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PayController::class, 'list'])->name('用户列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PayController::class, 'changeStatus'])->name('用户列表:状态修改');
     });
+    // Pay控制器
+    Route::prefix('applyfor')->group(function () {
+        Route::post('update', [Modules\Site\Http\Controllers\ApplyforController::class, 'update'])->name('用户列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('用户列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('用户列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ApplyforController::class, 'changeStatus'])->name('用户列表:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

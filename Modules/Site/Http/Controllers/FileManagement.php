@@ -7,6 +7,7 @@ use App\Helper\SiteUploads;
 
 class FileManagement extends Controller{
     private $RootPath;
+    private $i = 1;
     public function __construct()
     {   
         $request = request();
@@ -673,9 +674,8 @@ class FileManagement extends Controller{
     {
         $RootPath = SiteUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res = ['value' => '','label' => '根目录','chiildren' => $DirList];
-        array_unshift($DirList,);
-        ReturnJson(true, trans('lang.request_success'), $DirList);
+        $res = ['id' => 1,'value' => '','label' => '根目录','chiildren' => $DirList];
+        ReturnJson(true, trans('lang.request_success'), $res);
     }
 
     // 递归查询文件夹
@@ -686,7 +686,8 @@ class FileManagement extends Controller{
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
-                    $result[] = ['value'=>$value,'label' => $value,'chiildren' => $this->listFolderFiles($dir . '/' . $value)];
+                    $this->i = $this->i + 1;
+                    $result[] = ['id' => $this->i,'value'=>$value,'label' => $value,'chiildren' => $this->listFolderFiles($dir . '/' . $value)];
                 }
             }
         }
