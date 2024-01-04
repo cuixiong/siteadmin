@@ -8,6 +8,7 @@ use JsonException;
 
 class FileManagement extends Controller{
     private $RootPath;
+    private $i = 1;
     public function __construct()
     {
         $this->RootPath = AdminUploads::GetRootPath();
@@ -746,10 +747,8 @@ class FileManagement extends Controller{
     {
         $RootPath = AdminUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res = array_map(function ($v) use ($RootPath) {
-            return str_replace($RootPath, '', $v);
-        }, $DirList);
-        array_unshift($res,['value' => '','label' => '根目录']);
+        $res = [];
+        $res[] = ['value' => '','label' => '根目录','children' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
@@ -761,8 +760,8 @@ class FileManagement extends Controller{
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
-                    $result[] = ['value'=>$dir . '/' . $value,'label' => $dir . '/' . $value];
-                    $result = array_merge($result, $this->listFolderFiles($dir . '/' . $value));
+                    $this->i = $this->i + 1;
+                    $result[] = ['value'=>$value,'label' => $value,'children' => $this->listFolderFiles($dir . '/' . $value)];
                 }
             }
         }

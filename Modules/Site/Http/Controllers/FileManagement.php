@@ -7,6 +7,7 @@ use App\Helper\SiteUploads;
 
 class FileManagement extends Controller{
     private $RootPath;
+    private $i = 1;
     public function __construct()
     {   
         $request = request();
@@ -673,23 +674,21 @@ class FileManagement extends Controller{
     {
         $RootPath = SiteUploads::getRootPath();
         $DirList = $this->listFolderFiles($RootPath);
-        $res = array_map(function ($v) use ($RootPath) {
-            return str_replace($RootPath, '', $v);
-        }, $DirList);
-        array_unshift($res,['value' => '','label' => '根目录']);
+        $res = [];
+        $res[] = ['value' => '','label' => '根目录','children' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
     // 递归查询文件夹
     public function listFolderFiles($dir){
         $dir = rtrim($dir, '/');
-        $result = array();
+        $result = [];
         $cdir = scandir($dir);
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
-                    $result[] = ['value'=>$dir . '/' . $value,'label' => $dir . '/' . $value];
-                    $result = array_merge($result, $this->listFolderFiles($dir . '/' . $value));
+                    $this->i = $this->i + 1;
+                    $result[] = ['value'=>$value,'label' => $value,'children' => $this->listFolderFiles($dir . '/' . $value)];
                 }
             }
         }
