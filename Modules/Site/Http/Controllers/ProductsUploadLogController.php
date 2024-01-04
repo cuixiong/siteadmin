@@ -415,12 +415,12 @@ class ProductsUploadLogController extends CrudController
                     $errorCount++;
                     continue;
                 }
-                // 过滤不符合作者策略的数据
+                // 过滤不符合作者覆盖策略的数据
                 if ($product) {
                     if (
-                        !($item['author'] == '完成报告'
-                            || ($item['author'] == '报告翻新' && $product->author != '完成报告')
-                            || ($product->author != '完成报告' && $product->author != '报告翻新'))
+                        !($item['author'] == '已售报告'
+                            || ($item['author'] == '完成报告' && $product->author != '已售报告')
+                            || ($product->author != '已售报告' && $product->author != '完成报告'))
                     ) {
                         $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . '-' . trans('lang.author_level') . ($product->author) . "\r\n";
                         $errorCount++;
@@ -619,6 +619,9 @@ class ProductsUploadLogController extends CrudController
                 }
 
                 $item['published_date'] = date('Y-m-d', $item['published_date'])?? '';
+                if(isset($item['category_id'])){
+                    $item['category_id'] = ProductsCategory::where('id', $item['category_id'])->value('name');
+                }
 
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
                 $item['description'] = $descriptionData['description'] ?? '';

@@ -333,7 +333,7 @@ class SiteController extends CrudController
                 $ids = explode(",", $ids);
             }
             // 同步删除定时任务
-            (new TimedTaskController)->DeleteForSiteIds($ids);
+            (new TimedTaskController)->DeleteForSiteId($ids);
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
                 if ($record) {

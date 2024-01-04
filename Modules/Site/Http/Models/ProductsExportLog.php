@@ -86,9 +86,15 @@ class ProductsExportLog extends Base
             $model = $model->where('updated_at', '<=', $updateTime[1]);
         }
 
+        //导出者
+        if (isset($search->created_by) && !empty($search->created_by)) {
+            $createrIds = \Modules\Admin\Http\Models\User::where('name', 'like', '%' .$search->created_by .'%')->pluck('id');
+            $model = $model->whereIn('created_by', $createrIds);
+        }
+
         return $model;
     }
-    
+
 
     /**
      * 状态文字获取器

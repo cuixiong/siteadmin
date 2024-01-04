@@ -34,9 +34,9 @@ class ProductsExcelField extends Base
             $model = $model->where('name', 'like', '%' . $search->name . '%');
         }
 
-        //keyword
-        if (isset($search->link) && !empty($search->link)) {
-            $model = $model->where('link', 'like', '%' . $search->link . '%');
+        //field
+        if (isset($search->field) && !empty($search->field)) {
+            $model = $model->where('field', 'like', '%' . $search->field . '%');
         }
 
         //status 状态
