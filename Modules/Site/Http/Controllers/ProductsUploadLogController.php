@@ -418,9 +418,8 @@ class ProductsUploadLogController extends CrudController
 
                 // 过滤不符合作者覆盖策略的数据
                 if ($product) {
-                    if (
-                        !(($product->author == '已售报告' && $item['author'] != '已售报告')
-                            || ($product->author == '完成报告' && ($item['author'] != '已售报告' || $item['author'] != '完成报告')))
+                    if (($product->author == '已售报告' && $item['author'] != '已售报告')
+                            || ($product->author == '完成报告' && ($item['author'] != '已售报告' || $item['author'] != '完成报告'))
                     ) {
                         $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . '-' . trans('lang.author_level') . ($product->author) . "\r\n";
                         $errorCount++;
