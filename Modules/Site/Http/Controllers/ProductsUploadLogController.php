@@ -108,7 +108,7 @@ class ProductsUploadLogController extends CrudController
     public function uploadProducts(Request $request)
     {
         $basePath = public_path() . '/site';
-        $basePath .= '/' . $request->header('Site').'/';
+        $basePath .= '/' . $request->header('Site') . '/';
 
         // $basePath = public_path();
         //检验目录是否存在
@@ -119,7 +119,7 @@ class ProductsUploadLogController extends CrudController
         $publisher_id = $request->pulisher_id;
         // 操作者id
         $user = \Illuminate\Support\Facades\Auth::user();
-        if(isset($user->id)){
+        if (isset($user->id)) {
             $userID = $user->id;
         } else {
             $userID = 0;
@@ -177,7 +177,7 @@ class ProductsUploadLogController extends CrudController
                 'fieldData' => $fieldData,  //字段与excel表头的对应关系
                 'publisher_id' => $publisher_id,  //出版商id
                 'user_id' => $userID,  //用户id
-                
+
             ];
             $data = json_encode($data);
             $RabbitMQ = new RabbitmqService();
@@ -262,7 +262,7 @@ class ProductsUploadLogController extends CrudController
                         'log_id' => $params['log_id'],
                         'publisher_id' => $params['publisher_id'],
                         'data' => $item,
-                        'user_id' => $params['user_id'], 
+                        'user_id' => $params['user_id'],
                     ];
                     $data = json_encode($data);
                     $RabbitMQ = new RabbitmqService();
@@ -370,8 +370,6 @@ class ProductsUploadLogController extends CrudController
                 isset($row['companies_mentioned']) && $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row['companies_mentioned']);
 
 
-                // 查询单个报告数据/去重
-                $product = Products::where('name', trim($item['name']))->orWhere('name', isset($row['english_name']) ? trim($row['name']) : '')->first();
 
                 /** 
                  * 不合格的数据过滤
@@ -415,12 +413,14 @@ class ProductsUploadLogController extends CrudController
                     $errorCount++;
                     continue;
                 }
+                // 查询单个报告数据/去重
+                $product = Products::where('name', trim($item['name']))->orWhere('name', isset($row['english_name']) ? trim($row['name']) : '')->first();
+
                 // 过滤不符合作者覆盖策略的数据
                 if ($product) {
                     if (
-                        !($item['author'] == '已售报告'
-                            || ($item['author'] == '完成报告' && $product->author != '已售报告')
-                            || ($product->author != '已售报告' && $product->author != '完成报告'))
+                        !(($product->author == '已售报告' && $item['author'] != '已售报告')
+                            || ($product->author == '完成报告' && ($item['author'] != '已售报告' || $item['author'] != '完成报告')))
                     ) {
                         $details .= '【' . ($row['name'] ?? '') . '】' . ($item['author']) . '-' . trans('lang.author_level') . ($product->author) . "\r\n";
                         $errorCount++;
@@ -448,7 +448,7 @@ class ProductsUploadLogController extends CrudController
                         //删除旧详情
                         if ($oldYear) {
                             $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $product->id)->first();
-                            if($oldProductDescription){
+                            if ($oldProductDescription) {
                                 $oldProductDescription->delete();
                             }
                         }
@@ -457,9 +457,9 @@ class ProductsUploadLogController extends CrudController
                     } else {
                         //直接更新
                         $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product->id)->first();
-                        if($newProductDescriptionUpdate){
+                        if ($newProductDescriptionUpdate) {
                             $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
-                        }else{
+                        } else {
                             $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                         }
                     }
@@ -484,7 +484,7 @@ class ProductsUploadLogController extends CrudController
         }
 
         //恢复监听
-        Products:: setEventDispatcher($dispatcher);
+        Products::setEventDispatcher($dispatcher);
         try {
             DB::beginTransaction();
             $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
@@ -618,9 +618,9 @@ class ProductsUploadLogController extends CrudController
                     continue;
                 }
 
-                $item['published_date'] = date('Y-m-d', $item['published_date'])?? '';
-                if(isset($item['category_id'])){
-                    $item['category_id'] = ProductsCategory::where('id', $item['category_id'])->value('name');
+                $item['published_date'] = date('Y-m-d', $item['published_date']) ?? '';
+                if (isset($item['category_id'])) {
+                    $item['category_id'] = ProductsCategory::where('id', $item['category_id'])->value('name') ?? '';
                 }
 
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
