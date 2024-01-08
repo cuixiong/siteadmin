@@ -714,6 +714,9 @@ class FileManagement extends Controller{
         if (empty($files)) {
             ReturnJson(false, '请选择上传文件');
         }
+        if(count($files) > 20){
+            ReturnJson(false, '上传文件最多只能上传20个！');
+        }
         $res = [];
         foreach ($files as $file) {
             $name = $file->getClientOriginalName();
