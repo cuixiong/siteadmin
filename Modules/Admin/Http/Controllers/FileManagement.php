@@ -20,16 +20,14 @@ class FileManagement extends Controller{
         $filename = $this->RootPath . $path;
 
         if (!is_dir($filename)) {
-            ReturnJson(false,'该路径非文件夹');
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
         } elseif (!file_exists($filename)) {
-            ReturnJson(false,'路径不存在');
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
         } elseif ($path == '..') {
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
-        }
-        if(!is_dir($filename)){
-            mkdir($filename, 0755, true);
-            chmod($filename, 0755);
         }
 
         $result = [];
