@@ -137,7 +137,7 @@ class User extends Base
     public function getRuleTextAttribute($value)
     {
         if(!empty($this->attributes['role_id'])){
-            $value = Role::whereIn('id',explode(",",$this->attributes['role_id']))->pluck('name');
+            $value = Role::whereIn('id',explode(",",$this->attributes['role_id']))->where('status',1)->pluck('name');
             return $value;
         }
         return [];

@@ -27,6 +27,10 @@ class FileManagement extends Controller{
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
         }
+        if(!is_dir($filename)){
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
+        }
 
         $result = [];
         $path_array = explode('/', str_replace('\\', '/', $path));
@@ -264,7 +268,7 @@ class FileManagement extends Controller{
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
         }
         foreach ($names as $name) {
-            if(rtrim($old_path,'/').'/' . $name == $new_path){
+            if(rtrim($old_path,'/').'/' . $name == '/'.rtrim($new_path,'/')){
                 return ReturnJson(false,'复制或移动的目标相同，请正确操作');
             }
         }
@@ -461,7 +465,6 @@ class FileManagement extends Controller{
 
     /**
      *移动文件
-     *
      *@param string $fileUrl
      *@param string $aimUrl
      *@param boolean $overWrite 该参数控制是否覆盖原文件
