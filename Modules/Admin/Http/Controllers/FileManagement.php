@@ -16,9 +16,10 @@ class FileManagement extends Controller{
 
     public function FileList(Request $request)
     {   
-        $route = $request->route;
+        $routeName = $request->routeName ?? '';
+        $routeName = $routeName ? trim($routeName,"/")."/" : "";
         $path = $request->path ?? '';
-        $this->RootPath = $this->RootPath . ($route ? "/". trim("/",$route)."/" : "");
+        $this->RootPath = $this->RootPath . $routeName;
         $filename = $this->RootPath.$path;
 
         if (!is_dir($filename)) {
