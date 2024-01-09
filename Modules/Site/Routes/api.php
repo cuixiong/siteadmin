@@ -202,6 +202,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据删除');
         Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
         Route::get('options', [Modules\Site\Http\Controllers\MenuController::class, 'options'])->name('导航菜单:字典数据');
+        Route::get('is-single', [Modules\Site\Http\Controllers\MenuController::class, 'isSingle'])->name('导航菜单:是否单页修改');
     });
 
     // System控制器
