@@ -201,6 +201,7 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\MenuController::class, 'update'])->name('导航菜单:数据编辑');
         Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据删除');
         Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
+        Route::get('options', [Modules\Site\Http\Controllers\MenuController::class, 'options'])->name('导航菜单:字典数据');
     });
 
     // System控制器

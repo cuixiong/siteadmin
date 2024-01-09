@@ -2,6 +2,9 @@
 namespace Modules\Site\Http\Controllers;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\Dictionary;
+use Modules\Admin\Http\Models\DictionaryValue;
+
 class MenuController extends CrudController{
     /**
      * 查询列表页
@@ -53,5 +56,18 @@ class MenuController extends CrudController{
 
         }
         return $tree;
+    }
+    public function options(Request $request){
+        $options = [];
+        $codes = ['Switch_State','Navigation_Menu_Type','Is_Single_Page'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        $options['menus'] = $this->ModelInstance()->where('status',1)->select('id as value','name as label')->get()->toArray();
+        ReturnJson(TRUE,'', $options);
     }
 }
