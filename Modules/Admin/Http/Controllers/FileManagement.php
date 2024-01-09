@@ -12,9 +12,7 @@ class FileManagement extends Controller{
     public function __construct()
     {
         $request = request();
-        $routeName = $request->routeName ?? '';
-        $routeName = $routeName ? trim($routeName,"/")."/" : "";
-        $this->RootPath = AdminUploads::GetRootPath(). $routeName;
+        $this->RootPath = AdminUploads::GetRootPath();
     }
 
     public function FileList(Request $request)

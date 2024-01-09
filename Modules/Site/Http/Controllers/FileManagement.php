@@ -13,9 +13,7 @@ class FileManagement extends Controller{
         $request = request();
         $action = $request->route()->getActionName();
         list($class, $action) = explode('@', $action);
-        $routeName = $request->routeName ?? '';
-        $routeName = $routeName ? trim($routeName,"/")."/" : "";
-        $this->RootPath = SiteUploads::GetRootPath(). $routeName;        
+        $this->RootPath = SiteUploads::GetRootPath();        
         if($action != 'download'){
             $client = SiteUploads::OssClient();
         }
@@ -23,10 +21,7 @@ class FileManagement extends Controller{
 
     public function FileList(Request $request)
     {   
-        $routeName = $request->routeName ?? '';
-        $routeName = $routeName ? trim($routeName,"/")."/" : "";
         $path = $request->path ?? '';
-        $this->RootPath = $this->RootPath . $routeName;
         $filename = $this->RootPath.$path;
 
         if (!is_dir($filename)) {
