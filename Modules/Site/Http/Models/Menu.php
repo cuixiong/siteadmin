@@ -25,7 +25,8 @@ class Menu extends Base
         'updated_by',
         'created_by',
         'sort',
-        'banner_short_title'
+        'banner_short_title',
+        'prompt'
     ];
     protected $appends = ['parent_name'];
 

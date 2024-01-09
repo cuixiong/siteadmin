@@ -15,7 +15,7 @@ class MenuController extends CrudController{
         $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
         if(!empty($data)){
             foreach ($data as $map){
-                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
             }
         }
         $options['menus'] = $this->ModelInstance()->GetListLabel(['id as value', 'name as label'],false,'',['status' => 1]);
