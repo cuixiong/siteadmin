@@ -13,7 +13,9 @@ class FileManagement extends Controller{
         $request = request();
         $action = $request->route()->getActionName();
         list($class, $action) = explode('@', $action);
-        $this->RootPath = SiteUploads::GetRootPath();
+        $routeName = $request->routeName ?? '';
+        $routeName = $routeName ? trim($routeName,"/")."/" : "";
+        $this->RootPath = SiteUploads::GetRootPath(). $routeName;        
         if($action != 'download'){
             $client = SiteUploads::OssClient();
         }

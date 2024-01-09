@@ -11,15 +11,16 @@ class FileManagement extends Controller{
     private $i = 1;
     public function __construct()
     {
-        $this->RootPath = AdminUploads::GetRootPath();
+        $request = request();
+        $routeName = $request->routeName ?? '';
+        $routeName = $routeName ? trim($routeName,"/")."/" : "";
+        $this->RootPath = AdminUploads::GetRootPath(). $routeName;
     }
 
     public function FileList(Request $request)
     {   
-        $routeName = $request->routeName ?? '';
-        $routeName = $routeName ? trim($routeName,"/")."/" : "";
+        
         $path = $request->path ?? '';
-        $this->RootPath = $this->RootPath . $routeName;
         $filename = $this->RootPath.$path;
 
         if (!is_dir($filename)) {
