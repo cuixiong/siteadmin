@@ -267,6 +267,14 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PlateController::class, 'list'])->name('页面板块:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateController::class, 'changeStatus'])->name('页面板块:状态修改');
     });
+    // Plate-Value控制器
+    Route::prefix('plate-value')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PlateValueController::class, 'store'])->name('页面板块子级:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PlateValueController::class, 'update'])->name('页面板块子级:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PlateValueController::class, 'destroy'])->name('页面板块子级:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PlateValueController::class, 'list'])->name('页面板块子级:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
+    });
     // SinglePage控制器
     Route::prefix('single-page')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\SinglePageController::class, 'store'])->name('单页管理:数据新增');
