@@ -267,6 +267,14 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PlateController::class, 'list'])->name('页面板块:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateController::class, 'changeStatus'])->name('页面板块:状态修改');
     });
+    // SinglePage控制器
+    Route::prefix('single-page')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\SinglePageController::class, 'store'])->name('单页管理:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SinglePageController::class, 'update'])->name('单页管理:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SinglePageController::class, 'destroy'])->name('单页管理:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\SinglePageController::class, 'list'])->name('单页管理:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SinglePageController::class, 'changeStatus'])->name('单页管理:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
