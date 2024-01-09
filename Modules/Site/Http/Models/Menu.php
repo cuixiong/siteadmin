@@ -24,7 +24,8 @@ class Menu extends Base
         'status',
         'updated_by',
         'created_by',
-        'sort'
+        'sort',
+        'banner_short_title'
     ];
     protected $appends = ['parent_name'];
 
@@ -36,6 +37,20 @@ class Menu extends Base
         $value = self::where('id',$this->attributes['parent_id'])
             ->value('name');
         $value = empty($value)? '' : $value;
+        return $value;
+    }
+
+    public function setBannerPcAttribute($value)
+    {
+        $value = is_array($value) ? implode(",",$value) : $value;
+        $this->attributes['banner_pc'] = $value;
+        return $value;
+    }
+
+    public function setBannerMobileAttribute($value)
+    {
+        $value = is_array($value) ? implode(",",$value) : $value;
+        $this->attributes['banner_mobile'] = $value;
         return $value;
     }
 }
