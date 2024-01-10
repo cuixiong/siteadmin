@@ -293,11 +293,19 @@ Route::middleware([
     });
     // Video控制器
     Route::prefix('video')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\videoController::class, 'store'])->name('视频列表:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\videoController::class, 'update'])->name('视频列表:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\videoController::class, 'destroy'])->name('视频列表:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\videoController::class, 'list'])->name('视频列表:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\videoController::class, 'changeStatus'])->name('视频列表:状态修改');
+        Route::post('store', [Modules\Site\Http\Controllers\VideoController::class, 'store'])->name('视频列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\VideoController::class, 'update'])->name('视频列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\VideoController::class, 'destroy'])->name('视频列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\VideoController::class, 'list'])->name('视频列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\VideoController::class, 'changeStatus'])->name('视频列表:状态修改');
+    });
+    // Link控制器
+    Route::prefix('link')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\LinkController::class, 'store'])->name('视频列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\LinkController::class, 'update'])->name('视频列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\LinkController::class, 'destroy'])->name('视频列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\LinkController::class, 'list'])->name('视频列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\LinkController::class, 'changeStatus'])->name('视频列表:状态修改');
     });
 });
 
