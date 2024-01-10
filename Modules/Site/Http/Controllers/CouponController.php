@@ -11,6 +11,7 @@ use Modules\Site\Http\Models\CouponUser;
 use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\OrderGoods;
+use Modules\Site\Http\Models\User;
 
 class CouponController extends CrudController
 {
@@ -23,6 +24,10 @@ class CouponController extends CrudController
     public function searchDroplist(Request $request)
     {
         try {
+
+            //用户名单
+            $data['users'] = (new User())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
             } else {
