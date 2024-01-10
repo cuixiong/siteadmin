@@ -35,6 +35,8 @@ class CouponController extends CrudController
             }
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            // 是否生效
+            $data['is_effect'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Coupon_State', 'status' => 1], ['sort' => 'ASC']);
             // 优惠类型
             $data['type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Coupon_Type', 'status' => 1], ['sort' => 'ASC']);
             

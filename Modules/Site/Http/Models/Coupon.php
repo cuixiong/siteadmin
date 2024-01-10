@@ -97,6 +97,18 @@ class Coupon extends Base
             $model = $model->where('time_end', '<=', $effectEndTime[1]);
         }
 
+        //是否生效
+        if (isset($search->is_effect)) {
+            if ($search->is_effect === 0 || $search->is_effect === '0') {
+                $model->where(function ($query) {
+                    $query->where('time_begin', '<', time())
+                        ->orWhere('time_end', '>', time());
+                });
+            } else {
+                $model = $model->where('time_begin', '>=', time());
+                $model = $model->where('time_end', '<=', time());
+            }
+        }
 
         return $model;
     }
@@ -145,9 +157,9 @@ class Coupon extends Base
             && !empty($this->attributes['time_begin']) && !empty($this->attributes['time_end'])
             && time() >= $this->attributes['time_begin'] && time() <= $this->attributes['time_end']
         ) {
-            $text = DictionaryValue::where('code', 'Coupon_State')->where('value', "true")->value($field) ?? 'true';
+            $text = DictionaryValue::where('code', 'Coupon_State')->where('value', 1)->value($field) ?? true;
         } else {
-            $text = DictionaryValue::where('code', 'Coupon_State')->where('value', "false")->value($field) ?? 'false';
+            $text = DictionaryValue::where('code', 'Coupon_State')->where('value', 0)->value($field) ?? false;
         }
         return $text;
     }
