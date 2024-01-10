@@ -10,7 +10,7 @@ class Coupon extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['time_begin_format', 'time_end_format', 'is_effect', 'usernames'];
+    protected $appends = ['time_begin_format', 'time_end_format', 'is_effect', 'usernames', 'type_text'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -174,6 +174,27 @@ class Coupon extends Base
             $userIdsArray = explode(',', $this->attributes['user_ids']);
             $nameArray = User::query()->whereIn('id', $userIdsArray)->pluck('name')->toArray();
             $text = ($nameArray && count($nameArray) > 0) ? implode(',', $nameArray) : '';
+        }
+        return $text;
+    }
+
+    /**
+     * 用户名获取器
+     */
+    public function getTypeTextAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['type'])) {
+
+            // 获取请求对象
+            $request = request();
+
+            if ($request->HeaderLanguage == 'en') {
+                $field = 'english_name';
+            } else {
+                $field = 'name';
+            }
+            $text = DictionaryValue::where('code', 'Coupon_Type')->where('value', $this->attributes['type'])->value($field);
         }
         return $text;
     }
