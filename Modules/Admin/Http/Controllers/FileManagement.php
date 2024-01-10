@@ -11,18 +11,22 @@ class FileManagement extends Controller{
     private $i = 1;
     public function __construct()
     {
+        $request = request();
         $this->RootPath = AdminUploads::GetRootPath();
     }
 
     public function FileList(Request $request)
     {   
+        
         $path = $request->path ?? '';
-        $filename = $this->RootPath . $path;
+        $filename = $this->RootPath.$path;
 
         if (!is_dir($filename)) {
-            ReturnJson(false,'该路径非文件夹');
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
         } elseif (!file_exists($filename)) {
-            ReturnJson(false,'路径不存在');
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
         } elseif ($path == '..') {
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
@@ -264,7 +268,7 @@ class FileManagement extends Controller{
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
         }
         foreach ($names as $name) {
-            if(rtrim($old_path,'/').'/' . $name == $new_path){
+            if(rtrim($old_path,'/').'/' . $name == '/'.rtrim($new_path,'/')){
                 return ReturnJson(false,'复制或移动的目标相同，请正确操作');
             }
         }
@@ -461,7 +465,6 @@ class FileManagement extends Controller{
 
     /**
      *移动文件
-     *
      *@param string $fileUrl
      *@param string $aimUrl
      *@param boolean $overWrite 该参数控制是否覆盖原文件
@@ -714,6 +717,9 @@ class FileManagement extends Controller{
         if (empty($files)) {
             ReturnJson(false, '请选择上传文件');
         }
+        if(count($files) > 20){
+            ReturnJson(false, '上传文件最多只能上传20个！');
+        }
         $res = [];
         foreach ($files as $file) {
             $name = $file->getClientOriginalName();
@@ -746,14 +752,14 @@ class FileManagement extends Controller{
     public function DirList(Request $request)
     {
         $RootPath = AdminUploads::getRootPath();
-        $DirList = $this->listFolderFiles($RootPath);
+        $DirList = $this->listFolderFiles($RootPath,$RootPath);
         $res = [];
         $res[] = ['value' => '','label' => '根目录','children' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
     // 递归查询文件夹
-    public function listFolderFiles($dir){
+    public function listFolderFiles($dir,$RootPath){
         $dir = rtrim($dir, '/');
         $result = array();
         $cdir = scandir($dir);
@@ -761,7 +767,8 @@ class FileManagement extends Controller{
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
                     $this->i = $this->i + 1;
-                    $result[] = ['value'=>$value,'label' => $value,'children' => $this->listFolderFiles($dir . '/' . $value)];
+                    $tempRoot = str_replace(rtrim($RootPath, '/'),'',$dir).'/';
+                    $result[] = ['value'=> trim($tempRoot . $value,'/'),'label' => $value,'children' => $this->listFolderFiles($dir . '/' . $value,$RootPath)];
                 }
             }
         }

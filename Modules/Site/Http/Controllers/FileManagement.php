@@ -13,7 +13,7 @@ class FileManagement extends Controller{
         $request = request();
         $action = $request->route()->getActionName();
         list($class, $action) = explode('@', $action);
-        $this->RootPath = SiteUploads::GetRootPath();
+        $this->RootPath = SiteUploads::GetRootPath();        
         if($action != 'download'){
             $client = SiteUploads::OssClient();
         }
@@ -22,12 +22,14 @@ class FileManagement extends Controller{
     public function FileList(Request $request)
     {   
         $path = $request->path ?? '';
-        $filename = $this->RootPath . $path;
+        $filename = $this->RootPath.$path;
 
         if (!is_dir($filename)) {
-            ReturnJson(false,'该路径非文件夹');
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
         } elseif (!file_exists($filename)) {
-            ReturnJson(false,'路径不存在');
+            mkdir($filename, 0755, true);
+            chmod($filename, 0755);
         } elseif ($path == '..') {
             //不能进去基本路径的上层
             ReturnJson(false,'超过文件管理范围');
@@ -259,6 +261,11 @@ class FileManagement extends Controller{
             ReturnJson(false,'超过文件管理范围');
         } elseif ($old_path == $new_path) {
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
+        }
+        foreach ($names as $name) {
+            if(rtrim($old_path,'/').'/' . $name == '/'.rtrim($new_path,'/')){
+                return ReturnJson(false,'复制或移动的目标相同，请正确操作');
+            }
         }
 
         $IsExistsFiles = [];
@@ -673,22 +680,23 @@ class FileManagement extends Controller{
     public function DirList(Request $request)
     {
         $RootPath = SiteUploads::getRootPath();
-        $DirList = $this->listFolderFiles($RootPath);
+        $DirList = $this->listFolderFiles($RootPath,$RootPath);
         $res = [];
         $res[] = ['value' => '','label' => '根目录','children' => $DirList];
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
     // 递归查询文件夹
-    public function listFolderFiles($dir){
+    public function listFolderFiles($dir,$RootPath){
         $dir = rtrim($dir, '/');
-        $result = [];
+        $result = array();
         $cdir = scandir($dir);
         foreach ($cdir as $value){
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
                     $this->i = $this->i + 1;
-                    $result[] = ['value'=>$value,'label' => $value,'children' => $this->listFolderFiles($dir . '/' . $value)];
+                    $tempRoot = str_replace(rtrim($RootPath, '/'),'',$dir).'/';
+                    $result[] = ['value'=> trim($tempRoot . $value,'/'),'label' => $value,'children' => $this->listFolderFiles($dir . '/' . $value,$RootPath)];
                 }
             }
         }

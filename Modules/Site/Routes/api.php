@@ -235,6 +235,8 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\MenuController::class, 'update'])->name('导航菜单:数据编辑');
         Route::post('destroy', [Modules\Site\Http\Controllers\MenuController::class, 'destroy'])->name('导航菜单:数据删除');
         Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
+        Route::get('options', [Modules\Site\Http\Controllers\MenuController::class, 'options'])->name('导航菜单:字典数据');
+        Route::get('is-single', [Modules\Site\Http\Controllers\MenuController::class, 'isSingle'])->name('导航菜单:是否单页修改');
     });
 
     // System控制器
@@ -266,6 +268,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\UserController::class, 'destroy'])->name('用户列表:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\UserController::class, 'list'])->name('用户列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\UserController::class, 'changeStatus'])->name('用户列表:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\UserController::class, 'options'])->name('用户列表:字典数据');
     });
     // Pay控制器
     Route::prefix('pay')->group(function () {
@@ -289,6 +292,30 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('留言分类:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('留言分类:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\ApplyforController::class, 'changeStatus'])->name('留言分类:状态修改');
+    });
+    // Plate控制器
+    Route::prefix('plate')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PlateController::class, 'store'])->name('页面板块:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PlateController::class, 'update'])->name('页面板块:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PlateController::class, 'destroy'])->name('页面板块:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PlateController::class, 'list'])->name('页面板块:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PlateController::class, 'changeStatus'])->name('页面板块:状态修改');
+    });
+    // Plate-Value控制器
+    Route::prefix('plate-value')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PlateValueController::class, 'store'])->name('页面板块子级:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PlateValueController::class, 'update'])->name('页面板块子级:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PlateValueController::class, 'destroy'])->name('页面板块子级:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PlateValueController::class, 'list'])->name('页面板块子级:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
+    });
+    // SinglePage控制器
+    Route::prefix('single-page')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\SinglePageController::class, 'store'])->name('单页管理:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SinglePageController::class, 'update'])->name('单页管理:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SinglePageController::class, 'destroy'])->name('单页管理:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\SinglePageController::class, 'list'])->name('单页管理:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SinglePageController::class, 'changeStatus'])->name('单页管理:状态修改');
     });
 });
 

@@ -7,7 +7,7 @@ use Modules\Site\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
 
-class UserController extends CrudController
+class SinglePageController extends CrudController
 {
     public function options(Request $request){
         $options = [];

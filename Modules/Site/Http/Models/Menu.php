@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Site\Http\Models;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Base;
 class Menu extends Base
 {
@@ -24,9 +25,11 @@ class Menu extends Base
         'status',
         'updated_by',
         'created_by',
-        'sort'
+        'sort',
+        'banner_short_title',
+        'prompt'
     ];
-    protected $appends = ['parent_name'];
+    protected $appends = ['parent_name','type_name'];
 
     public function getParentNameAttribute()
     {
@@ -37,5 +40,40 @@ class Menu extends Base
             ->value('name');
         $value = empty($value)? '' : $value;
         return $value;
+    }
+    public function getBannerPcAttribute($value)
+    {
+        $value = $value ? explode(",",$value) : [];
+        return $value;
+    }
+
+    public function setBannerPcAttribute($value)
+    {
+        $value = is_array($value) ? implode(",",$value) : $value;
+        $this->attributes['banner_pc'] = $value;
+        return $value;
+    }
+
+    public function getBannerMobileAttribute($value)
+    {
+        $value = $value ? explode(",",$value) : [];
+        return $value;
+    }
+    public function setBannerMobileAttribute($value)
+    {
+        $value = is_array($value) ? implode(",",$value) : $value;
+        $this->attributes['banner_mobile'] = $value;
+        return $value;
+    }
+
+    public function getTypeNameAttribute()
+    {
+        if(empty($this->attributes['type'])){
+            return '';
+        }
+        $value = DictionaryValue::where('code','Navigation_Menu_Type')
+            ->where('value',$this->attributes['type'])
+            ->value('name');
+        return empty($value)? '' : $value;
     }
 }

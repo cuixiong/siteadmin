@@ -234,4 +234,25 @@ class RuleController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+    public function destroy(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if($record){
+                    $this->ModelInstance()->where('parent_id',$id)->delete();
+                    $record->delete();
+                }
+            }
+            ReturnJson(TRUE, trans('lang.delete_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }
