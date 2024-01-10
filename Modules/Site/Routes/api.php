@@ -153,6 +153,40 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'destroy'])->name('报告字段:删除字段');
 
     });
+    
+    // Order 控制器
+    Route::prefix('order')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\OrderController::class, 'list'])->name('订单管理:订单列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\OrderController::class, 'searchDroplist'])->name('订单管理:订单下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\OrderController::class, 'changeStatus'])->name('订单管理:状态修改');
+
+        Route::post('update', [Modules\Site\Http\Controllers\OrderController::class, 'update'])->name('订单管理:修改订单');
+        Route::post('destroy', [Modules\Site\Http\Controllers\OrderController::class, 'destroy'])->name('订单管理:删除订单');
+
+    });
+
+    // ShopCart 控制器
+    Route::prefix('shop-cart')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ShopCartController::class, 'list'])->name('购物车:订单列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\ShopCartController::class, 'searchDroplist'])->name('购物车:下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ShopCartController::class, 'changeStatus'])->name('购物车:状态修改');
+
+        Route::post('destroy', [Modules\Site\Http\Controllers\ShopCartController::class, 'destroy'])->name('购物车:删除购物车');
+
+    });
+    
+    // Coupon 控制器
+    Route::prefix('coupon')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\CouponController::class, 'list'])->name('优惠券:字段列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\CouponController::class, 'searchDroplist'])->name('优惠券:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CouponController::class, 'changeStatus'])->name('优惠券:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\CouponController::class, 'changeSort'])->name('优惠券:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\CouponController::class, 'store'])->name('优惠券:新增优惠券');
+        Route::post('update', [Modules\Site\Http\Controllers\CouponController::class, 'update'])->name('优惠券:修改优惠券');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CouponController::class, 'destroy'])->name('优惠券:删除优惠券');
+
+    });
 
     // SearchRank 控制器
     Route::prefix('search-rank')->group(function () {
