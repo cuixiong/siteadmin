@@ -291,6 +291,14 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\AuthorityController::class, 'list'])->name('权威引用:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\AuthorityController::class, 'changeStatus'])->name('权威引用:状态修改');
     });
+    // Video控制器
+    Route::prefix('video')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\videoController::class, 'store'])->name('视频列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\videoController::class, 'update'])->name('视频列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\videoController::class, 'destroy'])->name('视频列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\videoController::class, 'list'])->name('视频列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\videoController::class, 'changeStatus'])->name('视频列表:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
