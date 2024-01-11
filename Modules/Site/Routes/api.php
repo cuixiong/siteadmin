@@ -360,6 +360,14 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\OfficeController::class, 'list'])->name('办公室列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeStatus'])->name('办公室列表:状态修改');
     });
+    // Qualification控制器
+    Route::prefix('qualification')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\QualificationController::class, 'store'])->name('资质认证:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\QualificationController::class, 'update'])->name('资质认证:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\QualificationController::class, 'destroy'])->name('资质认证:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\QualificationController::class, 'list'])->name('资质认证:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\QualificationController::class, 'changeStatus'])->name('资质认证:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
