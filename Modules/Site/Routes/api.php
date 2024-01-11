@@ -384,6 +384,14 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\HistoryController::class, 'list'])->name('发展历程:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\HistoryController::class, 'changeStatus'])->name('发展历程:状态修改');
     });
+    // Partner控制器
+    Route::prefix('partner')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PartnerController::class, 'store'])->name('合作伙伴:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PartnerController::class, 'update'])->name('合作伙伴:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PartnerController::class, 'destroy'])->name('合作伙伴:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PartnerController::class, 'list'])->name('合作伙伴:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PartnerController::class, 'changeStatus'])->name('合作伙伴:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
