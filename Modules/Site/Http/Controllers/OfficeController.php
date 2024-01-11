@@ -1,12 +1,14 @@
 <?php
+
 namespace Modules\Site\Http\Controllers;
+
 use Illuminate\Http\Request;
+use Modules\Site\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
-use Modules\Site\Http\Models\Email;
 
-class EmailSceneController extends CrudController{
-    // 字典接口
+class OfficeController extends CrudController
+{
     public function options(Request $request){
         $options = [];
         $codes = ['Switch_State'];
@@ -17,8 +19,7 @@ class EmailSceneController extends CrudController{
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
             }
         }
-        $options['email'] = Email::where('status',1)->select('id as value',$NameField)->orderBy('sort','asc')->get()->toArray();
-        $options['code'] = ['register','password'];
+        $options['country'] = Country::where('status',1)->select('id as value',$NameField)->orderBy('sort','asc')->get()->toArray();
         ReturnJson(TRUE,'', $options);
     }
 }

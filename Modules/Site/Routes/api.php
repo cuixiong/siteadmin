@@ -191,6 +191,7 @@ Route::middleware([
         Route::post('store', [Modules\Site\Http\Controllers\EmailSceneController::class, 'store'])->name('发邮场景:发邮新增');
         Route::post('update', [Modules\Site\Http\Controllers\EmailSceneController::class, 'update'])->name('发邮场景:发邮编辑');
         Route::post('destroy', [Modules\Site\Http\Controllers\EmailSceneController::class, 'destroy'])->name('发邮场景:发邮删除');
+        Route::get('options', [Modules\Site\Http\Controllers\EmailSceneController::class, 'options'])->name('发邮场景:字典数据');
     });
 
     // Menu控制器
@@ -306,6 +307,22 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\LinkController::class, 'destroy'])->name('视频列表:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\LinkController::class, 'list'])->name('视频列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\LinkController::class, 'changeStatus'])->name('视频列表:状态修改');
+    });
+    // TeamMember控制器
+    Route::prefix('team-member')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\TeamMemberController::class, 'store'])->name('团队成员:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\TeamMemberController::class, 'update'])->name('团队成员:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\TeamMemberController::class, 'destroy'])->name('团队成员:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\TeamMemberController::class, 'list'])->name('团队成员:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\TeamMemberController::class, 'changeStatus'])->name('团队成员:状态修改');
+    });
+    // Office控制器
+    Route::prefix('office')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\OfficeController::class, 'store'])->name('办公室列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\OfficeController::class, 'update'])->name('办公室列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\OfficeController::class, 'destroy'])->name('办公室列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\OfficeController::class, 'list'])->name('办公室列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeStatus'])->name('办公室列表:状态修改');
     });
 });
 
