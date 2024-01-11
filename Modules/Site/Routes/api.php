@@ -370,11 +370,19 @@ Route::middleware([
     });
     // Comment控制器
     Route::prefix('comment')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\QualificationController::class, 'store'])->name('资质认证:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\QualificationController::class, 'update'])->name('资质认证:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\QualificationController::class, 'destroy'])->name('资质认证:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\QualificationController::class, 'list'])->name('资质认证:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\QualificationController::class, 'changeStatus'])->name('资质认证:状态修改');
+        Route::post('store', [Modules\Site\Http\Controllers\CommentController::class, 'store'])->name('资质认证:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\CommentController::class, 'update'])->name('资质认证:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CommentController::class, 'destroy'])->name('资质认证:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\CommentController::class, 'list'])->name('资质认证:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CommentController::class, 'changeStatus'])->name('资质认证:状态修改');
+    });
+    // History控制器
+    Route::prefix('history')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\HistoryController::class, 'store'])->name('发展历程:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\HistoryController::class, 'update'])->name('发展历程:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\HistoryController::class, 'destroy'])->name('发展历程:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\HistoryController::class, 'list'])->name('发展历程:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\HistoryController::class, 'changeStatus'])->name('发展历程:状态修改');
     });
 });
 
