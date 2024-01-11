@@ -171,6 +171,8 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\ShopCartController::class, 'searchDroplist'])->name('购物车:下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\ShopCartController::class, 'changeStatus'])->name('购物车:状态修改');
 
+        Route::post('store', [Modules\Site\Http\Controllers\ShopCartController::class, 'store'])->name('购物车:新增购物车');
+        Route::post('update', [Modules\Site\Http\Controllers\ShopCartController::class, 'update'])->name('购物车:修改购物车');
         Route::post('destroy', [Modules\Site\Http\Controllers\ShopCartController::class, 'destroy'])->name('购物车:删除购物车');
 
     });

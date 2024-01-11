@@ -108,4 +108,17 @@ class ShopCart extends Base
         }
         return $text;
     }
+
+
+    /**
+     * 用户名获取器
+     */
+    public function getUsernameAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['user_id'])) {
+            $text = User::query()->where('id', $this->attributes['user_id'])->value('name');
+        }
+        return $text;
+    }
 }
