@@ -14,11 +14,14 @@ class EmailSceneController extends CrudController{
         $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
         if(!empty($data)){
             foreach ($data as $map){
-                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
             }
         }
         $options['email'] = Email::where('status',1)->select('id as value',$NameField)->orderBy('sort','asc')->get()->toArray();
-        $options['code'] = ['register','password'];
+        $options['code'] = [
+            ['value' => 'register','label' => 'register'],
+            ['value' => 'password','label' => 'password'],
+        ];
         ReturnJson(TRUE,'', $options);
     }
 }
