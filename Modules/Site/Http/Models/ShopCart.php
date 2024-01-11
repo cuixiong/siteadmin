@@ -11,7 +11,7 @@ class ShopCart extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['goods_name', 'price_edition_name'];
+    protected $appends = ['goods_name', 'price_edition_name','username'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
