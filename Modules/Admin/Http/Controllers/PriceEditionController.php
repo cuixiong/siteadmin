@@ -90,18 +90,26 @@ class PriceEditionController extends CrudController
             $editionData = $input['edition_data'] ?? null;
             if ($editionId && $editionData) {
                 $editionData = json_decode($editionData, true);
-                //删除旧版本项
-                PriceEditionValue::where('edition_id', $editionId)->delete();
-
-                //新增版本项
+                
                 foreach ($editionData as $item) {
-                    $item['edition_id'] = $editionId;
-                    //子项验证
-                    (new PriceEditionValueRequest())->store(new Request($item));
 
-                    $itemModel = new PriceEditionValue();
-                    $resItem = $itemModel->create($item);
-                    if (!$resItem) {
+                    $item['edition_id'] = $editionId;
+                    if (isset($item['id']) && !empty($item['id'])) {
+                        (new PriceEditionValueRequest())->update(new Request($item));
+
+                        $itemModel = PriceEditionValue::find($item['id']);
+                        if($itemModel){
+                            $resItem = $itemModel->update($item);
+                        }
+                    } else {
+                        //子项验证
+                        (new PriceEditionValueRequest())->store(new Request($item));
+
+                        $itemModel = new PriceEditionValue();
+                        $resItem = $itemModel->create($item);
+                    }
+
+                    if (!isset($resItem) || !$resItem) {
                         // 回滚事务
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.update_error'));
@@ -188,7 +196,7 @@ class PriceEditionController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort')
+                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort')
                         ->where('edition_id', $item['id'])
                         ->orderBy('sort', 'ASC')
                         ->get();

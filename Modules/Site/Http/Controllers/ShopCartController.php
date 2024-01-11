@@ -6,13 +6,16 @@ use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\PriceEditionValue;
 use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\OrderGoods;
+use Modules\Site\Http\Models\ShopCart;
+use Modules\Site\Http\Models\User;
 
 class ShopCartController extends CrudController
 {
-    
+
     /**
      * 查询列表页
      * @param $request 请求信息
@@ -64,6 +67,24 @@ class ShopCartController extends CrudController
      */
     public function searchDroplist(Request $request)
     {
+        //价格版本
+        $priceEditionIds = ShopCart::query()->select(['price_edition'])->distinct()->pluck('price_edition');
+        $data['price_edition'] = PriceEditionValue::query()
+            ->select(['id as value', 'name as label'])
+            ->where(['status' => 1])
+            ->whereIn('id', $priceEditionIds ?? [])
+            ->get()
+            ->makeHidden((new PriceEditionValue())->getAppends());
+            
+        //用户
+        $userIds = ShopCart::query()->select(['user_id'])->distinct()->pluck('user_id');
+        $data['user_id'] = User::query()
+            ->select(['id as value', 'name as label'])
+            ->where(['status' => 1])
+            ->whereIn('id', $userIds ?? [])
+            ->get()
+            ->makeHidden((new User())->getAppends());
+
         try {
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
@@ -79,8 +100,4 @@ class ShopCartController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-
-    
-
-    
 }

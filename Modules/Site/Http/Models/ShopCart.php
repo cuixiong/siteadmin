@@ -11,7 +11,7 @@ class ShopCart extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['goods_name', 'price_edition_name','username'];
+    protected $appends = ['goods_name', 'price_edition_name', 'username'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -49,7 +49,12 @@ class ShopCart extends Base
 
         // goods_id
         if (isset($search->goods_id) && !empty($search->goods_id)) {
-            $model = $model->where('goods_id', $search->goods_id);
+            if (is_numeric($search->goods_id)) {
+                $model = $model->where('goods_id', $search->goods_id);
+            } else {
+                $goodsIds = Products::query()->select(['id'])->where('name', 'like', '%' . $search->goods_id . '%')->where('status', 1)->pluck('id');
+                $model = $model->whereIn('goods_id', $goodsIds);
+            }
         }
         // number
         if (isset($search->number) && !empty($search->number)) {
