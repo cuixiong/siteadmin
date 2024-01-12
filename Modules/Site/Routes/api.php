@@ -372,6 +372,46 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\OfficeController::class, 'list'])->name('办公室列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeStatus'])->name('办公室列表:状态修改');
     });
+    // Qualification控制器
+    Route::prefix('qualification')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\QualificationController::class, 'store'])->name('资质认证:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\QualificationController::class, 'update'])->name('资质认证:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\QualificationController::class, 'destroy'])->name('资质认证:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\QualificationController::class, 'list'])->name('资质认证:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\QualificationController::class, 'changeStatus'])->name('资质认证:状态修改');
+    });
+    // Comment控制器
+    Route::prefix('comment')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\CommentController::class, 'store'])->name('资质认证:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\CommentController::class, 'update'])->name('资质认证:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CommentController::class, 'destroy'])->name('资质认证:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\CommentController::class, 'list'])->name('资质认证:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CommentController::class, 'changeStatus'])->name('资质认证:状态修改');
+    });
+    // History控制器
+    Route::prefix('history')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\HistoryController::class, 'store'])->name('发展历程:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\HistoryController::class, 'update'])->name('发展历程:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\HistoryController::class, 'destroy'])->name('发展历程:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\HistoryController::class, 'list'])->name('发展历程:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\HistoryController::class, 'changeStatus'])->name('发展历程:状态修改');
+    });
+    // Partner控制器
+    Route::prefix('partner')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PartnerController::class, 'store'])->name('合作伙伴:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PartnerController::class, 'update'])->name('合作伙伴:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PartnerController::class, 'destroy'])->name('合作伙伴:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PartnerController::class, 'list'])->name('合作伙伴:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PartnerController::class, 'changeStatus'])->name('合作伙伴:状态修改');
+    });
+    // Problem控制器
+    Route::prefix('problem')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\ProblemController::class, 'store'])->name('常见问题:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\ProblemController::class, 'update'])->name('常见问题:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ProblemController::class, 'destroy'])->name('常见问题:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\ProblemController::class, 'list'])->name('常见问题:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ProblemController::class, 'changeStatus'])->name('常见问题:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

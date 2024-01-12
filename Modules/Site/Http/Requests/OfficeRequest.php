@@ -2,7 +2,7 @@
 namespace Modules\Site\Http\Requests;
 use Modules\Admin\Http\Requests\BaseRequest;
 
-class TeamMemberRequest extends BaseRequest
+class OfficeRequest extends BaseRequest
 {
     /**
      * 新增数据验证
