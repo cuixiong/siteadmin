@@ -17,7 +17,7 @@ class EmailSceneController extends CrudController{
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
             }
         }
-        $options['email'] = Email::where('status',1)->select('id as value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        $options['email'] = Email::where('status',1)->select('id as value','name as label')->orderBy('sort','asc')->get()->toArray();
         $options['code'] = [
             ['value' => 'register','label' => 'register'],
             ['value' => 'password','label' => 'password'],
