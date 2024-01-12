@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Order;
+use Modules\Site\Http\Models\User;
+use Modules\Site\Http\Models\Invoice;
 
 class InvoiceController extends CrudController
 {
@@ -84,6 +86,13 @@ class InvoiceController extends CrudController
     public function searchDroplist(Request $request)
     {
         try {
+            $userIds = Invoice::query()->select(['user_id'])->distinct()->pluck('user_id');
+            $data['user_id'] = User::query()
+                ->select(['id as value', 'name as label'])
+                ->where(['status' => 1])
+                ->whereIn('id', $userIds ?? [])
+                ->get()
+                ->makeHidden((new User())->getAppends());
 
             if ($request->HeaderLanguage == 'en') {
                 $filed = ['english_name as label', 'value'];
