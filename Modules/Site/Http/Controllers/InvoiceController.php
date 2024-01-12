@@ -140,4 +140,26 @@ class InvoiceController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+    
+    /**
+     * 修改开票状态
+     * @param $request 请求信息
+     * @param $id 主键ID
+     */
+    public function changeApplyStatus(Request $request)
+    {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->apply_status = $request->apply_status;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }

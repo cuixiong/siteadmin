@@ -181,7 +181,8 @@ Route::middleware([
     Route::prefix('invoice')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\InvoiceController::class, 'list'])->name('发票管理:发票列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\InvoiceController::class, 'searchDroplist'])->name('发票管理:下拉列表数据');
-        Route::post('change-status', [Modules\Site\Http\Controllers\InvoiceController::class, 'changeStatus'])->name('发票管理:发票状态修改');
+        Route::post('change-status', [Modules\Site\Http\Controllers\InvoiceController::class, 'changeStatus'])->name('发票管理:状态修改');
+        Route::post('change-apply-status', [Modules\Site\Http\Controllers\InvoiceController::class, 'changeApplyStatus'])->name('发票管理:发票状态修改');
 
         Route::post('store', [Modules\Site\Http\Controllers\InvoiceController::class, 'store'])->name('发票管理:新增发票');
         Route::post('update', [Modules\Site\Http\Controllers\InvoiceController::class, 'update'])->name('发票管理:修改发票');
