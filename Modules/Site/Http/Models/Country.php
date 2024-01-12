@@ -65,4 +65,52 @@ class Country extends Base
         }
         return $model;
     }
+
+
+    /**
+     * 获取某个国家的对应语言的名称
+     */
+    public static function getCountryName($country_id, $language)
+    {
+
+        $data = Country::where('status', 1)->where('id', $country_id)->value('data');
+        $name = '';
+        if ($data) {
+            $data = json_decode($data, true);
+            $language = request()->HeaderLanguage ?? '';
+            switch ($language) {
+                case 'en':
+                    $name = $data['en'];
+                    break;
+
+                case 'zh':
+                    $name = $data['zh-cn'];
+                    break;
+                case 'jp':
+                    $name = $data['jp'];
+                    break;
+
+                default:
+                    $name = $data['en'];
+                    break;
+            };
+        }
+        return $name;
+    }
+
+    /**
+     * 获取某个省份城市
+     */
+    public static function getCityName($city_id)
+    {
+        //44代表国内
+        $data = Country::where('status', 1)->where('id', 44)->value('provinces');
+        $name = '';
+        if ($data) {
+            $data = json_decode($data, true);
+            $data = array_column($data, null, 'id');
+            return (isset($data[$city_id]) && isset($data[$city_id]['status']) && $data[$city_id]['status'] == 1) ? $data[$city_id]['name'] : '';
+        }
+        return $name;
+    }
 }

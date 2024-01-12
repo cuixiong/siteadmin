@@ -9,7 +9,7 @@ class Order extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text'];
+    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'country', 'province', 'city'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -37,7 +37,7 @@ class Order extends Base
         'province_id',  // 用户信息-省份id
         'city_id',      // 用户信息-城市id
         'channel',      // 获知渠道
-        'ship_id',      // 邮寄方式: 电子/纸质
+        'ship_id',      // 物流方式: ems、顺丰等等
         'address',      // 邮寄地址
 
         'ip',           // 下单者ip
@@ -256,5 +256,30 @@ class Order extends Base
             return date('Y-m-d H:i:s', $this->attributes['invoice_time']);
         }
         return $text;
+    }
+
+    /**
+     * 国家获取器
+     */
+    public function getCountryAttribute()
+    {
+        $language = request()->HeaderLanguage ?? '';
+        return Country::getCountryName($this->attributes['country_id'], $language);
+    }
+
+    /**
+     * 省份获取器
+     */
+    public function getProvinceAttribute()
+    {
+        return Country::getCityName($this->attributes['province_id']);
+    }
+
+    /**
+     * 城市获取器
+     */
+    public function getCityAttribute()
+    {
+        return Country::getCityName($this->attributes['city_id']);
     }
 }

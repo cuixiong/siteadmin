@@ -177,6 +177,18 @@ Route::middleware([
 
     });
     
+    // Invoice 控制器
+    Route::prefix('invoice')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\InvoiceController::class, 'list'])->name('发票管理:发票列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\InvoiceController::class, 'searchDroplist'])->name('发票管理:下拉列表数据');
+        Route::post('change-invoice-status', [Modules\Site\Http\Controllers\InvoiceController::class, 'changeInvoiceStatus'])->name('发票管理:发票状态修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\InvoiceController::class, 'store'])->name('发票管理:新增发票');
+        Route::post('update', [Modules\Site\Http\Controllers\InvoiceController::class, 'update'])->name('发票管理:修改发票');
+        Route::post('destroy', [Modules\Site\Http\Controllers\InvoiceController::class, 'destroy'])->name('发票管理:删除发票');
+
+    });
+    
     // Coupon 控制器
     Route::prefix('coupon')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\CouponController::class, 'list'])->name('优惠券:字段列表');
