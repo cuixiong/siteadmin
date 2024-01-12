@@ -9,7 +9,7 @@ class Invoice extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['username'];
+    protected $appends = ['username', 'order_number', 'invoice_type_text'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -23,7 +23,8 @@ class Invoice extends Base
         'title',                // 发票抬头
         'contact_person',       // 联系人
         'contact_detail',       // 内容
-        'status',               // 状态/开票状态;0：未开票，1：已开票
+        'status',               // 状态
+        'apply_status',         // 开票状态;0：未开票，1：已开票
         'phone',                // 注册电话
         'bank_name',            // 开户银行
         'bank_account',         // 银行账户
@@ -94,12 +95,16 @@ class Invoice extends Base
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
         }
+        // apply_status 
+        if (isset($search->apply_status) && $search->apply_status != '') {
+            $model = $model->where('apply_status', $search->apply_status);
+        }
 
         // phone
         if (isset($search->phone) && !empty($search->phone)) {
             $model = $model->where('phone', 'like', '%' . $search->phone . '%');
         }
-        
+
         // bank_name
         if (isset($search->bank_name) && !empty($search->bank_name)) {
             $model = $model->where('bank_name', 'like', '%' . $search->bank_name . '%');
@@ -135,7 +140,41 @@ class Invoice extends Base
     {
         $text = '';
         if (isset($this->attributes['user_id'])) {
-            $text = User::query()->where('id', $this->attributes['user_id'])->value('name');
+            $text = User::query()->where('id', $this->attributes['user_id'])->value('name') ?? '';
+        }
+        return $text;
+    }
+
+    /**
+     * 订单编号获取器
+     */
+    public function getOrderNumberAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['order_id'])) {
+            $text = Order::query()->where('id', $this->attributes['order_id'])->value('order_number') ?? '';
+        }
+        return $text;
+    }
+
+
+    /**
+     * 发票类型获取器
+     */
+    public function getInvoiceTypeTextAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['invoice_type'])) {
+
+            // 获取请求对象
+            $request = request();
+
+            if ($request->HeaderLanguage == 'en') {
+                $field = 'english_name';
+            } else {
+                $field = 'name';
+            }
+            $text = DictionaryValue::where('code', 'Invoice_Type')->where('value', $this->attributes['invoice_type'])->value($field) ?? '';
         }
         return $text;
     }

@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\Order;
 
 class InvoiceController extends CrudController
 {
@@ -53,6 +54,29 @@ class InvoiceController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    /**
+     * 单个新增
+     * @param $request 请求信息
+     */
+    protected function store(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                $orderId = $record->order_id;
+                $orderRecord = Order::query()->where('id', $orderId)->update(['is_invoice' => 1, 'invoice_time' => time()]);
+                ReturnJson(FALSE, trans('lang.add_error'));
+            }
+            ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -67,11 +91,13 @@ class InvoiceController extends CrudController
                 $filed = ['name as label', 'value'];
             }
 
+            // 状态
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
             // 开票状态
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Invoice_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['invoice_status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Invoice_State', 'status' => 1], ['sort' => 'ASC']);
             // 发票类型
             $data['invoice_type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Invoice_Type', 'status' => 1], ['sort' => 'ASC']);
-            
+
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -79,6 +105,30 @@ class InvoiceController extends CrudController
         }
     }
 
-    
-    
+
+    /**
+     * AJax单行删除
+     * @param $ids 主键ID
+     */
+    protected function destroy(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if ($record) {
+                    $orderId = $record->order_id;
+                    $orderRecord = Order::query()->where('id', $orderId)->update(['is_invoice' => 0, 'invoice_time' => null]);
+                    $record->delete();
+                }
+            }
+            ReturnJson(TRUE, trans('lang.delete_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }
