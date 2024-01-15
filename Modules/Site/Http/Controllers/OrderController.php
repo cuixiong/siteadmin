@@ -42,7 +42,7 @@ class OrderController extends CrudController
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+                $model = $model->orderBy('id', $sort)->orderBy('created_at', 'DESC');
             }
 
             $record = $model->get();
