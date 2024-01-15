@@ -9,6 +9,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\OrderGoods;
+use Modules\Site\Http\Models\Products;
 
 class OrderController extends CrudController
 {
@@ -42,11 +43,24 @@ class OrderController extends CrudController
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                $model = $model->orderBy('id', $sort)->orderBy('created_at', 'DESC');
+                $model = $model->orderBy('id', $sort);
             }
 
             $record = $model->get();
 
+            if ($record) {
+                foreach ($record as $key => $item) {
+                    $record[$key]['order_goods'] = [];
+                    $record[$key]['product_name'] = '';
+                    $orderGoods = OrderGoods::query()->where('order_id', $item['id'])->get()->toArray();
+                    if ($orderGoods) {
+                        $record[$key]['order_goods'] = $orderGoods;
+                        $productIds = array_column($orderGoods, 'goods_id');
+                        $productNames = Products::query()->select('name')->whereIn('id', $productIds)->pluck('name')->toArray();
+                        $record[$key]['product_name'] = ($productNames && count($productNames)) ? implode("\n", $productNames) : '';
+                    }
+                }
+            }
 
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
@@ -100,15 +114,15 @@ class OrderController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
-            if(!is_array($ids)){
-                $ids = explode(",",$ids);
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
             }
-            
-            $orderRecord = Order::query()->whereIn('id',$ids);
-            if(!$orderRecord->delete()){
-                ReturnJson(FALSE,trans('lang.delete_error'));
-            }else{
-                $orderGoodsRecord = OrderGoods::query()->whereIn('order_id',$ids);
+
+            $orderRecord = Order::query()->whereIn('id', $ids);
+            if (!$orderRecord->delete()) {
+                ReturnJson(FALSE, trans('lang.delete_error'));
+            } else {
+                $orderGoodsRecord = OrderGoods::query()->whereIn('order_id', $ids);
                 $orderGoodsRecord->delete();
             }
             ReturnJson(TRUE, trans('lang.delete_success'));
@@ -116,5 +130,4 @@ class OrderController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
 }

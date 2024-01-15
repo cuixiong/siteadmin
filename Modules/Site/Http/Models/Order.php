@@ -9,7 +9,7 @@ class Order extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'country', 'province', 'city'];
+    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text','post_type_text','channel', 'country', 'province', 'city'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -23,8 +23,6 @@ class Order extends Base
         'order_amount',     // 订单总价(原价，不打折，无优惠，日语不计算消费税)
         'actually_paid',    // 实付金额(用户实际支付价格，可能含打折、优惠券，日语包含消费税)
         'coupon_id',        // 优惠券id
-        'is_invoice',       // 是否开票
-        'invoice_time',     // 开票时间
         'status',           // 状态(目前在后台代表已读未读)
         'is_delete',        // 逻辑删除状态
 
@@ -36,8 +34,8 @@ class Order extends Base
         'country_id',   // 用户信息-国家id
         'province_id',  // 用户信息-省份id
         'city_id',      // 用户信息-城市id
-        'channel',      // 获知渠道
-        'ship_id',      // 物流方式: ems、顺丰等等
+        'channel_id',      // 获知渠道
+        'post_id',      // 物流方式: ems、顺丰等等
         'address',      // 邮寄地址
 
         'ip',           // 下单者ip
@@ -105,10 +103,6 @@ class Order extends Base
         if (isset($search->coupon_id) && $search->coupon_id != '') {
             $model = $model->where('coupon_id', $search->coupon_id);
         }
-        // is_invoice 
-        if (isset($search->is_invoice) && $search->is_invoice != '') {
-            $model = $model->where('is_invoice', $search->is_invoice);
-        }
         // status 
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
@@ -154,14 +148,16 @@ class Order extends Base
             $model = $model->where('city_id', $search->city_id);
         }
 
-        // channel
-        if (isset($search->channel) && !empty($search->channel)) {
-            $model = $model->where('channel', $search->channel);
+        // channel_id
+        if (isset($search->channel_id) && !empty($search->channel_id)) {
+            $model = $model->where('channel_id', $search->channel_id);
         }
-        // ship_id
-        if (isset($search->ship_id) && !empty($search->ship_id)) {
-            $model = $model->where('ship_id', $search->ship_id);
+
+        // post_id
+        if (isset($search->post_id) && !empty($search->post_id)) {
+            $model = $model->where('post_id', $search->post_id);
         }
+
         // address
         if (isset($search->address) && !empty($search->address)) {
             $model = $model->where('address', 'like', '%' . $search->address . '%');
@@ -197,12 +193,6 @@ class Order extends Base
             $model = $model->where('pay_time', '<=', $payTime[1]);
         }
 
-        // 开票时间
-        if (isset($search->invoice_time) && !empty($search->invoice_time)) {
-            $invoiceTime = $search->invoice_time;
-            $model = $model->where('invoice_time', '>=', $invoiceTime[0]);
-            $model = $model->where('invoice_time', '<=', $invoiceTime[1]);
-        }
 
 
         return $model;
@@ -256,6 +246,46 @@ class Order extends Base
             return date('Y-m-d H:i:s', $this->attributes['invoice_time']);
         }
         return $text;
+    }
+
+
+
+    /**
+     * 开票状态获取器
+     */
+    public function getInvoiceStateTextAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['id'])) {
+            $apply_status = Invoice::query()->select(['apply_status'])->where('order_id', $this->attributes['id'])->value('apply_status') ?? 0;
+
+            $text = DictionaryValue::where('code', 'Invoice_State')->where('value', $apply_status)->value('name');
+        }
+        return $text ?? '';
+    }
+    
+    /**
+     * 获知渠道获取器
+     */
+    public function getChannelAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['channel_id'])) {
+            $text = DictionaryValue::where('code', 'Channel_Type')->where('value', $this->attributes['channel_id'])->value('name');
+        }
+        return $text ?? '';
+    }
+
+    /**
+     * 邮寄方式获取器
+     */
+    public function getPostTypeTextAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['post_id'])) {
+            $text = DictionaryValue::where('code', 'Post_Type')->where('value', $this->attributes['post_id'])->value('name');
+        }
+        return $text ?? '';
     }
 
     /**

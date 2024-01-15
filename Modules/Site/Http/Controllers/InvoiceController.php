@@ -59,27 +59,6 @@ class InvoiceController extends CrudController
 
 
     /**
-     * 单个新增
-     * @param $request 请求信息
-     */
-    protected function store(Request $request)
-    {
-        try {
-            $this->ValidateInstance($request);
-            $input = $request->all();
-            $record = $this->ModelInstance()->create($input);
-            if (!$record) {
-                $orderId = $record->order_id;
-                $orderRecord = Order::query()->where('id', $orderId)->update(['is_invoice' => 1, 'invoice_time' => time()]);
-                ReturnJson(FALSE, trans('lang.add_error'));
-            }
-            ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
-        } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
-        }
-    }
-
-    /**
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
@@ -114,32 +93,6 @@ class InvoiceController extends CrudController
         }
     }
 
-
-    /**
-     * AJax单行删除
-     * @param $ids 主键ID
-     */
-    protected function destroy(Request $request)
-    {
-        try {
-            $this->ValidateInstance($request);
-            $ids = $request->ids;
-            if (!is_array($ids)) {
-                $ids = explode(",", $ids);
-            }
-            foreach ($ids as $id) {
-                $record = $this->ModelInstance()->find($id);
-                if ($record) {
-                    $orderId = $record->order_id;
-                    $orderRecord = Order::query()->where('id', $orderId)->update(['is_invoice' => 0, 'invoice_time' => null]);
-                    $record->delete();
-                }
-            }
-            ReturnJson(TRUE, trans('lang.delete_success'));
-        } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
-        }
-    }
     
     /**
      * 修改开票状态

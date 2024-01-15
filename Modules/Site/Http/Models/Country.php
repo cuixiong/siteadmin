@@ -103,14 +103,14 @@ class Country extends Base
      */
     public static function getCityName($city_id)
     {
-        //44代表国内
-        $data = Country::where('status', 1)->where('id', 44)->value('provinces');
         $name = '';
-        if ($data) {
-            $data = json_decode($data, true);
-            $data = array_column($data, null, 'id');
-            return (isset($data[$city_id]) && isset($data[$city_id]['status']) && $data[$city_id]['status'] == 1) ? $data[$city_id]['name'] : '';
-        }
+        //44代表国内
+        // $data = Country::where('status', 1)->where('id', 44)->value('provinces');
+        // if ($data) {
+        //     $data = json_decode($data, true);
+        //     $data = array_column($data, null, 'id');
+        //     return (isset($data[$city_id]) && isset($data[$city_id]['status']) && $data[$city_id]['status'] == 1) ? $data[$city_id]['name'] : '';
+        // }
         return $name;
     }
 }
