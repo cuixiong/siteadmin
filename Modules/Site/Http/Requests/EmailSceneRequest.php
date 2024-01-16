@@ -49,7 +49,7 @@ class EmailSceneRequest extends BaseRequest
             'status' => 'required',
             'action' => [
                 'required',
-                \Illuminate\Validation\Rule::unique('email_scennes')->ignore($request->input('action')),
+                \Illuminate\Validation\Rule::unique('email_scenes')->ignore($request->input('action')),
             ],
             'alternate_email_id' => 'required|different:email_sender_id',
         ];
