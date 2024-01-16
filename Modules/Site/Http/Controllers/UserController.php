@@ -19,7 +19,7 @@ class UserController extends CrudController
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
             }
         }
-        $options['country'] = Country::where('status',1)->select('id as value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        $options['country'] = Country::where('status',1)->select('id as value','name as label')->orderBy('sort','asc')->get()->toArray();
         ReturnJson(TRUE,'', $options);
     }
 }

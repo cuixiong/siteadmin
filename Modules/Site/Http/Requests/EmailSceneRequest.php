@@ -17,7 +17,7 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient' => 'required',
             'status' => 'required',
             'action' => 'required|unique:email_scenes',
-            'alternate_email_id' => 'required',
+            'alternate_email_id' => 'required|different:email_sender_id',
         ];
         $message = [
             'name.required' => '场景名称不能为空',
@@ -29,6 +29,7 @@ class EmailSceneRequest extends BaseRequest
             'action.required' => trans('lang.action_empty'),
             'action.unique' => trans('lang.action_unique'),
             'alternate_email_id.required' => trans('lang.alternate_email_empty'),
+            'alternate_email_id.different' => '发送邮箱与备用邮箱不能相同',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -46,8 +47,11 @@ class EmailSceneRequest extends BaseRequest
             'email_sender_id' => 'required',
             'email_recipient' => 'required',
             'status' => 'required',
-            'action' => 'required',
-            'alternate_email_id' => 'required',
+            'action' => [
+                'required',
+                \Illuminate\Validation\Rule::unique('email_scennes')->ignore($request->input('action')),
+            ],
+            'alternate_email_id' => 'required|different:email_sender_id',
         ];
         $message = [
             'id.required' => 'ID不能为空',
@@ -58,7 +62,9 @@ class EmailSceneRequest extends BaseRequest
             'email_recipient.required' => '邮箱收件人不能为空',
             'status.required' => '状态不能为空',
             'action.required' => trans('lang.action_empty'),
+            'action.unique' => trans('lang.action_unique'),
             'alternate_email_id.required' => trans('lang.alternate_email_empty'),
+            'alternate_email_id.different' => '发送邮箱与备用邮箱不能相同',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
