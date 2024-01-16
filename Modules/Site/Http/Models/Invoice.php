@@ -45,6 +45,15 @@ class Invoice extends Base
             $model = $model->where('id', $search->id);
         }
 
+        // order_number
+        if (isset($search->order_number) && !empty($search->order_number)) {
+
+            $orderIds = Order::query()->select(['id'])->where('order_number', 'like', '%' . $search->order_number . '%')->where('status', 1)->pluck('id');
+            if ($orderIds) {
+                $model = $model->whereIn('order_id', $orderIds);
+            }
+        }
+
         // company_name
         if (isset($search->company_name) && !empty($search->company_name)) {
             $model = $model->where('company_name', 'like', '%' . $search->company_name . '%');
@@ -71,7 +80,12 @@ class Invoice extends Base
 
         // user_id 
         if (isset($search->user_id) && $search->user_id != '') {
-            $model = $model->where('user_id', $search->user_id);
+            if (is_numeric($search->user_id)) {
+                $model = $model->where('user_id', $search->user_id);
+            } else {
+                $userIds = User::query()->select(['id'])->where('name', 'like', '%' . $search->user_id . '%')->where('status', 1)->pluck('id');
+                $model = $model->whereIn('user_id', $userIds);
+            }
         }
 
         // order_id 

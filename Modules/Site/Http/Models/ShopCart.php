@@ -44,7 +44,13 @@ class ShopCart extends Base
 
         // user_id 
         if (isset($search->user_id) && $search->user_id != '') {
-            $model = $model->where('user_id', $search->user_id);
+            
+            if (is_numeric($search->user_id)) {
+                $model = $model->where('user_id', $search->user_id);
+            } else {
+                $userIds = User::query()->select(['id'])->where('name', 'like', '%' . $search->user_id . '%')->where('status', 1)->pluck('id');
+                $model = $model->whereIn('user_id', $userIds);
+            }
         }
 
         // goods_id

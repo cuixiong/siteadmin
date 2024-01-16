@@ -98,7 +98,7 @@ class Coupon extends Base
         }
 
         //是否生效
-        if (isset($search->is_effect)) {
+        if (isset($search->is_effect) && $search->status != '') {
             if ($search->is_effect === 0 || $search->is_effect === '0') {
                 $model->where(function ($query) {
                     $query->where('time_begin', '<', time())
