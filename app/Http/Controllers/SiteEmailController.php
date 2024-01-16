@@ -200,4 +200,91 @@ class SiteEmailController extends Controller
         $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
         return true;
     }
+
+    /**
+     * reset password eamil send
+     * @param use Illuminate\Http\Request $request;
+     * @return response Code
+     */
+    public function password(Request $request){
+        try {
+            if(!isset($request->email) || empty($request->email)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_empaty'));
+            }   
+            $email = $request->email;
+            $user = User::where('email',$email)->first();
+            if(empty($user)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_undefined'));
+            }
+            $user = $user->toArray();
+            $token = $user['email'].'&'.$user['id'];
+            $user['token'] = base64_encode($token);
+            $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+            $scene = EmailScene::where('action','password')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            if(empty($scene)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+            } catch (\Exception $e) {
+                if($scene->alternate_email_id){
+                    $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                }
+            }
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
+            ReturnJson(true,trans()->get('lang.eamail_success'));
+        } catch (\Exception $e) {
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+    /**
+     * reset password eamil send Test
+     * @param use Illuminate\Http\Request $request;
+     * @return response Code
+     */
+    public function passwordTest(Request $request){
+        $id = $request->user->id;
+        $user = User::find($id);
+        $user = $user ? $user->toArray() : [];
+        $token = $user['email'].'&'.$user['id'];
+        $user['token'] = base64_encode($token);
+        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $scene = $request->all();
+        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        // 邮箱账号配置信息
+        $config = [
+            'host' =>  $senderEmail->host,
+            'port' =>  $senderEmail->port,
+            'encryption' =>  $senderEmail->encryption,
+            'username' =>  $senderEmail->email,
+            'password' =>  $senderEmail->password
+        ];
+        $this->SetConfig($config);
+        $email = $request->test ? $request->test : $request->user->email;
+        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        return true;
+    }
 }
