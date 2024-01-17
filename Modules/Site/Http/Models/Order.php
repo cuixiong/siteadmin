@@ -5,12 +5,13 @@ namespace Modules\Site\Http\Models;
 use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Country;
+use Modules\Admin\Http\Models\City;
 
 class Order extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text','post_type_text','channel', 'country', 'province', 'city'];
+    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text', 'post_type_text', 'channel', 'country', 'province', 'city'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -114,7 +115,7 @@ class Order extends Base
         }
         // user_id 
         if (isset($search->user_id) && $search->user_id != '') {
-            
+
             if (is_numeric($search->user_id)) {
                 $model = $model->where('user_id', $search->user_id);
             } else {
@@ -270,7 +271,7 @@ class Order extends Base
         }
         return $text ?? '';
     }
-    
+
     /**
      * 获知渠道获取器
      */
@@ -308,7 +309,11 @@ class Order extends Base
      */
     public function getProvinceAttribute()
     {
-        return Country::getCityName($this->attributes['province_id']);
+        $text = '';
+        if (isset($this->attributes['province_id']) && !empty($this->attributes['province_id'])) {
+            $text = City::getCityName($this->attributes['province_id']) ?? '';
+        }
+        return $text ?? '';
     }
 
     /**
@@ -316,6 +321,10 @@ class Order extends Base
      */
     public function getCityAttribute()
     {
-        return Country::getCityName($this->attributes['city_id']);
+        $text = '';
+        if (isset($this->attributes['city_id']) && !empty($this->attributes['city_id'])) {
+            $text = City::query()->where('id', $this->attributes['city_id'])->value('name') ?? '';
+        }
+        return $text ?? '';
     }
 }

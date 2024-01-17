@@ -4,6 +4,7 @@ namespace Modules\Site\Http\Models;
 
 use Modules\Site\Http\Models\Base;
 use Modules\Site\Http\Models\User;
+use Modules\Admin\Http\Models\User as Admin;
 use Modules\Admin\Http\Models\DictionaryValue;
 
 class Coupon extends Base
@@ -34,6 +35,7 @@ class Coupon extends Base
     {
 
         $search = json_decode($request->input('search'));
+
         //id 
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
@@ -98,16 +100,31 @@ class Coupon extends Base
         }
 
         //是否生效
-        if (isset($search->is_effect) && $search->status != '') {
+        if (isset($search->is_effect) && $search->is_effect != '') {
             if ($search->is_effect === 0 || $search->is_effect === '0') {
                 $model->where(function ($query) {
-                    $query->where('time_begin', '<', time())
-                        ->orWhere('time_end', '>', time());
+                    $query->where('time_begin', '>', time())
+                        ->orWhere('time_end', '<', time());
                 });
             } else {
-                $model = $model->where('time_begin', '>=', time());
-                $model = $model->where('time_end', '<=', time());
+                $model = $model->where('time_begin', '<=', time());
+                $model = $model->where('time_end', '>=', time());
             }
+        }
+
+        
+        //创建者
+        if (isset($search->created_by) && !empty($search->created_by)) {
+            $userIds = Admin::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
+            $userIds = $userIds ? $userIds : [];
+            $model = $model->whereIn('created_by',$userIds);
+        }
+
+        //修改者
+        if (isset($search->updated_by) && !empty($search->updated_by)) {
+            $userIds = Admin::where('name', 'like', '%' . $search->updated_by . '%')->pluck('id');
+            $userIds = $userIds ? $userIds : [];
+            $model = $model->whereIn('updated_by',$userIds);
         }
 
         return $model;
