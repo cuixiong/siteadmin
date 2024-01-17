@@ -156,13 +156,13 @@ class ProductsCategory extends Base
         return $model;
     }
 
-    
+
     /**
      * 列表数据
      * @param array/string $filed 字段，全部则不传
      * @param $isTree 是否返回递归类型
      * @param $treeKey 递归类型的key
-     * @param array $where 查询条件
+     * @param array $search 查询条件
      * @return array $res
      */
     public function GetList($filed = '*', $isTree = false, $treeKey = 'parent_id', $search = [])
@@ -174,6 +174,45 @@ class ProductsCategory extends Base
         $list = $model->select($filed)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
         if (!empty($list)) {
 
+            if ($isTree) {
+                $minPid = array_column($list, $treeKey);
+                $minPid = min($minPid);
+                $list = array_column($list, null, 'id');
+                $list = $this->tree($list, $treeKey, $minPid);
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * 列表数据
+     * @param array/string $filed 字段，全部则不传
+     * @param $isTree 是否返回递归类型
+     * @param $treeKey 递归类型的key
+     * @param array $search 查询条件
+     * @param int|null $withoutId 排除的分类id
+     * @return array $res
+     */
+    public function GetListWithoutSelf($filed = '*', $isTree = false, $treeKey = 'parent_id', $search = [], $withoutId = null)
+    {
+        $model = self::query();
+        if (!empty($search)) {
+            $model = $this->HandleWhere($model, $search);
+        }
+        $list = $model->select($filed)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
+        if (!empty($list)) {
+            $list = array_map(function ($item) {
+
+                return $item;
+            }, $list);
+            if ($withoutId) {
+
+                $list = array_filter($list, function ($item) use ($withoutId) {
+                    if ($item['id'] != $withoutId) {
+                        return true;
+                    }
+                });
+            }
             if ($isTree) {
                 $minPid = array_column($list, $treeKey);
                 $minPid = min($minPid);
@@ -199,8 +238,8 @@ class ProductsCategory extends Base
             if ($item[$key] == $parentId) {
                 $list[$index]['pid_array'] = [];
                 $list[$index]['pid_array'] = $list[$item[$key]]['pid_array'] ?? [];
-                array_push($list[$index]['pid_array'],$item['id']);
-                
+                array_push($list[$index]['pid_array'], $item['id']);
+
                 $item['pid_array'] = $list[$index]['pid_array'];
                 $children = $this->tree($list, $key, $item['id']);
                 if (!empty($children)) {

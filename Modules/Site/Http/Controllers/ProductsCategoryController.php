@@ -205,7 +205,7 @@ class ProductsCategoryController extends CrudController
 
 
     /**
-     * 获取一二级分类
+     * 获取某层级分类
      * @param $request 请求信息
      */
     public function getCategory(Request $request)
@@ -214,6 +214,19 @@ class ProductsCategoryController extends CrudController
         $id = !empty($request->id) ? $request->id : 0;
 
         $data = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['pid' => $id, 'status' => 1]);
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
+    }
+
+    /**
+     * 获取全部分类(但不包含自己以及它的分类)
+     * @param $request 请求信息
+     */
+    public function getCategoryWithoutSelf(Request $request)
+    {
+
+        $id = !empty($request->id) ? $request->id : 0;
+
+        $data = (new ProductsCategory())->GetListWithoutSelf(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1], $id);
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }
