@@ -311,7 +311,7 @@ class Order extends Base
     {
         $text = '';
         if (isset($this->attributes['province_id']) && !empty($this->attributes['province_id'])) {
-            $text = City::getCityName($this->attributes['province_id']) ?? '';
+            $text = City::query()->where('id', $this->attributes['province_id'])->value('name') ?? '';
         }
         return $text ?? '';
     }
