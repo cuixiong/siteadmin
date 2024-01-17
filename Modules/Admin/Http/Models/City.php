@@ -4,12 +4,15 @@ namespace Modules\Admin\Http\Models;
 
 use Modules\Admin\Http\Models\Base;
 
-class Country extends Base
+class City extends Base
 {
-    protected $table = 'countrys';
+    protected $table = 'citys';
 
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'data', 'acronym', 'code', 'status', 'sort', 'updated_by', 'created_by'];
+    protected $fillable = ['name', 'pid', 'country_id', 'type', 'status', 'sort', 'updated_by', 'created_by'];
+
+    //将虚拟字段追加到数据对象列表里去
+    protected $appends = ['country', 'type_text'];
 
 
     /**
@@ -29,14 +32,19 @@ class Country extends Base
             $model = $model->where('name', 'like', '%' . $search->name . '%');
         }
 
-        //acronym
-        if (isset($search->acronym) && !empty($search->acronym)) {
-            $model = $model->where('acronym', 'like', '%' . $search->acronym . '%');
+        //pid
+        if (isset($search->pid) && !empty($search->pid)) {
+            $model = $model->where('pid', $search->pid);
         }
 
-        //code
-        if (isset($search->code) && !empty($search->code)) {
-            $model = $model->where('code', 'like', '%' . $search->code . '%');
+        //country_id
+        if (isset($search->country_id) && !empty($search->picountry_idd)) {
+            $model = $model->where('country_id', $search->country_id);
+        }
+
+        //type
+        if (isset($search->type) && !empty($search->type)) {
+            $model = $model->where('type', $search->type);
         }
 
         //sort
@@ -68,35 +76,27 @@ class Country extends Base
 
 
     /**
-     * 获取某个国家的对应语言的名称
+     * 国家地区获取器
      */
-    public static function getCountryName($country_id, $language)
+    public function getCountryAttribute()
     {
-
-        $data = Country::where('status', 1)->where('id', $country_id)->value('data');
-        $name = '';
-        if ($data) {
-            $data = json_decode($data, true);
+        $text = '';
+        if (isset($this->attributes['country_id'])) {
             $language = request()->HeaderLanguage ?? '';
-            switch ($language) {
-                case 'en':
-                    $name = $data['en'];
-                    break;
-
-                case 'zh':
-                    $name = $data['zh-cn'];
-                    break;
-                    
-                case 'jp':
-                    $name = $data['jp'];
-                    break;
-
-                default:
-                    $name = $data['en'];
-                    break;
-            };
+            return Country::getCountryName($this->attributes['country_id'], $language);
         }
-        return $name;
+        return $text;
     }
 
+    /**
+     * 类型获取器
+     */
+    public function getTypeTextAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['type'])) {
+            $text = DictionaryValue::where('code', 'City_Type')->where('value', $this->attributes['type'])->value('name');
+        }
+        return $text ?? '';
+    }
 }

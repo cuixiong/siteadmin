@@ -1,16 +1,13 @@
 <?php
 
-namespace Modules\Site\Http\Controllers;
+namespace Modules\Admin\Http\Controllers;
 
 use Illuminate\Routing\Controller;
-use Modules\Site\Http\Controllers\CrudController;
+use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
-use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Admin\Http\Models\DictionaryValue;
-use Illuminate\Support\Facades\Validator;
-use Modules\Admin\Http\Models\ListStyle;
 
-class CountryController extends CrudController
+class CityController extends CrudController
 {
     
     /**

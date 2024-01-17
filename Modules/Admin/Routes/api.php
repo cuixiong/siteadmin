@@ -172,6 +172,17 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
         Route::post('change-sort', [Modules\Admin\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
     });
+    
+    // City 控制器
+    Route::prefix('city')->group(function () {
+
+        Route::get('list', [Modules\Admin\Http\Controllers\CityController::class, 'list'])->name('省市区管理:省市区列表');
+        Route::get('option', [Modules\Admin\Http\Controllers\CityController::class, 'option'])->name('省市区管理:下拉列表数据');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\CityController::class, 'searchDroplist'])->name('省市区管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\CityController::class, 'changeStatus'])->name('省市区管理:状态修改');
+        Route::post('change-sort', [Modules\Admin\Http\Controllers\CityController::class, 'changeSort'])->name('省市区管理:排序修改');
+
+    });
 
     // Region 控制器
     Route::prefix('region')->group(function () {
@@ -393,6 +404,14 @@ Route::middleware([
         Route::post('destroy', [Modules\Admin\Http\Controllers\CountryController::class, 'destroy'])->name('国家管理:删除地区');
     });
 
+    // City 控制器
+    Route::prefix('city')->group(function () {
+
+        Route::post('store', [Modules\Admin\Http\Controllers\CityController::class, 'store'])->name('省市区管理:新增省市');
+        Route::post('update', [Modules\Admin\Http\Controllers\CityController::class, 'update'])->name('省市区管理:修改省市');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\CityController::class, 'destroy'])->name('省市区管理:删除省市');
+    });
+
     // Language 控制器
     Route::prefix('language')->group(function () {
         Route::post('store', [Modules\Admin\Http\Controllers\LanguageController::class, 'store'])->name('语言管理:语言新增');
@@ -443,7 +462,6 @@ Route::middleware([
     Route::get('admin/department/option', 'DepartmentController@option')->name('部门option');
     // Position控制器
     Route::get('admin/position/list', 'PositionController@list')->name('职位列表');
-    Route::get('admin/country/get-country', 'CountryController@getCountry')->name('国家列表');
     Route::get('admin/common/get-status', 'CommonController@getStatus')->name('获取状态 未知');
     Route::get('admin/common/filters', 'CommonController@filters')->name('公共数据'); // 公共的列表表头和下拉数据
 
