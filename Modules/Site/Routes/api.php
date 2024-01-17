@@ -190,6 +190,33 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\CouponController::class, 'destroy'])->name('优惠券:删除优惠券');
 
     });
+    
+    // NewsCategory 控制器
+    Route::prefix('news-category')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'list'])->name('新闻分类:新闻分类列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'searchDroplist'])->name('新闻分类:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'changeStatus'])->name('新闻分类:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'changeSort'])->name('新闻分类:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'store'])->name('新闻分类:新增新闻');
+        Route::post('update', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'update'])->name('新闻分类:修改新闻');
+        Route::post('destroy', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'destroy'])->name('新闻分类:删除新闻');
+
+    });
+    
+    // News 控制器
+    Route::prefix('news')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\NewsController::class, 'list'])->name('新闻管理:新闻列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\NewsController::class, 'searchDroplist'])->name('新闻管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\NewsController::class, 'changeStatus'])->name('新闻管理:状态修改');
+        Route::post('change-home', [Modules\Site\Http\Controllers\NewsController::class, 'changeHome'])->name('新闻管理:首页状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\NewsController::class, 'changeSort'])->name('新闻管理:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\NewsController::class, 'store'])->name('新闻管理:新增新闻');
+        Route::post('update', [Modules\Site\Http\Controllers\NewsController::class, 'update'])->name('新闻管理:修改新闻');
+        Route::post('destroy', [Modules\Site\Http\Controllers\NewsController::class, 'destroy'])->name('新闻管理:删除新闻');
+
+    });
 
     // SearchRank 控制器
     Route::prefix('search-rank')->group(function () {

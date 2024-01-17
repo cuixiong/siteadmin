@@ -329,20 +329,20 @@ class ProductsController extends CrudController
             }
 
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
             //显示首页/热门/推荐
-            $data['show_home'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['show_home'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
             $data['show_hot'] = $data['show_home'];
             $data['show_recommend'] = $data['show_home'];
-            $data['have_sample'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Has_Sample', 'status' => 1], ['sort' => 'ASC']);
+            $data['have_sample'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Has_Sample', 'status' => 1], ['sort' => 'ASC']);
 
             // 状态开关
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
             // 折扣
-            $data['discount_type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
+            $data['discount_type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
@@ -505,11 +505,11 @@ class ProductsController extends CrudController
             $data = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1], ['sort' => 'ASC', 'pid' => 0]);
         } elseif ($keyword == 'status') {
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
-            $data = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
+            $data = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
         } elseif ($keyword == 'country_id') {
 
             $data = (new Region())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1], ['sort' => 'ASC']);

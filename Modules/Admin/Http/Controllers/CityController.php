@@ -24,13 +24,13 @@ class CityController extends CrudController
 
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State','status' => 1], ['sort' => 'ASC']);
 
-            $data['type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'City_Type','status' => 1], ['sort' => 'ASC']);
+            $data['type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'City_Type','status' => 1], ['sort' => 'ASC']);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

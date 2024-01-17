@@ -29,16 +29,16 @@ class CouponController extends CrudController
             $data['users'] = (new User())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
             // 状态开关
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
             // 是否生效
-            $data['is_effect'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Coupon_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['is_effect'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Coupon_State', 'status' => 1], ['sort' => 'ASC']);
             // 优惠类型
-            $data['type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Coupon_Type', 'status' => 1], ['sort' => 'ASC']);
+            $data['type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Coupon_Type', 'status' => 1], ['sort' => 'ASC']);
             
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

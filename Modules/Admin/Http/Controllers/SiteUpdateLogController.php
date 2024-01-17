@@ -22,11 +22,11 @@ class SiteUpdateLogController extends CrudController
 
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
-            $data['exec_status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Exec_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['exec_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Exec_State', 'status' => 1], ['sort' => 'ASC']);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

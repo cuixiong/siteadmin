@@ -66,15 +66,15 @@ class ProductsCategoryController extends CrudController
         try {
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
-            $data['show_home'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['show_home'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
 
-            $data['discount_type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
+            $data['discount_type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

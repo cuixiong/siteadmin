@@ -74,17 +74,17 @@ class InvoiceController extends CrudController
                 ->makeHidden((new User())->getAppends());
 
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
 
             // 状态
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
             // 开票状态
-            $data['invoice_status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Invoice_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['invoice_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Invoice_State', 'status' => 1], ['sort' => 'ASC']);
             // 发票类型
-            $data['invoice_type'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Invoice_Type', 'status' => 1], ['sort' => 'ASC']);
+            $data['invoice_type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Invoice_Type', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

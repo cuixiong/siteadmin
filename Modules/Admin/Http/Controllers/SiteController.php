@@ -484,14 +484,14 @@ class SiteController extends CrudController
 
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
             //是否创建数据库
-            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code'=>'Create Database','status' => 1], ['sort' => 'ASC']);
+            // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code'=>'Create Database','status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
@@ -683,12 +683,12 @@ class SiteController extends CrudController
             }
         }
         $is_super = Role::whereIn('id', explode(',', $request->user->role_id))->where('is_super', 1)->count();
-        $filed = $request->HeaderLanguage == 'en' ? ['name as value', 'english_name as label'] : ['name as value', 'name as label'];
+        $field = $request->HeaderLanguage == 'en' ? ['name as value', 'english_name as label'] : ['name as value', 'name as label'];
         $res = [];
         if ($is_super > 0) {
-            $res = (new Site)->GetListLabel($filed, false, '', ['status' => 1]);
+            $res = (new Site)->GetListLabel($field, false, '', ['status' => 1]);
         } else {
-            $res = (new Site)->GetListLabel($filed, false, '', ['status' => 1, 'id' => $site_ids]);
+            $res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
         }
         ReturnJson(TRUE, trans('lang.request_success'), $res);
     }

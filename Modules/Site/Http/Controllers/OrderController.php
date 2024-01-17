@@ -87,16 +87,16 @@ class OrderController extends CrudController
             $data['pay_type'] = (new Pay())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
             if ($request->HeaderLanguage == 'en') {
-                $filed = ['english_name as label', 'value'];
+                $field = ['english_name as label', 'value'];
             } else {
-                $filed = ['name as label', 'value'];
+                $field = ['name as label', 'value'];
             }
 
             // 支付状态
-            $data['pay_status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Pay_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['pay_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Pay_State', 'status' => 1], ['sort' => 'ASC']);
 
             // 状态开关
-            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
 
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);

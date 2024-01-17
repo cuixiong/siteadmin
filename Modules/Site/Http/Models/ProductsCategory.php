@@ -159,19 +159,19 @@ class ProductsCategory extends Base
 
     /**
      * 列表数据
-     * @param array/string $filed 字段，全部则不传
+     * @param array/string $field 字段，全部则不传
      * @param $isTree 是否返回递归类型
      * @param $treeKey 递归类型的key
      * @param array $search 查询条件
      * @return array $res
      */
-    public function GetList($filed = '*', $isTree = false, $treeKey = 'parent_id', $search = [])
+    public function GetList($field = '*', $isTree = false, $treeKey = 'parent_id', $search = [])
     {
         $model = self::query();
         if (!empty($search)) {
             $model = $this->HandleWhere($model, $search);
         }
-        $list = $model->select($filed)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
+        $list = $model->select($field)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
         if (!empty($list)) {
 
             if ($isTree) {
@@ -186,20 +186,20 @@ class ProductsCategory extends Base
 
     /**
      * 列表数据
-     * @param array/string $filed 字段，全部则不传
+     * @param array/string $field 字段，全部则不传
      * @param $isTree 是否返回递归类型
      * @param $treeKey 递归类型的key
      * @param array $search 查询条件
      * @param int|null $withoutId 排除的分类id
      * @return array $res
      */
-    public function GetListWithoutSelf($filed = '*', $isTree = false, $treeKey = 'parent_id', $search = [], $withoutId = null)
+    public function GetListWithoutSelf($field = '*', $isTree = false, $treeKey = 'parent_id', $search = [], $withoutId = null)
     {
         $model = self::query();
         if (!empty($search)) {
             $model = $this->HandleWhere($model, $search);
         }
-        $list = $model->select($filed)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
+        $list = $model->select($field)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
         if (!empty($list)) {
             $list = array_map(function ($item) {
 
