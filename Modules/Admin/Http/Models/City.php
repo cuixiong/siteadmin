@@ -82,8 +82,7 @@ class City extends Base
     {
         $text = '';
         if (isset($this->attributes['country_id'])) {
-            $language = request()->HeaderLanguage ?? '';
-            return Country::getCountryName($this->attributes['country_id'], $language);
+            return Country::getCountryName($this->attributes['country_id']);
         }
         return $text;
     }
@@ -98,5 +97,43 @@ class City extends Base
             $text = DictionaryValue::where('code', 'City_Type')->where('value', $this->attributes['type'])->value('name');
         }
         return $text ?? '';
+    }
+
+    /**
+     * 获取对应语言的国家列表
+     */
+    public static function getCountryList($language = null)
+    {
+        $countryIds = City::query()->distinct()->pluck('country_id');
+        $countryData = Country::where('status', 1)->whereIn('id',$countryIds)->select(['id', 'data'])->orderBy('sort', 'asc')->orderBy('id', 'desc')->get()->toArray();
+
+        $data = [];
+        if ($countryData) {
+            if (!$language) {
+                $language = request()->HeaderLanguage ?? '';
+            }
+            foreach ($countryData as $key => $item) {
+                $country = json_decode($item['data'], true);
+                switch ($language) {
+                    case 'en':
+                        $name = $country['en'];
+                        break;
+
+                    case 'zh':
+                        $name = $country['zh-cn'];
+                        break;
+
+                    case 'jp':
+                        $name = $country['jp'];
+                        break;
+
+                    default:
+                        $name = $country['en'];
+                        break;
+                };
+                $data[] = ['label' => $name, 'value' => $item['id']];
+            }
+        }
+        return $data;
     }
 }

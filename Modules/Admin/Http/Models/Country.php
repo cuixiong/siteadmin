@@ -70,14 +70,16 @@ class Country extends Base
     /**
      * 获取某个国家的对应语言的名称
      */
-    public static function getCountryName($country_id, $language)
+    public static function getCountryName($country_id, $language = null)
     {
 
         $data = Country::where('status', 1)->where('id', $country_id)->value('data');
         $name = '';
         if ($data) {
             $data = json_decode($data, true);
-            $language = request()->HeaderLanguage ?? '';
+            if (!$language) {
+                $language = request()->HeaderLanguage ?? '';
+            }
             switch ($language) {
                 case 'en':
                     $name = $data['en'];
@@ -86,7 +88,7 @@ class Country extends Base
                 case 'zh':
                     $name = $data['zh-cn'];
                     break;
-                    
+
                 case 'jp':
                     $name = $data['jp'];
                     break;
@@ -99,4 +101,40 @@ class Country extends Base
         return $name;
     }
 
+    /**
+     * 获取对应语言的国家列表
+     */
+    public static function getCountryList($language = null)
+    {
+        $countryData = Country::where('status', 1)->select(['id', 'data'])->orderBy('sort', 'asc')->orderBy('id', 'desc')->get()->toArray();
+
+        $data = [];
+        if ($countryData) {
+            if (!$language) {
+                $language = request()->HeaderLanguage ?? '';
+            }
+            foreach ($countryData as $key => $item) {
+                $country = json_decode($item['data'], true);
+                switch ($language) {
+                    case 'en':
+                        $name = $country['en'];
+                        break;
+
+                    case 'zh':
+                        $name = $country['zh-cn'];
+                        break;
+
+                    case 'jp':
+                        $name = $country['jp'];
+                        break;
+
+                    default:
+                        $name = $country['en'];
+                        break;
+                };
+                $data[] = ['label' => $name, 'value' => $item['id']];
+            }
+        }
+        return $data;
+    }
 }

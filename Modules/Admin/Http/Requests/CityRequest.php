@@ -12,9 +12,13 @@ class CityRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
+            'country_id' => 'required',
+            'type' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
+            'country_id.required' => '所属国家不能为空',
+            'type.required' => '行政级别不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -27,10 +31,14 @@ class CityRequest extends BaseRequest
         $rules = [
             'id' => 'required',
             'name' => 'required',
+            'country_id' => 'required',
+            'type' => 'required',
         ];
         $message = [
             'id.required' => 'ID不能为空',
             'name.required' => '名称不能为空',
+            'country_id.required' => '所属国家不能为空',
+            'type.required' => '行政级别不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }

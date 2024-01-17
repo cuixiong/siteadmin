@@ -300,8 +300,7 @@ class Order extends Base
      */
     public function getCountryAttribute()
     {
-        $language = request()->HeaderLanguage ?? '';
-        return Country::getCountryName($this->attributes['country_id'], $language);
+        return Country::getCountryName($this->attributes['country_id']);
     }
 
     /**
