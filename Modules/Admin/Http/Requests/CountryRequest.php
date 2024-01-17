@@ -1,5 +1,5 @@
 <?php
-namespace Modules\Site\Http\Requests;
+namespace Modules\Admin\Http\Requests;
 use Modules\Admin\Http\Requests\BaseRequest;
 
 class CountryRequest extends BaseRequest

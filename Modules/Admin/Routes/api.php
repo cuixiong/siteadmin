@@ -163,6 +163,15 @@ Route::middleware([
         Route::get('list', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'list'])->name('升级日志:日志列表');
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'searchDroplist'])->name('升级日志:搜索下拉列表数据');
     });
+    
+    // Country 控制器
+    Route::prefix('country')->group(function () {
+        Route::get('list', [Modules\Admin\Http\Controllers\CountryController::class, 'list'])->name('国家管理:地区列表');
+        Route::get('option', [Modules\Admin\Http\Controllers\CountryController::class, 'option'])->name('国家管理:下拉列表数据');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\CountryController::class, 'searchDroplist'])->name('国家管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
+        Route::post('change-sort', [Modules\Admin\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
+    });
 
     // Region 控制器
     Route::prefix('region')->group(function () {
@@ -374,6 +383,14 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\RegionController::class, 'store'])->name('地区管理:地区新增');
         Route::post('update', [Modules\Admin\Http\Controllers\RegionController::class, 'update'])->name('地区管理:地区编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\RegionController::class, 'destroy'])->name('地区管理:地区删除');
+    });
+    
+    // Country 控制器
+    Route::prefix('country')->group(function () {
+
+        Route::post('store', [Modules\Admin\Http\Controllers\CountryController::class, 'store'])->name('国家管理:新增地区');
+        Route::post('update', [Modules\Admin\Http\Controllers\CountryController::class, 'update'])->name('国家管理:修改地区');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\CountryController::class, 'destroy'])->name('国家管理:删除地区');
     });
 
     // Language 控制器

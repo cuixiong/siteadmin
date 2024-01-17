@@ -2,6 +2,8 @@
 
 namespace Modules\Site\Http\Models;
 use Modules\Site\Http\Models\Base;
+use Modules\Admin\Http\Models\Country;
+
 class User extends Base
 {
     // 设置允许入库字段,数组形式

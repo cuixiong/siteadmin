@@ -1,27 +1,35 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
+use Illuminate\Routing\Controller;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
-use Modules\Admin\Http\Models\Country;
+use Modules\Admin\Http\Models\DictionaryValue;
 
 class CountryController extends CrudController
 {
-    public function getCountry(Request $request)
+    
+    /**
+     * 获取搜索下拉列表
+     * @param $request 请求信息
+     */
+    public function searchDroplist(Request $request)
     {
-        $data = Country::get()->toArray();
-        $language = $request->input('language');
-        $list = [];
-        if(!empty($data)){
-            foreach($data as $key=>$item){
-                $name = json_decode($item['data']);
-                if(!isset($name->$language)){
-                    continue;
-                }
-                $list[$key]['id'] = $item['id'];
-                $list[$key]['name'] = $name->$language;
+        try {
+            $data = [];
+            // 状态开关
+            if ($request->HeaderLanguage == 'en') {
+                $filed = ['english_name as label', 'value'];
+            } else {
+                $filed = ['name as label', 'value'];
             }
+            $data['status'] = (new DictionaryValue())->GetListLabel($filed, false, '', ['code' => 'Switch_State','status' => 1], ['sort' => 'ASC']);
+
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
         }
-        ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
+    
 }
