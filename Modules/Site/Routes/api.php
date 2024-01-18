@@ -311,6 +311,7 @@ Route::middleware([
     });
     // Applyfor控制器
     Route::prefix('applyfor')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\ApplyforController::class, 'store'])->name('申请样本:数据新增');
         Route::post('update', [Modules\Site\Http\Controllers\ApplyforController::class, 'update'])->name('申请样本:数据更新');
         Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('申请样本:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('申请样本:数据列表');
