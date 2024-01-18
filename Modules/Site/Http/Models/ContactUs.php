@@ -4,10 +4,10 @@ namespace Modules\Site\Http\Models;
 
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Base;
-class Applyfor extends Base
+class ContactUs extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'email', 'company', 'country','channel','status','message_id','product_id','category_id','updated_by', 'created_by'];
+    protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','updated_by', 'created_by'];
     protected $appends = ['product_name','message_name','category_id','channel_name'];
 
     // 产品名称获取器
