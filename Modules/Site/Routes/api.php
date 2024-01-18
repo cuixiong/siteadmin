@@ -318,11 +318,11 @@ Route::middleware([
     });
     // MessageCategory控制器
     Route::prefix('message-category')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\PayController::class, 'store'])->name('留言分类:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\ApplyforController::class, 'update'])->name('留言分类:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\ApplyforController::class, 'destroy'])->name('留言分类:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\ApplyforController::class, 'list'])->name('留言分类:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\ApplyforController::class, 'changeStatus'])->name('留言分类:状态修改');
+        Route::post('store', [Modules\Site\Http\Controllers\MessageCategoryController::class, 'store'])->name('留言分类:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\MessageCategoryController::class, 'update'])->name('留言分类:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\MessageCategoryController::class, 'destroy'])->name('留言分类:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\MessageCategoryController::class, 'list'])->name('留言分类:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\MessageCategoryController::class, 'changeStatus'])->name('留言分类:状态修改');
     });
     // Plate控制器
     Route::prefix('plate')->group(function () {
