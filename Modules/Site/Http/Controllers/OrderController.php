@@ -51,13 +51,13 @@ class OrderController extends CrudController
             if ($record) {
                 foreach ($record as $key => $item) {
                     $record[$key]['order_goods'] = [];
-                    $record[$key]['product_name'] = '';
+                    // $record[$key]['product_name'] = '';
                     $orderGoods = OrderGoods::query()->where('order_id', $item['id'])->get()->toArray();
                     if ($orderGoods) {
                         $record[$key]['order_goods'] = $orderGoods;
-                        $productIds = array_column($orderGoods, 'goods_id');
-                        $productNames = Products::query()->select('name')->whereIn('id', $productIds)->pluck('name')->toArray();
-                        $record[$key]['product_name'] = ($productNames && count($productNames)) ? implode("\n", $productNames) : '';
+                        // $productIds = array_column($orderGoods, 'goods_id');
+                        // $productNames = Products::query()->select('name')->whereIn('id', $productIds)->pluck('name')->toArray();
+                        // $record[$key]['product_name'] = ($productNames && count($productNames)) ? implode("\n", $productNames) : '';
                     }
                 }
             }

@@ -11,7 +11,7 @@ class Order extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text', 'post_type_text', 'channel', 'country', 'province', 'city'];
+    protected $appends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text', 'post_type_text', 'channel', 'country', 'province', 'city', 'product_name'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -122,6 +122,14 @@ class Order extends Base
                 $userIds = User::query()->select(['id'])->where('name', 'like', '%' . $search->user_id . '%')->where('status', 1)->pluck('id');
                 $model = $model->whereIn('user_id', $userIds);
             }
+        }
+
+        // product_name 
+        if (isset($search->product_name) && $search->product_name != '') {
+
+            $productIds = Products::query()->select(['id'])->where('name', 'like', '%' . $search->product_name . '%')->pluck('id');
+            $orderIds = OrderGoods::find()->where('goods_id', $productIds)->pluck('id') ?? [];
+            $model = $model->whereIn('order_id', $orderIds);
         }
 
         // username
@@ -325,6 +333,24 @@ class Order extends Base
         if (isset($this->attributes['city_id']) && !empty($this->attributes['city_id'])) {
             $text = City::query()->where('id', $this->attributes['city_id'])->value('name') ?? '';
         }
+        return $text ?? '';
+    }
+
+    /**
+     * 报告名称获取器
+     */
+    public function getProductNameAttribute()
+    {
+        $text = '';
+        if (isset($this->attributes['order_id']) && !empty($this->attributes['order_id'])) {
+            $orderGoods = OrderGoods::query()->where('order_id', $this->attributes['order_id'])->get()->toArray();
+            if ($orderGoods) {
+                $productIds = array_column($orderGoods, 'goods_id');
+                $productNames = Products::query()->select('name')->whereIn('id', $productIds)->pluck('name')->toArray();
+                $text = ($productNames && count($productNames)) ? implode("\n", $productNames) : '';
+            }
+        }
+
         return $text ?? '';
     }
 }

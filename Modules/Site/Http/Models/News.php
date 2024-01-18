@@ -47,7 +47,7 @@ class News extends Base
 
         if (!empty($search)) {
             $textField = ['title', 'description', 'thumb', 'url', 'content', 'keywords', 'tags', 'author'];
-            $numberField = ['type', 'category_id', 'upload_at', 'sort', 'show_home', 'status', 'hits', 'real_hits'];
+            $numberField = ['id', 'type', 'category_id', 'upload_at', 'sort', 'show_home', 'status', 'hits', 'real_hits'];
             $timeField = ['created_at', 'updated_at', 'upload_at'];
             $userField = ['created_by', 'updated_by'];
             foreach ($search as $key => $value) {
