@@ -11,24 +11,32 @@ class OfficeRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
+            'city' => 'required',
             'name' => 'required',
+            'language_alias' => 'required',
+            'region' => 'required',
+            'area' => 'required',
             'image' => 'required',
-            'address' => 'required',
+            'national_flag' => 'required',
             'phone' => 'required',
-            'wechat' => 'required',
-            'language' => 'required',
-            'work_time' => 'required',
-            'status' => 'required',
+            'address' => 'required',
+            'working_language' => 'required',
+            'working_time' => 'required',
+            'time_zone' => 'required',
         ];
         $message = [
-            'name.required' => '名称不能为空',
+            'city.required' => '城市不能为空',
+            'name.required' => '简称不能为空',
+            'language_alias.required' => '语言别名不能为空',
+            'region.required' => '区域不能为空',
+            'area.required' => '地区不能为空',
             'image.required' => '图片不能为空',
-            'address.required' => '地址不能为空',
+            'national_flag.required' => '国旗不能为空',
             'phone.required' => '电话不能为空',
-            'wechat.required' => '电话/微信不能为空',
-            'language.required' => '语言支持不能为空',
-            'work_time.required' => '工作时间不能为空',
-            'status.required' => '状态不能为空',
+            'address.required' => '地址不能为空',
+            'working_language.required' => '工作语言不能为空',
+            'working_time.required' => '不能为空',
+            'time_zone.required' => '时区不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -40,25 +48,33 @@ class OfficeRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
+            'city' => 'required',
             'name' => 'required',
+            'language_alias' => 'required',
+            'region' => 'required',
+            'area' => 'required',
             'image' => 'required',
-            'address' => 'required',
+            'national_flag' => 'required',
             'phone' => 'required',
-            'wechat' => 'required',
-            'language' => 'required',
-            'work_time' => 'required',
-            'status' => 'required',
+            'address' => 'required',
+            'working_language' => 'required',
+            'working_time' => 'required',
+            'time_zone' => 'required',
         ];
         $message = [
             'id' => 'required',
-            'name.required' => '名称不能为空',
+            'city.required' => '城市不能为空',
+            'name.required' => '简称不能为空',
+            'language_alias.required' => '语言别名不能为空',
+            'region.required' => '区域不能为空',
+            'area.required' => '地区不能为空',
             'image.required' => '图片不能为空',
-            'address.required' => '地址不能为空',
+            'national_flag.required' => '国旗不能为空',
             'phone.required' => '电话不能为空',
-            'wechat.required' => '电话/微信不能为空',
-            'language.required' => '语言支持不能为空',
-            'work_time.required' => '工作时间不能为空',
-            'status.required' => '状态不能为空',
+            'address.required' => '地址不能为空',
+            'working_language.required' => '工作语言不能为空',
+            'working_time.required' => '不能为空',
+            'time_zone.required' => '时区不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
