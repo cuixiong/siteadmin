@@ -13,8 +13,8 @@ class Applyfor extends Base
     // 产品名称获取器
     public function getProductNameAttribute()
     {
-        if(isset($this->Attribute['product_id'])){
-            $value = Products::where('id',$this->Attribute['product_id'])->value('name');
+        if(isset($this->attributes['product_id'])){
+            $value = Products::where('id',$this->attributes['product_id'])->value('name');
         } else {
             $value = "";
         }
@@ -24,8 +24,8 @@ class Applyfor extends Base
     // 类型名称获取器
     public function getMessageNameAttribute()
     {
-        if(isset($this->Attribute['message_id'])){
-            $value = MessageCategory::where('id',$this->Attribute['message_id'])->value('name');
+        if(isset($this->attributes['message_id'])){
+            $value = MessageCategory::where('id',$this->attributes['message_id'])->value('name');
         } else {
             $value = "";
         }
@@ -35,8 +35,8 @@ class Applyfor extends Base
     // 分类名称获取器
     public function getCategoryIdAttribute()
     {
-        if(isset($this->Attribute['category_id'])){
-            $value = ProductsCategory::where('id',$this->Attribute['category_id'])->value('name');
+        if(isset($this->attributes['category_id'])){
+            $value = ProductsCategory::where('id',$this->attributes['category_id'])->value('name');
         } else {
             $value = "";
         }
@@ -46,8 +46,8 @@ class Applyfor extends Base
     // 来源名称获取器
     public function getChannelNameAttribute()
     {
-        if(isset($this->Attribute['channel'])){
-            $value = DictionaryValue::GetNameAsCode('Channel_Type',$this->Attribute['channel']);
+        if(isset($this->attributes['channel'])){
+            $value = DictionaryValue::GetNameAsCode('Channel_Type',$this->attributes['channel']);
         } else {
             $value = "";
         }
