@@ -151,6 +151,8 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\OrderController::class, 'update'])->name('订单管理:修改订单');
         Route::post('destroy', [Modules\Site\Http\Controllers\OrderController::class, 'destroy'])->name('订单管理:删除订单');
 
+        Route::post('send-order-email', [App\Http\Controllers\SiteEmailController::class, 'sendOrderEmail'])->name('订单管理:补发邮件');
+
     });
 
     // ShopCart 控制器

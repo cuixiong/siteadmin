@@ -287,4 +287,72 @@ class SiteEmailController extends Controller
         $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
         return true;
     }
+
+
+    
+    /**
+     * 补发邮件
+     * @param $id 主键ID
+     */
+    protected function sendOrderEmail(Request $request)
+    {
+
+        try {
+            $record = $this->ModelInstance()->findOrFail($request->id);
+
+            $code = $record->is_pay == 1?'paid':'order';
+
+            $scene = EmailScene::where('action',$code)->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            if(empty($scene)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+
+            if($scene->status == 0)
+            {
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
+            // 再加上订单上的邮箱
+            $emails[] = $record->email;
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,[],$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                    if($scene->alternate_email_id){
+                        $this->SendEmail($email,$scene->body,[],$scene->title,$BackupSenderEmail->email,'backups');
+                    }
+                }
+            }
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,[]);
+            ReturnJson(true,trans()->get('lang.eamail_success'));
+        } catch (\Exception $e) {
+            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,[]);
+            ReturnJson(FALSE,$e->getMessage());
+        }
+    }
+    
 }
