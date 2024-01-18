@@ -342,8 +342,8 @@ class Order extends Base
     public function getProductNameAttribute()
     {
         $text = '';
-        if (isset($this->attributes['order_id']) && !empty($this->attributes['order_id'])) {
-            $orderGoods = OrderGoods::query()->where('order_id', $this->attributes['order_id'])->get()->toArray();
+        if (isset($this->attributes['id']) && !empty($this->attributes['id'])) {
+            $orderGoods = OrderGoods::query()->where('order_id', $this->attributes['id'])->get()->toArray();
             if ($orderGoods) {
                 $productIds = array_column($orderGoods, 'goods_id');
                 $productNames = Products::query()->select('name')->whereIn('id', $productIds)->pluck('name')->toArray();
