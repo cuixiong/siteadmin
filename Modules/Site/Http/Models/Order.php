@@ -127,9 +127,9 @@ class Order extends Base
         // product_name 
         if (isset($search->product_name) && $search->product_name != '') {
 
-            $productIds = Products::query()->select(['id'])->where('name', 'like', '%' . $search->product_name . '%')->pluck('id');
-            $orderIds = OrderGoods::find()->where('goods_id', $productIds)->pluck('id') ?? [];
-            $model = $model->whereIn('order_id', $orderIds);
+            $productIds = Products::query()->select(['id'])->where('name', 'like', '%' . $search->product_name . '%')->pluck('id')??[];
+            $orderIds = OrderGoods::query()->whereIn('goods_id', $productIds)->pluck('order_id') ?? [];
+            $model = $model->whereIn('id', $orderIds);
         }
 
         // username
