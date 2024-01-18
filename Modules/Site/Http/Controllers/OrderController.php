@@ -10,6 +10,11 @@ use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\OrderGoods;
 use Modules\Site\Http\Models\Products;
+use Modules\Admin\Http\Models\User;
+use Modules\Site\Http\Models\EmailScene;
+use Modules\Site\Http\Models\Email;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TrendsEmail;
 
 class OrderController extends CrudController
 {
@@ -129,5 +134,80 @@ class OrderController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
+    }
+
+
+    /**
+     * 补发邮件
+     * @param $id 主键ID
+     */
+    protected function sendOrderEmail(Request $request)
+    {
+
+        try {
+
+            $scene = EmailScene::where('action','order')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+            if(empty($scene)){
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+
+            if($scene->status == 0)
+            {
+                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            // 收件人的数组
+            $emails = explode(',',$scene->email_recipient);
+            // 邮箱账号配置信息
+            $config = [
+                'host' =>  $senderEmail->host,
+                'port' =>  $senderEmail->port,
+                'encryption' =>  $senderEmail->encryption,
+                'username' =>  $senderEmail->email,
+                'password' =>  $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if($scene->alternate_email_id){
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupConfig = [
+                    'host' =>  $BackupSenderEmail->host,
+                    'port' =>  $BackupSenderEmail->port,
+                    'encryption' =>  $BackupSenderEmail->encryption,
+                    'username' =>  $BackupSenderEmail->email,
+                    'password' =>  $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            }
+
+            foreach ($emails as $email) {
+                try {
+                    $this->SendEmail($email,$scene->body,[],$scene->title,$senderEmail->email);
+                } catch (\Exception $e) {
+                }
+            }
+            ReturnJson(true,trans()->get('lang.eamail_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE,$e->getMessage());
+        }
+        try {
+            $record = $this->ModelInstance()->findOrFail($request->id);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+    
+    /**
+     * 发送邮箱
+     * @param string $email 接收邮箱号
+     * @param string $templet 邮箱字符串的模板
+     * @param array $data 渲染模板需要的数据
+     * @param string $subject 邮箱标题
+     * @param string $EmailUser 邮箱发件人
+     */
+    private function SendEmail($email,$templet,$data,$subject,$EmailUser,$name = 'trends')
+    {
+        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet,$data,$subject,$EmailUser));
+        return $res;
     }
 }
