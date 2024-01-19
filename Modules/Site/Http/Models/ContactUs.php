@@ -36,7 +36,7 @@ class ContactUs extends Base
     public function getCategoryNameAttribute()
     {
         if(isset($this->attributes['category_id'])){
-            $value = ProductsCategory::where('id',$this->attributes['category_id'])->value('name');
+            $value = MessageCategory::where('id',$this->attributes['category_id'])->value('name');
         } else {
             $value = "";
         }
