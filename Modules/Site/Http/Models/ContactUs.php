@@ -7,8 +7,8 @@ use Modules\Site\Http\Models\Base;
 class ContactUs extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','updated_by', 'created_by'];
-    protected $appends = ['product_name','message_name','category_id','channel_name','buy_time_name'];
+    protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','category_id','updated_by', 'created_by'];
+    protected $appends = ['product_name','message_name','category_name','channel_name','buy_time_name'];
 
     // 产品名称获取器
     public function getProductNameAttribute()
@@ -33,7 +33,7 @@ class ContactUs extends Base
     }
 
     // 分类名称获取器
-    public function getCategoryIdAttribute()
+    public function getCategoryNameAttribute()
     {
         if(isset($this->attributes['category_id'])){
             $value = ProductsCategory::where('id',$this->attributes['category_id'])->value('name');
