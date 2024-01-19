@@ -335,6 +335,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PlateController::class, 'list'])->name('页面板块:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateController::class, 'changeStatus'])->name('页面板块:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\PlateController::class, 'options'])->name('页面板块:字典数据');
+        Route::get('from/{id}', [Modules\Site\Http\Controllers\PlateController::class, 'form'])->name('页面板块:数据单查');
     });
     // Plate-Value控制器
     Route::prefix('plate-value')->group(function () {
@@ -343,6 +344,8 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PlateValueController::class, 'destroy'])->name('页面板块子级:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PlateValueController::class, 'list'])->name('页面板块子级:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
+        Route::get('from/{id}', [Modules\Site\Http\Controllers\PlateValueController::class, 'form'])->name('页面板块子级:数据单查');
+
     });
     // SinglePage控制器
     Route::prefix('single-page')->group(function () {
