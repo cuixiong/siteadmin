@@ -12,7 +12,7 @@ class PlateRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
-            'type' => 'required',
+            'page_id' => 'required',
             'title' => 'required',
             'short_title' => 'required',
             'pc_image' => 'required',
@@ -22,7 +22,7 @@ class PlateRequest extends BaseRequest
         ];
         $message = [
             'name.required' => '名称不能为空',
-            'type.required' => '类型不能为空',
+            'page_id.required' => '页面ID不能为空',
             'title.unique' => '标题不能重复',
             'short_title.required' => '短标题不能为空',
             'pc_image.required' => 'PC图片不能为空',
@@ -41,7 +41,7 @@ class PlateRequest extends BaseRequest
         $rules = [
             'id' => 'required',
             'name' => 'required',
-            'type' => 'required',
+            'page_id' => 'required',
             'title' => 'required',
             'short_title' => 'required',
             'pc_image' => 'required',
@@ -52,7 +52,7 @@ class PlateRequest extends BaseRequest
         $message = [
             'id' => 'required',
             'name.required' => '名称不能为空',
-            'type.required' => '类型不能为空',
+            'page_id.required' => '页面ID类型不能为空',
             'title.unique' => '标题不能重复',
             'short_title.required' => '短标题不能为空',
             'pc_image.required' => 'PC图片不能为空',
