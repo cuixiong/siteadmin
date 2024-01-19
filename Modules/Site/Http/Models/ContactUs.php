@@ -8,7 +8,7 @@ class ContactUs extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','updated_by', 'created_by'];
-    protected $appends = ['product_name','message_name','category_id','channel_name'];
+    protected $appends = ['product_name','message_name','category_id','channel_name','buy_time_name'];
 
     // 产品名称获取器
     public function getProductNameAttribute()
@@ -55,11 +55,12 @@ class ContactUs extends Base
     }
 
     // 购买时间获取器
-    public function getBuyTimeAttribute()
+    public function getBuyTimeNameAttribute()
     {
         if(isset($this->attributes['buy_time'])){
             $value = $this->attributes['buy_time'] . '天内';
             return $value;
         }
+        return '';
     }
 }
