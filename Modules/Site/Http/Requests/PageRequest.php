@@ -11,12 +11,12 @@ class PageRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'name' => 'required',
+            'page_id' => 'required',
             'content' => 'required',
         ];
         $message = [
-            'name.required' => '名称不能为空',
-            'content.required' => '内容不能为空',
+            'page_id.required' => '页面ID不能为空',
+            'content.required' => '页面内容不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -28,13 +28,13 @@ class PageRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
-            'name' => 'required',
+            'page_id' => 'required',
             'content' => 'required',
         ];
         $message = [
             'id' => 'required',
-            'name.required' => '名称不能为空',
-            'content.required' => '内容不能为空',
+            'page_id.required' => '页面ID不能为空',
+            'content.required' => '页面内容不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }

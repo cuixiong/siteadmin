@@ -332,6 +332,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PlateController::class, 'destroy'])->name('页面板块:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PlateController::class, 'list'])->name('页面板块:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateController::class, 'changeStatus'])->name('页面板块:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\PlateController::class, 'options'])->name('页面板块:字典数据');
     });
     // Plate-Value控制器
     Route::prefix('plate-value')->group(function () {
@@ -436,6 +437,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ContactUsController::class, 'destroy'])->name('联系我们:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\ContactUsController::class, 'list'])->name('联系我们:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('联系我们:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\ContactUsController::class, 'options'])->name('联系我们:字典数据');
     });
     // Page控制器
     Route::prefix('page')->group(function () {
@@ -444,6 +446,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PageController::class, 'destroy'])->name('单页管理:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PageController::class, 'list'])->name('单页管理:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PageController::class, 'changeStatus'])->name('单页管理:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\PageController::class, 'options'])->name('单页管理:字典数据');
     });
 });
 

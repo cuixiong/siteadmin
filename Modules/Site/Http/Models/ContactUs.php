@@ -53,4 +53,13 @@ class ContactUs extends Base
         }
         return $value;
     }
+
+    // 购买时间获取器
+    public function getBuyTimeAttribute()
+    {
+        if(isset($this->attributes['buy_time'])){
+            $value = $this->attributes['buy_time'] . '天内';
+            return $value;
+        }
+    }
 }
