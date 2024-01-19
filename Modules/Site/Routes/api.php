@@ -437,6 +437,14 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\ContactUsController::class, 'list'])->name('联系我们:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('联系我们:状态修改');
     });
+    // Page控制器
+    Route::prefix('page')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PageController::class, 'store'])->name('单页管理:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PageController::class, 'update'])->name('单页管理:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PageController::class, 'destroy'])->name('单页管理:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PageController::class, 'list'])->name('单页管理:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PageController::class, 'changeStatus'])->name('单页管理:状态修改');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
