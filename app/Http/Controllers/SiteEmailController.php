@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Modules\Site\Http\Models\Email;
 use Modules\Site\Http\Models\EmailLog;
+use Modules\Site\Http\Models\Order;
 use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\EmailScene;
 
@@ -291,31 +292,31 @@ class SiteEmailController extends Controller
 
     
     /**
-     * 补发邮件
+     * 发送订单邮件
      * @param $id 主键ID
      */
     protected function sendOrderEmail(Request $request)
     {
 
+        $record = (new Order())->findOrFail($request->id);
+
+        $code = $record->is_pay == 1?'paid':'order';
+
+        $scene = EmailScene::where('action',$code)->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
+        if(empty($scene)){
+            ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+        }
+        if($scene->status == 0)
+        {
+            ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+        }
         try {
-            $record = $this->ModelInstance()->findOrFail($request->id);
-
-            $code = $record->is_pay == 1?'paid':'order';
-
-            $scene = EmailScene::where('action',$code)->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
-            if(empty($scene)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
-            }
-
-            if($scene->status == 0)
-            {
-                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
-            }
             $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
             // 收件人的数组
             $emails = explode(',',$scene->email_recipient);
             // 再加上订单上的邮箱
             $emails[] = $record->email;
+            array_unique($emails);
             // 邮箱账号配置信息
             $config = [
                 'host' =>  $senderEmail->host,

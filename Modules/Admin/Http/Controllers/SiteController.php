@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use App\Helper\BtPanel;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -691,5 +692,10 @@ class SiteController extends CrudController
             $res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
         }
         ReturnJson(TRUE, trans('lang.request_success'), $res);
+    }
+
+    public function btTest(Request $request){
+        $data = (new BtPanel())->GetSiteList();
+        ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }

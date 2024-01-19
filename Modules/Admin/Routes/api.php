@@ -481,6 +481,10 @@ Route::middleware([
     Route::get('admin/test/task4', 'TestController@task4')->name('测试接口');
     Route::get('admin/test/task5', 'TestController@task5')->name('测试接口');
     Route::get('admin/test/task6', 'TestController@task6')->name('测试接口');
+
+    //测试面板接口
+    Route::get('admin/site/bt-test', 'SiteController@btTest')->name('测试接口');
+    
 });
 
 // 暂时测试路由
