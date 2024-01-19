@@ -20,6 +20,10 @@ class Plate extends Base
         'created_by'
     ];
 
+    protected $appends = [
+        'page_name'
+    ];
+
     // pc_image修改器
     public function setPcImageAttribute($value){
         $value = $value && is_array($value) ? implode(",",$value) : "";
@@ -41,5 +45,14 @@ class Plate extends Base
     public function getMbImageAttribute($value){
         $value = $value ? explode(",",$value) : [];
         return $value;
+    }
+    // page_name获取器
+    public function getPageNameAttribute($value){
+        if(isset($this->attributes['page_id'])){
+            $value = Menu::where('id',$this->attributes['page_id'])->value('name');
+            $value = $value ? $value : '';
+            return $value;
+        }
+        return '';
     }
 }
