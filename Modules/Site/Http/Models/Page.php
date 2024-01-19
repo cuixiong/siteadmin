@@ -6,7 +6,7 @@ class Page extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = ['page_id', 'content','status','sort', 'updated_by', 'created_by'];
-    protected $appeds = ['page_name'];
+    protected $appends = ['page_name'];
 
     // 页面名称获取器
     public function getPageNameAttribute()
