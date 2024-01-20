@@ -126,14 +126,54 @@ class SiteController extends CrudController
     public function createSiteToRemoteServer(Request $request)
     {
 
+        set_time_limit(100);
+
         $siteId = $request->input('site_id');
         // 创建者ID
         $created_by = $request->user->id;
 
+        //获取站点配置
+        $site = Site::findOrFail($siteId);
+        //获取服务器配置
+        $server = Server::find($site->server_id);
+        //获取数据库配置
+        $database = Database::find($site->database_id);
+
+
+        $checkParamEmpty = [
+            'server_model_empty' => $server,
+            'database_model_empty' => $database,
+            'site_name_empty' => $site->name ?? '',
+            'site_api_repository_empty' => $site->api_repository ?? '',
+            'site_frontend_repository_empty' => $site->frontend_repository ?? '',
+            'site_api_path_empty' => $site->api_path ?? '',
+            'site_frontend_path_empty' => $site->frontend_path ?? '',
+            'site_domain_empty' => $site->domain ?? '',
+            'server_ip_empty' => $server->ip ?? '',
+            'server_username_empty' => $server->username ?? '',
+            'server_password_empty' => $server->password ?? '',
+            'database_ip_empty' => $database->ip ?? '',
+            'database_username_empty' => $database->username ?? '',
+            'database_password_empty' => $database->password ?? '',
+        ];
+
+        //判断参数是否为空
+        foreach ($checkParamEmpty as $key => $value) {
+            if (empty($value)) {
+                ReturnJson(FALSE, !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty'));
+            }
+        }
+
         try {
-            $output = Site::executeRemoteCommand($siteId, 'add_site', ['created_by' => $created_by]);
-            //调用宝塔api新建站点、添加证书
-            // (new BtPanel())->addSite();
+            $output = Site::executeRemoteCommand($site, $server, $database, 'add_site', ['created_by' => $created_by]);
+            $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
+            // 调用宝塔api新建站点
+            (new BtPanel())->addSite($webname, $site->api_path);
+            // // 申请证书（免费Let's Encrypt 证书）
+            // (new BtPanel())->applyCert($webname,$site->api_path);
+            // // 添加证书
+            // (new BtPanel())->setSSL();
+
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
@@ -170,7 +210,7 @@ class SiteController extends CrudController
             $database = Database::where('id', $input['database_id'])->select('ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password')->first();
             if (!$database) {
                 DB::rollBack();
-                ReturnJson(TRUE, trans('lang.update_error') . ' '.trans('lang.database_model_empty'));
+                ReturnJson(TRUE, trans('lang.update_error') . ' ' . trans('lang.database_model_empty'));
             } else {
                 $database = $database->toArray();
             }
@@ -214,8 +254,11 @@ class SiteController extends CrudController
         // 创建者ID
         $created_by = $request->user->id;
 
+        //获取站点配置
+        $site = Site::findOrFail($siteId);
+
         try {
-            $output = Site::executeRemoteCommand($siteId, 'pull_code', ['created_by' => $created_by]);
+            $output = Site::executeRemoteCommand($site, null, null, 'pull_code', ['created_by' => $created_by]);
 
             if (!$output['result']) {
                 ReturnJson(FALSE, $output['output']);
@@ -247,15 +290,19 @@ class SiteController extends CrudController
         // 创建者ID
         $created_by = $request->user->id;
 
+        //获取站点配置
+        $site = Site::findOrFail($siteId);
+
+
         try {
             //获取数量
-            $commitCountOutput = Site::executeRemoteCommand($siteId, 'commit_history_count', ['created_by' => $created_by]);
+            $commitCountOutput = Site::executeRemoteCommand($site, null, null, 'commit_history_count', ['created_by' => $created_by]);
             $commitCount = 0;
             if ($commitCountOutput['result']) {
                 $commitCount = trim($commitCountOutput['output'], "\n");
             }
             //获取具体内容
-            $commitOutput = Site::executeRemoteCommand($siteId, 'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
+            $commitOutput = Site::executeRemoteCommand($site, null, null,  'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
             $commitOutput['count'] = $commitCount;
 
             if (!$commitOutput['result']) {
@@ -280,8 +327,13 @@ class SiteController extends CrudController
         // 创建者ID
         $created_by = $request->user->id;
 
+        //获取站点配置
+        $site = Site::findOrFail($siteId);
+
+
         try {
-            $output = Site::executeRemoteCommand($siteId, 'available_pull', ['created_by' => $created_by]);
+            //获取数量
+            $output = Site::executeRemoteCommand($site, null, null, 'available_pull', ['created_by' => $created_by]);
 
             // if (!$output['result']) {
             //     ReturnJson(FALSE, $output['output']);
@@ -308,8 +360,14 @@ class SiteController extends CrudController
         if (empty($hash)) {
             ReturnJson(FALSE, trans('lang.param_empty'), 'hash');
         }
+
+        //获取站点配置
+        $site = Site::findOrFail($siteId);
+
+
         try {
-            $output = Site::executeRemoteCommand($siteId, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
+            //获取数量
+            $output = Site::executeRemoteCommand($site, null, null, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
 
             if (!$output['result']) {
                 ReturnJson(FALSE, $output['output']);
@@ -417,7 +475,7 @@ class SiteController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //获取当前站点仓库的版本hash值
-                    $currentHashData = Site::executeRemoteCommand($item['id'], 'current_hash');
+                    $currentHashData = Site::executeRemoteCommand($item, null, null, 'current_hash');
 
                     $record[$key]['hash'] = '';
                     $record[$key]['hash_sample'] = '';
@@ -678,7 +736,7 @@ class SiteController extends CrudController
      */
     public function UserOption(Request $request)
     {
-        $res = Role::whereIn('id', explode(',', $request->user->role_id))->where('status',1)->pluck('site_id')->toArray();
+        $res = Role::whereIn('id', explode(',', $request->user->role_id))->where('status', 1)->pluck('site_id')->toArray();
         $site_ids = [];
         foreach ($res as $key => $value) {
             if (is_array($value)) {
@@ -696,7 +754,8 @@ class SiteController extends CrudController
         ReturnJson(TRUE, trans('lang.request_success'), $res);
     }
 
-    public function btTest(Request $request){
+    public function btTest(Request $request)
+    {
         $data = (new BtPanel())->httpToHttps();
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }

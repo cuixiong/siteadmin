@@ -184,47 +184,14 @@ class Site extends Base
 
     /**
      * 连接远程服务器 执行命令 处理输出
-     * @param int $siteId 站点ID
+     * @param object $site 站点信息
+     * @param object $server 服务器信息
+     * @param object $database 数据库信息
      * @param string $type 操作类型
      * @param array $option 额外参数
-     * @param array|string $commands shell命令
      */
-    protected static function executeRemoteCommand($siteId, $type, $option = [])
+    protected static function executeRemoteCommand($site, $server = null, $database = null, $type, $option = [])
     {
-        set_time_limit(100);
-
-        //获取站点配置
-        $site = self::findOrFail($siteId);
-        //获取服务器配置
-        $server = Server::find($site->server_id);
-        //获取数据库配置
-        $database = Database::find($site->database_id);
-
-
-        $checkParamEmpty = [
-            'server_model_empty' => $server,
-            'database_model_empty' => $database,
-            'site_name_empty' => $site->name ?? '',
-            'site_api_repository_empty' => $site->api_repository ?? '',
-            'site_frontend_repository_empty' => $site->frontend_repository ?? '',
-            'site_api_path_empty' => $site->api_path ?? '',
-            'site_frontend_path_empty' => $site->frontend_path ?? '',
-            'server_ip_empty' => $server->ip ?? '',
-            'server_username_empty' => $server->username ?? '',
-            'server_password_empty' => $server->password ?? '',
-            'database_ip_empty' => $database->ip ?? '',
-            'database_username_empty' => $database->username ?? '',
-            'database_password_empty' => $database->password ?? '',
-        ];
-        //判断参数是否为空
-        foreach ($checkParamEmpty as $key => $value) {
-            if (empty($value)) {
-                return [
-                    'result' => false,
-                    'output' => !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty'),
-                ];
-            }
-        }
 
         //连接远程服务器
         $ssh = new SSH2($server->ip);
@@ -454,7 +421,9 @@ class Site extends Base
              * 复制env模板文件,替换其中的占位符，如果已存在env文件，须事先进行备份以免误覆盖
              */
             // 检查是否存在 .env 文件,备份当前的 .env 文件为时间戳命名的文件
-            'cd ' . $apiDirName . ' && if [ -f .env ]; then mv .env "$(date +\'' . time() . '\')_env.backup" fi',
+            'cd ' . $apiDirName . ' && if [ -f .env ]; then 
+                mv .env "env.backup' . date('YmdHis', time()) . '" 
+            fi',
             // 替换操作
             'cd ' . $apiDirName . ' && cp .env.template .env',
             'cd ' . $apiDirName . ' && sed -i "s/{{DB_HOST}}/' . $dbHost . '/g" .env',

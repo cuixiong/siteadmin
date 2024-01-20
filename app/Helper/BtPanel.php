@@ -206,8 +206,16 @@ class BtPanel
         return $data;
     }
 
-    // 创建网站
-    public function addSite()
+    /**
+     * 创建网站
+     * @param string $webname 网站主域名和域名列表JSON
+     * @param string $path 根目录
+     * @param string $version PHP版本,请从PHP版本列表中选择
+     * @param int $post 网站端口
+     * @param string $ps 网站备注
+     * 
+     */
+    public function addSite($webname, $path, $version = 80, $post = 80, $ps = '')
     {
 
         //拼接URL地址
@@ -216,13 +224,14 @@ class BtPanel
         //准备POST数据
         $p_data = $this->GetKeyData();        //取签名
 
-        $p_data['webname'] = json_encode(["domain" => "	qycnadmin.qyrdata.com", "domainlist" => [], "count" => 0]); //网站主域名和域名列表请传JSON[必传]
-        $p_data['path'] = '/www/wwwroot/qy-cn/new-adminqy-cn/backend/web'; // 根目录 [必传]
+        // json_encode(["domain" => "qycnadmin.qyrdata.com", "domainlist" => [], "count" => 0]);
+        $p_data['webname'] = $webname;
+        $p_data['path'] = $path; // 根目录 [必传]
         $p_data['type_id'] = 0; //分类标识 [必传]
         $p_data['type'] = 'PHP'; //项目类型 请传PHP [必传]
-        $p_data['version'] = 74; //PHP 版本 请从PHP 版本列表中选择[必传]
-        $p_data['port'] = 80; // 网站端口 [必传]
-        $p_data['ps'] = 'qy-cn测试后台'; //网站备注 [必传]
+        $p_data['version'] = $version; //PHP 版本 请从PHP 版本列表中选择[必传]
+        $p_data['port'] = $post; // 网站端口 [必传]
+        $p_data['ps'] = $ps; //网站备注 [必传]
         $p_data['ftp'] = false; //是否创建 FTP [必传]
         $p_data['sql'] = false; //是否创建数据库[必传]
 
@@ -255,8 +264,8 @@ class BtPanel
         return $data;
     }
 
-    // 申请Let's Encrypt 证书 + 设置SSL
-    public function applyCert()
+    // 申请Let's Encrypt 证书
+    public function applyCert($domain,$btSiteId)
     {
 
         //拼接URL地址
@@ -265,38 +274,38 @@ class BtPanel
         //准备POST数据
         $p_data = $this->GetKeyData();        //取签名
 
-        $p_data['domains'] = json_encode(["qycnadmin.qyrdata.com"]);
+        $p_data['domains'] = json_encode([$domain]);
         $p_data['auth_type'] = 'http';
-        $p_data['auth_to'] = 41;
+        $p_data['auth_to'] = $btSiteId;
         $p_data['auto_wildcard'] = 0;
-        $p_data['id'] = 41;
+        $p_data['id'] = $btSiteId;
         //请求面板接口
         $result = $this->HttpPostCookie($url, $p_data);
 
         //解析JSON数据
         $data = json_decode($result, true);
         // return $data;
-        if ($data) {
-            //申请后设置证书
+        // if ($data) {
+        //     //申请后设置证书
 
-            //拼接URL地址
-            $sslUrl = $this->BT_PANEL . '/site?action=SetSSL';
+        //     //拼接URL地址
+        //     $sslUrl = $this->BT_PANEL . '/site?action=SetSSL';
 
-            //准备POST数据
-            $p_data2 = $this->GetKeyData();        //取签名
+        //     //准备POST数据
+        //     $p_data2 = $this->GetKeyData();        //取签名
 
-            $p_data2['type'] = 1;
-            $p_data2['siteName'] = $data['domains'][0];
-            $p_data2['key'] = $data['private_key'];
-            $p_data2['csr'] = $data['cert'];
+        //     $p_data2['type'] = 1;
+        //     $p_data2['siteName'] = $data['domains'][0];
+        //     $p_data2['key'] = $data['private_key'];
+        //     $p_data2['csr'] = $data['cert'];
 
-            //请求面板接口
-            $result2 = $this->HttpPostCookie($sslUrl, $p_data2);
+        //     //请求面板接口
+        //     $result2 = $this->HttpPostCookie($sslUrl, $p_data2);
 
-            //解析JSON数据
-            $data2 = json_decode($result2, true);
-            return [$data, $data2];
-        }
+        //     //解析JSON数据
+        //     $data2 = json_decode($result2, true);
+        //     return [$data, $data2];
+        // }
         return $data;
     }
 
@@ -321,10 +330,16 @@ class BtPanel
         return $data;
     }
 
-    // 设置SSL
-    public function setSSL($key,$csr)
+    /**
+     * 设置SSL
+     * @param string $domain 域名不带协议(没有http、https)
+     * @param string $key 密钥(KEY)
+     * @param string $csr 证书(PEM格式)
+     * 
+     */
+    public function setSSL($domain,$key, $csr)
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/site?action=SetSSL';
 
@@ -332,7 +347,7 @@ class BtPanel
         $p_data = $this->GetKeyData();        //取签名
 
         $p_data['type'] = 1;
-        $p_data['siteName'] = 'qycn.qyrdata.com';
+        $p_data['siteName'] = $domain;
         $p_data['key'] = $key;
         $p_data['csr'] = $csr;
 
@@ -347,7 +362,7 @@ class BtPanel
     // 获取SSL
     public function getSSL()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/site?action=GetSSL';
 
@@ -367,7 +382,7 @@ class BtPanel
     //强制使用https
     public function httpToHttps()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/site?action=HttpToHttps';
 
@@ -387,7 +402,7 @@ class BtPanel
     //取消强制使用https
     public function closeToHttps()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/site?action=CloseToHttps';
 
@@ -403,6 +418,4 @@ class BtPanel
         $data = json_decode($result, true);
         return $data;
     }
-
-    
 }
