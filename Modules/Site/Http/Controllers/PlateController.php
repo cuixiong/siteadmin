@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Site\Http\Models\Menu;
+use Modules\Site\Http\Models\PlateValue;
 
 class PlateController extends CrudController
 {
@@ -21,5 +22,14 @@ class PlateController extends CrudController
         }
         $options['pages'] = (new Menu())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
+    }
+    // 获取子级列表
+    public function children(Request $request)
+    {
+        if(empty($request->page_id)){
+            ReturnJson(FALSE,'父级ID为空');
+        }
+        $res = PlateValue::where('parent_id',$request->page_id)->where('status',1)->get()->toArray();
+        ReturnJson(TRUE,'', $res);
     }
 }

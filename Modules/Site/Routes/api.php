@@ -336,6 +336,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateController::class, 'changeStatus'])->name('页面板块:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\PlateController::class, 'options'])->name('页面板块:字典数据');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\PlateController::class, 'form'])->name('页面板块:数据单查');
+        Route::get('children', [Modules\Site\Http\Controllers\PlateController::class, 'children'])->name('页面板块:查询子级列表');
     });
     // Plate-Value控制器
     Route::prefix('plate-value')->group(function () {
