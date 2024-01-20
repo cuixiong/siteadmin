@@ -26,10 +26,10 @@ class PlateController extends CrudController
     // 获取子级列表
     public function children(Request $request)
     {
-        if(empty($request->page_id)){
+        if(empty($request->id)){
             ReturnJson(FALSE,'父级ID为空');
         }
-        $res = PlateValue::where('parent_id',$request->page_id)->where('status',1)->get()->toArray();
+        $res = PlateValue::where('parent_id',$request->id)->where('status',1)->get()->toArray();
         ReturnJson(TRUE,'', $res);
     }
 }
