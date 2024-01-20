@@ -481,10 +481,12 @@ class SiteController extends CrudController
             if ($record && count($record) > 0) {
 
                 foreach ($record as $key => $item) {
-                    //获取当前站点仓库的版本hash值
                     //获取服务器配置
                     $server = Server::find($item->server_id);
-                    $currentHashData = Site::executeRemoteCommand($item, null, null, 'current_hash');
+                    //获取当前站点仓库的版本hash值
+                    if(isset($server->ip)){
+                        $currentHashData = Site::executeRemoteCommand($item, $server, null, 'current_hash');
+                    }
 
                     $record[$key]['hash'] = '';
                     $record[$key]['hash_sample'] = '';
