@@ -256,9 +256,11 @@ class SiteController extends CrudController
 
         //获取站点配置
         $site = Site::findOrFail($siteId);
+        //获取服务器配置
+        $server = Server::find($site->server_id);
 
         try {
-            $output = Site::executeRemoteCommand($site, null, null, 'pull_code', ['created_by' => $created_by]);
+            $output = Site::executeRemoteCommand($site, $server, null, 'pull_code', ['created_by' => $created_by]);
 
             if (!$output['result']) {
                 ReturnJson(FALSE, $output['output']);
@@ -292,11 +294,13 @@ class SiteController extends CrudController
 
         //获取站点配置
         $site = Site::findOrFail($siteId);
+        //获取服务器配置
+        $server = Server::find($site->server_id);
 
 
         try {
             //获取数量
-            $commitCountOutput = Site::executeRemoteCommand($site, null, null, 'commit_history_count', ['created_by' => $created_by]);
+            $commitCountOutput = Site::executeRemoteCommand($site, $server, null, 'commit_history_count', ['created_by' => $created_by]);
             $commitCount = 0;
             if ($commitCountOutput['result']) {
                 $commitCount = trim($commitCountOutput['output'], "\n");
@@ -329,11 +333,12 @@ class SiteController extends CrudController
 
         //获取站点配置
         $site = Site::findOrFail($siteId);
-
+        //获取服务器配置
+        $server = Server::find($site->server_id);
 
         try {
             //获取数量
-            $output = Site::executeRemoteCommand($site, null, null, 'available_pull', ['created_by' => $created_by]);
+            $output = Site::executeRemoteCommand($site, $server, null, 'available_pull', ['created_by' => $created_by]);
 
             // if (!$output['result']) {
             //     ReturnJson(FALSE, $output['output']);
@@ -363,11 +368,13 @@ class SiteController extends CrudController
 
         //获取站点配置
         $site = Site::findOrFail($siteId);
+        //获取服务器配置
+        $server = Server::find($site->server_id);
 
 
         try {
             //获取数量
-            $output = Site::executeRemoteCommand($site, null, null, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
+            $output = Site::executeRemoteCommand($site, $server, null, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]);
 
             if (!$output['result']) {
                 ReturnJson(FALSE, $output['output']);
@@ -475,6 +482,8 @@ class SiteController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //获取当前站点仓库的版本hash值
+                    //获取服务器配置
+                    $server = Server::find($item->server_id);
                     $currentHashData = Site::executeRemoteCommand($item, null, null, 'current_hash');
 
                     $record[$key]['hash'] = '';
