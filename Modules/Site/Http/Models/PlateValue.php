@@ -29,4 +29,18 @@ class PlateValue extends Base
         $value = $value ? explode(",",$value) : [];
         return $value;
     }
+
+    /**
+     * 处理查询列表条件数组
+     * @param use Illuminate\Http\Request;
+     */
+    public function HandleWhere($model,$request){
+        if(!empty($request->id)){
+            $model = $model->where('parent_id',$request->id);
+        }
+        if(!empty($request->search)){
+            $model = $this->HandleSearch($model,$request->search);
+        }
+        return $model;
+    }
 }
