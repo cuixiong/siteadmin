@@ -132,6 +132,8 @@ class SiteController extends CrudController
 
         try {
             $output = Site::executeRemoteCommand($siteId, 'add_site', ['created_by' => $created_by]);
+            //调用宝塔api新建站点、添加证书
+            // (new BtPanel())->addSite();
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
@@ -695,7 +697,7 @@ class SiteController extends CrudController
     }
 
     public function btTest(Request $request){
-        $data = (new BtPanel())->GetSiteList();
+        $data = (new BtPanel())->httpToHttps();
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
 }

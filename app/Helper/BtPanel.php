@@ -18,7 +18,7 @@ class BtPanel
     }
 
     //示例取面板日志	
-    public function GetLogs()
+    public function getLogs()
     {
         //拼接URL地址
         $url = $this->BT_PANEL . '/data?action=getData';
@@ -88,9 +88,9 @@ class BtPanel
      */
 
     //获取系统基础统计
-    public function GetSystemTotal()
+    public function getSystemTotal()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/system?action=GetSystemTotal';
 
@@ -104,11 +104,11 @@ class BtPanel
         $data = json_decode($result, true);
         return $data;
     }
-    
+
     // 获取磁盘分区信息
-    public function GetDiskInfo()
+    public function getDiskInfo()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/system?action=GetDiskInfo';
 
@@ -122,11 +122,11 @@ class BtPanel
         $data = json_decode($result, true);
         return $data;
     }
-    
+
     // 获取磁盘分区信息
-    public function GetNetWork()
+    public function getNetWork()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/system?action=GetNetWork';
 
@@ -141,27 +141,62 @@ class BtPanel
         return $data;
     }
 
-    
+
     /**
      * 网站管理
      *  
      */
     // 获取网站列表
-    public function GetSiteList()
+    public function getSiteList()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/data?action=getData&table=sites';
 
         //准备POST数据
         $p_data = $this->GetKeyData();        //取签名
-        
+
         // $p_data['p'] = 1; // 当前分页 [可选]
         $p_data['limit'] = 15; // 取回的数据行数 [必传]
         // $p_data['type'] = -1; // 分类标识; -1: 全部部分类 0: 默认分类 [可选]
         // $p_data['order'] = 'id desc'; // 排序规则 使用 id 降序：id desc 使用名称升序：name desc [可选]
         // $p_data['tojs'] = 'get_site_list'; // 分页 JS 回调,若不传则构造 URI 分页连接 [可选]
         // $p_data['search'] = 'www'; // 搜索内容 [可选]
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+    // 获取网站分类
+    public function getSiteTypes()
+    {
+
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=get_site_types';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    // 获取网站分类
+    public function getPHPVersion()
+    {
+
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=GetPHPVersion';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
 
         //请求面板接口
         $result = $this->HttpPostCookie($url, $p_data);
@@ -174,27 +209,200 @@ class BtPanel
     // 创建网站
     public function addSite()
     {
-        
+
         //拼接URL地址
         $url = $this->BT_PANEL . '/site?action=AddSite';
 
         //准备POST数据
         $p_data = $this->GetKeyData();        //取签名
 
+        $p_data['webname'] = json_encode(["domain" => "	qycnadmin.qyrdata.com", "domainlist" => [], "count" => 0]); //网站主域名和域名列表请传JSON[必传]
+        $p_data['path'] = '/www/wwwroot/qy-cn/new-adminqy-cn/backend/web'; // 根目录 [必传]
+        $p_data['type_id'] = 0; //分类标识 [必传]
+        $p_data['type'] = 'PHP'; //项目类型 请传PHP [必传]
+        $p_data['version'] = 74; //PHP 版本 请从PHP 版本列表中选择[必传]
+        $p_data['port'] = 80; // 网站端口 [必传]
+        $p_data['ps'] = 'qy-cn测试后台'; //网站备注 [必传]
+        $p_data['ftp'] = false; //是否创建 FTP [必传]
+        $p_data['sql'] = false; //是否创建数据库[必传]
+
         //请求面板接口
         $result = $this->HttpPostCookie($url, $p_data);
-        
-        // $p_data['p'] = 1; // 当前分页 [可选]
-        $p_data['limit'] = 15; // 取回的数据行数 [必传]
-        // $p_data['type'] = -1; // 分类标识; -1: 全部部分类 0: 默认分类 [可选]
-        // $p_data['order'] = 'id desc'; // 排序规则 使用 id 降序：id desc 使用名称升序：name desc [可选]
-        // $p_data['tojs'] = 'get_site_list'; // 分页 JS 回调,若不传则构造 URI 分页连接 [可选]
-        // $p_data['search'] = 'www'; // 搜索内容 [可选]
 
         //解析JSON数据
         $data = json_decode($result, true);
         return $data;
     }
 
+    // 删除网站
+    public function deleteSite()
+    {
 
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=DeleteSite';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['id'] = 40; // 网站 ID [必传]
+        $p_data['webname'] = 'w1.hao.com'; // 网站名称 [必传]
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    // 申请Let's Encrypt 证书 + 设置SSL
+    public function applyCert()
+    {
+
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/acme?action=apply_cert_api';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['domains'] = json_encode(["qycnadmin.qyrdata.com"]);
+        $p_data['auth_type'] = 'http';
+        $p_data['auth_to'] = 41;
+        $p_data['auto_wildcard'] = 0;
+        $p_data['id'] = 41;
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        // return $data;
+        if ($data) {
+            //申请后设置证书
+
+            //拼接URL地址
+            $sslUrl = $this->BT_PANEL . '/site?action=SetSSL';
+
+            //准备POST数据
+            $p_data2 = $this->GetKeyData();        //取签名
+
+            $p_data2['type'] = 1;
+            $p_data2['siteName'] = $data['domains'][0];
+            $p_data2['key'] = $data['private_key'];
+            $p_data2['csr'] = $data['cert'];
+
+            //请求面板接口
+            $result2 = $this->HttpPostCookie($sslUrl, $p_data2);
+
+            //解析JSON数据
+            $data2 = json_decode($result2, true);
+            return [$data, $data2];
+        }
+        return $data;
+    }
+
+    // 申请进度
+    public function getLines()
+    {
+
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/ajax?action=get_lines';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['num'] = 10;
+        $p_data['filename'] = '/www/server/panel/logs/letsencrypt.log';
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    // 设置SSL
+    public function setSSL($key,$csr)
+    {
+        
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=SetSSL';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['type'] = 1;
+        $p_data['siteName'] = 'qycn.qyrdata.com';
+        $p_data['key'] = $key;
+        $p_data['csr'] = $csr;
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    // 获取SSL
+    public function getSSL()
+    {
+        
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=GetSSL';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['siteName'] = 'qycnadmin.qyrdata.com';
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    //强制使用https
+    public function httpToHttps()
+    {
+        
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=HttpToHttps';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['siteName'] = 'qycnadmin.qyrdata.com';
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    //取消强制使用https
+    public function closeToHttps()
+    {
+        
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/site?action=CloseToHttps';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['siteName'] = 'qycnadmin.qyrdata.com';
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+    
 }
