@@ -442,7 +442,6 @@ class Site extends Base
              * 携带密码：git clone https://用户名:密码@仓库地址 [新建的目录名]
              * 例: git clone https://6953%40qq.com:1234567acde@gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
              * 用户名密码有@这些特殊符号需转义
-             * 命令是根据yii部署步骤而定的，若换了框架，需要重新写一个，视仓库而定
              */
             'git clone ' . $apiRepository . ' ' . $apiDirName,
             /**
@@ -451,6 +450,20 @@ class Site extends Base
              */
             'cd ' . $apiDirName . ' &&  composer install ',
             /**
+             * 三、配置文件连接数据库
+             * 复制env模板文件,替换其中的占位符，如果已存在env文件，须事先进行备份以免误覆盖
+             */
+            // 检查是否存在 .env 文件,备份当前的 .env 文件为时间戳命名的文件
+            'cd ' . $apiDirName . ' && if [ -f .env ]; then mv .env "$(date +\'' . time() . '\')_env.backup" fi',
+            // 替换操作
+            'cd ' . $apiDirName . ' && cp .env.template .env',
+            'cd ' . $apiDirName . ' && sed -i "s/{{DB_HOST}}/' . $dbHost . '/g" .env',
+            'cd ' . $apiDirName . ' && sed -i "s/{{DB_DATABASE}}/' . $dbName . '/g" .env',
+            'cd ' . $apiDirName . ' && sed -i "s/{{DB_USERNAME}}/' . $dbUsername . '/g" .env',
+            'cd ' . $apiDirName . ' && sed -i "s/{{DB_PASSWORD}}/' . $dbPassword . '/g" .env',
+
+            /**
+         * 
          * 三、修改项目的权限
          * 因为每一句命令独立运行，所以每次都要指定目录
          */
@@ -461,12 +474,6 @@ class Site extends Base
          * --env=Development --overwrite=n 默认使用Development模式，选择不覆盖重名文件
          */
             // 'cd ' . $siteBasePath . $apiDirName . ' && ./init --env=Development --overwrite=n',
-            /**
-         * 五、配置文件连接数据库
-         * 网站项目的console我新增了一个Controller,通过命令行传递数据库信息以填写数据库信息
-         * config/index config是控制器名，index是函数方法
-         */
-            // 'cd ' . $siteBasePath . $apiDirName . ' && ./yii config/index --dbHost=' . $dbHost . ' --dbUsername=' . $dbUsername . ' --dbPassword=' . $dbPassword . ' --dbName=' . $dbName . ' --tablePrefix=' . $tablePrefix,
         ];
         return $commands;
     }
