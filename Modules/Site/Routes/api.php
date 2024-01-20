@@ -363,6 +363,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\AuthorityController::class, 'destroy'])->name('权威引用:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\AuthorityController::class, 'list'])->name('权威引用:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\AuthorityController::class, 'changeStatus'])->name('权威引用:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\AuthorityController::class, 'options'])->name('权威引用:字典数据');
     });
     // Video控制器
     Route::prefix('video')->group(function () {

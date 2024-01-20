@@ -3,9 +3,9 @@
 namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
+use Modules\Site\Http\Models\ProductsCategory;
 
 class AuthorityController extends CrudController
 {
@@ -16,10 +16,10 @@ class AuthorityController extends CrudController
         $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
         if(!empty($data)){
             foreach ($data as $map){
-                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
             }
         }
-        $options['country'] = Country::where('status',1)->select('id as value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        $options['product_category'] = (new ProductsCategory())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
 }
