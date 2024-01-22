@@ -129,16 +129,17 @@ class SiteController extends CrudController
         set_time_limit(100);
 
         $siteId = $request->input('site_id');
+
+        $step = $request->input('step');
+
         // 创建者ID
         $created_by = $request->user->id;
-
         //获取站点配置
         $site = Site::findOrFail($siteId);
         //获取服务器配置
         $server = Server::find($site->server_id);
         //获取数据库配置
         $database = Database::find($site->database_id);
-
 
         $checkParamEmpty = [
             'server_model_empty' => $server,
@@ -157,7 +158,7 @@ class SiteController extends CrudController
             'database_password_empty' => $database->password ?? '',
         ];
 
-        //判断参数是否为空
+        // 判断参数是否为空
         foreach ($checkParamEmpty as $key => $value) {
             if (empty($value)) {
                 ReturnJson(FALSE, !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty'));
@@ -165,15 +166,20 @@ class SiteController extends CrudController
         }
 
         try {
-            $output = Site::executeRemoteCommand($site, $server, $database, 'add_site', ['created_by' => $created_by]);
-            $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
-            // 调用宝塔api新建站点
-            (new BtPanel())->addSite($webname, $site->api_path);
-            // // 申请证书（免费Let's Encrypt 证书）
-            // (new BtPanel())->applyCert($webname,$site->api_path);
-            // // 添加证书
-            // (new BtPanel())->setSSL();
-
+            $initWebsiteStep = Site::getInitWebsiteStep(true);
+            if ($initWebsiteStep['commands'] && in_array($step, $initWebsiteStep['commands'])) {
+                $output = Site::executeRemoteCommand($site, $server, $database, $step, ['created_by' => $created_by]);
+            } elseif ($initWebsiteStep['btPanelApi'] && in_array($step, $initWebsiteStep['btPanelApi'])) {
+                $option['created_by'] = $created_by;
+                if ($request->input('private_key')) {
+                    $option['private_key'] = $request->input('private_key');
+                }
+                if ($request->input('csr')) {
+                    $option['csr'] = $request->input('csr');
+                }
+                $output = Site::invokeBtApi($site, $step, $option);
+                // ReturnJson(FALSE, trans('lang.request_success'), $output);
+            }
         } catch (\Throwable $th) {
             ReturnJson(FALSE, trans('lang.request_error'), $th->getMessage());
         }
@@ -484,7 +490,7 @@ class SiteController extends CrudController
                     //获取服务器配置
                     $server = Server::find($item->server_id);
                     //获取当前站点仓库的版本hash值
-                    if(isset($server->ip)){
+                    if (isset($server->ip)) {
                         $currentHashData = Site::executeRemoteCommand($item, $server, null, 'current_hash');
                     }
 
@@ -525,6 +531,7 @@ class SiteController extends CrudController
                 'pageSize' => $pageSize,
                 'list' => $record,
                 'headerTitle' => !empty($headerTitle) ? $headerTitle : [],
+                'step' => Site::getInitWebsiteStep(),
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

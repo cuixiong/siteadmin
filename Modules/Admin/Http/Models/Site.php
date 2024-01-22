@@ -7,6 +7,8 @@ use phpseclib3\Net\SSH2;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use PDO;
+use App\Helper\BtPanel;
+use Symfony\Component\Process\Process;
 
 class Site extends Base
 {
@@ -37,6 +39,7 @@ class Site extends Base
 
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['publisher', 'country', 'language', 'server', 'database'];
+
 
     /**
      * 出版商获取器
@@ -205,54 +208,107 @@ class Site extends Base
 
         // // 项目所在外层路径
         // $siteBasePath = '/www/wwwroot/platform_test/' . $site->name . '/';
-        // 接口/后台代码项目路径
+        // 接口代码项目路径
         $apiDirName = $site->api_path;
-        // 前台代码仓库别名
+        // 前台代码项目路径
         $frontedDirName = $site->frontend_path;
+        // 接口代码仓库地址
+        $apiRepository = $site->api_repository;
+        // 前台代码仓库地址
+        $frontendRepository = $site->frontend_repository;
 
         //根据类型获取命令
         $commands = [];
-        if ($type == 'add_site') {
-            //部署站点
-            // 接口/后台代码仓库地址
-            $apiRepository = $site->api_repository;
-            // 前台代码仓库地址
-            $frontendRepository = $site->frontend_repository;
-            $commands = self::getAddSiteCommands($apiRepository, $apiDirName, $frontendRepository, $frontedDirName, $database);
-        } elseif ($type == 'pull_code') {
-            //拉取代码、升级站点
-            $commands = self::getPullCodeCommands($apiDirName, $frontedDirName);
-        } elseif ($type == 'current_hash') {
-            //当前版本hash及hash短格式
-            $commands = self::getCurrentHashCommands($apiDirName, $frontedDirName);
-        } elseif ($type == 'commit_history') {
-            //历史提交记录、返回哈希值及注释
-            $pageNum = $option['pageNum'] ?? 0;
-            $pageSize = $option['pageSize'] ?? 0;
-            $commands = self::getCommitHistoryCommands($apiDirName, $frontedDirName, $pageNum, $pageSize);
-        } elseif ($type == 'commit_history_count') {
-            //历史提交记录总数
-            $commands = self::getCommitHistoryCountCommands($apiDirName, $frontedDirName);
-        } elseif ($type == 'available_pull') {
-            $commands = self::getAvailablePullCommands($apiDirName, $frontedDirName);
-        } elseif ($type == 'rollback_code') {
-            $hash = $option['hash'];
-            $commands = self::getRollbackCodeCommands($apiDirName, $frontedDirName, $hash);
+        switch ($type) {
+            case 'add_site':
+                //一整套流程：
+                // 拉取接口项目代码
+                $commands1 = self::getCloneCodeCommands($apiRepository, $apiDirName);
+                // 下载接口项目依赖
+                $commands2 = self::getApiDependencyCommands($apiRepository, $apiDirName);
+                // 配置文件配置数据库
+                $commands3 = self::getWriteDbConfigCommands($apiRepository, $apiDirName);
+                array_merge($commands1, $commands2, $commands3);
+                break;
+            case 'clone_api_code':
+                // 拉取接口项目代码
+                $commands = self::getCloneCodeCommands($apiRepository, $apiDirName);
+                break;
+
+            case 'api_dependency':
+                // 下载接口项目依赖
+                $commands = self::getApiDependencyCommands($apiRepository, $apiDirName);
+                break;
+
+            case 'write_db_config':
+                // 配置文件配置数据库
+                $commands = self::getWriteDbConfigCommands($apiRepository, $apiDirName);
+                break;
+
+            case 'clone_frontend_code':
+                // 拉取前端代码
+                $commands = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
+                break;
+
+            case 'frontend_dependency':
+                // 下载前端依赖
+                $commands = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
+                break;
+
+            case 'pull_code':
+                //拉取代码/升级站点
+                $commands = self::getPullCodeCommands($apiDirName, $frontedDirName);
+                break;
+
+            case 'current_hash':
+                //当前版本hash及hash短格式
+                $commands = self::getCurrentHashCommands($apiDirName, $frontedDirName);
+                break;
+
+            case 'commit_history':
+                //历史提交记录、返回哈希值及注释
+                $pageNum = $option['pageNum'] ?? 0;
+                $pageSize = $option['pageSize'] ?? 0;
+                $commands = self::getCommitHistoryCommands($apiDirName, $frontedDirName, $pageNum, $pageSize);
+                break;
+
+            case 'commit_history_count':
+                //历史提交记录总数
+                $commands = self::getCommitHistoryCountCommands($apiDirName, $frontedDirName);
+                break;
+            case 'available_pull':
+                // 是否可以拉取
+                $commands = self::getAvailablePullCommands($apiDirName, $frontedDirName);
+                break;
+
+            case 'rollback_code':
+                // 代码回滚
+                $hash = $option['hash'];
+                $commands = self::getRollbackCodeCommands($apiDirName, $frontedDirName, $hash);
+                break;
+
+            default:
+                return [
+                    'result' => false,
+                    'output' => '',
+                ];
+                break;
         }
-        // return $commands;
+
         //执行命令
         //输出的$output['result']为true时只代表命令正常执行，不代表达到预期结果
         $output = self::executeCommands($ssh, $commands);
         // return $commands;
         // return $output;
-        //是否写入日志
-        $writeUpdateLog = false;
+
+
+        $writeUpdateLog = false; //是否写入日志
         $message = $output['output'] ?? '';
 
-        //结果需要处理一下
-        if ($type == 'add_site') {
+        //执行的结果需要处理一下
+        if (in_array($type, ['add_site', 'clone_api_code', 'api_dependency', 'write_db_config', 'clone_frontend_code', 'frontend_dependency'])) {
             $writeUpdateLog = true;
-            $message = 'add_site';
+            $message = $type;
         } elseif ($type == 'pull_code') {
             $writeUpdateLog = true;
 
@@ -352,26 +408,35 @@ class Site extends Base
     private static function executeCommands($ssh, $commands)
     {
 
+        $output = '';
         if (is_array($commands)) {
 
             foreach ($commands as $command) {
-                # code...
-                if (!empty($command)) {
+                $process = new Process($command);
+                $process->run();
 
-                    $output = $ssh->exec($command);
-                    if ($ssh->getExitStatus() !== 0) {
-                        // 执行失败
-                        return [
-                            'result' => false,
-                            'output' => $output,
-                            'command' => $command,
-                        ];
-                    }
+                if (!$process->isSuccessful()) {
+                    // throw new \RuntimeException($process->getErrorOutput());
+                    // 执行失败
+                    return [
+                        'result' => false,
+                        'output' => $process->getErrorOutput(),
+                        'command' => $command,
+                    ];
                 }
+
+                $output .= $process->getOutput();
+                $output .= "\n";
             }
         } elseif (!empty($commands)) {
 
-            $output = $ssh->exec($commands);
+            $process = new Process(['commands']);
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                $output = $process->getErrorOutput();
+            }
+            $output = $process->getOutput();
         }
         return [
             'result' => true,
@@ -381,7 +446,7 @@ class Site extends Base
 
 
     /**
-     * 获取新建站点/部署项目命令
+     * 获取新建站点/部署项目命令（拆分成多步了，用不到此函数）
      * @param string apiRepository 接口仓库地址
      * @param string apiDirName 接口仓库路径
      * @param string frontend_repository 网站仓库路径
@@ -447,18 +512,86 @@ class Site extends Base
         return $commands;
     }
 
+    /**
+     * 克隆代码
+     * @param string dirName 项目所在路径/文件夹
+     * @return array|string commands 命令
+     */
+    private static function getCloneCodeCommands($repository, $dirName)
+    {
+
+        $commands = [
+            /** 
+             * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
+             * 原：git clone 仓库地址 [新建的目录名]
+             * 例: git clone https://gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
+             * 携带密码：git clone https://用户名:密码@仓库地址 [新建的目录名]
+             * 例: git clone https://6953%40qq.com:1234567acde@gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
+             * 用户名密码有@这些特殊符号需转义
+             */
+            'git clone ' . $repository . ' ' . $dirName,
+        ];
+        return $commands;
+    }
+
+    /**
+     * 接口项目下载依赖
+     * @param string dirName 项目所在路径/文件夹
+     * @return array|string commands 命令
+     */
+    private static function getApiDependencyCommands($dirName)
+    {
+
+        $commands = [
+            /** 
+             * 下载依赖
+             */
+            'cd ' . $dirName . ' &&  composer install ',
+        ];
+        return $commands;
+    }
+
+    /**
+     * 接口端项目配置数据库链接
+     * @param string dirName 项目所在路径/文件夹
+     * @return array|string commands 命令
+     */
+    private static function getWriteDbConfigCommands($dirName, $database)
+    {
+
+        //数据库信息，用于替换项目配置的数据库信息
+        $dbHost = $database->ip;
+        $dbName = $database->name;
+        $dbUsername = $database->username;
+        $dbPassword = $database->password;
+        $tablePrefix = empty($database->prefix) ? $database->prefix : '';
+        /**
+         * 配置文件连接数据库
+         * 复制env模板文件,替换其中的占位符，如果已存在env文件，须事先进行备份以免误覆盖
+         */
+        $commands = [
+            // 检查是否存在 .env 文件,备份当前的 .env 文件为时间戳命名的文件
+            'cd ' . $dirName . ' && if [ -f .env ]; then 
+                mv .env "env.backup' . date('YmdHis', time()) . '" 
+            fi',
+            // 替换操作
+            'cd ' . $dirName . ' && cp .env.template .env',
+            'cd ' . $dirName . ' && sed -i "s/{{DB_HOST}}/' . $dbHost . '/g" .env',
+            'cd ' . $dirName . ' && sed -i "s/{{DB_DATABASE}}/' . $dbName . '/g" .env',
+            'cd ' . $dirName . ' && sed -i "s/{{DB_USERNAME}}/' . $dbUsername . '/g" .env',
+            'cd ' . $dirName . ' && sed -i "s/{{DB_PASSWORD}}/' . $dbPassword . '/g" .env',
+        ];
+        return $commands;
+    }
+
 
     /**
      * 拉取代码
-     * @param string apiDirName 接口仓库路径
-     * @param string frontedDirName 网站仓库路径
+     * @param string dirName 项目所在路径/文件夹
      * @return array|string commands 命令
      */
-    private static function getPullCodeCommands($apiDirName, $frontedDirName)
+    private static function getPullCodeCommands($dirName)
     {
-        //没有更新依赖
-        //前台暂无
-
         $commands = [
             /** 
              * 拉取代码命令
@@ -466,7 +599,7 @@ class Site extends Base
              * fatal: detected dubious ownership in repository at 'xxx' To add an exception for this directory, call:
              * 需执行命令 git config --global --add safe.directory 项目路径
              */
-            'cd ' . $apiDirName . ' &&  git pull',
+            'cd ' . $dirName . ' &&  git pull',
         ];
         return $commands;
     }
@@ -474,11 +607,10 @@ class Site extends Base
 
     /**
      * 提交记录
-     * @param string apiDirName 接口仓库路径
-     * @param string frontedDirName 网站仓库路径
+     * @param string dirName 项目所在路径/文件夹
      * @return array|string commands 命令
      */
-    private static function getCommitHistoryCommands($apiDirName, $frontedDirName, $pageNum, $pageSize)
+    private static function getCommitHistoryCommands($dirName, $pageNum, $pageSize)
     {
         //前台暂无
         $param = [];
@@ -498,7 +630,7 @@ class Site extends Base
              * -n 5 指定返回5条
              * --pretty=format:"%H|%an|%ae|%ad|%s" 展示格式
              */
-            'cd ' . $apiDirName  . ' &&  git log ' . $paramStr,
+            'cd ' . $dirName  . ' &&  git log ' . $paramStr,
 
         ];
         return $commands;
@@ -506,14 +638,11 @@ class Site extends Base
 
     /**
      * 提交记录总数
-     * @param string apiDirName 接口仓库路径
-     * @param string frontedDirName 网站仓库路径
+     * @param string dirName 项目所在路径/文件夹
      * @return array|string commands 命令
      */
-    private static function getCommitHistoryCountCommands($apiDirName, $frontedDirName)
+    private static function getCommitHistoryCountCommands($dirName)
     {
-        //前台暂无
-
         $commands = [
             /** 
              * 获取提交记录总数量命令
@@ -521,7 +650,7 @@ class Site extends Base
              * count 总数，需git 2.7以上版本
              * HEAD 当前分支
              */
-            'cd ' . $apiDirName  . ' &&  git rev-list --count HEAD',
+            'cd ' . $dirName  . ' &&  git rev-list --count HEAD',
 
         ];
         return $commands;
@@ -529,16 +658,13 @@ class Site extends Base
 
     /**
      * 获取当前提交版本的hash值
-     * @param string apiDirName 接口仓库路径
-     * @param string frontedDirName 网站仓库路径
+     * @param string dirName 项目所在路径/文件夹
      * @return array|string commands 命令
      */
-    private static function getCurrentHashCommands($apiDirName, $frontedDirName)
+    private static function getCurrentHashCommands($dirName)
     {
-        //前台暂无
-
         $commands = [
-            'cd ' . $apiDirName . ' &&  git rev-parse HEAD && git rev-parse --short HEAD',
+            'cd ' . $dirName . ' &&  git rev-parse HEAD && git rev-parse --short HEAD',
 
         ];
         return $commands;
@@ -546,14 +672,11 @@ class Site extends Base
 
     /**
      * 是否可更新
-     * @param string apiDirName 接口仓库路径
-     * @param string frontedDirName 网站仓库路径
+     * @param string dirName 项目所在路径/文件夹
      * @return array|string commands 命令
      */
-    private static function getAvailablePullCommands($apiDirName, $frontedDirName)
+    private static function getAvailablePullCommands($dirName)
     {
-        //前台暂无
-
         $commands = [
             /** 
              * 是否可更新
@@ -576,7 +699,7 @@ class Site extends Base
              * 则判断 Your branch is up to date 即可
              * 
              */
-            'cd ' . $apiDirName . ' &&  git fetch && git status',
+            'cd ' . $dirName . ' &&  git fetch && git status',
 
         ];
         return $commands;
@@ -585,15 +708,12 @@ class Site extends Base
 
     /**
      * 回退站点版本/git回退
-     * @param string apiDirName 接口仓库路径
-     * @param string frontedDirName 网站仓库路径
+     * @param string dirName 项目所在路径/文件夹
      * @param string hash 回退版本的完整hash值
      * @return array|string commands 命令
      */
-    private static function getRollbackCodeCommands($apiDirName, $frontedDirName, $hash)
+    private static function getRollbackCodeCommands($dirName, $hash)
     {
-        //前台暂无
-
         $commands = [
             /**
              * git回退
@@ -603,9 +723,122 @@ class Site extends Base
              * git revert [hash值] 也是回退到之前的代码，但本质是一个新的提交
              * 
              */
-            'cd ' . $apiDirName . ' &&  git reset --hard ' . $hash,
+            'cd ' . $dirName . ' &&  git reset --hard ' . $hash,
 
         ];
         return $commands;
+    }
+
+
+    /**
+     * 初始化站点步骤列表
+     */
+    public static function getInitWebsiteStep($showType = false)
+    {
+        $step = [
+            ['name' => 'clone_api_code', 'type' => 'commands'],
+            ['name' => 'api_dependency', 'type' => 'commands'],
+            ['name' => 'write_db_config', 'type' => 'commands'],
+            ['name' => 'add_bt_site', 'type' => 'btPanelApi'],
+            ['name' => 'set_ssl', 'type' => 'btPanelApi'],
+            ['name' => 'clone_frontend_code', 'type' => 'commands'],
+            ['name' => 'frontend_dependency', 'type' => 'commands'],
+            ['name' => 'deploy', 'type' => 'commands']
+        ];
+        $data = [];
+
+        if ($showType) {
+            foreach ($step as $index => $item) {
+                $type = $item['type'];
+                if (empty($type)) {
+                    continue;
+                }
+                if (!isset($data[$type])) {
+                    $data[$type] = [];
+                }
+                $data[$type][] = $item['name'];
+            }
+        } else {
+            foreach ($step as $index => $item) {
+                $data[] = array_merge(['id' => $index + 1], ['name' => $item['name']]);
+            }
+        }
+        return $data;
+    }
+
+
+
+    /**
+     * 调用宝塔api
+     * @param object $site 站点信息
+     * @param string $type 操作类型
+     * @param array $option 额外参数
+     */
+    protected static function invokeBtApi($site, $type, $option = [])
+    {
+        $result = [];
+        switch ($type) {
+            case 'add_bt_site':
+                $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
+                // 调用宝塔api新建站点
+                $result = (new BtPanel())->addSite($webname, $site->api_path);
+                break;
+
+            case 'set_ssl':
+                if (empty($option['private_key']) || empty($option['csr'])) {
+                }
+                // // 申请证书（免费Let's Encrypt 证书）
+                // (new BtPanel())->applyCert($webname,$site->api_path);
+                // 添加证书
+                $result = (new BtPanel())->setSSL($site->domain, $option['private_key'], $option['csr']);
+                // return $result;
+                break;
+
+            default:
+
+                return [
+                    'result' => false,
+                    'output' => '未知类型',
+                ];
+                break;
+        }
+
+
+        $writeUpdateLog = false; //是否写入日志
+
+        //执行的结果需要处理一下
+        if (in_array($type, ['add_bt_site'])) {
+            $writeUpdateLog = true;
+            $message = $result['msg'];
+            // $message = $type;
+            $output['result'] = $result['siteStatus'] ?? false;
+            $output['output'] = '';
+        } elseif (in_array($type, ['set_ssl'])) {
+            $writeUpdateLog = true;
+            $message = $result['msg'];
+            $output['result'] = $result['status'] ?? false;
+            $output['output'] = $result['msg'] ?? '';
+        }
+
+        //拉取、回滚等操作要写到站点更新日志里
+        if ($writeUpdateLog) {
+
+            SiteUpdateLog::insert(
+                [
+                    'site_id' => $site->id,
+                    'site_name' => $site->name,
+                    'message' => $message,
+                    'output' => $output['output'],
+                    'exec_status' => $output['result'] ? 1 : 0,
+                    'command' => 'bt_api',
+                    'created_at' => time(),
+                    'updated_at' => time(),
+                    'created_by' => $option['created_by'] ?? '',
+                    'hash' => '',
+                    'hash_sample' => '',
+                ],
+            );
+        }
+        return $output;
     }
 }
