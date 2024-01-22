@@ -12,22 +12,11 @@ class LinkRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
-            'user_name' => 'required|unique:users',
-            'email' => 'required',
-            'phone' => 'required',
-            'country_id' => 'required',
-            'status' => 'required',
-            'company' => 'required',
+            'logo' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
-            'user_name.required' => '登陆名不能为空',
-            'user_name.unique' => '登陆名不能重复',
-            'email.required' => '邮箱不能为空',
-            'phone.required' => '手机号不能为空',
-            'country_id.required' => '国家不能为空',
-            'status.required' => '状态不能为空',
-            'company.required' => '公司不能为空',
+            'logo.required' => '登陆名不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -40,23 +29,12 @@ class LinkRequest extends BaseRequest
         $rules = [
             'id' => 'required',
             'name' => 'required',
-            'user_name' => 'required',
-            'email' => 'required',
-            'phone' => 'required',
-            'country_id' => 'required',
-            'status' => 'required',
-            'company' => 'required',
+            'logo' => 'required',
         ];
         $message = [
             'id' => 'required',
             'name.required' => '名称不能为空',
-            'user_name.required' => '登陆名不能为空',
-            'user_name.unique' => '登陆名不能重复',
-            'email.required' => '邮箱不能为空',
-            'phone.required' => '手机号不能为空',
-            'country_id.required' => '国家不能为空',
-            'status.required' => '状态不能为空',
-            'company.required' => '公司不能为空',
+            'logo.required' => '登陆名不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
