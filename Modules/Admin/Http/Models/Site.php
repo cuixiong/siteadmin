@@ -805,6 +805,7 @@ class Site extends Base
             ],
             ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
             ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
+            ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(网站)新建站点', 'field' => []],
             ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
         ];
         $data = [];
@@ -858,7 +859,7 @@ class Site extends Base
                 $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点
                 $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->api_path);
-                return $result;
+                // return $result;
                 break;
 
             case 'set_ssl':
@@ -868,6 +869,16 @@ class Site extends Base
                 // (new BtPanel($bt_link,$bt_apisecret))->applyCert($webname,$site->api_path);
                 // 添加证书
                 $result = (new BtPanel($bt_link, $bt_apisecret))->setSSL($site->domain, $option['private_key'], $option['csr']);
+                // return $result;
+                break;
+            
+            case 'add_bt_frontend_site':
+                $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
+                // 调用宝塔api新建站点
+                $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->frontend_path);
+                if($result['siteStatus']){
+                    $result = (new BtPanel($bt_link, $bt_apisecret))->saveNginxConfig($site->domain,$fileContent);
+                }
                 // return $result;
                 break;
 

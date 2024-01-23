@@ -267,7 +267,7 @@ class BtPanel
     }
 
     // 申请Let's Encrypt 证书
-    public function applyCert($domain,$btSiteId)
+    public function applyCert($domain, $btSiteId)
     {
 
         //拼接URL地址
@@ -339,7 +339,7 @@ class BtPanel
      * @param string $csr 证书(PEM格式)
      * 
      */
-    public function setSSL($domain,$key, $csr)
+    public function setSSL($domain, $key, $csr)
     {
 
         //拼接URL地址
@@ -412,6 +412,36 @@ class BtPanel
         $p_data = $this->GetKeyData();        //取签名
 
         $p_data['siteName'] = 'qycnadmin.qyrdata.com';
+
+        //请求面板接口
+        $result = $this->HttpPostCookie($url, $p_data);
+
+        //解析JSON数据
+        $data = json_decode($result, true);
+        return $data;
+    }
+
+
+    /**
+     * 保存nginx配置
+     * @param string $domain 域名不带协议(没有http、https)
+     * @param string $key 密钥(KEY)
+     * @param string $csr 证书(PEM格式)
+     * 
+     */
+    public function saveNginxConfig($domain, $data)
+    {
+
+        //拼接URL地址
+        $url = $this->BT_PANEL . '/files?action=SaveFileBody';
+
+        //准备POST数据
+        $p_data = $this->GetKeyData();        //取签名
+
+        $p_data['encoding'] = 'utf-8';
+        $p_data['path'] = '/www/server/panel/vhost/nginx/' . $domain . '.conf';
+        //文件内容
+        $p_data['data'] = $data;
 
         //请求面板接口
         $result = $this->HttpPostCookie($url, $p_data);
