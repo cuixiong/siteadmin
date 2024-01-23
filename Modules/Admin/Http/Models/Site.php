@@ -827,24 +827,26 @@ class Site extends Base
      * @param string $type 操作类型
      * @param array $option 额外参数
      */
-    protected static function invokeBtApi($site, $server ,$type, $option = [])
+    protected static function invokeBtApi($site, $server, $type, $option = [])
     {
         $bt_link = $server->bt_link;
         $bt_apisecret = $server->bt_apisecret;
-        $pattern = '/(https?:\/\/[\w\.-]+(:\d+)?)/';
+        $pattern = '/(https?:\/\/[\w\.-]+(:\d+)?\/)/';
 
         preg_match($pattern, $bt_link, $matches);
 
-        if (empty($matches)) {
+        if (!empty($matches)) {
+            $bt_link = $matches[1];
+        } else {
             return 'URL地址错误';
         }
-
+        
         $result = [];
         switch ($type) {
             case 'add_bt_site':
                 $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点
-                $result = (new BtPanel($bt_link,$bt_apisecret))->addSite($webname, $site->api_path);
+                $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->api_path);
                 break;
 
             case 'set_ssl':
@@ -853,7 +855,7 @@ class Site extends Base
                 // // 申请证书（免费Let's Encrypt 证书）
                 // (new BtPanel($bt_link,$bt_apisecret))->applyCert($webname,$site->api_path);
                 // 添加证书
-                $result = (new BtPanel($bt_link,$bt_apisecret))->setSSL($site->domain, $option['private_key'], $option['csr']);
+                $result = (new BtPanel($bt_link, $bt_apisecret))->setSSL($site->domain, $option['private_key'], $option['csr']);
                 // return $result;
                 break;
 
@@ -904,5 +906,4 @@ class Site extends Base
         }
         return $output;
     }
-
 }
