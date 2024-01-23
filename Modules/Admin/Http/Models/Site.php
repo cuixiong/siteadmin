@@ -599,7 +599,7 @@ class Site extends Base
             /** 
              * 下载依赖
              */
-            'cd ' . $dirName . ' && npm -i ',
+            'cd ' . $dirName . ' && npm i ',
         ];
         return $commands;
     }
@@ -804,9 +804,9 @@ class Site extends Base
                 ]
             ],
             ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
-            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
-            ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(网站)新建站点', 'field' => []],
-            ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
+            // ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
+            // ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(网站)新建站点', 'field' => []],
+            // ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
         ];
         $data = [];
 
@@ -873,12 +873,12 @@ class Site extends Base
                 break;
             
             case 'add_bt_frontend_site':
-                $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
+                // $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点
-                $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->frontend_path);
-                if($result['siteStatus']){
-                    $result = (new BtPanel($bt_link, $bt_apisecret))->saveNginxConfig($site->domain,$fileContent);
-                }
+                // $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->frontend_path);
+                // if($result['siteStatus']){
+                //     $result = (new BtPanel($bt_link, $bt_apisecret))->saveNginxConfig($site->domain,$fileContent);
+                // }
                 // return $result;
                 break;
 
