@@ -13,10 +13,12 @@ class QualificationRequest extends BaseRequest
         $rules = [
             'name' => 'required',
             'image' => 'required',
+            'thumbnail' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
             'image.required' => '图片不能为空',
+            'thumbnail.required' => '缩略图不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -30,11 +32,13 @@ class QualificationRequest extends BaseRequest
             'id' => 'required',
             'name' => 'required',
             'image' => 'required',
+            'thumbnail' => 'required',
         ];
         $message = [
             'id' => 'required',
             'name.required' => '名称不能为空',
             'image.required' => '图片不能为空',
+            'thumbnail.required' => '缩略图不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }

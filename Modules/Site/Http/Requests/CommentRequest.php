@@ -13,11 +13,13 @@ class CommentRequest extends BaseRequest
         $rules = [
             'title' => 'required',
             'image' => 'required',
+            'comment_at' => 'required',
             'status' => 'required',
         ];
         $message = [
             'title.required' => '标题不能为空',
             'image.required' => '图片不能为空',
+            'comment_at.required' => '评论时间不能为空',
             'status.required' => '状态不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
@@ -32,12 +34,14 @@ class CommentRequest extends BaseRequest
             'id' => 'required',
             'title' => 'required',
             'image' => 'required',
+            'comment_at' => 'required',
             'status' => 'required',
         ];
         $message = [
             'id' => 'required',
             'title.required' => '标题不能为空',
             'image.required' => '图片不能为空',
+            'comment_at.required' => '评论时间不能为空',
             'status.required' => '状态不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);

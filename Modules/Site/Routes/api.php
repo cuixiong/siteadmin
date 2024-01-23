@@ -407,11 +407,11 @@ Route::middleware([
     });
     // Comment控制器
     Route::prefix('comment')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\CommentController::class, 'store'])->name('资质认证:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\CommentController::class, 'update'])->name('资质认证:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\CommentController::class, 'destroy'])->name('资质认证:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\CommentController::class, 'list'])->name('资质认证:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\CommentController::class, 'changeStatus'])->name('资质认证:状态修改');
+        Route::post('store', [Modules\Site\Http\Controllers\CommentController::class, 'store'])->name('客户评价:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\CommentController::class, 'update'])->name('客户评价:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CommentController::class, 'destroy'])->name('客户评价:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\CommentController::class, 'list'])->name('客户评价:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CommentController::class, 'changeStatus'])->name('客户评价:状态修改');
     });
     // History控制器
     Route::prefix('history')->group(function () {
