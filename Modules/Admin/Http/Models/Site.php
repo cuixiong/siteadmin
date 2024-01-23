@@ -592,7 +592,7 @@ class Site extends Base
         ];
         return $commands;
     }
-    
+
 
     /**
      * 接口端项目配置数据库链接
@@ -779,14 +779,22 @@ class Site extends Base
     public static function getInitWebsiteStep($showType = false)
     {
         $step = [
-            ['name' => 'clone_api_code', 'type' => 'commands'],
-            ['name' => 'api_dependency', 'type' => 'commands'],
-            ['name' => 'write_db_config', 'type' => 'commands'],
-            ['name' => 'add_bt_site', 'type' => 'btPanelApi'],
-            ['name' => 'set_ssl', 'type' => 'btPanelApi'],
-            ['name' => 'clone_frontend_code', 'type' => 'commands'],
-            ['name' => 'frontend_dependency', 'type' => 'commands'],
-            ['name' => 'deploy', 'type' => 'commands']
+            ['name' => 'clone_api_code', 'type' => 'commands', 'title' => '(接口)克隆代码', 'field' => []],
+            ['name' => 'api_dependency', 'type' => 'commands', 'title' => '(接口)下载依赖', 'field' => []],
+            ['name' => 'write_db_config', 'type' => 'commands', 'title' => '(接口)配置数据库', 'field' => []],
+            ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '(接口)新建站点', 'field' => []],
+            [
+                'name' => 'set_ssl',
+                'type' => 'btPanelApi',
+                'title' => '(接口)设置证书',
+                'field' => [
+                    ['name' => 'private_key', 'type' => 'textarea'],
+                    ['name' => 'csr', 'type' => 'textarea']
+                ]
+            ],
+            ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
+            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载以来', 'field' => []],
+            ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
         ];
         $data = [];
 
@@ -803,7 +811,8 @@ class Site extends Base
             }
         } else {
             foreach ($step as $index => $item) {
-                $data[] = array_merge(['id' => $index + 1], ['name' => $item['name']]);
+                unset($item['type']);
+                $data[] = array_merge(['id' => $index + 1], $item);
             }
         }
         return $data;

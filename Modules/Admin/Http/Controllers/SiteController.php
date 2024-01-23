@@ -132,6 +132,9 @@ class SiteController extends CrudController
 
         $step = $request->input('step');
 
+        $param = $request->input('param');
+        $param = $param ? json_decode($param, true) : [];
+        
         // 创建者ID
         $created_by = $request->user->id;
         //获取站点配置
@@ -171,11 +174,11 @@ class SiteController extends CrudController
                 $output = Site::executeRemoteCommand($site, $server, $database, $step, ['created_by' => $created_by]);
             } elseif ($initWebsiteStep['btPanelApi'] && in_array($step, $initWebsiteStep['btPanelApi'])) {
                 $option['created_by'] = $created_by;
-                if ($request->input('private_key')) {
-                    $option['private_key'] = $request->input('private_key');
+                if ($param['private_key']) {
+                    $option['private_key'] = $param['private_key'];
                 }
-                if ($request->input('csr')) {
-                    $option['csr'] = $request->input('csr');
+                if ($param['csr']) {
+                    $option['csr'] = $param['csr'];
                 }
                 $output = Site::invokeBtApi($site, $step, $option);
                 // ReturnJson(FALSE, trans('lang.request_success'), $output);
