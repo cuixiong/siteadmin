@@ -7,8 +7,10 @@ class BtPanel
     // 接口文档 https://www.bt.cn/data/api-doc.pdf
     // 论坛 https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=20376&highlight=%E6%8E%A5%E5%8F%A3
 
-    private $BT_KEY = "c5bcMa7D9De3NtDi440eEidltvgpIWdI";  //接口密钥
-    private $BT_PANEL = "http://8.219.5.215:18754/";       //面板地址
+    // private $BT_KEY = "c5bcMa7D9De3NtDi440eEidltvgpIWdI";  //接口密钥
+    // private $BT_PANEL = "http://8.219.5.215:18754/";       //面板地址
+    private $BT_KEY = "";  //接口密钥
+    private $BT_PANEL = "";       //面板地址
 
     //如果希望多台面板，可以在实例化对象时，将面板地址与密钥传入
     public function __construct($bt_panel = null, $bt_key = null)
@@ -53,7 +55,7 @@ class BtPanel
 
     /**
      * 发起POST请求
-     * @param String $url 目标网填，带http://
+     * @param String $url 目标网址，带http://
      * @param Array|String $data 欲提交的数据
      * @return string
      */

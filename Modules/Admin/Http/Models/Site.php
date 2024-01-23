@@ -793,7 +793,7 @@ class Site extends Base
                 ]
             ],
             ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
-            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载以来', 'field' => []],
+            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
             ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
         ];
         $data = [];
@@ -823,26 +823,37 @@ class Site extends Base
     /**
      * 调用宝塔api
      * @param object $site 站点信息
+     * @param object $server 服务器信息
      * @param string $type 操作类型
      * @param array $option 额外参数
      */
-    protected static function invokeBtApi($site, $type, $option = [])
+    protected static function invokeBtApi($site, $server ,$type, $option = [])
     {
+        $bt_link = $server->bt_link;
+        $bt_apisecret = $server->bt_apisecret;
+        $pattern = '/(https?:\/\/[\w\.-]+(:\d+)?)/';
+
+        preg_match($pattern, $bt_link, $matches);
+
+        if (empty($matches)) {
+            return 'URL地址错误';
+        }
+
         $result = [];
         switch ($type) {
             case 'add_bt_site':
                 $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点
-                $result = (new BtPanel())->addSite($webname, $site->api_path);
+                $result = (new BtPanel($bt_link,$bt_apisecret))->addSite($webname, $site->api_path);
                 break;
 
             case 'set_ssl':
                 if (empty($option['private_key']) || empty($option['csr'])) {
                 }
                 // // 申请证书（免费Let's Encrypt 证书）
-                // (new BtPanel())->applyCert($webname,$site->api_path);
+                // (new BtPanel($bt_link,$bt_apisecret))->applyCert($webname,$site->api_path);
                 // 添加证书
-                $result = (new BtPanel())->setSSL($site->domain, $option['private_key'], $option['csr']);
+                $result = (new BtPanel($bt_link,$bt_apisecret))->setSSL($site->domain, $option['private_key'], $option['csr']);
                 // return $result;
                 break;
 
@@ -893,4 +904,5 @@ class Site extends Base
         }
         return $output;
     }
+
 }
