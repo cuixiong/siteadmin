@@ -408,35 +408,60 @@ class Site extends Base
     private static function executeCommands($ssh, $commands)
     {
 
-        $output = '';
+        // $output = '';
+        // if (is_array($commands)) {
+
+        //     foreach ($commands as $command) {
+        //         $process = new Process([$command]);
+        //         $process->run();
+
+        //         if (!$process->isSuccessful()) {
+        //             // throw new \RuntimeException($process->getErrorOutput());
+        //             // 执行失败
+        //             return [
+        //                 'result' => false,
+        //                 'output' => $process->getErrorOutput(),
+        //                 'command' => $command,
+        //             ];
+        //         }
+
+        //         $output .= $process->getOutput();
+        //         $output .= "\n";
+        //     }
+        // } elseif (!empty($commands)) {
+
+        //     $process = new Process(['commands']);
+        //     $process->run();
+
+        //     if (!$process->isSuccessful()) {
+        //         $output = $process->getErrorOutput();
+        //     }
+        //     $output = $process->getOutput();
+        // }
+        // return [
+        //     'result' => true,
+        //     'output' => $output,
+        // ];
         if (is_array($commands)) {
 
             foreach ($commands as $command) {
-                $process = new Process([$command]);
-                $process->run();
+                # code...
+                if (!empty($command)) {
 
-                if (!$process->isSuccessful()) {
-                    // throw new \RuntimeException($process->getErrorOutput());
-                    // 执行失败
-                    return [
-                        'result' => false,
-                        'output' => $process->getErrorOutput(),
-                        'command' => $command,
-                    ];
+                    $output = $ssh->exec($command);
+                    if ($ssh->getExitStatus() !== 0) {
+                        // 执行失败
+                        return [
+                            'result' => false,
+                            'output' => $output,
+                            'command' => $command,
+                        ];
+                    }
                 }
-
-                $output .= $process->getOutput();
-                $output .= "\n";
             }
         } elseif (!empty($commands)) {
 
-            $process = new Process(['commands']);
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $output = $process->getErrorOutput();
-            }
-            $output = $process->getOutput();
+            $output = $ssh->exec($commands);
         }
         return [
             'result' => true,
