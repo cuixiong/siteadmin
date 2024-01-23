@@ -20,4 +20,15 @@ class TeamMember extends Base
         'industry',
         'is_analyst'
         ];
+    // Image修改器
+    public function setImageAttribute($value){
+        $value = $value && is_array($value) ? implode(",",$value) : "";
+        $this->attributes['image'] = $value;
+        return $value;
+    }
+    // Image获取器
+    public function getImageAttribute($value){
+        $value = $value ? explode(",",$value) : [];
+        return $value;
+    }
 }
