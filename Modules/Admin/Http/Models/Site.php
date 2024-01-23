@@ -223,12 +223,19 @@ class Site extends Base
             case 'add_site':
                 //一整套流程：
                 // 拉取接口项目代码
-                $commands1 = self::getCloneCodeCommands($apiRepository, $apiDirName);
+                $commandsGroup[] = self::getCloneCodeCommands($apiRepository, $apiDirName);
                 // 下载接口项目依赖
-                $commands2 = self::getApiDependencyCommands($apiDirName);
+                $commandsGroup[] = self::getApiDependencyCommands($apiDirName);
                 // 配置文件配置数据库
-                $commands3 = self::getWriteDbConfigCommands($apiDirName, $database);
-                array_merge($commands1, $commands2, $commands3);
+                $commandsGroup[] = self::getWriteDbConfigCommands($apiDirName, $database);
+                // 拉取前端代码
+                $commandsGroup[] = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
+                // 下载前端依赖
+                $commandsGroup[] = self::getFrontendDependencyCommands($frontedDirName);
+
+                foreach ($commandsGroup as  $commandsItem) {
+                    $commands = array_merge($commands, $commandsItem);
+                }
                 break;
             case 'clone_api_code':
                 // 拉取接口项目代码
@@ -303,12 +310,16 @@ class Site extends Base
 
 
         $writeUpdateLog = false; //是否写入日志
-        $message = $output['output'] ?? '';
-
+        $output['message'] = $output['output'] ?? '';
+        $logMessage = '';
         //执行的结果需要处理一下
         if (in_array($type, ['add_site', 'clone_api_code', 'api_dependency', 'write_db_config', 'clone_frontend_code', 'frontend_dependency'])) {
             $writeUpdateLog = true;
-            $message = $type;
+            if (($type == 'clone_api_code' || $type == 'clone_frontend_code') && strpos($output['output'], 'already exists and is not an empty directory') !== false) {
+
+                $output['result'] = false;
+                $output['message'] = '目录已存在或指定的目录是非空的文件夹';
+            }
         } elseif ($type == 'pull_code') {
             $writeUpdateLog = true;
 
@@ -317,11 +328,11 @@ class Site extends Base
                 if (strpos($output['output'], 'Already up to date') !== false) {
                     //拉取了但没可用更新
                     $output['result'] = true;
-                    $message = 'Already up to date';
+                    $logMessage = 'Already up to date';
                 } elseif (strpos($output['output'], 'Updating') !== false || strpos($output['output'], 'Fast-forward') !== false) {
                     //拉取了但有可用
                     $output['result'] = true;
-                    $message = 'Updating...Fast-forward..';
+                    $logMessage = 'Updating...Fast-forward..';
                 } else {
                     $output['result'] = false;
                 }
@@ -384,7 +395,7 @@ class Site extends Base
                 [
                     'site_id' => $site->id,
                     'site_name' => $site->name,
-                    'message' => $message,
+                    'message' => empty($logMessage) ? $type : $logMessage,
                     'output' => $output['output'],
                     'exec_status' => $output['result'] ? 1 : 0,
                     'command' => $output['command'] ?? '',
@@ -840,13 +851,14 @@ class Site extends Base
         } else {
             return 'URL地址错误';
         }
-        
+
         $result = [];
         switch ($type) {
             case 'add_bt_site':
                 $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点
                 $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->api_path);
+                return $result;
                 break;
 
             case 'set_ssl':
@@ -864,6 +876,7 @@ class Site extends Base
                 return [
                     'result' => false,
                     'output' => '未知类型',
+                    'message' => '未知类型',
                 ];
                 break;
         }
@@ -872,16 +885,17 @@ class Site extends Base
         $writeUpdateLog = false; //是否写入日志
 
         //执行的结果需要处理一下
+        $output['message'] = $output['output'] ?? '';
         if (in_array($type, ['add_bt_site'])) {
             $writeUpdateLog = true;
-            $message = $result['msg'];
             // $message = $type;
             $output['result'] = $result['siteStatus'] ?? false;
+            $output['message'] = $result['msg'] ?? '';
             $output['output'] = '';
         } elseif (in_array($type, ['set_ssl'])) {
             $writeUpdateLog = true;
-            $message = $result['msg'];
             $output['result'] = $result['status'] ?? false;
+            $output['message'] = $result['msg'] ?? '';
             $output['output'] = $result['msg'] ?? '';
         }
 
@@ -892,7 +906,7 @@ class Site extends Base
                 [
                     'site_id' => $site->id,
                     'site_name' => $site->name,
-                    'message' => $message,
+                    'message' => $type,
                     'output' => $output['output'],
                     'exec_status' => $output['result'] ? 1 : 0,
                     'command' => 'bt_api',
