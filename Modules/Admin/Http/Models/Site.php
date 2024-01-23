@@ -225,9 +225,9 @@ class Site extends Base
                 // 拉取接口项目代码
                 $commands1 = self::getCloneCodeCommands($apiRepository, $apiDirName);
                 // 下载接口项目依赖
-                $commands2 = self::getApiDependencyCommands($apiRepository, $apiDirName);
+                $commands2 = self::getApiDependencyCommands($apiDirName);
                 // 配置文件配置数据库
-                $commands3 = self::getWriteDbConfigCommands($apiRepository, $apiDirName);
+                $commands3 = self::getWriteDbConfigCommands($apiDirName, $database);
                 array_merge($commands1, $commands2, $commands3);
                 break;
             case 'clone_api_code':
@@ -237,12 +237,12 @@ class Site extends Base
 
             case 'api_dependency':
                 // 下载接口项目依赖
-                $commands = self::getApiDependencyCommands($apiRepository, $apiDirName);
+                $commands = self::getApiDependencyCommands($apiDirName);
                 break;
 
             case 'write_db_config':
                 // 配置文件配置数据库
-                $commands = self::getWriteDbConfigCommands($apiRepository, $apiDirName);
+                $commands = self::getWriteDbConfigCommands($apiDirName, $database);
                 break;
 
             case 'clone_frontend_code':
@@ -252,7 +252,7 @@ class Site extends Base
 
             case 'frontend_dependency':
                 // 下载前端依赖
-                $commands = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
+                $commands = self::getFrontendDependencyCommands($frontedDirName);
                 break;
 
             case 'pull_code':
@@ -412,7 +412,7 @@ class Site extends Base
         if (is_array($commands)) {
 
             foreach ($commands as $command) {
-                $process = new Process($command);
+                $process = new Process([$command]);
                 $process->run();
 
                 if (!$process->isSuccessful()) {
@@ -550,6 +550,24 @@ class Site extends Base
         ];
         return $commands;
     }
+
+    /**
+     * 前端项目下载依赖
+     * @param string dirName 项目所在路径/文件夹
+     * @return array|string commands 命令
+     */
+    private static function getFrontendDependencyCommands($dirName)
+    {
+
+        $commands = [
+            /** 
+             * 下载依赖
+             */
+            'cd ' . $dirName . ' && npm -i ',
+        ];
+        return $commands;
+    }
+    
 
     /**
      * 接口端项目配置数据库链接
