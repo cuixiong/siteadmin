@@ -17,16 +17,4 @@ class Comment extends Base
         $value = $value ? explode(",",$value) : [];
         return $value;
     }
-
-    // CommentAt修改器
-    public function setCommentAtAttribute($value){
-        $value = $value ? strtotime($value) : 0;
-        $this->attributes['comment_at'] = $value;
-        return $value;
-    }
-    // CommentAt获取器
-    public function getCommentAtAttribute($value){
-        $value = $value ? date('Y-m-d H:i:s',$value) : '';
-        return $value;
-    }
 }
