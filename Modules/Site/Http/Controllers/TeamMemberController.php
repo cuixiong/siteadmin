@@ -22,4 +22,21 @@ class TeamMemberController extends CrudController
         $options['category'] = ProductsCategory::where('status',1)->select('id as value','name as label')->orderBy('sort','asc')->get()->toArray();
         ReturnJson(TRUE,'', $options);
     }
+
+    // 修改分析师状态
+    public function ChangeAnalyst(Request $request){
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->is_analyst = $request->is_analyst;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }
