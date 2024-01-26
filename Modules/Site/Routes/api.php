@@ -389,7 +389,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\TeamMemberController::class, 'list'])->name('团队成员:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\TeamMemberController::class, 'changeStatus'])->name('团队成员:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\TeamMemberController::class, 'options'])->name('团队成员:字典数据');
-        Route::get('change-analyst', [Modules\Site\Http\Controllers\TeamMemberController::class, 'ChangeAnalyst'])->name('团队成员:分析师状态修改');
+        Route::post('change-analyst', [Modules\Site\Http\Controllers\TeamMemberController::class, 'ChangeAnalyst'])->name('团队成员:分析师状态修改');
     });
     // Office控制器
     Route::prefix('office')->group(function () {
