@@ -388,6 +388,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\TeamMemberController::class, 'destroy'])->name('团队成员:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\TeamMemberController::class, 'list'])->name('团队成员:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\TeamMemberController::class, 'changeStatus'])->name('团队成员:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\TeamMemberController::class, 'options'])->name('团队成员:字典数据');
     });
     // Office控制器
     Route::prefix('office')->group(function () {
