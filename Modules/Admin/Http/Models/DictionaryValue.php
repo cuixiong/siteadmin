@@ -1,12 +1,39 @@
 <?php
 
 namespace Modules\Admin\Http\Models;
+
+use Illuminate\Support\Facades\Redis;
 use Modules\Admin\Http\Models\Base;
 class DictionaryValue extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = ['name','value','parent_id','code','status','sort','remark','english_name','updated_by','created_by'];
     public $ListSelect = ['*'];
+
+     /**
+     * Register the model events for updating.
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // 在创建成功后触发
+        static::created(function ($model) {
+            self::RedisSet($model);
+        });
+
+        // 在更新成功后触发
+        static::updated(function ($model) {
+            self::RedisUpdate($model);
+        });
+
+        // 在删除成功后触发
+        static::deleted(function ($mode) {
+            self::RedisDelete($mode->code,$mode->value);
+        });
+    }
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
@@ -37,5 +64,36 @@ class DictionaryValue extends Base
         $filed = $request->HeaderLanguage == 'en'? ['english_name as label','value'] : ['name as label','value'];
         $option = self::where('code',$code)->where('status',1)->select($filed)->get();
         return $option;
+    }
+
+    // redis 创建hash
+    private static function RedisSet($model)
+    {
+        $model = $model->toArray();
+        $dictionary = json_encode($model);
+        Redis::hset(
+            'dictionary_'.$model['code'], 
+            $model['value'], $dictionary,
+        );
+    }
+
+    // redis 删除hash
+    private static function RedisDelete($code,$value)
+    {
+        Redis::hdel(
+            'dictionary_'. $code, 
+            $value,
+        );
+    }
+
+    // redis 更新hash
+    private static function RedisUpdate($model)
+    {
+        $model = $model->toArray();
+        $dictionary = json_encode($model);
+        Redis::hset(
+            'dictionary_'.$model['code'], 
+            $model['value'], $dictionary,
+        );
     }
 }
