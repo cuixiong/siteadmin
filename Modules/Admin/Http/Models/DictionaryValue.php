@@ -26,12 +26,12 @@ class DictionaryValue extends Base
 
         // 在更新成功后触发
         static::updating(function ($model) {
-            self::RedisUpdate($model);
+            self::RedisSet($model);
         });
 
         // 在删除成功后触发
         static::deleted(function ($mode) {
-            self::RedisDelete($mode->code,$mode->value);
+            self::RedisDelete($mode->code,$mode->id);
         });
     }
     /**
@@ -66,14 +66,14 @@ class DictionaryValue extends Base
         return $option;
     }
 
-    // redis 创建hash
+    // redis 创建/更新hash
     private static function RedisSet($model)
     {
         $model = $model->toArray();
         $dictionary = json_encode($model);
         Redis::hset(
             'dictionary_'.$model['code'], 
-            $model['value'], $dictionary,
+            $model['id'], $dictionary,
         );
     }
 
@@ -83,17 +83,6 @@ class DictionaryValue extends Base
         Redis::hdel(
             'dictionary_'. $code, 
             $value,
-        );
-    }
-
-    // redis 更新hash
-    private static function RedisUpdate($model)
-    {
-        $model = $model->toArray();
-        $dictionary = json_encode($model);
-        Redis::hset(
-            'dictionary_'.$model['code'], 
-            $model['value'], $dictionary,
         );
     }
 }
