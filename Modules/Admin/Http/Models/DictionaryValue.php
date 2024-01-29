@@ -71,7 +71,16 @@ class DictionaryValue extends Base
     {
         $model = $model->toArray();
         $dictionary = json_encode($model);
-        Redis::hset(
+        $redis = new Redis();
+        $res = $redis::hget('dictionary_'.$model['code'],$model['id']);
+        // 先删除缓存再更新缓存
+        if($res){
+            $redis::hdel(
+                'dictionary_'.$model['code'], 
+                $model['id'], $dictionary,
+            );
+        }
+        $redis::hset(
             'dictionary_'.$model['code'], 
             $model['id'], $dictionary,
         );
