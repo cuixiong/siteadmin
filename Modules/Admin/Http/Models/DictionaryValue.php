@@ -25,7 +25,7 @@ class DictionaryValue extends Base
         });
 
         // 在更新成功后触发
-        static::updated(function ($model) {
+        static::updating(function ($model) {
             self::RedisUpdate($model);
         });
 
