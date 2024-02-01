@@ -13,7 +13,7 @@ class EmailRequest extends BaseRequest
             'name' => 'required',
             'email' => 'required',
             'host' => 'required',
-            'port' => 'required',
+            'port' => 'required|between:1,65535',
             'encryption' => 'required',
             'password' => 'required',
         ];
@@ -22,6 +22,7 @@ class EmailRequest extends BaseRequest
             'email.required' => '邮箱不能为空',
             'host.required' => 'SMTP主机地址不能为空',
             'port.required' => 'SMTP主机端口不能为空',
+            'port.between' => 'SMTP主机端口不正确',
             'encryption.required' => 'SMTP加密类型不能为空',
             'password.required' => '邮箱授权码不能为空',
         ];
@@ -38,7 +39,7 @@ class EmailRequest extends BaseRequest
             'name' => 'required',
             'email' => 'required',
             'host' => 'required',
-            'port' => 'required',
+            'port' => 'required|between:1,65535',
             'encryption' => 'required',
             'password' => 'required',
         ];
@@ -47,7 +48,7 @@ class EmailRequest extends BaseRequest
             'name.required' => '名称不能为空',
             'email.required' => '邮箱不能为空',
             'host.required' => 'SMTP主机地址不能为空',
-            'port.required' => 'SMTP主机端口不能为空',
+            'port.between' => 'SMTP主机端口不正确',
             'encryption.required' => 'SMTP加密类型不能为空',
             'password.required' => '邮箱授权码不能为空',
         ];
