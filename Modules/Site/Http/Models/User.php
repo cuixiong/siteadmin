@@ -7,7 +7,7 @@ use Modules\Admin\Http\Models\Country;
 class User extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'user_name', 'email', 'phone','country_id','status','company','login_time', 'updated_by', 'created_by'];
+    protected $fillable = ['name', 'username', 'email', 'phone','area_id','status','company','check_email','login_time', 'updated_by', 'created_by'];
     // 添加虚拟字段
     protected $appends = ['country'];
 

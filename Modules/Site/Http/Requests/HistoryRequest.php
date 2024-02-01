@@ -11,12 +11,13 @@ class HistoryRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'year' => 'required',
+            'year' => 'required|size:4',
             'body' => 'required',
             'status' => 'required',
         ];
         $message = [
             'year.required' => '年份不能为空',
+            'year.size' => '年份不正确',
             'body.required' => '发展事件不能为空',
             'status.required' => '状态不能为空',
         ];
@@ -30,13 +31,14 @@ class HistoryRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
-            'year' => 'required',
+            'year' => 'required|size:4',
             'body' => 'required',
             'status' => 'required',
         ];
         $message = [
             'id' => 'required',
             'year.required' => '年份不能为空',
+            'year.size' => '年份不正确',
             'body.required' => '发展事件不能为空',
             'status.required' => '状态不能为空',
         ];

@@ -17,9 +17,12 @@ class TeamMember extends Base
         'area',
         'experience',
         'custom',
-        'industry',
+        'industry_id',
         'is_analyst'
         ];
+    protected $appends = [
+        'industry_name'
+    ];
     // Image修改器
     public function setImageAttribute($value){
         $value = $value && is_array($value) ? implode(",",$value) : "";
@@ -30,5 +33,41 @@ class TeamMember extends Base
     public function getImageAttribute($value){
         $value = $value ? explode(",",$value) : [];
         return $value;
+    }
+
+    /**
+     * 行业ID获取器
+     */
+    public function getIndustryIdAttribute($value)
+    {
+        if(isset($this->attributes['industry_id']))
+        {
+            $value = explode(',',$this->attributes['industry_id']);
+            $value = ProductsCategory::whereIn('id',$value)->where('status',1)->pluck('id')->toArray();
+            foreach ($value as &$map) {
+                $map = intval($map);
+            }
+            return $value;
+        }
+        return null;
+    }
+
+    /**
+     * 行业ID修改器
+     */
+    protected function setIndustryIdAttribute($value)
+    {
+        $this->attributes['industry_id'] = $value && is_array($value) ? implode(',',$value) : '';
+    }
+
+    // 行业名称获取器
+    public function getIndustryNameAttribute($value){
+        if(isset($this->attributes['industry_id'])){
+            $ids = $this->attributes['industry_id'] ? explode(',',$this->attributes['industry_id']) : [];
+            $value = ProductsCategory::whereIn('id',$ids)->pluck('name');
+            $value = $value ? $value : [];
+            return $value;
+        }
+        return [];
     }
 }

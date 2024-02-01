@@ -12,6 +12,7 @@ use Modules\Admin\Http\Models\Department;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\User;
 use Modules\Admin\Http\Models\Site;
+use Modules\Site\Http\Models\Menu;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\Order;
 
@@ -49,6 +50,7 @@ class AdminServiceProvider extends ServiceProvider
         //分站点
         Products::observe(OperationLog::class);
         Order::observe(OperationLog::class);
+        Menu::observe(OperationLog::class);
     }
 
     /**
