@@ -19,7 +19,7 @@ class AuthorityController extends CrudController
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
             }
         }
-        $options['product_category'] = (new ProductsCategory())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
+        $options['product_category'] = (new ProductsCategory())->GetListLabel(['id as value','name as label','pid','id'],true,'pid',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
 }
