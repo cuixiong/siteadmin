@@ -12,7 +12,7 @@ class UserRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
-            'user_name' => 'required|unique:users',
+            'username' => 'required|unique:users',
             'email' => 'required',
             'phone' => 'required|size:11',
             'country_id' => 'required',
@@ -21,8 +21,8 @@ class UserRequest extends BaseRequest
         ];
         $message = [
             'name.required' => '名称不能为空',
-            'user_name.required' => '登陆名不能为空',
-            'user_name.unique' => '登陆名不能重复',
+            'username.required' => '登陆名不能为空',
+            'username.unique' => '登陆名不能重复',
             'email.required' => '邮箱不能为空',
             'phone.required' => '手机号不能为空',
             'phone.size' => '手机号必须为11位数不能为空',
@@ -41,7 +41,7 @@ class UserRequest extends BaseRequest
         $rules = [
             'id' => 'required',
             'name' => 'required',
-            'user_name' => 'required',
+            'username' => 'required',
             'email' => 'required',
             'phone' => 'required|size:11',
             'country_id' => 'required',
@@ -51,8 +51,8 @@ class UserRequest extends BaseRequest
         $message = [
             'id' => 'required',
             'name.required' => '名称不能为空',
-            'user_name.required' => '登陆名不能为空',
-            'user_name.unique' => '登陆名不能重复',
+            'username.required' => '登陆名不能为空',
+            'username.unique' => '登陆名不能重复',
             'email.required' => '邮箱不能为空',
             'phone.required' => '手机号不能为空',
             'phone.size' => '手机号必须为11位数不能为空',
