@@ -39,7 +39,7 @@ class NewsCategory extends Base
 
         if (!empty($search)) {
             $textField = ['name', 'url', 'seo_title', 'seo_keyword', 'seo_description'];
-            $numberField = ['sort', 'status'];
+            $numberField = ['id', 'sort', 'status'];
             $timeField = ['created_at', 'updated_at'];
             $userField = ['created_by', 'updated_by'];
             foreach ($search as $key => $value) {

@@ -772,6 +772,8 @@ class ProductsController extends CrudController
                 }
                 $item['published_date'] = date('Y-m-d', $item['published_date']);
 
+                $item['category_id'] = ProductsCategory::query()->where('id', $item['category_id'])->value('name');
+
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
                 $item['description'] = $descriptionData['description'] ?? '';
                 $item['table_of_content'] = $descriptionData['table_of_content'] ?? '';

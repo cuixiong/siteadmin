@@ -77,7 +77,7 @@ class News extends Base
     {
         $text = '';
         if (isset($this->attributes['category_id'])) {
-            return ProductsCategory::query()->value('name') ?? '';
+            return ProductsCategory::query()->where('id',$this->attributes['category_id'])->value('name') ?? '';
         }
         return $text;
     }

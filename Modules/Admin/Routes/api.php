@@ -190,6 +190,7 @@ Route::middleware([
         Route::get('option', [Modules\Admin\Http\Controllers\RegionController::class, 'option'])->name('地区管理:地区列表下拉列表数据');
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\RegionController::class, 'searchDroplist'])->name('地区管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\RegionController::class, 'changeStatus'])->name('地区管理:状态修改');
+        Route::post('change-sort', [Modules\Admin\Http\Controllers\RegionController::class, 'changeSort'])->name('地区管理:排序修改');
     });
 
     // Language 控制器
