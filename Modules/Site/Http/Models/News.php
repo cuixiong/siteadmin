@@ -10,7 +10,7 @@ class News extends Base
 {
 
     //将虚拟字段追加到数据对象列表里去
-    protected $appends = ['category', 'type_text','upload_at_format'];
+    protected $appends = ['category', 'type_text', 'upload_at_format'];
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
@@ -47,7 +47,7 @@ class News extends Base
 
         if (!empty($search)) {
             $textField = ['title', 'description', 'thumb', 'url', 'content', 'keywords', 'tags', 'author'];
-            $numberField = ['id', 'type', 'category_id', 'upload_at', 'sort', 'show_home', 'status', 'hits', 'real_hits'];
+            $numberField = ['id', 'type', 'category_id', 'sort', 'show_home', 'status', 'hits', 'real_hits'];
             $timeField = ['created_at', 'updated_at', 'upload_at'];
             $userField = ['created_by', 'updated_by'];
             foreach ($search as $key => $value) {
@@ -55,7 +55,7 @@ class News extends Base
                     $model = $model->where($key, 'like', '%' . trim($value) . '%');
                 } else if (in_array($key, $numberField) && $value != '') {
                     $model = $model->where($key, $value);
-                } else if (in_array($key, $timeField) && !empty($value)) {
+                } else if (in_array($key, $timeField) && !empty($value) && count($value) > 0) {
                     $time = $value;
                     $model = $model->where($key, '>=', $time[0]);
                     $model = $model->where($key, '<=', $time[1]);
@@ -77,7 +77,7 @@ class News extends Base
     {
         $text = '';
         if (isset($this->attributes['category_id'])) {
-            return ProductsCategory::query()->where('id',$this->attributes['category_id'])->value('name') ?? '';
+            return ProductsCategory::query()->where('id', $this->attributes['category_id'])->value('name') ?? '';
         }
         return $text;
     }
@@ -94,7 +94,7 @@ class News extends Base
         }
         return $text;
     }
-    
+
     /**
      * 上传时间获取器
      */

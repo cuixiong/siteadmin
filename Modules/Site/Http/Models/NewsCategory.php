@@ -47,7 +47,7 @@ class NewsCategory extends Base
                     $model = $model->where($key, 'like', '%' . trim($value) . '%');
                 } else if (in_array($key, $numberField) && $value != '') {
                     $model = $model->where($key, $value);
-                } else if (in_array($key, $timeField) && !empty($value)) {
+                } else if (in_array($key, $timeField) && !empty($value) && count($value) > 0) {
                     $time = $value;
                     $model = $model->where($key, '>=', $time[0]);
                     $model = $model->where($key, '<=', $time[1]);

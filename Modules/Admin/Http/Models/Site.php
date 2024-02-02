@@ -794,6 +794,7 @@ class Site extends Base
             ['name' => 'api_dependency', 'type' => 'commands', 'title' => '(接口)下载依赖', 'field' => []],
             ['name' => 'write_db_config', 'type' => 'commands', 'title' => '(接口)配置数据库', 'field' => []],
             ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '(接口)新建站点', 'field' => []],
+            ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
             [
                 'name' => 'set_ssl',
                 'type' => 'btPanelApi',
@@ -803,7 +804,6 @@ class Site extends Base
                     ['name' => 'csr', 'type' => 'textarea']
                 ]
             ],
-            ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
             // ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
             // ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(网站)新建站点', 'field' => []],
             // ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
