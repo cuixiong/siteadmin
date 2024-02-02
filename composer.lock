@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c5f536536d0c13dc65140a48fe8e37df",
+    "content-hash": "0ed48a30b92ef06c3dbe6c5613abcd44",
     "packages": [
         {
             "name": "aliyuncs/oss-sdk-php",
@@ -1756,6 +1756,76 @@
                 }
             ],
             "time": "2023-08-27T10:19:19+00:00"
+        },
+        {
+            "name": "hightman/xunsearch",
+            "version": "1.4.17",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hightman/xs-sdk-php.git",
+                "reference": "3803e5a7a3dba462b656d995770f0b8254c30f06"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/hightman/xs-sdk-php/zipball/3803e5a7a3dba462b656d995770f0b8254c30f06",
+                "reference": "3803e5a7a3dba462b656d995770f0b8254c30f06",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "lib-pcre": "*",
+                "php": ">=5.3.0"
+            },
+            "bin": [
+                "util/xs"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.4.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "hightman\\xunsearch\\": "wrapper/yii2-ext/"
+                },
+                "classmap": [
+                    "lib/",
+                    "wrapper/yii-ext/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0+"
+            ],
+            "authors": [
+                {
+                    "name": "hightman",
+                    "email": "hightman@twomice.net",
+                    "role": "Founder and project leader"
+                }
+            ],
+            "description": "xunsearch php sdk, include yii, yii2 supports",
+            "homepage": "http://www.xunsearch.com/",
+            "keywords": [
+                "search engine",
+                "xunsearch",
+                "yii",
+                "yii2"
+            ],
+            "support": {
+                "forum": "http://bbs.xunsearch.com/",
+                "guide": "http://www.xunsearch.com/doc/php",
+                "issues": "https://github.com/hightman/xunsearch/issues?q=is%3Aopen",
+                "source": "https://github.com/hightman/xunsearch/"
+            },
+            "time": "2022-08-11T12:39:26+00:00"
         },
         {
             "name": "intervention/image",
