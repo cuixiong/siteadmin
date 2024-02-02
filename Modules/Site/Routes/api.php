@@ -460,3 +460,4 @@ Route::middleware([
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
+Route::get('xuntest', [Modules\Site\Http\Controllers\XunSearch::class, 'add'])->name('测试');
