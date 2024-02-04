@@ -23,7 +23,7 @@ class XunSearch extends CrudController
     {
         $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
         $index = $xs->index;
-        $data = Products::where('id','>',0)->where('id','<',200)->limit(50)->get()->toArray();
+        $data = Products::where('id','>',0)->where('id','<',51)->limit(50)->get()->toArray();
         foreach ($data as $map){
             $doc = new XSDocument();
             $doc->setFields($map);
