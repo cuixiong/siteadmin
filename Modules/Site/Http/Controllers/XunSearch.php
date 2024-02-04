@@ -25,6 +25,8 @@ class XunSearch extends CrudController
         $index = $xs->index;
         $data = Products::where('id','>',0)->where('id','<',51)->limit(50)->get()->toArray();
         foreach ($data as $map){
+            $map['pid'] = $map['id'];
+            unset($map['id']);
             $doc = new XSDocument();
             $doc->setFields($map);
             $index->add($doc); 
