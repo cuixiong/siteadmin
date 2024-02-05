@@ -46,7 +46,25 @@ class Products extends Base
         'show_recommend' // 推荐
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
 
+        static::created(function ($model) {
+            // 创建完成后
+            $this->PushXunSearchMQ($model->id,'add');
+        });
+
+        static::updated(function ($model) {
+            // 更新完成后
+            $this->PushXunSearchMQ($model->id,'update');
+        });
+
+        static::deleted(function ($model) {
+            // 删除完成后
+            $this->PushXunSearchMQ($model->id,'delete');
+        });
+    }
 
     /**
      * 处理查询列表条件数组
@@ -298,5 +316,9 @@ class Products extends Base
                 'type' => '2',
             ],
         ];
+    }
+
+    public function PushXunSearchMQ($id,$action){
+        var_dump(123);die;
     }
 }
