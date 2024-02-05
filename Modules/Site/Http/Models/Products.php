@@ -320,7 +320,7 @@ class Products extends Base
 
     public function PushXunSearchMQ($id,$action){
         $request = request();
-        $siteName = $request->Site;
+        $siteName = $request->header('Site');
         $RabbitMQ = new RabbitmqService();
         $RabbitMQ->setQueueName('xunsearch_'.$siteName);
         $RabbitMQ->SimpleModePush('','',['id' => $id, 'action' => $action]);
