@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Models;
 
+use App\Services\RabbitmqService;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\Publisher;
@@ -49,20 +50,19 @@ class Products extends Base
     protected static function boot()
     {
         parent::boot();
-
         static::created(function ($model) {
             // 创建完成后
-            $this->PushXunSearchMQ($model->id,'add');
+            $model->PushXunSearchMQ($model->id,'add');
         });
 
         static::updated(function ($model) {
             // 更新完成后
-            $this->PushXunSearchMQ($model->id,'update');
+            $model->PushXunSearchMQ($model->id,'update');
         });
 
         static::deleted(function ($model) {
             // 删除完成后
-            $this->PushXunSearchMQ($model->id,'delete');
+            $model->PushXunSearchMQ($model->id,'delete');
         });
     }
 
@@ -319,6 +319,12 @@ class Products extends Base
     }
 
     public function PushXunSearchMQ($id,$action){
-        var_dump(123);die;
+        $request = request();
+        $siteName = $request->Site;
+        $RabbitMQ = new RabbitmqService();
+        $RabbitMQ->setQueueName('xunsearch_'.$siteName);
+        $RabbitMQ->SimpleModePush('','',['id' => $id, 'action' => $action]);
+        $RabbitMQ->close();
+        return true;
     }
 }
