@@ -9,12 +9,12 @@ class User extends Base
     // 设置允许入库字段,数组形式
     protected $fillable = ['name', 'username', 'email', 'phone','area_id','status','company','check_email','login_time', 'updated_by', 'created_by'];
     // 添加虚拟字段
-    protected $appends = ['country'];
+    protected $appends = ['area_name'];
 
-    public function getCountryAttribute()
+    public function getAreaNameAttribute()
     {
-        if(isset($this->attributes['country_id'])){
-            $value = Country::where('status',1)->where('id',$this->attributes['country_id'])->value('name');
+        if(isset($this->attributes['area_id'])){
+            $value = Country::where('status',1)->where('id',$this->attributes['area_id'])->value('name');
             $value = $value ? $value : "";
         } else {
             $value = "";

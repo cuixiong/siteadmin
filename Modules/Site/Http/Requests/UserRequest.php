@@ -15,7 +15,7 @@ class UserRequest extends BaseRequest
             'username' => 'required|unique:users',
             'email' => 'required',
             'phone' => 'required',
-            'country_id' => 'required',
+            'area_id' => 'required',
             'status' => 'required',
             'company' => 'required',
         ];
@@ -25,7 +25,7 @@ class UserRequest extends BaseRequest
             'username.unique' => '登陆名不能重复',
             'email.required' => '邮箱不能为空',
             'phone.required' => '手机号不能为空',
-            'country_id.required' => '国家不能为空',
+            'area_id.required' => '地区不能为空',
             'status.required' => '状态不能为空',
             'company.required' => '公司不能为空',
         ];
@@ -43,7 +43,7 @@ class UserRequest extends BaseRequest
             'username' => 'required',
             'email' => 'required',
             'phone' => 'required',
-            'country_id' => 'required',
+            'area_id' => 'required',
             'status' => 'required',
             'company' => 'required',
         ];
@@ -54,7 +54,7 @@ class UserRequest extends BaseRequest
             'username.unique' => '登陆名不能重复',
             'email.required' => '邮箱不能为空',
             'phone.required' => '手机号不能为空',
-            'country_id.required' => '国家不能为空',
+            'area_id.required' => '地区不能为空',
             'status.required' => '状态不能为空',
             'company.required' => '公司不能为空',
         ];
