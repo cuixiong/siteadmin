@@ -461,6 +461,7 @@ Route::middleware([
     Route::get('xun-add', [Modules\Site\Http\Controllers\XunSearch::class, 'add'])->name('测试接口:迅速新增');
     Route::get('xun-search', [Modules\Site\Http\Controllers\XunSearch::class, 'search'])->name('测试接口:迅速搜索');
     Route::get('xun-clean', [Modules\Site\Http\Controllers\XunSearch::class, 'clean'])->name('测试接口:迅速清空');
+    Route::get('xun-test', [Modules\Site\Http\Controllers\XunSearch::class, 'AddToMQ'])->name('测试接口:迅速清空');
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

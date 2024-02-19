@@ -70,4 +70,14 @@ class XunSearch extends CrudController
         $index = $xs->index;
         $index->clean();
     }
+    public function AddToMQ(Request $request)
+    {
+        $s = $request->s;
+        $e = $request->e;
+        $ids = Products::where('status',1)->offset($s)->limit($e)->pluck('id');
+        $model = new Products();
+        foreach ($ids as $id) {
+           $model->PushXunSearchMQ($id,'add');
+        }
+    }
 }
