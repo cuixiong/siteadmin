@@ -72,9 +72,9 @@ class XunSearch extends CrudController
     }
     public function AddToMQ(Request $request)
     {
-        $s = $request->s;
-        $e = $request->e;
-        $ids = Products::where('status',1)->offset($s)->limit($e)->pluck('id');
+        // 设置当前脚本最大执行时间为 120 秒
+        set_time_limit(-1);
+        $ids = Products::where('status',1)->pluck('id');
         $model = new Products();
         foreach ($ids as $id) {
            $model->PushXunSearchMQ($id,'add');

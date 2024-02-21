@@ -168,6 +168,9 @@ class ProductsController extends CrudController
                         $product[$key2] = $value2;
                         
                     }
+                    $product['category'] = ProductsCategory::where('id', $product['category_id'])->value('name') ?? '';
+                    $product['country'] = Region::where('id', $product['country_id'])->value('name') ?? '';
+                    $product['Publisher'] = Publisher::where('id', $product['publisher_id'])->value('name') ?? '';
                     $products[] = $product;
                 }
             }
