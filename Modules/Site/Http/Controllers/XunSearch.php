@@ -74,7 +74,8 @@ class XunSearch extends CrudController
     {
         // 设置当前脚本最大执行时间为 120 秒
         set_time_limit(-1);
-        $ids = Products::where('status',1)->pluck('id');
+        ini_set('memory_limit', -1);
+        $ids = Products::pluck('id');
         $model = new Products();
         foreach ($ids as $id) {
            $model->PushXunSearchMQ($id,'add');
