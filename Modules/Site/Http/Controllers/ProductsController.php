@@ -150,9 +150,9 @@ class ProductsController extends CrudController
                 $search->addRange('published_date',$RequestWhere['published_date'][0],$RequestWhere['published_date'][1]);
             }
             // 表示先以 published_date 反序、再以 sort 正序
-            $sorts = array('published_date' => false, 'sort' => true);
+            $sorts = array('id' => false);
             // 设置搜索排序
-            $search->setMultiSort($sorts);
+            $search->setSort('id');
             // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
             $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
             $docs = $search->search();
@@ -162,8 +162,31 @@ class ProductsController extends CrudController
                 foreach ($docs as $key => $doc) {
                     $product = [];
                     foreach ($doc as $key2 => $value2) {
-                        if(in_array($key2, ['created_at','published_date'])){
+                        if(in_array($key2, ['created_at','published_date','updated_at'])){
                             $value2 = date('Y-d-m H:i:s', $value2);
+                        }
+                        $IntvalKey = [
+                            'publisher_id',
+                            'category_id',
+                            'country_id',
+                            'status',
+                            'show_home',
+                            'have_sample',
+                            'discount',
+                            'discount_type',
+                            'discount_time_begin',
+                            'discount_time_end',
+                            'pages',
+                            'tables',
+                            'hits',
+                            'show_hot',
+                            'show_recommend',
+                            'sort'
+                        ];
+                        if(in_array($key2, $IntvalKey)){
+                            if($value2 != null) {
+                                $value2 = intval($value2);
+                            }
                         }
                         $product[$key2] = $value2;
                         
