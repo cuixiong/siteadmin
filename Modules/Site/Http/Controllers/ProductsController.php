@@ -68,7 +68,7 @@ class ProductsController extends CrudController
             $total = $data['total'];
             //附加详情数据
             foreach ($record as $key => $item) {
-                $year = date('Y', $item['published_date']);
+                $year = is_int($item['published_date']) ?  date('Y', $item['published_date']) : date('Y', strtotime($item['published_date']));
                 if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
                     continue;
                 }
