@@ -99,7 +99,8 @@ class ProductsController extends CrudController
     public function GetProductList($request)
     {
         try {
-            $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
+            $SiteName = $request->header('Site');
+            $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
             $search = $xs->search;
             // 表示先以 published_date 反序、再以 sort 正序
             $sorts = array('published_date' => false, 'sort' => true);
