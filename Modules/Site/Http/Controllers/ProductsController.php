@@ -102,6 +102,53 @@ class ProductsController extends CrudController
             $SiteName = $request->header('Site');
             $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
             $search = $xs->search;
+            $RequestWhere = json_decode($request->input('search'),true);
+            $where = '';
+            if($RequestWhere['id']){
+                $where .= 'id:'.$RequestWhere['id'] .' ';
+            }
+            if($RequestWhere['name']){
+                $where .= 'name:'.$RequestWhere['name'] .' ';
+            }
+            if($RequestWhere['english_name']){
+                $where .= 'english_name:'.$RequestWhere['english_name'] .' ';
+            }
+            if($RequestWhere['country_id']){
+                $where .= 'country_id:'.$RequestWhere['country_id'] .' ';
+            }
+            if($RequestWhere['category_id']){
+                $where .= 'category_id:'.$RequestWhere['category_id'] .' ';
+            }
+            if($RequestWhere['price']){
+                $where .= 'price:'.$RequestWhere['price'] .' ';
+            }
+            if($RequestWhere['discount']){
+                $where .= 'discount:'.$RequestWhere['discount'] .' ';
+            }
+            if($RequestWhere['author']){
+                $where .= 'author:'.$RequestWhere['author'] .' ';
+            }
+            if($RequestWhere['show_hot']){
+                $where .= 'show_hot:'.$RequestWhere['show_hot'] .' ';
+            }
+            if($RequestWhere['show_recommend']){
+                $where .= 'show_recommend:'.$RequestWhere['show_recommend'] .' ';
+            }
+            if($RequestWhere['status']){
+                $where .= 'status:'.$RequestWhere['status'] .' ';
+            }
+            if($RequestWhere['discount_amount']){
+                $where .= 'discount_amount:'.$RequestWhere['discount_amount'] .' ';
+            }
+            $where = trim($where,' ');
+            $search->setQuery($where);
+            
+            if(isset($RequestWhere['created_at']) && count($RequestWhere['created_at']) >= 2){
+                $search->addRange('created_at',$RequestWhere['created_at'][0],$RequestWhere['created_at'][1]);
+            }
+            if(isset($RequestWhere['published_date']) && count($RequestWhere['published_date']) >= 2){
+                $search->addRange('published_date',$RequestWhere['published_date'][0],$RequestWhere['published_date'][1]);
+            }
             // 表示先以 published_date 反序、再以 sort 正序
             $sorts = array('published_date' => false, 'sort' => true);
             // 设置搜索排序
@@ -115,7 +162,11 @@ class ProductsController extends CrudController
                 foreach ($docs as $key => $doc) {
                     $product = [];
                     foreach ($doc as $key2 => $value2) {
+                        if(in_array($key2, ['created_at','published_date'])){
+                            $value2 = date('Y-d-m H:i:s', $value2);
+                        }
                         $product[$key2] = $value2;
+                        
                     }
                     $products[] = $product;
                 }
