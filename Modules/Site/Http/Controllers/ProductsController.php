@@ -23,6 +23,7 @@ use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use XS;
 
 class ProductsController extends CrudController
 {
@@ -39,29 +40,32 @@ class ProductsController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request);
-            // 总数量
-            $total = $model->count();
-            // 查询偏移量
-            if (!empty($request->pageNum) && !empty($request->pageSize)) {
-                $model->offset(($request->pageNum - 1) * $request->pageSize);
-            }
-            // 查询条数
-            if (!empty($request->pageSize)) {
-                $model->limit($request->pageSize);
-            }
-            $model = $model->select($ModelInstance->ListSelect);
-            // 数据排序
-            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
-            } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
-            }
+            // $model = $ModelInstance->query();
+            // $model = $ModelInstance->HandleWhere($model, $request);
+            // // 总数量
+            // $total = $model->count();
+            // // 查询偏移量
+            // if (!empty($request->pageNum) && !empty($request->pageSize)) {
+            //     $model->offset(($request->pageNum - 1) * $request->pageSize);
+            // }
+            // // 查询条数
+            // if (!empty($request->pageSize)) {
+            //     $model->limit($request->pageSize);
+            // }
+            // $model = $model->select($ModelInstance->ListSelect);
+            // // 数据排序
+            // $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            // if (!empty($request->order)) {
+            //     $model = $model->orderBy($request->order, $sort);
+            // } else {
+            //     $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+            // }
 
-            $record = $model->get();
-
+            // $record = $model->get();
+            // var_dump($record);die;
+            $data = $this->GetProductList($request);
+            $record = $data['list'];
+            $total = $data['total'];
             //附加详情数据
             foreach ($record as $key => $item) {
                 $year = date('Y', $item['published_date']);
@@ -89,6 +93,62 @@ class ProductsController extends CrudController
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    public function GetProductList($request)
+    {
+        try {
+            $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/product.ini');
+            $search = $xs->search;
+            // 表示先以 published_date 反序、再以 sort 正序
+            $sorts = array('published_date' => false, 'sort' => true);
+            // 设置搜索排序
+            $search->setMultiSort($sorts);
+            // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
+            $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
+            $docs = $search->search();
+            $count = $search->count();
+            $products = [];
+            if(!empty($docs)){
+                foreach ($docs as $key => $doc) {
+                    $product = [];
+                    foreach ($doc as $key2 => $value2) {
+                        $product[$key2] = $value2;
+                    }
+                    $products[] = $product;
+                }
+            }
+            $data = [
+                'list' => $products,
+                'total' => $count,
+            ];
+            return $data;
+        } catch (\Throwable $th) {
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+            }
+
+            $record = $model->get();
+            return ['list' => $record, 'total' => $total];
         }
     }
 
