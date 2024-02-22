@@ -47,24 +47,24 @@ class Products extends Base
         'show_recommend' // 推荐
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-        static::created(function ($model) {
-            // 创建完成后
-            $model->PushXunSearchMQ($model->id,'add');
-        });
+    // protected static function boot()
+    // {
+    //     parent::boot();
+    //     static::created(function ($model) {
+    //         // 创建完成后
+    //         $model->PushXunSearchMQ($model->id,'add');
+    //     });
 
-        static::updated(function ($model) {
-            // 更新完成后
-            $model->PushXunSearchMQ($model->id,'update');
-        });
+    //     static::updated(function ($model) {
+    //         // 更新完成后
+    //         $model->PushXunSearchMQ($model->id,'update');
+    //     });
 
-        static::deleted(function ($model) {
-            // 删除完成后
-            $model->PushXunSearchMQ($model->id,'delete');
-        });
-    }
+    //     static::deleted(function ($model) {
+    //         // 删除完成后
+    //         $model->PushXunSearchMQ($model->id,'delete');
+    //     });
+    // }
 
     /**
      * 处理查询列表条件数组

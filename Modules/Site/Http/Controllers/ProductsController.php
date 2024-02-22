@@ -274,6 +274,8 @@ class ProductsController extends CrudController
             }
             // DB::connection($currentTenant->getConnectionName())->commit();
             DB::commit();
+            // 创建完成后同步到xunsearch
+            $this->ModelInstance()->PushXunSearchMQ($record->id,'add');
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
@@ -401,6 +403,8 @@ class ProductsController extends CrudController
             }
 
             DB::commit();
+            // 更新完成后同步到xunsearch
+            $this->ModelInstance()->PushXunSearchMQ($record->id,'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
@@ -436,6 +440,8 @@ class ProductsController extends CrudController
                 }
                 if ($record) {
                     $record->delete();
+                    // 删除完成后同步到xunsearch
+                    $this->ModelInstance()->PushXunSearchMQ($record->id,'delete');
                 }
             }
             ReturnJson(TRUE, trans('lang.delete_success'));
