@@ -141,7 +141,7 @@ class ProductsController extends CrudController
                 $where .= 'discount_amount:'.$RequestWhere['discount_amount'] .' ';
             }
             $where = trim($where,' ');
-            $search->setQuery($where);
+            $search->setFuzzy()->setQuery($where);
             
             if(isset($RequestWhere['created_at']) && count($RequestWhere['created_at']) >= 2){
                 $search->addRange('created_at',$RequestWhere['created_at'][0],$RequestWhere['created_at'][1]);
