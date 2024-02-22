@@ -275,7 +275,7 @@ class ProductsController extends CrudController
             // DB::connection($currentTenant->getConnectionName())->commit();
             DB::commit();
             // 创建完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id,'add');
+            $this->ModelInstance()->PushXunSearchMQ($record,'add');
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
@@ -404,7 +404,7 @@ class ProductsController extends CrudController
 
             DB::commit();
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id,'update');
+            $this->ModelInstance()->PushXunSearchMQ($record,'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
