@@ -172,9 +172,10 @@ class RabbitmqService
     public function SimpleModePush($controller, $method, $data)
     {
         $data = json_encode(['class' => $controller,'method' => $method, 'data' => $data]);
-        $this->channel->queue_declare($this->queueName, false, false, false, false);
+        $this->channel->queue_declare($this->queueName, false, true, false, false);
         $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $this->channel->basic_publish($message, '',$this->queueName);
-        $this->channel->wait_for_pending_acks();
+        // $this->channel->wait_for_pending_acks();
+        $this->close();
     }
 }
