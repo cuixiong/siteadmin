@@ -339,6 +339,7 @@ class Products extends Base
     private function GetProductData($data)
     {
         if($data){
+            $data = Products::find($data['id']);
             $ini = [
                 "pid" => $data['id'],
                 "id" => $data['id'],
@@ -367,10 +368,10 @@ class Products extends Base
                 "show_hot" => $data['show_hot'],
                 "show_recommend" => $data['show_recommend'],
                 "sort" => $data['sort'],
-                "updated_at" => $data['updated_at'],
-                "created_at" => $data['created_at'],
-                "updated_by" => $data['updated_by'],
-                "created_by" => $data['created_by'],
+                "updated_at" => $data->getRawOriginal('updated_at'),
+                "created_at" => $data->getRawOriginal('created_at'),
+                "updated_by" => $data->getRawOriginal('updated_by'),
+                "created_by" => $data->getRawOriginal('created_by'),
                 "downloads" => $data['downloads'],
             ];
         } else {
