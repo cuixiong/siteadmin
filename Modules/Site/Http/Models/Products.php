@@ -323,7 +323,7 @@ class Products extends Base
         $siteName = $request->header('Site');
         $RabbitMQ = new RabbitmqService();
         $RabbitMQ->setQueueName('xunsearch_'.$siteName);
-        $RabbitMQ->SimpleModePush('','',['id' => $id, 'action' => $action]);
+        $RabbitMQ->WorkModePush('','',['id' => $id, 'action' => $action]);
         $RabbitMQ->close();
         return true;
     }
