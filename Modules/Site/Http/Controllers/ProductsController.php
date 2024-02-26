@@ -181,7 +181,8 @@ class ProductsController extends CrudController
                             'hits',
                             'show_hot',
                             'show_recommend',
-                            'sort'
+                            'sort',
+                            'id'
                         ];
                         if(in_array($key2, $IntvalKey)){
                             if($value2 != null) {
