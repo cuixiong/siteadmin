@@ -204,7 +204,6 @@ class ProductsController extends CrudController
             ];
             return $data;
         } catch (\Exception $e) {
-            var_dump($e->getMessage());die;
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);

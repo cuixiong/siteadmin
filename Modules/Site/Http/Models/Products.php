@@ -318,14 +318,14 @@ class Products extends Base
         ];
     }
 
-    public function PushXunSearchMQ($model,$action){
+    public function PushXunSearchMQ($model,$action,$siteName = ''){
         if(in_array($action,['add','update'])){
             $data = $this->GetProductData($model);
         } else {
             $data = ['id' => $model];
         }
         $request = request();
-        $siteName = $request->header('Site');
+        $siteName = $siteName ? $siteName : $request->header('Site');
         $RabbitMQ = new RabbitmqService();
         $RabbitMQ->setQueueName('xunsearch_'.$siteName);
         $RabbitMQ->WorkModePush('','',['data' => $data, 'action' => $action]);
