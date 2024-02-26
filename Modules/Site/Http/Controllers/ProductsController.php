@@ -202,8 +202,8 @@ class ProductsController extends CrudController
                 'total' => $count,
             ];
             return $data;
-        } catch (\Throwable $th) {
-            var_dump(123);die;
+        } catch (\Exception $e) {
+            var_dump($e->getMessage());die;
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
