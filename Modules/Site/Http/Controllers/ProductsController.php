@@ -102,8 +102,8 @@ class ProductsController extends CrudController
     public function GetProductList($request)
     {
         try {
-            $status = SystemValue::where('key', 'xunsearch')->value('status');
-            if ($status == 1) {
+            $hidden = SystemValue::where('key', 'xunsearch')->value('hidden');
+            if ($hidden == 1) {
                 return $this->SearchForXunsearch($request);
             } else {
                 return $this->SearchForMysql($request);
