@@ -66,6 +66,7 @@ class ProductsController extends CrudController
             $data = $this->GetProductList($request);
             $record = $data['list'];
             $total = $data['total'];
+            $type = '当前查询方式是：'.$data['type'];
             //附加详情数据
             foreach ($record as $key => $item) {
                 $year = is_int($item['published_date']) ?  date('Y', $item['published_date']) : date('Y', strtotime($item['published_date']));
@@ -89,6 +90,7 @@ class ProductsController extends CrudController
                 'total' => $total,
                 'list' => $record,
                 'headerTitle' => $headerTitle ?? [],
+                'type' => $type
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -99,135 +101,107 @@ class ProductsController extends CrudController
     public function GetProductList($request)
     {
         try {
-            $SiteName = $request->header('Site');
-            $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
-            $search = $xs->search;
-            $RequestWhere = json_decode($request->input('search'),true);
-            $where = '';
-            if($RequestWhere['id']){
-                $where .= 'id:'.$RequestWhere['id'] .' ';
-            }
-            if($RequestWhere['name']){
-                $where .= 'name:'.$RequestWhere['name'] .' ';
-            }
-            if($RequestWhere['english_name']){
-                $where .= 'english_name:'.$RequestWhere['english_name'] .' ';
-            }
-            if($RequestWhere['country_id']){
-                $where .= 'country_id:'.$RequestWhere['country_id'] .' ';
-            }
-            if($RequestWhere['category_id']){
-                $where .= 'category_id:'.$RequestWhere['category_id'] .' ';
-            }
-            if($RequestWhere['price']){
-                $where .= 'price:'.$RequestWhere['price'] .' ';
-            }
-            if($RequestWhere['discount']){
-                $where .= 'discount:'.$RequestWhere['discount'] .' ';
-            }
-            if($RequestWhere['author']){
-                $where .= 'author:'.$RequestWhere['author'] .' ';
-            }
-            if($RequestWhere['show_hot']){
-                $where .= 'show_hot:'.$RequestWhere['show_hot'] .' ';
-            }
-            if($RequestWhere['show_recommend']){
-                $where .= 'show_recommend:'.$RequestWhere['show_recommend'] .' ';
-            }
-            if($RequestWhere['status']){
-                $where .= 'status:'.$RequestWhere['status'] .' ';
-            }
-            if($RequestWhere['discount_amount']){
-                $where .= 'discount_amount:'.$RequestWhere['discount_amount'] .' ';
-            }
-            $where = trim($where,' ');
-            $search->setFuzzy()->setQuery($where);
-            
-            if(isset($RequestWhere['created_at']) && count($RequestWhere['created_at']) >= 2){
-                $search->addRange('created_at',$RequestWhere['created_at'][0],$RequestWhere['created_at'][1]);
-            }
-            if(isset($RequestWhere['published_date']) && count($RequestWhere['published_date']) >= 2){
-                $search->addRange('published_date',$RequestWhere['published_date'][0],$RequestWhere['published_date'][1]);
-            }
-            // 表示先以 published_date 反序、再以 sort 正序
-            $sorts = array('id' => false);
-            // 设置搜索排序
-            $search->setSort('id');
-            // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
-            $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
-            $docs = $search->search();
-            $count = $search->count();
-            $products = [];
-            if(!empty($docs)){
-                foreach ($docs as $key => $doc) {
-                    $product = [];
-                    foreach ($doc as $key2 => $value2) {
-                        if(in_array($key2, ['created_at','published_date','updated_at'])){
-                            $value2 = date('Y-d-m H:i:s', $value2);
-                        }
-                        $IntvalKey = [
-                            'publisher_id',
-                            'category_id',
-                            'country_id',
-                            'status',
-                            'show_home',
-                            'have_sample',
-                            'discount',
-                            'discount_type',
-                            'discount_time_begin',
-                            'discount_time_end',
-                            'pages',
-                            'tables',
-                            'hits',
-                            'show_hot',
-                            'show_recommend',
-                            'sort',
-                            'id'
-                        ];
-                        if(in_array($key2, $IntvalKey)){
-                            if($value2 != null) {
-                                $value2 = intval($value2);
-                            }
-                        }
-                        $product[$key2] = $value2;
-                        
+            return $this->SearchForXunsearch($request);
+        } catch (\Exception $e) {
+            return $this->SearchForMysql($request);
+        }
+    }
+
+    private function SearchForMysql($request)
+    {
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
+        $model = $ModelInstance->HandleWhere($model, $request);
+        // 总数量
+        $total = $model->count();
+        // 查询偏移量
+        if (!empty($request->pageNum) && !empty($request->pageSize)) {
+            $model->offset(($request->pageNum - 1) * $request->pageSize);
+        }
+        // 查询条数
+        if (!empty($request->pageSize)) {
+            $model->limit($request->pageSize);
+        }
+        $model = $model->select($ModelInstance->ListSelect);
+        // 数据排序
+        $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+        if (!empty($request->order)) {
+            $model = $model->orderBy($request->order, $sort);
+        } else {
+            $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+        }
+
+        $record = $model->get();
+        return ['list' => $record, 'total' => $total,'type' => 'mysql'];
+    }
+
+    private function SearchForXunsearch($request) {
+        $SiteName = $request->header('Site');
+        $RootPath = base_path();
+        $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
+        $search = $xs->search;
+        $RequestWhere = json_decode($request->input('search'),true);
+        $where = '';
+        if($RequestWhere['name']){
+            $where = $RequestWhere['name'];
+        }
+        $search->setFuzzy()->setQuery($where);
+        // 表示先以 published_date 反序、再以 sort 正序
+        $sorts = array('id' => false);
+        // 设置搜索排序
+        $search->setSort($sorts);
+        // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
+        $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
+        $docs = $search->search();
+        $count = $search->count();
+        $products = [];
+        if(!empty($docs)){
+            foreach ($docs as $key => $doc) {
+                $product = [];
+                foreach ($doc as $key2 => $value2) {
+                    if(in_array($key2, ['created_at','published_date','updated_at'])){
+                        $value2 = date('Y-m-d H:i:s', $value2);
                     }
-                    $product['category'] = ProductsCategory::where('id', $product['category_id'])->value('name') ?? '';
-                    $product['country'] = Region::where('id', $product['country_id'])->value('name') ?? '';
-                    $product['Publisher'] = Publisher::where('id', $product['publisher_id'])->value('name') ?? '';
-                    $products[] = $product;
+                    $IntvalKey = [
+                        'publisher_id',
+                        'category_id',
+                        'country_id',
+                        'status',
+                        'show_home',
+                        'have_sample',
+                        'discount',
+                        'discount_type',
+                        'discount_time_begin',
+                        'discount_time_end',
+                        'pages',
+                        'tables',
+                        'hits',
+                        'show_hot',
+                        'show_recommend',
+                        'sort',
+                        'id'
+                    ];
+                    if(in_array($key2, $IntvalKey)){
+                        if($value2 != null) {
+                            $value2 = intval($value2);
+                        }
+                    }
+                    $product[$key2] = $value2;
+                    
                 }
+                $product['category'] = ProductsCategory::where('id', $product['category_id'])->value('name') ?? '';
+                $product['country'] = Region::where('id', $product['country_id'])->value('name') ?? '';
+                $product['Publisher'] = Publisher::where('id', $product['publisher_id'])->value('name') ?? '';
+                $products[] = $product;
             }
             $data = [
                 'list' => $products,
                 'total' => $count,
+                'type' => 'xunsearch'
             ];
             return $data;
-        } catch (\Exception $e) {
-            $ModelInstance = $this->ModelInstance();
-            $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request);
-            // 总数量
-            $total = $model->count();
-            // 查询偏移量
-            if (!empty($request->pageNum) && !empty($request->pageSize)) {
-                $model->offset(($request->pageNum - 1) * $request->pageSize);
-            }
-            // 查询条数
-            if (!empty($request->pageSize)) {
-                $model->limit($request->pageSize);
-            }
-            $model = $model->select($ModelInstance->ListSelect);
-            // 数据排序
-            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
-            } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
-            }
-
-            $record = $model->get();
-            return ['list' => $record, 'total' => $total];
+        } else {
+            return $this->SearchForMysql($request);
         }
     }
 
