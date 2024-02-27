@@ -41,29 +41,71 @@ class ProductsController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            // $model = $ModelInstance->query();
-            // $model = $ModelInstance->HandleWhere($model, $request);
-            // // 总数量
-            // $total = $model->count();
-            // // 查询偏移量
-            // if (!empty($request->pageNum) && !empty($request->pageSize)) {
-            //     $model->offset(($request->pageNum - 1) * $request->pageSize);
-            // }
-            // // 查询条数
-            // if (!empty($request->pageSize)) {
-            //     $model->limit($request->pageSize);
-            // }
-            // $model = $model->select($ModelInstance->ListSelect);
-            // // 数据排序
-            // $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            // if (!empty($request->order)) {
-            //     $model = $model->orderBy($request->order, $sort);
-            // } else {
-            //     $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
-            // }
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+            }
 
-            // $record = $model->get();
-            // var_dump($record);die;
+            $record = $model->get();
+            //附加详情数据
+            foreach ($record as $key => $item) {
+                $year = is_int($item['published_date']) ?  date('Y', $item['published_date']) : date('Y', strtotime($item['published_date']));
+                if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+                    continue;
+                }
+                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
+                $record[$key]['description'] = $descriptionData['description'] ?? '';
+                $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
+                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+            }
+
+            //表头排序
+            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
+
+            $data = [
+                'total' => $total,
+                'list' => $record,
+                'headerTitle' => $headerTitle ?? [],
+                'type' => $type
+            ];
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
+    /**
+     * 快速搜索
+     * @param $request 请求信息
+     * @param int $page 页码
+     * @param int $pageSize 页数
+     * @param Array $where 查询条件数组 默认空数组
+     */
+    protected function QuickSearch(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
             $data = $this->GetProductList($request);
             $record = $data['list'];
             $total = $data['total'];
@@ -146,12 +188,12 @@ class ProductsController extends CrudController
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-        $RequestWhere = json_decode($request->input('search'),true);
-        $where = '';
-        if($RequestWhere['name']){
-            $where = $RequestWhere['name'];
+        $keyword = $request->input('keyword');
+        $type = $request->input('type');
+        if(empty($type) && in_array($type,['id','category_id'])){
+            $keyword = $type.':'.$keyword;
         }
-        $search->setFuzzy()->setQuery($where);
+        $search->setFuzzy()->setQuery($keyword);
         // 表示先以 published_date 反序、再以 sort 正序
         $sorts = array('id' => false);
         // 设置搜索排序
