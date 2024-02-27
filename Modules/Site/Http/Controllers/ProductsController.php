@@ -23,6 +23,7 @@ use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Modules\Site\Http\Models\SystemValue;
 use XS;
 
 class ProductsController extends CrudController
@@ -101,7 +102,12 @@ class ProductsController extends CrudController
     public function GetProductList($request)
     {
         try {
-            return $this->SearchForXunsearch($request);
+            $status = SystemValue::where('key', 'xunsearch')->value('status');
+            if ($status == 1) {
+                return $this->SearchForXunsearch($request);
+            } else {
+                return $this->SearchForMysql($request);
+            }
         } catch (\Exception $e) {
             return $this->SearchForMysql($request);
         }
