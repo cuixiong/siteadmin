@@ -198,7 +198,7 @@ class ProductsController extends CrudController
             $sorts = array('published_date' => false);
             // 设置搜索排序
             $search->setMultiSort($sorts);
-            $search->setFuzzy()->addRange($type,$keyword[0],$keyword[1]);
+            $search->setQuery('')->addRange($type,$keyword[0],$keyword[1]);
         } else if(empty($keyword)) {
             $sorts = array('published_date' => false);
             // 设置搜索排序
