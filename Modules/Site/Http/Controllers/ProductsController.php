@@ -186,17 +186,19 @@ class ProductsController extends CrudController
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-        $keyword = $request->keyword;
+        $keyword = $request->keyword ? $request->keyword : '';
         $type = $request->type;
-        $sorts = array('published_date' => false);
-        if(!empty($type) && in_array($type,['id','category_id'])){
+        if(!empty($type) && in_array($type,['id','category_id']) && $keyword){
             $keyword = $type.':'.$keyword;
-        } else {
-            $sorts = array('score' => false,'published_date' => false);
+            $sorts = array('published_date' => false);
+            // 设置搜索排序
+            $search->setMultiSort($sorts);
+        } else if(empty($keyword)) {
+            $sorts = array('published_date' => false);
+            // 设置搜索排序
+            $search->setMultiSort($sorts);
         }
         $search->setFuzzy()->setQuery($keyword);
-        // 设置搜索排序
-        $search->setMultiSort($sorts);
         // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
         $docs = $search->search();
@@ -207,7 +209,7 @@ class ProductsController extends CrudController
                 $product = [];
                 foreach ($doc as $key2 => $value2) {
                     if(in_array($key2, ['created_at','published_date','updated_at'])){
-                        $value2 = date('Y-m-d H:i:s', $value2);
+                        $value2 = $value2  ? date('Y-m-d H:i:s', intval($value2)) : '';
                     }
                     $IntvalKey = [
                         'publisher_id',
