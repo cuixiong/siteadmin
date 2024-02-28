@@ -189,7 +189,7 @@ class ProductsController extends CrudController
         $keyword = $request->keyword;
         $type = $request->type;
         $sorts = array('published_date' => false);
-        if(empty($type) && in_array($type,['id','category_id'])){
+        if(!empty($type) && in_array($type,['id','category_id'])){
             $keyword = $type.':'.$keyword;
         } else {
             $sorts = array('score' => false,'published_date' => false);
