@@ -186,8 +186,8 @@ class ProductsController extends CrudController
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-        $keyword = $request->input('keyword');
-        $type = $request->input('type');
+        $keyword = $request->keyword;
+        $type = $request->type;
         $sorts = array('published_date' => false);
         if(empty($type) && in_array($type,['id','category_id'])){
             $keyword = $type.':'.$keyword;
