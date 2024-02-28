@@ -103,7 +103,6 @@ class ProductsController extends CrudController
     protected function QuickSearch(Request $request)
     {
         try {
-            $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $data = $this->GetProductList($request);
             $record = $data['list'];
