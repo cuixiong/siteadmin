@@ -86,7 +86,6 @@ class ProductsController extends CrudController
                 'total' => $total,
                 'list' => $record,
                 'headerTitle' => $headerTitle ?? [],
-                'type' => $type
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -190,14 +189,15 @@ class ProductsController extends CrudController
         $search = $xs->search;
         $keyword = $request->input('keyword');
         $type = $request->input('type');
+        $sorts = array('published_date' => false);
         if(empty($type) && in_array($type,['id','category_id'])){
             $keyword = $type.':'.$keyword;
+        } else {
+            $sorts = array('score' => false,'published_date' => false);
         }
         $search->setFuzzy()->setQuery($keyword);
-        // 表示先以 published_date 反序、再以 sort 正序
-        $sorts = array('id' => false);
         // 设置搜索排序
-        $search->setSort($sorts);
+        $search->setMultiSort($sorts);
         // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
         $docs = $search->search();
