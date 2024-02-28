@@ -188,17 +188,25 @@ class ProductsController extends CrudController
         $search = $xs->search;
         $keyword = $request->keyword ? $request->keyword : '';
         $type = $request->type;
-        if(!empty($type) && in_array($type,['id','category_id']) && $keyword){
+        if(!empty($type) && in_array($type,['id','category_id','country_id','price','discount','discount_amount','show_hot','show_recommend','status']) && $keyword){
             $keyword = $type.':'.$keyword;
             $sorts = array('published_date' => false);
             // 设置搜索排序
             $search->setMultiSort($sorts);
+            $search->setFuzzy()->setQuery($keyword);
+        } else if(!empty($type) && in_array($type,['created_at','published_date']) && $keyword){
+            $sorts = array('published_date' => false);
+            // 设置搜索排序
+            $search->setMultiSort($sorts);
+            $search->setFuzzy()->addRange($type,$keyword[0],$keyword[1]);
         } else if(empty($keyword)) {
             $sorts = array('published_date' => false);
             // 设置搜索排序
             $search->setMultiSort($sorts);
+            $search->setFuzzy()->setQuery($keyword);
+        } else if($type == 'name' || $type == 'english_name'){
+            $search->setFuzzy()->setQuery($keyword);
         }
-        $search->setFuzzy()->setQuery($keyword);
         // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
         $docs = $search->search();
