@@ -678,7 +678,7 @@ class ProductsController extends CrudController
         $data = [];
         if ($keyword == 'category_id') {
             //分类
-            $data = (new ProductsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1], ['sort' => 'ASC', 'pid' => 0]);
+            $data= (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
         } elseif ($keyword == 'status') {
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];

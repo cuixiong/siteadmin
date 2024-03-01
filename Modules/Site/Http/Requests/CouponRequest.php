@@ -13,11 +13,11 @@ class CouponRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'name' => 'required|unique:coupons,name',
+            'code' => 'required|unique:coupons,code',
         ];
         $message = [
-            'name.required' => '名称不能为空',
-            'name.unique' => '名称不能重复',
+            'code.required' => '名称不能为空',
+            'code.unique' => '名称不能重复',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -29,15 +29,15 @@ class CouponRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
-            'name' => [
+            'code' => [
                 'required',
                 \Illuminate\Validation\Rule::unique('coupons')->ignore($request->input('id')),
             ]
         ];
         $message = [
             'id.required' => 'ID不能为空',
-            'name.required' => '名称不能为空',
-            'name.unique' => '名称不能重复',
+            'code.required' => '名称不能为空',
+            'code.unique' => '名称不能重复',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
