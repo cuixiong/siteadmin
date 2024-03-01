@@ -88,6 +88,7 @@ Route::middleware([
         Route::post('batch-update', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdate'])->name('报告管理:批量修改');
         Route::post('batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'batchDelete'])->name('报告管理:批量删除');
         Route::post('quick-search', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearch'])->name('报告管理:快速搜索');
+        Route::get('quick-search-dictionary', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearchDictionary'])->name('报告管理:快速搜索-字典数据');
 
     });
     
