@@ -1287,4 +1287,23 @@ class ProductsController extends CrudController
         }
         ReturnJson(TRUE, trans('lang.file_not_exist'));
     }
+
+    /**
+     * 快速搜索-字典数据
+     */
+    public function QuickSearchDictionary(Request $request)
+    {
+        $options = [];
+        $codes = ['Switch_State','Show_Home_State','Has_Sample','Discount_Type','Quick_Search'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        if(!empty($data)){
+            foreach ($data as $map){
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        //分类
+        $options['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
+        ReturnJson(TRUE,'', $options);
+    }
 }

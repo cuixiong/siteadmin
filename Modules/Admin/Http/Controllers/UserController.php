@@ -4,11 +4,13 @@ namespace Modules\Admin\Http\Controllers;
 
 use App\Exports\UsersExport;
 use App\Imports\UserImport;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Role;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends CrudController
 {
@@ -67,6 +69,9 @@ class UserController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->user->id);
+            $model = User::where('id',$request->user->id)->first();
+            $token = JWTAuth::fromUser($model);//生成token
+            $input['token'] = $token;
             if(!$record->update($input)){
                 ReturnJson(FALSE,trans('lang.update_error'));
                 exit;

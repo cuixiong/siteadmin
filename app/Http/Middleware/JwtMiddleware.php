@@ -24,6 +24,14 @@ class JwtMiddleware
                     'message' => '账号不存在'
                 ], 404);
             }
+            $token = $request->header('Authorization');
+            $token = trim(str_replace('Bearer','',$token));
+            if($user->token != $token){
+                return response()->json([
+                    'code' => 'B001',
+                    'message' => 'token is error'
+                ], 404);
+            }
             // 将用户信息存储在请求中，以便后续使用
             $is_super = Role::whereIn('id',explode(',',$user->role_id))->where('is_super',1)->count();
             $user->is_super = $is_super > 0 ? true : false;

@@ -20,7 +20,7 @@ Route::middleware([
     JwtMiddleware::class, // JWT验证中间件
     'language' // 语言中间件
 ])->prefix('admin')->group(function () {
-    Route::post('admin/update/info', 'UserController@updateInfo')->name('个人信息修改');
+    Route::post('update/info',[Modules\Admin\Http\Controllers\UserController::class, 'updateInfo'])->name('个人信息修改');
     // Common控制器
     Route::prefix('common')->group(function () {
         Route::get('info', [Modules\Admin\Http\Controllers\CommonController::class, 'info'])->name('公共模块:INFO接口');
