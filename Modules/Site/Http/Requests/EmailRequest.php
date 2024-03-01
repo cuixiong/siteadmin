@@ -13,8 +13,8 @@ class EmailRequest extends BaseRequest
             'name' => 'required',
             'email' => 'required',
             'host' => 'required',
-            'port' => ['required','size:1,5'],
-            'encryption' => ['required','size:1,6'],
+            'port' => ['required','max:5'],
+            'encryption' => ['required','max:20'],
             'password' => 'required',
         ];
         $message = [
@@ -23,9 +23,9 @@ class EmailRequest extends BaseRequest
             'host.required' => 'SMTP主机地址不能为空',
             'port.required' => 'SMTP主机端口不能为空',
             'port.required' => 'SMTP主机端口不能为空',
-            'port.size' => 'SMTP主机端口必须是在1-65535之间',
+            'port.max' => 'SMTP主机端口必须是在1-65535之间',
             'encryption.required' => 'SMTP加密类型不能为空',
-            'encryption.size' => 'SMTP加密类型不正确',
+            'encryption.max' => 'SMTP加密类型不正确',
             'password.required' => '邮箱授权码不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
@@ -41,8 +41,8 @@ class EmailRequest extends BaseRequest
             'name' => 'required',
             'email' => 'required',
             'host' => 'required',
-            'port' => ['required','size:1,5'],
-            'encryption' => ['required','size:1,6'],
+            'port' => ['required','max:5'],
+            'encryption' => ['required','max:20'],
             'password' => 'required',
         ];
         $message = [
@@ -51,9 +51,9 @@ class EmailRequest extends BaseRequest
             'email.required' => '邮箱不能为空',
             'host.required' => 'SMTP主机地址不能为空',
             'port.required' => 'SMTP主机端口不能为空',
-            'port.size' => 'SMTP主机端口必须是在1-65535之间',
+            'port.max' => 'SMTP主机端口必须是在1-65535之间',
             'encryption.required' => 'SMTP加密类型不能为空',
-            'encryption.size' => 'SMTP加密类型不正确',
+            'encryption.max' => 'SMTP加密类型不正确',
             'password.required' => '邮箱授权码不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
