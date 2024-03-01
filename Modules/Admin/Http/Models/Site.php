@@ -264,34 +264,34 @@ class Site extends Base
 
             case 'pull_code':
                 //拉取代码/升级站点
-                $commands = self::getPullCodeCommands($apiDirName, $frontedDirName);
+                $commands = self::getPullCodeCommands($apiDirName);
                 break;
 
             case 'current_hash':
                 //当前版本hash及hash短格式
-                $commands = self::getCurrentHashCommands($apiDirName, $frontedDirName);
+                $commands = self::getCurrentHashCommands($apiDirName);
                 break;
 
             case 'commit_history':
                 //历史提交记录、返回哈希值及注释
                 $pageNum = $option['pageNum'] ?? 0;
                 $pageSize = $option['pageSize'] ?? 0;
-                $commands = self::getCommitHistoryCommands($apiDirName, $frontedDirName, $pageNum, $pageSize);
+                $commands = self::getCommitHistoryCommands($apiDirName, $pageNum, $pageSize);
                 break;
 
             case 'commit_history_count':
                 //历史提交记录总数
-                $commands = self::getCommitHistoryCountCommands($apiDirName, $frontedDirName);
+                $commands = self::getCommitHistoryCountCommands($apiDirName);
                 break;
             case 'available_pull':
                 // 是否可以拉取
-                $commands = self::getAvailablePullCommands($apiDirName, $frontedDirName);
+                $commands = self::getAvailablePullCommands($apiDirName);
                 break;
 
             case 'rollback_code':
                 // 代码回滚
                 $hash = $option['hash'];
-                $commands = self::getRollbackCodeCommands($apiDirName, $frontedDirName, $hash);
+                $commands = self::getRollbackCodeCommands($apiDirName, $hash);
                 break;
 
             default:
