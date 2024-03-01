@@ -291,7 +291,7 @@ class Site extends Base
             case 'rollback_code':
                 // 代码回滚
                 $hash = $option['hash'];
-                $commands = self::getRollbackCodeCommands($apiDirName, $frontedDirName, $hash);
+                $commands = self::getRollbackCodeCommands($apiDirName, $hash);
                 break;
 
             default:
