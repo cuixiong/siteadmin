@@ -13,7 +13,7 @@ class EmailRequest extends BaseRequest
             'name' => 'required',
             'email' => 'required',
             'host' => 'required',
-            'port' => ['required','size:1,5'],
+            'port' => ['required','size:0,65535'],
             'encryption' => ['required','size:1,6'],
             'password' => 'required',
         ];
@@ -41,7 +41,7 @@ class EmailRequest extends BaseRequest
             'name' => 'required',
             'email' => 'required',
             'host' => 'required',
-            'port' => ['required','size:1,5'],
+            'port' => ['required','size:1,65535'],
             'encryption' => ['required','size:1,6'],
             'password' => 'required',
         ];
