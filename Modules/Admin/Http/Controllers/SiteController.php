@@ -317,7 +317,7 @@ class SiteController extends CrudController
                 $commitCount = trim($commitCountOutput['output'], "\n");
             }
             //获取具体内容
-            $commitOutput = Site::executeRemoteCommand($site, null, null,  'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
+            $commitOutput = Site::executeRemoteCommand($site, $server, null,  'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum, 'pageSize' => $pageSize,]);
             $commitOutput['count'] = $commitCount;
 
             if (!$commitOutput['result']) {

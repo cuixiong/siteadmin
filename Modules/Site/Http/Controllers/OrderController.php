@@ -118,13 +118,14 @@ class OrderController extends CrudController
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-
-            $orderRecord = Order::query()->whereIn('id', $ids);
-            if (!$orderRecord->delete()) {
-                ReturnJson(FALSE, trans('lang.delete_error'));
-            } else {
-                $orderGoodsRecord = OrderGoods::query()->whereIn('order_id', $ids);
-                $orderGoodsRecord->delete();
+            
+            foreach ($ids as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if ($record) {
+                    $record->delete();
+                    $orderGoodsRecord = OrderGoods::query()->whereIn('order_id', $ids);
+                    $orderGoodsRecord->delete();
+                }
             }
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {

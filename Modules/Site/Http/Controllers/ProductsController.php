@@ -736,7 +736,19 @@ class ProductsController extends CrudController
             $data['count'] = $model->count();
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } else {
-            $data['result_count'] = $model->update([$keyword => $value]);
+            // $data['result_count'] = $model->update([$keyword => $value]);
+            // 批量操作无法触发添加日志的功能，但我领导要求有日志
+            $newIds = $model->pluck('id');
+            
+            foreach ($newIds as $id) {
+                $record = $this->ModelInstance()->find($id);
+                if ($record) {
+                    $record->$keyword = $value;
+                    $record->save();
+                    $this->ModelInstance()->PushXunSearchMQ($record,'update');
+                }
+            }
+            
             ReturnJson(TRUE, trans('lang.update_success'));
         }
     }
@@ -772,7 +784,27 @@ class ProductsController extends CrudController
             $data['count'] = $model->count();
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } elseif ($type == 2) {
-            $data['result_count'] = $model->delete();
+            // $data['result_count'] = $model->delete();
+            
+            // 批量操作无法触发添加日志的功能，但我领导要求有日志
+            $newIds = $model->pluck('id');
+            
+            foreach ($newIds as $id) {
+                $record = $this->ModelInstance()->find($id);
+
+                $year = Products::publishedDateFormatYear($record->published_date);
+                if ($year) {
+                    $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
+                }
+                if ($recordDescription) {
+                    $recordDescription->delete();
+                }
+                if ($record) {
+                    $record->delete();
+                    // 删除完成后同步到xunsearch
+                    $this->ModelInstance()->PushXunSearchMQ($record->id,'delete');
+                }
+            }
             ReturnJson(TRUE, trans('lang.delete_success'));
         }
     }
