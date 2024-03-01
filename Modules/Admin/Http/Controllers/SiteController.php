@@ -133,7 +133,7 @@ class SiteController extends CrudController
         $step = $request->input('step');
 
         $param = $request->input('param');
-        // $param = $param ? json_decode($param, true) : [];
+        $param = $param ? json_decode($param, true) : [];
 
         // 创建者ID
         $created_by = $request->user->id;
