@@ -54,6 +54,7 @@ class LoginController extends Controller
                 ReturnJson(false,'生成TOKEN失败');
             }
             $model->login_at = time();
+            $model->token = $token;
             $model->save();
             ReturnJson(true,trans('lang.request_success'),[
                 'accessToken' => $token,
@@ -107,13 +108,15 @@ class LoginController extends Controller
             if(User::where('email','=',$model->email)->first()){
                 ReturnJson(false,trans('lang.eamail_unique'));
             }
+            $token=JWTAuth::fromUser($model);//生成token
+            $model->token = $token;
             if($model->save())
             {
                 (new SendEmailController)->register($model->id);
-                $token=JWTAuth::fromUser($model);//生成token
                 if(!$token){
                     ReturnJson(false,'注册成功,但是token生成失败');
                 }
+                User::where('email','=',$model->email)->update(['token' => $token]);
                 ReturnJson(true,trans('lang.request_success'),['token' => $token,'status' => 1,'expires_in' => auth('api')->factory()->getTTL() + 66240,'id' => $model->id]);
             } else {
                 ReturnJson(false,trans('lang.request_error'));
@@ -170,6 +173,8 @@ class LoginController extends Controller
                 ReturnJson(false,trans('lang.eamail_undefined'));
             }
             $model->password = Hash::make($request->get('password'));
+            $token = JWTAuth::fromUser($model);//生成token
+            $model->token = $token;
             $model->save();
             ReturnJson(true,trans('lang.request_success'));
         } catch (\Exception $e) {
