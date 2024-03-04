@@ -265,7 +265,7 @@ class FileManagement extends Controller{
         foreach ($names as $name) {
             $leftStr = trim(trim($old_path,'/').'/' . $name,'/').'/';
             $rightStr = trim($new_path,'/').'/';
-            if(strpos($leftStr,$rightStr) > 0){
+            if(strpos($leftStr,$rightStr) != 0){
                 return ReturnJson(false,'复制或移动的目标相同，请正确操作');
             }
         }
