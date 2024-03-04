@@ -820,4 +820,47 @@ class FileManagement extends Controller{
         }
         return true;
     }
+
+    // 根目录查询文件夹
+    public function DirListOne(Request $request)
+    {
+        set_time_limit(0);
+        $RootPath = AdminUploads::getRootPath();
+        $path = $request->path ? $request->path.'/' : '';
+        $DirList = $this->listFolderFilesOne($RootPath.$path,$RootPath);
+        ReturnJson(true, trans('lang.request_success'), $DirList);
+    }
+
+    // 递归查询文件夹
+    public function listFolderFilesOne($dir,$RootPath){
+        $dir = rtrim($dir, '/');
+        $result = array();
+        $cdir = scandir($dir);
+        foreach ($cdir as $value){
+            $isLeaf = false;
+            if (!in_array($value,array(".",".."))){
+                if (is_dir($dir . '/' . $value)){
+                    $this->i = $this->i + 1;
+                    $tempRoot = str_replace(rtrim($RootPath, '/'),'',$dir);
+                    $tempRoot = trim($tempRoot,'/') ? $tempRoot.'/'.$value : $value;
+                    $ccdir = scandir($dir . '/' . $value);
+                    if(count($ccdir) > 2){
+                        foreach ($ccdir as $value2) {
+                            if(is_dir($dir . '/' . $value . '/' . $value2)){
+                                $isLeaf = true;
+                                break;
+                            }
+                        }
+                    }
+                    $result[] = [
+                        'value'=> trim($tempRoot,'/'),
+                        'label' => $value,
+                        'isLeaf' => $isLeaf,
+                        'path' => $dir . '/' . $value
+                    ];
+                }
+            }
+        }
+        return $result;
+    }
 }
