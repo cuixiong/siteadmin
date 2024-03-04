@@ -752,7 +752,7 @@ class FileManagement extends Controller{
     public function DirListOne(Request $request)
     {
         set_time_limit(0);
-        $RootPath = AdminUploads::getRootPath();
+        $RootPath = SiteUploads::getRootPath();
         $path = $request->path ? $request->path.'/' : '';
         $level = $request->level ? $request->level : 0;
         if(empty($path) && empty($level)){
