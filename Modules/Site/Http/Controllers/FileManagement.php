@@ -261,11 +261,11 @@ class FileManagement extends Controller{
             ReturnJson(false,'超过文件管理范围');
         } elseif ($old_path == $new_path) {
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
-        }
+        }   
         foreach ($names as $name) {
             $leftStr = trim(trim($old_path,'/').'/' . $name,'/').'/';
             $rightStr = trim($new_path,'/').'/';
-            if(strpos($leftStr,$rightStr) != 0){
+            if(strpos($rightStr,$leftStr) === 0){
                 return ReturnJson(false,'复制或移动的目标相同，请正确操作');
             }
         }
