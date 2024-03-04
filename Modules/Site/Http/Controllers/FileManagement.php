@@ -754,6 +754,15 @@ class FileManagement extends Controller{
         set_time_limit(0);
         $RootPath = SiteUploads::getRootPath();
         $path = $request->path ? $request->path.'/' : '';
+        if(empty($path)){
+            $res = [
+                'value' => '',
+                'label' => '根目录' ,
+                'isLeaf' => false,
+                'path' => ''
+            ];
+            ReturnJson(true, trans('lang.request_success'), $res);
+        }
         $DirList = $this->listFolderFilesOne($RootPath.$path,$RootPath);
         ReturnJson(true, trans('lang.request_success'), $DirList);
     }
@@ -764,7 +773,7 @@ class FileManagement extends Controller{
         $result = array();
         $cdir = scandir($dir);
         foreach ($cdir as $value){
-            $isLeaf = false;
+            $isLeaf = true;
             if (!in_array($value,array(".",".."))){
                 if (is_dir($dir . '/' . $value)){
                     $this->i = $this->i + 1;
@@ -774,7 +783,7 @@ class FileManagement extends Controller{
                     if(count($ccdir) > 2){
                         foreach ($ccdir as $value2) {
                             if(is_dir($dir . '/' . $value . '/' . $value2)){
-                                $isLeaf = true;
+                                $isLeaf = false;
                                 break;
                             }
                         }
