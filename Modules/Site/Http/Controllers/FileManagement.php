@@ -755,7 +755,7 @@ class FileManagement extends Controller{
         $RootPath = SiteUploads::getRootPath();
         $path = $request->path ? $request->path.'/' : '';
         if(empty($path)){
-            $res = [
+            $res[] = [
                 'value' => '',
                 'label' => '根目录' ,
                 'isLeaf' => false,
