@@ -456,6 +456,50 @@ class OperationLogController extends CrudController
         return $contents;
     }
 
+    
+    private static function News($model)
+    {
+
+        $dirty = $model->getDirty();
+        $contents = [];
+        $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
+        foreach ($dirty as $field => $value) {
+            if (!in_array($field, ['created_by', 'updated_by', 'created_at', 'updated_at'])) {
+
+                $ColumnComment = $DbManager->getColumn($field)->getComment();
+                $ColumnComment = $ColumnComment ? $ColumnComment : $field;
+                $OriginalValue = $model->getOriginal($field);
+                if($OriginalValue == $value){
+                    continue;
+                }
+                switch ($field) {
+
+                    case 'status':
+                        $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
+                        $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
+                        break;
+                    default:
+                        $OriginalName = $OriginalValue;
+                        $NewName = $value;
+                        break;
+                }
+            } else {
+                continue;
+            }
+            if ($OriginalValue != $value) {
+                if ($OriginalName != $OriginalValue) {
+                    $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
+                } else {
+                    $title = "[$ColumnComment] 从 “" . $OriginalValue . "” 更新为=> “" . $value . "”";
+                }
+                $contents[] = $title;
+            }
+        }
+
+        $contents = implode('、', $contents);
+        return $contents;
+    }
+
     /**
      * get dict options
      * @return Array
