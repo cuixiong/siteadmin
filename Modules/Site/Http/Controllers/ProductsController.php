@@ -1296,14 +1296,39 @@ class ProductsController extends CrudController
         $options = [];
         $codes = ['Switch_State','Show_Home_State','Has_Sample','Discount_Type','Quick_Search'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
-        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
+        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField,'remark as type')->orderBy('sort','asc')->get()->toArray();
         if(!empty($data)){
             foreach ($data as $map){
-                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+                if($map['code'] == 'Quick_Search'){
+                    $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value'],'type' => $map['type'] ? intval($map['type']) : 0];
+                } else {
+                    $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
+                }
+            }
+        }
+        $res['Quick_Search'] = $options['Quick_Search'];
+        foreach ($res['Quick_Search'] as &$value) {
+            switch ($value['value']) {
+                case 'status':
+                    $value['dictionary'] = $options['Switch_State'];
+                break;
+                case 'show_recommend':
+                    $value['dictionary'] = $options['Show_Home_State'];
+                break;
+                case 'show_hot':
+                    $value['dictionary'] = $options['Has_Sample'];
+                break;
+                case 'discount_amount':
+                    $value['dictionary'] = $options['Discount_Type'];
+                break;
+                
+                default:
+                    $value['dictionary'] = [];
+                break;
             }
         }
         //分类
-        $options['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
-        ReturnJson(TRUE,'', $options);
+        $res['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
+        ReturnJson(TRUE,'', $res);
     }
 }
