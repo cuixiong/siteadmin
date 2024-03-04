@@ -827,7 +827,8 @@ class FileManagement extends Controller{
         set_time_limit(0);
         $RootPath = AdminUploads::getRootPath();
         $path = $request->path ? $request->path.'/' : '';
-        if(empty($path)){
+        $level = $request->level ? $request->level : 0;
+        if(empty($path) && empty($level)){
             $res[] = [
                 'value' => '',
                 'label' => '根目录' ,
