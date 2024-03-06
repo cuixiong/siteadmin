@@ -362,7 +362,7 @@ class ProductsController extends CrudController
                 $record['description_en'] = $descriptionData['description_en'] ?? '';
                 $record['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
                 $record['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
-                $rrecord['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+                $record['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
             }
 
             ReturnJson(TRUE, trans('lang.request_success'), $record);
