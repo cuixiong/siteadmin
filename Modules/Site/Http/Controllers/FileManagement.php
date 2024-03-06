@@ -261,9 +261,11 @@ class FileManagement extends Controller{
             ReturnJson(false,'超过文件管理范围');
         } elseif ($old_path == $new_path) {
             ReturnJson(false,'复制或移动的目标相同，请正确操作');
-        }
+        }   
         foreach ($names as $name) {
-            if(trim(trim($old_path,'/').'/' . $name,'/') == trim($new_path,'/')){
+            $leftStr = trim(trim($old_path,'/').'/' . $name,'/').'/';
+            $rightStr = trim($new_path,'/').'/';
+            if(strpos($rightStr,$leftStr) === 0){
                 return ReturnJson(false,'复制或移动的目标相同，请正确操作');
             }
         }
@@ -752,7 +754,7 @@ class FileManagement extends Controller{
     public function DirListOne(Request $request)
     {
         set_time_limit(0);
-        $RootPath = AdminUploads::getRootPath();
+        $RootPath = SiteUploads::getRootPath();
         $path = $request->path ? $request->path.'/' : '';
         $level = $request->level ? $request->level : 0;
         if(empty($path) && empty($level)){
