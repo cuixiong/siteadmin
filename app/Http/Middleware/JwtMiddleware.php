@@ -28,7 +28,7 @@ class JwtMiddleware
             $token = trim(str_replace('Bearer','',$token));
             if($user->token != $token){
                 return response()->json([
-                    'code' => 'B001',
+                    'code' => -200,
                     'message' => 'token is error'
                 ], 404);
             }
@@ -39,19 +39,19 @@ class JwtMiddleware
             return $next($request);
         } catch (TokenExpiredException $e) {
             return response()->json([
-                'code' => 'B001',
+                'code' => -200,
                 'message' => 'token 过期' , //token已过期
             ]);
  
         } catch (TokenInvalidException $e) {
             return response()->json([
-                'code' => 'B001',
+                'code' => -200,
                 'message' => 'token 无效',  //token无效
             ]);
  
         } catch (JWTException $e) {
             return response()->json([
-                'code' => 'B001',
+                'code' => -200,
                 'message' => '缺少token' , //token为空
             ]);
         }
