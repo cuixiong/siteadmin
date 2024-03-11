@@ -268,7 +268,7 @@ class Products extends Base
     {
         $text = '';
         if (isset($this->attributes['published_date'])) {
-            $text = date('Y-m-d H:i:s', $this->attributes['published_date']);
+            $text = date('Y-m-d', $this->attributes['published_date']);
         }
         return $text;
     }
