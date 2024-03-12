@@ -273,6 +273,7 @@ class ProductsController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            $input['published_date'] = is_numeric($input['published_date']) ? $input['published_date'] : strtotime($input['published_date']);
             // 开启事务
             // $currentTenant = tenancy()->tenant;
             // DB::connection($currentTenant->getConnectionName())->beginTransaction();
@@ -381,6 +382,7 @@ class ProductsController extends CrudController
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            $input['published_date'] = is_numeric($input['published_date']) ? $input['published_date'] : strtotime($input['published_date']);
             // 开启事务
             // $currentTenant = tenancy()->tenant;
             // DB::connection($currentTenant->getConnectionName())->beginTransaction();
