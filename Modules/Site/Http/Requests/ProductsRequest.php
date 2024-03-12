@@ -13,7 +13,7 @@ class ProductsRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'name' => 'required|unique:product_category,name',
+            'name' => 'required|unique:product_routine,name',
             'published_date' => 'required',
             'keywords' => 'required',
             'url' => 'required',
@@ -39,7 +39,7 @@ class ProductsRequest extends BaseRequest
         $rules = [
             'name' => [
                 'required',
-                \Illuminate\Validation\Rule::unique('product_category')->ignore($request->input('id')),
+                \Illuminate\Validation\Rule::unique('product_routine')->ignore($request->input('id')),
             ],
             'category_id' => 'required',
             'published_date' => 'required',

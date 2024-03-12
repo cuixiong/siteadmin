@@ -277,7 +277,7 @@ class Products extends Base
     public static function publishedDateFormatYear($timestamp)
     {
 
-        $year = date('Y', $timestamp);
+        $year = is_numeric($timestamp) ? date('Y', $timestamp) : date('Y', strtotime($timestamp));
         if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
             return false;
         }
@@ -318,8 +318,9 @@ class Products extends Base
         ];
     }
 
-    public function PushXunSearchMQ($model,$action,$siteName = ''){
-        if(in_array($action,['add','update'])){
+    public function PushXunSearchMQ($model, $action, $siteName = '')
+    {
+        if (in_array($action, ['add', 'update'])) {
             $data = $this->GetProductData($model);
         } else {
             $data = ['id' => $model];
@@ -327,8 +328,8 @@ class Products extends Base
         $request = request();
         $siteName = $siteName ? $siteName : $request->header('Site');
         $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('xunsearch_'.$siteName);
-        $RabbitMQ->WorkModePush('','',['data' => $data, 'action' => $action]);
+        $RabbitMQ->setQueueName('xunsearch_' . $siteName);
+        $RabbitMQ->WorkModePush('', '', ['data' => $data, 'action' => $action]);
         $RabbitMQ->close();
         return true;
     }
@@ -338,7 +339,7 @@ class Products extends Base
      */
     private function GetProductData($data)
     {
-        if($data){
+        if ($data) {
             $data = Products::find($data['id']);
             $ini = [
                 "pid" => $data['id'],
