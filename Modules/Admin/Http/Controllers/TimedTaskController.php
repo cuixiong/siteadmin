@@ -599,7 +599,16 @@ class TimedTaskController extends CrudController
             }
             $content = $ssh->exec($command);
         } else {
-            $content = shell_exec($command);
+            /**
+             * 这里有大坑，如果直接通过请求那么运行的liunx命令的用户是www
+             * 使用www是无法获取到日志文件里面的内容，必须要同ROOT账号权限
+             */
+            $ssh = new SSH2(env('APP_LOCAL_HOST'));
+            $res = $ssh->login(env('APP_USERNAME'),env('APP_PASSWORD'));
+            if(!$res){
+                ReturnJson(false,'');
+            }
+            $content = $ssh->exec($command);
         }
         $content = str_replace("\n",'<br/>',$content);
         ReturnJson(true,'',$content);
