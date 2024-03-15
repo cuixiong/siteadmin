@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Modules\Site\Http\Models\Email;
 use Modules\Site\Http\Models\EmailLog;
 use Modules\Site\Http\Models\Order;
-use Modules\Admin\Http\Models\User;
+use Modules\Site\Http\Models\User;
 use Modules\Site\Http\Models\EmailScene;
 
 class SiteEmailController extends Controller
