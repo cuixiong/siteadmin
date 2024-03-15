@@ -21,6 +21,14 @@ class EmailSceneController extends CrudController{
         $options['code'] = [
             ['value' => 'register','label' => 'register'],
             ['value' => 'password','label' => 'password'],
+            ['value' => 'reset-password','label' => 'reset-password'],
+            ['value' => 'register-success','label' => 'register-success'],
+            ['value' => 'contact-us','label' => 'contact-us'],
+            ['value' => 'product-sample','label' => 'product-sample'],
+            ['value' => 'sample-request','label' => 'sample-request'],
+            ['value' => 'customized','label' => 'customized'],
+            ['value' => 'payment','label' => 'payment'],
+            ['value' => 'place-order','label' => 'place-order'],
         ];
         ReturnJson(TRUE,'', $options);
     }
