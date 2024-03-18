@@ -37,6 +37,7 @@ class PriceEditionController extends CrudController
             }
             $editionId = $res['id'];
             $editionData = $input['edition_data'] ?? null;
+            $editionToRedisData = [];// 有了事务，就必须做容器保存需要入库的redis的数据
             if ($editionId && $editionData) {
                 $editionData = json_decode($editionData, true);
                 //新增价格版本子项
@@ -44,7 +45,6 @@ class PriceEditionController extends CrudController
                     $item['edition_id'] = $editionId;
                     //子项验证
                     (new PriceEditionValueRequest())->store(new Request($item));
-
                     $itemModel = new PriceEditionValue();
                     $resItem = $itemModel->create($item);
                     if (!$resItem) {
@@ -52,15 +52,20 @@ class PriceEditionController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.add_error'));
                     }
+                    $editionToRedisData[] = $resItem;
                 }
             }
+            DB::commit();
+            // 事务提交成功，入库redis
+            $editionToRedisData = array_map(function ($item) {
+                return PriceEditionValue::SaveToRedis($item);
+            }, $editionToRedisData);
+            ReturnJson(TRUE, trans('lang.add_success'));
         } catch (\Exception $e) {
             // 回滚事务
             DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
-        DB::commit();
-        ReturnJson(TRUE, trans('lang.add_success'));
     }
 
 
@@ -90,7 +95,7 @@ class PriceEditionController extends CrudController
             $editionData = $input['edition_data'] ?? null;
             if ($editionId && $editionData) {
                 $editionData = json_decode($editionData, true);
-                
+                $editionToRedisData = [];// 有了事务，就必须做容器保存需要入库的redis的数据
                 foreach ($editionData as $item) {
 
                     $item['edition_id'] = $editionId;
@@ -114,15 +119,20 @@ class PriceEditionController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.update_error'));
                     }
+                    $editionToRedisData[] = $resItem;
                 }
             }
+            DB::commit();
+            // 事务提交成功，入库redis
+            $editionToRedisData = array_map(function ($item) {
+                return PriceEditionValue::SaveToRedis($item);
+            }, $editionToRedisData);
+            ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
             DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
-        DB::commit();
-        ReturnJson(TRUE, trans('lang.update_success'));
     }
 
 
@@ -152,6 +162,10 @@ class PriceEditionController extends CrudController
             PriceEditionValue::whereIn('edition_id', $ids)->delete();
 
             DB::commit();
+            $ids = PriceEditionValue::whereIn('edition_id', $ids)->pluck('id');
+            foreach($ids as $id){
+                PriceEditionValue::DeteleToRedis($id);
+            }
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
             // 回滚事务
