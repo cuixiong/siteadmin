@@ -105,6 +105,7 @@ class PriceEditionController extends CrudController
                         $itemModel = PriceEditionValue::find($item['id']);
                         if($itemModel){
                             $resItem = $itemModel->update($item);
+                            $editionToRedisData[] = $itemModel;
                         }
                     } else {
                         //子项验证
@@ -112,6 +113,7 @@ class PriceEditionController extends CrudController
 
                         $itemModel = new PriceEditionValue();
                         $resItem = $itemModel->create($item);
+                        $editionToRedisData[] = $resItem;
                     }
 
                     if (!isset($resItem) || !$resItem) {
@@ -119,7 +121,7 @@ class PriceEditionController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.update_error'));
                     }
-                    $editionToRedisData[] = $resItem;
+                    
                 }
             }
             DB::commit();
