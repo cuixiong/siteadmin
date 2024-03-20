@@ -486,7 +486,7 @@ Route::middleware([
 
     //测试面板接口
     Route::get('admin/site/bt-test', 'SiteController@btTest')->name('测试接口');
-    Route::get('price-edition/to-redis',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'ToReadis'])->name('价格版本管理:全量同步到redis');
+    Route::get('admin/price-edition/to-redis',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'ToReadis'])->name('价格版本管理:全量同步到redis');
 });
 
 // 暂时测试路由
