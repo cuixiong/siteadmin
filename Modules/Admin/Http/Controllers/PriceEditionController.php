@@ -95,6 +95,25 @@ class PriceEditionController extends CrudController
             $editionData = $input['edition_data'] ?? null;
             if ($editionId && $editionData) {
                 $editionData = json_decode($editionData, true);
+                
+                // 需要更新的id
+                // $editionDataIds = array_column($editionData,'id');
+                $editionDataIds = [];
+                foreach ($editionData as $item) {
+                    if (isset($item['id']) && !empty($item['id'])) {
+                        array_push($editionDataIds,$item['id']);
+                    }
+                }
+                // 数据库存在的id
+                $existIds = PriceEditionValue::query()->select('id')->where(['edition_id' => $editionId])->pluck('id')->toArray();
+                // 删除多余版本
+                $deletedIds = array_values(array_diff($existIds, $editionDataIds));
+                if(count($deletedIds)>0){
+                    $deleteRecord = PriceEditionValue::query()->whereIn('id', $deletedIds);
+                    $deleteRecord->delete();
+                }
+
+
                 $editionToRedisData = [];// 有了事务，就必须做容器保存需要入库的redis的数据
                 foreach ($editionData as $item) {
 
