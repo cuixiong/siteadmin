@@ -278,6 +278,14 @@ class PriceEditionController extends CrudController
                     $i = $i + 1;
                 }
             }
+            $langauges = Language::get();
+            foreach ($langauges as $key => $value) {
+                Language::UpdateToRedis($value);
+            }
+            $priceEditions = PriceEdition::get();
+            foreach ($priceEditions as $key => $value) {
+                PriceEdition::UpdateToRedis($value);
+            }
             echo '已成功同步：'.$i .' 总数量:'.$count;
             exit;
         } catch (\Exception $e) {

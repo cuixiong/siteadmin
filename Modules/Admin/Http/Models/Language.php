@@ -2,11 +2,37 @@
 
 namespace Modules\Admin\Http\Models;
 use Modules\Admin\Http\Models\Base;
+use Illuminate\Support\Facades\Redis;
 class Language extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = ['name','status','sort','updated_by','created_by'];
-    
+    public static $RedisKey = 'Languages';
+
+    /**
+     * Register the model events for updating.
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // 在创建成功后触发
+        static::created(function ($model) {
+            self::SaveToRedis($model);
+        });
+
+        // 在更新成功后触发
+        static::updating(function ($model) {
+            self::DeteleToRedis($model);
+        });
+
+        // 在删除成功后触发
+        static::deleted(function ($mode) {
+            self::DeteleToRedis($mode->id);
+        });
+    }
     /**
      * 处理查询列表条件数组
      * @param use Illuminate\Http\Request;
@@ -49,5 +75,53 @@ class Language extends Base
             $model = $model->where('updated_at', '<=', $updateTime[1]);
         }
         return $model;
+    }
+
+    /**
+     * 保存数据到Redis中
+     */
+    public static function SaveToRedis($data)
+    {
+        try {
+            $data = is_array($data) ? $data : $data->toArray();
+            $id = $data['id'];
+            Redis::hset(self::$RedisKey,$id,json_encode($data));
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * 更新数据到Redis中
+     */
+    public static function UpdateToRedis($data)
+    {
+        try {
+            $data = is_array($data) ? $data : $data->toArray();
+            $id = $data['id'];
+            // 先删除
+            Redis::hdel(self::$RedisKey,$id);
+            // 后新增
+            Redis::hset(self::$RedisKey,$id,json_encode($data));
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * 删除数据到Redis中
+     */
+    public static function DeteleToRedis($data)
+    {
+        try {
+            $data = is_array($data) ? $data : $data->toArray();
+            $id = $data['id'];
+            Redis::hdel(self::$RedisKey,$id);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }
