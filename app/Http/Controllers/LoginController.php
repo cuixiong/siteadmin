@@ -108,10 +108,10 @@ class LoginController extends Controller
             if(User::where('email','=',$model->email)->first()){
                 ReturnJson(false,trans('lang.eamail_unique'));
             }
-            $token=JWTAuth::fromUser($model);//生成token
-            $model->token = $token;
+
             if($model->save())
             {
+                $token=JWTAuth::fromUser($model);//生成token
                 (new SendEmailController)->register($model->id);
                 if(!$token){
                     ReturnJson(false,'注册成功,但是token生成失败');

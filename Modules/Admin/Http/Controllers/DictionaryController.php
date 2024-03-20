@@ -84,4 +84,34 @@ class DictionaryController extends CrudController
         }
         ReturnJson(TRUE,'', $options);
     }
+
+    /**
+     * 修改状态
+     * @param $request 请求信息
+     * @param $id 主键ID
+     */
+    public function changeStatus(Request $request)
+    {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->status = $request->status;
+            if (!$record->save()) {
+                $childIds = DictionaryValue::where('parent_id',$request->id)->pluck('id');
+                if($childIds){
+                    foreach ($childIds as $key => $value) {
+                        $model = DictionaryValue::find($value);
+                        $model->status = $request->status;
+                        $model->save();
+                    }
+                }
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 }

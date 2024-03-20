@@ -176,7 +176,6 @@ class RabbitmqService
         $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $this->channel->basic_publish($message, '',$this->queueName);
         $this->channel->wait_for_pending_acks();
-        $this->close();
     }
 
     public function WorkModePush($controller, $method, $data)
@@ -186,6 +185,5 @@ class RabbitmqService
         $message = new AMQPMessage($data, ['content_type'=>'text/plain', 'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
         $this->channel->basic_publish($message, '',$this->queueName);
         $this->channel->wait_for_pending_acks();
-        $this->close();
     }
 }

@@ -50,9 +50,11 @@ class UserController extends CrudController
             $input['department_id'] = $input['deptId'];
             $input['role_id'] = $input['roleIds'];
             $record = $this->ModelInstance()->findOrFail($request->id);
-            $model = User::where('id',$request->user->id)->first();
-            $token = JWTAuth::fromUser($model);//生成token
-            $input['token'] = $token;
+            if(!empty($request->password)){
+                $model = User::where('id',$request->user->id)->first();
+                $token = JWTAuth::fromUser($model);//生成token
+                $input['token'] = $token;
+            }
             if(!$record->update($input)){
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
@@ -72,9 +74,11 @@ class UserController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->user->id);
-            $model = User::where('id',$request->user->id)->first();
-            $token = JWTAuth::fromUser($model);//生成token
-            $input['token'] = $token;
+            if(!empty($request->password)){
+                $model = User::where('id',$request->user->id)->first();
+                $token = JWTAuth::fromUser($model);//生成token
+                $input['token'] = $token;
+            }
             if(!$record->update($input)){
                 ReturnJson(FALSE,trans('lang.update_error'));
                 exit;

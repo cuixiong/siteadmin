@@ -1323,6 +1323,9 @@ class ProductsController extends CrudController
                 case 'discount_amount':
                     $value['dictionary'] = $options['Discount_Type'];
                 break;
+                case 'country_id':
+                    $value['dictionary'] = (new Region)->GetList(['id as value', 'name as label'], false, '', ['status' => 1]);
+                break;
                 
                 default:
                     $value['dictionary'] = [];
