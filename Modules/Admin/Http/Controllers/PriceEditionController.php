@@ -262,4 +262,20 @@ class PriceEditionController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+    /**
+     * 更新全部的价格版本到Redis中
+     */
+    public function ToReadis(Request $request)
+    {
+        $list = PriceEditionValue::get();
+        $i = 0;
+        foreach ($list as $key => $value) {
+            // $res = PriceEditionValue::UpdateToRedis($value);
+            // if($res == true){
+            //     $i = $i + 1;
+            // }
+        }
+        ReturnJson(true,trans('lang.request_success'),'success count :' .$i);
+    }
 }
