@@ -149,7 +149,8 @@ class ProductsController extends CrudController
                 return $this->SearchForMysql($request);
             }
         } catch (\Exception $e) {
-            return $this->SearchForMysql($request);
+            // return $this->SearchForMysql($request);
+            ReturnJson(false,$e->getMessage());
         }
     }
 
@@ -188,7 +189,7 @@ class ProductsController extends CrudController
         $search = $xs->search;
         $keyword = $request->keyword ? $request->keyword : '';
         $type = $request->type;
-        if(!empty($type) && in_array($type,['id','category_id','country_id','price','discount','discount_amount','show_hot','show_recommend','status']) && $keyword){
+        if(($type != '' || $type != null) && in_array($type,['id','category_id','country_id','price','discount','discount_amount','show_hot','show_recommend','status']) && $keyword){
             $keyword = $type.':'.$keyword;
             $sorts = array('published_date' => false);
             // 设置搜索排序
@@ -258,7 +259,12 @@ class ProductsController extends CrudController
             ];
             return $data;
         } else {
-            return $this->SearchForMysql($request);
+            // return $this->SearchForMysql($request);
+            return $data = [
+                'list' => [],
+                'total' => 0,
+                'type' => 'xunsearch'
+            ];
         }
     }
 
