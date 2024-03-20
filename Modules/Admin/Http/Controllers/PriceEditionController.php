@@ -127,7 +127,7 @@ class PriceEditionController extends CrudController
             DB::commit();
             // 事务提交成功，入库redis
             $editionToRedisData = array_map(function ($item) {
-                return PriceEditionValue::SaveToRedis($item);
+                return PriceEditionValue::UpdateToRedis($item);
             }, $editionToRedisData);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
