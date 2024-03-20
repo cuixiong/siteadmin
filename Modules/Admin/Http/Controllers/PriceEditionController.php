@@ -270,6 +270,7 @@ class PriceEditionController extends CrudController
     {
         try {
             $list = PriceEditionValue::get();
+            $count = PriceEditionValue::count();
             $i = 0;
             foreach ($list as $key => $value) {
                 $res = PriceEditionValue::UpdateToRedis($value);
@@ -277,9 +278,11 @@ class PriceEditionController extends CrudController
                     $i = $i + 1;
                 }
             }
-            ReturnJson(true,trans('lang.request_success'),'success count :' .$i);
+            echo '已成功同步：'.$i .' 总数量:'.$count;
+            exit;
         } catch (\Exception $e) {
-            ReturnJson(false,$e->getMessage());
+            echo $e->getMessage();
+            exit;
         }
     }
 }
