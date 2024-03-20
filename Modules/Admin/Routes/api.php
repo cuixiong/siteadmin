@@ -216,7 +216,6 @@ Route::middleware([
         Route::get('option', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'option'])->name('价格版本管理:价格版本列表下拉列表数据');
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'changeStatus'])->name('价格版本管理:状态修改');
-        Route::get('to-redis',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'ToReadis'])->name('价格版本管理:全量同步到redis');
     });
 
     // FileManagement 控制器
@@ -487,7 +486,7 @@ Route::middleware([
 
     //测试面板接口
     Route::get('admin/site/bt-test', 'SiteController@btTest')->name('测试接口');
-    
+    Route::get('price-edition/to-redis',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'ToReadis'])->name('价格版本管理:全量同步到redis');
 });
 
 // 暂时测试路由

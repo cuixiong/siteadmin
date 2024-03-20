@@ -268,14 +268,18 @@ class PriceEditionController extends CrudController
      */
     public function ToReadis(Request $request)
     {
-        $list = PriceEditionValue::get();
-        $i = 0;
-        foreach ($list as $key => $value) {
-            // $res = PriceEditionValue::UpdateToRedis($value);
-            // if($res == true){
-            //     $i = $i + 1;
-            // }
+        try {
+            $list = PriceEditionValue::get();
+            $i = 0;
+            foreach ($list as $key => $value) {
+                $res = PriceEditionValue::UpdateToRedis($value);
+                if($res == true){
+                    $i = $i + 1;
+                }
+            }
+            ReturnJson(true,trans('lang.request_success'),'success count :' .$i);
+        } catch (\Exception $e) {
+            ReturnJson(false,$e->getMessage());
         }
-        ReturnJson(true,trans('lang.request_success'),'success count :' .$i);
     }
 }
