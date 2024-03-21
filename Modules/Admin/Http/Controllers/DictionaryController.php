@@ -99,15 +99,15 @@ class DictionaryController extends CrudController
             $record = $this->ModelInstance()->findOrFail($request->id);
             $record->status = $request->status;
             if (!$record->save()) {
-                $childIds = DictionaryValue::where('parent_id',$request->id)->pluck('id');
-                if($childIds){
-                    foreach ($childIds as $key => $value) {
-                        $model = DictionaryValue::find($value);
-                        $model->status = $request->status;
-                        $model->save();
-                    }
-                }
                 ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            $childIds = DictionaryValue::where('parent_id',$request->id)->pluck('id')->toArray();
+            if($childIds){
+                foreach ($childIds as $key => $value) {
+                    $model = DictionaryValue::find($value);
+                    $model->status = $request->status;
+                    $model->save();
+                }
             }
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
