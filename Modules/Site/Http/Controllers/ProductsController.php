@@ -1314,7 +1314,7 @@ class ProductsController extends CrudController
                 }
             }
         }
-        $res['Quick_Search'] = $options['Quick_Search'];
+        $res['Quick_Search'] = isset($options['Quick_Search']) && !empty($options['Quick_Search']) ? $options['Quick_Search'] : [];
         foreach ($res['Quick_Search'] as &$value) {
             switch ($value['value']) {
                 case 'status':

@@ -148,7 +148,7 @@ class SendEmailController extends Controller
                 }
             }
             EmailLog::AddLog(1,$scene->email_sender_id,$emails,$scene->id,$user);
-            ReturnJson(true,trans()->get('lang.eamail_success'));
+            ReturnJson(true,'邮箱已成功发送到你的邮箱！');
         } catch (\Exception $e) {
             EmailLog::AddLog(0,$scene->email_sender_id,$emails,$scene->id,$user);
             ReturnJson(FALSE,$e->getMessage());
