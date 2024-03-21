@@ -187,9 +187,9 @@ class ProductsController extends CrudController
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-        $keyword = $request->keyword ? $request->keyword : '';
+        $keyword = $request->keyword || $request->keyword == '0' ? $request->keyword : '';
         $type = $request->type;
-        if(($type != '' || $type != null) && in_array($type,['id','category_id','country_id','price','discount','discount_amount','show_hot','show_recommend','status']) && $keyword){
+        if(($type != '' || $type != null) && in_array($type,['id','category_id','author','country_id','price','discount','discount_amount','show_hot','show_recommend','status']) && (!empty($keyword) || $keyword == '0')){
             $keyword = $type.':'.$keyword;
             $sorts = array('published_date' => false);
             // 设置搜索排序
