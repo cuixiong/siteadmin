@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Site\Http\Models\QuoteCategory;
 
 class AuthorityController extends CrudController
 {
@@ -20,6 +21,7 @@ class AuthorityController extends CrudController
             }
         }
         $options['product_category'] = (new ProductsCategory())->GetListLabel(['id as value','name as label','pid','id'],true,'pid',['status' => 1]);
+        $options['quote_category'] = (new QuoteCategory())->GetListLabel(['id as value','name as label'],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
 }

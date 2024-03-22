@@ -18,10 +18,12 @@ class Authority extends Base
         'sort',
         'updated_by',
         'created_by',
+        'category_id'
     ];
 
     protected $appends = [
-        'class_name'
+        'class_name',
+        'category_name',
     ];
     public function setBigImageAttribute($value)
     {
@@ -53,6 +55,15 @@ class Authority extends Base
     {
         if(isset($this->attributes['class_id'])){
             $value = ProductsCategory::where('id',$this->attributes['class_id'])->where('status',1)->value('name');
+            return $value;
+        }
+        return $value;
+    }
+
+    public function getCategoryNameAttribute($value)
+    {
+        if(isset($this->attributes['category_id'])){
+            $value = QuoteCategory::where('id',$this->attributes['category_id'])->where('status',1)->value('name');
             return $value;
         }
         return $value;

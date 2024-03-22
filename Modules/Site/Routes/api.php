@@ -461,6 +461,13 @@ Route::middleware([
         Route::get('options', [Modules\Site\Http\Controllers\PageController::class, 'options'])->name('单页管理:字典数据');
     });
 
+    // QuoteCategory 控制器
+    Route::prefix('quote-category')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'list'])->name('权威引用分类:数据列表');
+        Route::post('store', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'store'])->name('权威引用分类:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'update'])->name('权威引用分类:数据编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'destroy'])->name('权威引用分类:删除操作');
+    });
     Route::get('xun-add', [Modules\Site\Http\Controllers\XunSearch::class, 'add'])->name('测试接口:迅速新增');
     Route::get('xun-search', [Modules\Site\Http\Controllers\XunSearch::class, 'search'])->name('测试接口:迅速搜索');
     Route::get('xun-clean', [Modules\Site\Http\Controllers\XunSearch::class, 'clean'])->name('测试接口:迅速清空');
