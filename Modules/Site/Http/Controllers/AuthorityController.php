@@ -12,7 +12,7 @@ class AuthorityController extends CrudController
 {
     public function options(Request $request){
         $options = [];
-        $codes = ['Switch_State'];
+        $codes = ['Switch_State','quote_cage'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
         $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
         if(!empty($data)){
