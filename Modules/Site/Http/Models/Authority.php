@@ -1,6 +1,8 @@
 <?php
 
 namespace Modules\Site\Http\Models;
+
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Base;
 class Authority extends Base
 {
@@ -63,7 +65,7 @@ class Authority extends Base
     public function getCategoryNameAttribute($value)
     {
         if(isset($this->attributes['category_id'])){
-            $value = QuoteCategory::where('id',$this->attributes['category_id'])->where('status',1)->value('name');
+            $value = DictionaryValue::where('code','quote_cage')->where('value',$this->attributes['category_id'])->value('key');
             return $value;
         }
         return $value;
