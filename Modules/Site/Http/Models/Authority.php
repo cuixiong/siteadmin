@@ -65,7 +65,7 @@ class Authority extends Base
     public function getCategoryNameAttribute($value)
     {
         if(isset($this->attributes['category_id'])){
-            $value = DictionaryValue::where('code','quote_cage')->where('value',$this->attributes['category_id'])->value('key');
+            $value = DictionaryValue::where('code','quote_cage')->where('value',$this->attributes['category_id'])->value('name');
             return $value;
         }
         return $value;
