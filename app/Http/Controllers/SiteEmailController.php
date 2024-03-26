@@ -5,11 +5,14 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
+use Modules\Admin\Http\Models\City;
+use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\Email;
 use Modules\Site\Http\Models\EmailLog;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\User;
 use Modules\Site\Http\Models\EmailScene;
+use Modules\Site\Http\Models\SystemValue;
 
 class SiteEmailController extends Controller
 {
@@ -485,12 +488,18 @@ class SiteEmailController extends Controller
      */
     private function contactUsTest($request)
     {
-        $id = $request->user->id;
-        $user = User::find($id);
-        $user = $user ? $user->toArray() : [];
-        $token = $user['email'].'&'.$user['id'];
-        $user['token'] = base64_encode($token);
-        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $ContactUs = ContactUs::first();
+        $data = $ContactUs ? $ContactUs->toArray() : [];
+        $data['area_id'] = City::where('id',$data['area_id'])->value('name');
+        $token = $data['email'].'&'.$data['id'];
+        $data['token'] = base64_encode($token);
+        $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+        if($siteInfo){
+            foreach ($siteInfo as $key => $value) {
+                $data[$key] = $value;
+            }
+        }
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
@@ -505,7 +514,7 @@ class SiteEmailController extends Controller
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
         return true;
     }
 
