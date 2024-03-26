@@ -522,7 +522,7 @@ class SiteEmailController extends Controller
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data1,$data);
+        $data = array_merge($data2,$data);
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
