@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
+use Modules\Admin\Http\Models\AliyunOssConfig;
 use Modules\Admin\Http\Models\City;
+use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\Email;
 use Modules\Site\Http\Models\EmailLog;
@@ -494,12 +496,34 @@ class SiteEmailController extends Controller
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $user = User::where('id',$data['user_id'])->first();
+        $siteName = $request->header('Site');
+        $siteData = Site::where('name',$siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $data2 = [
+            'homePage' => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+            'homeUrl' => $data['domain'],
+            'userName' => $user['username'] ? $user['username'] : '',
+            'email' => $data['email'],
+            'company' => $data['company'],
+            'area' => City::where('id',$data['area_id'])->value('name'),
+            'phone' => $data['phone'] ? $data['phone'] : '',
+            'plantTimeBuy' => $data['buy_time'],
+            'content' => $data['remarks'],
+            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'plantTimeBuy' => $data['buy_time'],
+            'plantTimeBuy' => $data['buy_time'],
+            'plantTimeBuy' => $data['buy_time'],
+        ];
         $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
         if($siteInfo){
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
+        $data = array_merge($data1,$data);
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
