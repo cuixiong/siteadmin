@@ -684,7 +684,7 @@ class SiteEmailController extends Controller
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
         return true;
     }
 
