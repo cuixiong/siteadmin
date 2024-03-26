@@ -496,7 +496,6 @@ class SiteEmailController extends Controller
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-        $user = User::where('id',$data['user_id'])->first();
         $siteName = $request->header('Site');
         $siteData = Site::where('name',$siteName)->first();
         $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
@@ -505,7 +504,7 @@ class SiteEmailController extends Controller
             'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
             'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
             'homeUrl' => $data['domain'],
-            'userName' => $user['username'] ? $user['username'] : '',
+            'userName' => $data['name'] ? $data['name'] : '',
             'email' => $data['email'],
             'company' => $data['company'],
             'area' => City::where('id',$data['area_id'])->value('name'),
