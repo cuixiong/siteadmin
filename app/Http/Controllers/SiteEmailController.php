@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Modules\Admin\Http\Models\AliyunOssConfig;
 use Modules\Admin\Http\Models\City;
+use Modules\Admin\Http\Models\Language;
+use Modules\Admin\Http\Models\PriceEditionValue;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\Email;
@@ -14,6 +16,9 @@ use Modules\Site\Http\Models\EmailLog;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\User;
 use Modules\Site\Http\Models\EmailScene;
+use Modules\Site\Http\Models\OrderGoods;
+use Modules\Site\Http\Models\Pay;
+use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\SystemValue;
 
 class SiteEmailController extends Controller
@@ -54,16 +59,16 @@ class SiteEmailController extends Controller
      */
     public function test(Request $request)
     {
-        try {
+        // try {
             // 验证表单数据
             $this->validatorData($request->all());
             $action = $request->action.'Test';
             // 调用
             $res = $this->$action($request);
             $res ? ReturnJson(true,trans()->get('lang.eamail_success')) : ReturnJson(FALSE,trans()->get('lang.eamail_error')); 
-        } catch (\Exception $e) {
-            ReturnJson(FALSE,$e->getMessage());
-        }
+        // } catch (\Exception $e) {
+        //     ReturnJson(FALSE,$e->getMessage());
+        // }
     }
 
     /**
@@ -726,12 +731,67 @@ class SiteEmailController extends Controller
      */
     private function placeOrderTest($request)
     {
-        $id = $request->user->id;
-        $user = User::find($id);
+        $user = User::where('email',$request->test)->first();
+        if($user){
+            $Order = Order::where('user_id',$user->id)->where('is_pay',0)->first();
+            if(!$Order){
+                $Order = Order::where('is_pay',1)->first();
+            }
+        } else {
+            $Order = Order::where('is_pay',1)->first();
+        }
+        $data = $Order ? $Order->toArray() : [];
+        if(!$data){
+            ReturnJson(false, '未找到订单数据');
+        }
+        $user = User::find($data['user_id']);
         $user = $user ? $user->toArray() : [];
-        $token = $user['email'].'&'.$user['id'];
-        $user['token'] = base64_encode($token);
-        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $siteName = $request->header('Site');
+        $siteData = Site::where('name',$siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $PayName = Pay::where('id',$data['pay_type'])->value('name');
+        $OrderGoods = OrderGoods::where('order_id',$data['id'])->first();
+        $priceEdition = PriceEditionValue::where('id',$OrderGoods['price_edition'])->first();
+        $language = Language::where('id',$priceEdition['language_id'])->value('name');
+        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
+        if($Products){
+            foreach ($Products as $key => $value) {
+                $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
+                $Products[$key]['language'] = $language;
+                $Products[$key]['price_edition'] = $priceEdition['name'];
+                $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
+            }
+        }
+        $data2 = [
+            'homePage' => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+            'homeUrl' => $data['domain'],
+            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'userName' => $user['username'] ? $user['username'] : '',
+            'userEmail' => $user['email'],
+            'userCompany' => $user['company'],
+            'userAddress' => City::where('id',$user['area_id'])->value('name'),
+            'userPhone' => $user['phone'] ? $user['phone'] : '',
+            'orderStatus' => '未付款',
+            'paymentMethod' => $PayName,
+            'orderAmount' => $data['order_amount'],
+            'preferentialAmount' => $data['order_amount'] - $data['actually_paid'],
+            'orderActuallyPaid' => $data['actually_paid'],
+            'orderNumber' => $data['order_number'],
+            'paymentLink' => $siteData['domain'].'/api/order/pay?order_id='.$data['id'],
+            'orderDetails' => $siteData['domain'].'/account?orderdetails='.$data['id'],
+            'goods' => $Products,
+            'userId' => $user['id']
+        ];
+        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+        if($siteInfo){
+            foreach ($siteInfo as $key => $value) {
+                $data[$key] = $value;
+            }
+        }
+        $data = array_merge($data2,$data);
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
@@ -746,7 +806,7 @@ class SiteEmailController extends Controller
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
         return true;
     }
 }
