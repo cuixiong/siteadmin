@@ -188,12 +188,42 @@ class SiteEmailController extends Controller
      */
     private function registerTest($request)
     {
-        $id = $request->user->id;
-        $user = User::find($id);
-        $user = $user ? $user->toArray() : [];
-        $token = $user['email'].'&'.$user['id'];
-        $user['token'] = base64_encode($token);
-        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $user = User::where('email',$request->test)->first();
+        if(!$user){
+            $user = User::first();
+        }
+        $data = $user ? $user->toArray() : [];
+        $siteName = $request->header('Site');
+        $siteData = Site::where('name',$siteName)->first();
+        $data['domain'] = 'https://'.$siteData['domain'];
+        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $token = $data['email'].'&'.$data['id'];
+        $data['token'] = base64_encode($token);
+        $emailCode = 'signupToBeMember';
+        $dataQuery = [
+            'timestamp' => time(),
+            'randomstr' => '123',
+            'authkey' => '123',
+            'sign' => $data['token'],
+        ];
+        $verifyUrl = $data['domain'].'/?verifyemail='.$emailCode.'&'.http_build_query($dataQuery);
+        $data2 = [
+            'homePage' => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+            'homeUrl' => $data['domain'],
+            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'verifyUrl' => $verifyUrl,
+            'userName' => $data['name'],
+            'area' => City::where('id',$data['area_id'])->value('name'),
+        ];
+        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+        if($siteInfo){
+            foreach ($siteInfo as $key => $value) {
+                $data[$key] = $value;
+            }
+        }
+        $data = array_merge($data2,$data);
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
@@ -208,7 +238,7 @@ class SiteEmailController extends Controller
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
         return true;
     }
 
@@ -464,12 +494,34 @@ class SiteEmailController extends Controller
      */
     private function registerSuccessTest($request)
     {
-        $id = $request->user->id;
-        $user = User::find($id);
-        $user = $user ? $user->toArray() : [];
-        $token = $user['email'].'&'.$user['id'];
-        $user['token'] = base64_encode($token);
-        $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
+        $user = User::where('email',$request->test)->first();
+        if(!$user){
+            $user = User::first();
+        }
+        $data = $user ? $user->toArray() : [];
+        $siteName = $request->header('Site');
+        $siteData = Site::where('name',$siteName)->first();
+        $data['domain'] = 'https://'.$siteData['domain'];
+        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $token = $data['email'].'&'.$data['id'];
+        $data['token'] = base64_encode($token);
+        $data2 = [
+            'homePage' => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
+            'homeUrl' => $data['domain'],
+            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'verifyUrl' => '',
+            'userName' => $data['name'],
+            'area' => City::where('id',$data['area_id'])->value('name'),
+        ];
+        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
+        if($siteInfo){
+            foreach ($siteInfo as $key => $value) {
+                $data[$key] = $value;
+            }
+        }
+        $data = array_merge($data2,$data);
         $scene = $request->all();
         $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
         // 收件人的数组
@@ -484,7 +536,7 @@ class SiteEmailController extends Controller
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
         return true;
     }
 
