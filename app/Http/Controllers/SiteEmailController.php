@@ -782,6 +782,7 @@ class SiteEmailController extends Controller
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
+                $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
             }
         }
         $cityName = City::where('id',$data['city_id'])->value('name');
@@ -871,6 +872,7 @@ class SiteEmailController extends Controller
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
+                $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
             }
         }
         $cityName = City::where('id',$data['city_id'])->value('name');
