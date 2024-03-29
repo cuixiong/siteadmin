@@ -784,17 +784,20 @@ class SiteEmailController extends Controller
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
             }
         }
+        $cityName = City::where('id',$data['city_id'])->value('name');
+        $provinceName = City::where('id',$data['province_id'])->value('name');
+        $addres = $provinceName .' '.$cityName.' '.$data['address'];
         $data2 = [
             'homePage' => $data['domain'],
             'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
             'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
             'homeUrl' => $data['domain'],
             'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'userName' => $user['username'] ? $user['username'] : '',
-            'userEmail' => $user['email'],
-            'userCompany' => $user['company'],
-            'userAddress' => City::where('id',$user['area_id'])->value('name'),
-            'userPhone' => $user['phone'] ? $user['phone'] : '',
+            'userName' => $data['username'] ? $data['username'] : '',
+            'userEmail' => $data['email'],
+            'userCompany' => $data['company'],
+            'userAddress' => $addres,
+            'userPhone' => $data['phone'] ? $data['phone'] : '',
             'orderStatus' => '已付款',
             'paymentMethod' => $PayName,
             'orderAmount' => $data['order_amount'],
@@ -870,17 +873,20 @@ class SiteEmailController extends Controller
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
             }
         }
+        $cityName = City::where('id',$data['city_id'])->value('name');
+        $provinceName = City::where('id',$data['province_id'])->value('name');
+        $addres = $provinceName .' '.$cityName.' '.$data['address'];
         $data2 = [
             'homePage' => $data['domain'],
             'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
             'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
             'homeUrl' => $data['domain'],
             'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'userName' => $user['username'] ? $user['username'] : '',
-            'userEmail' => $user['email'],
-            'userCompany' => $user['company'],
-            'userAddress' => City::where('id',$user['area_id'])->value('name'),
-            'userPhone' => $user['phone'] ? $user['phone'] : '',
+            'userName' => $data['username'] ? $data['username'] : '',
+            'userEmail' => $data['email'],
+            'userCompany' => $data['company'],
+            'userAddress' => $addres,
+            'userPhone' => $data['phone'] ? $data['phone'] : '',
             'orderStatus' => '未付款',
             'paymentMethod' => $PayName,
             'orderAmount' => $data['order_amount'],
