@@ -19,6 +19,7 @@ use Modules\Site\Http\Models\EmailScene;
 use Modules\Site\Http\Models\OrderGoods;
 use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\SystemValue;
 
 class SiteEmailController extends Controller
@@ -782,7 +783,12 @@ class SiteEmailController extends Controller
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                if(empty($value['thumb'])){
+                    $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$categoryThumb;
+                } else {
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                }
             }
         }
         $cityName = City::where('id',$data['city_id'])->value('name');
@@ -872,7 +878,12 @@ class SiteEmailController extends Controller
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                if(empty($value['thumb'])){
+                    $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$categoryThumb;
+                } else {
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                }
             }
         }
         $cityName = City::where('id',$data['city_id'])->value('name');
