@@ -7,7 +7,7 @@ use Modules\Site\Http\Models\Base;
 class ContactUs extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','category_id','sort','updated_by', 'created_by'];
+    protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','category_id','sort','updated_by', 'created_by', 'remarks', 'product_id'];
     protected $appends = ['product_name','message_name','category_name','channel_name','buy_time_name'];
 
     // 产品名称获取器
