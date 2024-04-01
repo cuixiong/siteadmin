@@ -19,6 +19,7 @@ use Modules\Site\Http\Models\EmailScene;
 use Modules\Site\Http\Models\OrderGoods;
 use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\SystemValue;
 
 class SiteEmailController extends Controller
@@ -775,26 +776,35 @@ class SiteEmailController extends Controller
         $OrderGoods = OrderGoods::where('order_id',$data['id'])->first();
         $priceEdition = PriceEditionValue::where('id',$OrderGoods['price_edition'])->first();
         $language = Language::where('id',$priceEdition['language_id'])->value('name');
-        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
+        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
         if($Products){
             foreach ($Products as $key => $value) {
-                $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
+                $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
+                if(empty($value['thumb'])){
+                    $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$categoryThumb;
+                } else {
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                }
             }
         }
+        $cityName = City::where('id',$data['city_id'])->value('name');
+        $provinceName = City::where('id',$data['province_id'])->value('name');
+        $addres = $provinceName .' '.$cityName.' '.$data['address'];
         $data2 = [
             'homePage' => $data['domain'],
             'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
             'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
             'homeUrl' => $data['domain'],
             'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'userName' => $user['username'] ? $user['username'] : '',
-            'userEmail' => $user['email'],
-            'userCompany' => $user['company'],
-            'userAddress' => City::where('id',$user['area_id'])->value('name'),
-            'userPhone' => $user['phone'] ? $user['phone'] : '',
+            'userName' => $data['username'] ? $data['username'] : '',
+            'userEmail' => $data['email'],
+            'userCompany' => $data['company'],
+            'userAddress' => $addres,
+            'userPhone' => $data['phone'] ? $data['phone'] : '',
             'orderStatus' => '已付款',
             'paymentMethod' => $PayName,
             'orderAmount' => $data['order_amount'],
@@ -861,26 +871,35 @@ class SiteEmailController extends Controller
         $OrderGoods = OrderGoods::where('order_id',$data['id'])->first();
         $priceEdition = PriceEditionValue::where('id',$OrderGoods['price_edition'])->first();
         $language = Language::where('id',$priceEdition['language_id'])->value('name');
-        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
+        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
         if($Products){
             foreach ($Products as $key => $value) {
-                $Products[$key]['goods_number'] = $data['out_order_num'] ? intval($data['out_order_num']) : 0;
+                $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
+                if(empty($value['thumb'])){
+                    $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$categoryThumb;
+                } else {
+                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                }
             }
         }
+        $cityName = City::where('id',$data['city_id'])->value('name');
+        $provinceName = City::where('id',$data['province_id'])->value('name');
+        $addres = $provinceName .' '.$cityName.' '.$data['address'];
         $data2 = [
             'homePage' => $data['domain'],
             'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
             'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
             'homeUrl' => $data['domain'],
             'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'userName' => $user['username'] ? $user['username'] : '',
-            'userEmail' => $user['email'],
-            'userCompany' => $user['company'],
-            'userAddress' => City::where('id',$user['area_id'])->value('name'),
-            'userPhone' => $user['phone'] ? $user['phone'] : '',
+            'userName' => $data['username'] ? $data['username'] : '',
+            'userEmail' => $data['email'],
+            'userCompany' => $data['company'],
+            'userAddress' => $addres,
+            'userPhone' => $data['phone'] ? $data['phone'] : '',
             'orderStatus' => '未付款',
             'paymentMethod' => $PayName,
             'orderAmount' => $data['order_amount'],
