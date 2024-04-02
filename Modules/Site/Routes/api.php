@@ -434,6 +434,15 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PartnerController::class, 'list'])->name('合作伙伴:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PartnerController::class, 'changeStatus'])->name('合作伙伴:状态修改');
     });
+    
+    // LanguageWebsite控制器
+    Route::prefix('language-website')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\LanguageWebsiteController::class, 'store'])->name('其它语言网站:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\LanguageWebsiteController::class, 'update'])->name('其它语言网站:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\LanguageWebsiteController::class, 'destroy'])->name('其它语言网站:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\LanguageWebsiteController::class, 'list'])->name('其它语言网站:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\LanguageWebsiteController::class, 'changeStatus'])->name('其它语言网站:状态修改');
+    });
     // Problem控制器
     Route::prefix('problem')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\ProblemController::class, 'store'])->name('常见问题:数据新增');
