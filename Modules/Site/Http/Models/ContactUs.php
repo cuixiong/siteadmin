@@ -4,17 +4,36 @@ namespace Modules\Site\Http\Models;
 
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Base;
+
 class ContactUs extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'email', 'phone', 'company','channel','status','buy_time','category_id','sort','updated_by', 'created_by', 'remarks', 'product_id'];
-    protected $appends = ['product_name','message_name','category_name','channel_name','buy_time_name'];
+    protected $fillable = [
+        'category_id',
+        'product_id',
+        'name',
+        'email',
+        'country_id',
+        'province_id',
+        'city_id',
+        'phone',
+        'company',
+        'channel',
+        'status',
+        'buy_time',
+        'content',
+        'language_version',
+        'sort',
+        'updated_by',
+        'created_by',
+    ];
+    protected $appends = ['product_name', 'message_name', 'category_name', 'channel_name', 'buy_time_name'];
 
     // 产品名称获取器
     public function getProductNameAttribute()
     {
-        if(isset($this->attributes['product_id'])){
-            $value = Products::where('id',$this->attributes['product_id'])->value('name');
+        if (isset($this->attributes['product_id'])) {
+            $value = Products::where('id', $this->attributes['product_id'])->value('name');
         } else {
             $value = "";
         }
@@ -24,8 +43,8 @@ class ContactUs extends Base
     // 类型名称获取器
     public function getMessageNameAttribute()
     {
-        if(isset($this->attributes['message_id'])){
-            $value = MessageCategory::where('id',$this->attributes['message_id'])->value('name');
+        if (isset($this->attributes['message_id'])) {
+            $value = MessageCategory::where('id', $this->attributes['message_id'])->value('name');
         } else {
             $value = "";
         }
@@ -35,8 +54,8 @@ class ContactUs extends Base
     // 分类名称获取器
     public function getCategoryNameAttribute()
     {
-        if(isset($this->attributes['category_id'])){
-            $value = MessageCategory::where('id',$this->attributes['category_id'])->value('name');
+        if (isset($this->attributes['category_id'])) {
+            $value = MessageCategory::where('id', $this->attributes['category_id'])->value('name');
         } else {
             $value = "";
         }
@@ -46,8 +65,8 @@ class ContactUs extends Base
     // 来源名称获取器
     public function getChannelNameAttribute()
     {
-        if(isset($this->attributes['channel'])){
-            $value = DictionaryValue::GetNameAsCode('Channel_Type',$this->attributes['channel']);
+        if (isset($this->attributes['channel'])) {
+            $value = DictionaryValue::GetNameAsCode('Channel_Type', $this->attributes['channel']);
         } else {
             $value = "";
         }
@@ -57,7 +76,7 @@ class ContactUs extends Base
     // 购买时间获取器
     public function getBuyTimeNameAttribute()
     {
-        if(isset($this->attributes['buy_time'])){
+        if (isset($this->attributes['buy_time'])) {
             $value = $this->attributes['buy_time'] . '天内';
             return $value;
         }

@@ -460,6 +460,15 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('联系我们:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\ContactUsController::class, 'options'])->name('联系我们:字典数据');
     });
+    
+    Route::prefix('message-language-version')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'store'])->name('其它语言网站:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'update'])->name('其它语言网站:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'destroy'])->name('其它语言网站:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'list'])->name('其它语言网站:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'changeStatus'])->name('其它语言网站:状态修改');
+    });
+
     // Page控制器
     Route::prefix('page')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PageController::class, 'store'])->name('单页管理:数据新增');
