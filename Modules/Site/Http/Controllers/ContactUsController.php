@@ -4,6 +4,8 @@ namespace Modules\Site\Http\Controllers;
 
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\City;
+use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\MessageCategory;
 use Modules\Site\Http\Models\MessageLanguageVersion;
@@ -24,6 +26,11 @@ class ContactUsController extends CrudController
         $options['categorys'] = (new MessageCategory)->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
         $options['language_version'] = (new MessageLanguageVersion())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+
+        $options['country'] = Country::where('status', 1)->select('id as value', $NameField)->orderBy('sort', 'asc')->get()->toArray();
+
+        $options['city'] = City::where('status', 1)->select('id as value', $NameField)->orderBy('sort', 'asc')->get()->toArray();
+
         ReturnJson(TRUE, '', $options);
     }
 }
