@@ -30,10 +30,10 @@ class ContactUsController extends CrudController
         $options['country'] = Country::where('status', 1)->select('id as value', $NameField)->orderBy('sort', 'asc')->get()->toArray();
 
 
-        $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy('sort', 'asc')->get()->toArray();
+        $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy('id', 'asc')->get()->toArray();
 
         foreach ($provinces as $key => $province) {
-            $cities = City::where(['status' => 1, 'type' => 2, 'pid' => $province['value']])->select('id as value', 'name as label')->orderBy('sort', 'asc')->get()->toArray();
+            $cities = City::where(['status' => 1, 'type' => 2, 'pid' => $province['value']])->select('id as value', 'name as label')->orderBy('id', 'asc')->get()->toArray();
             $provinces[$key]['children'] = $cities;
         }
         $options['city'] = $provinces;
