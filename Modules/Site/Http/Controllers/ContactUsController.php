@@ -33,7 +33,7 @@ class ContactUsController extends CrudController
         $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy('sort', 'asc')->get()->toArray();
 
         foreach ($provinces as $key => $province) {
-            $cities = City::where(['status' => 1, 'type' => 2, 'pid' => $province['id']])->select('id as value', 'name as label')->orderBy('sort', 'asc')->get()->toArray();
+            $cities = City::where(['status' => 1, 'type' => 2, 'pid' => $province['value']])->select('id as value', 'name as label')->orderBy('sort', 'asc')->get()->toArray();
             $provinces[$key]['children'] = $cities;
         }
         $options['city'] = $provinces;
