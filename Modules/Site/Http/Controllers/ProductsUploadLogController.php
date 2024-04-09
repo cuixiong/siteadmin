@@ -463,7 +463,7 @@ class ProductsUploadLogController extends CrudController
                         }
                     }
                     $updateCount++;
-                    (new Products)->PushXunSearchMQ(['id' => $product->id],'update',$params['site']);
+                    // (new Products)->PushXunSearchMQ(['id' => $product->id],'update',$params['site']);
 
                 } else {
                     //新增报告
@@ -473,7 +473,7 @@ class ProductsUploadLogController extends CrudController
                     $itemDescription['product_id'] = $product->id;
                     $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     $insertCount++;
-                    (new Products)->PushXunSearchMQ(['id' => $product->id],'add',$params['site']);
+                    // (new Products)->PushXunSearchMQ(['id' => $product->id],'add',$params['site']);
 
                 }
                 //code...
