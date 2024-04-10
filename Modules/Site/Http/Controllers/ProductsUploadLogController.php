@@ -354,10 +354,10 @@ class ProductsUploadLogController extends CrudController
                 // 如果链接为空，则用关键词做链接
                 if (!empty($row['keywords']) && empty($row['url'])) {
                     $item['url'] = $row['keywords'];
-                    $item['url'] = strtolower(preg_replace('/%[0-9A-Fa-f]{2}/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
-                    $item['url'] = strtolower(preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
-                    $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
                 }
+                $item['url'] = strtolower(preg_replace('/%[0-9A-Fa-f]{2}/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
+                $item['url'] = strtolower(preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
+                $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
 
                 //详情数据
                 $itemDescription = [];
