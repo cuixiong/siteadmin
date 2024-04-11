@@ -50,7 +50,7 @@ class DictionaryValueController extends CrudController
             if (!$record) {
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
-            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $request->parent_id, true);
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $record->parent_id, true);
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -96,7 +96,7 @@ class DictionaryValueController extends CrudController
             if (!$record->update($input)) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $request->parent_id, true);
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $record->parent_id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -119,7 +119,7 @@ class DictionaryValueController extends CrudController
             if (!$record->save()) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $request->parent_id, true);
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $record->parent_id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -143,7 +143,7 @@ class DictionaryValueController extends CrudController
             if (!$record->save()) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $request->parent_id, true);
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $record->parent_id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
