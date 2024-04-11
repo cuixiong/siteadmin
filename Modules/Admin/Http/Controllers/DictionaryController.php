@@ -12,8 +12,9 @@ use Modules\Admin\Http\Models\Dictionary;
 class DictionaryController extends CrudController
 {
     // 全量更新
-    protected function test(Request $request){
-        return Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE,61,true);
+    protected function test(Request $request)
+    {
+        return Dictionary::SaveToSite(Dictionary::SAVE_TYPE_FULL, null, true);
     }
 
     /**
@@ -30,7 +31,7 @@ class DictionaryController extends CrudController
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
             // 同步到分站点
-            
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $record->id, true);
 
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
@@ -60,6 +61,8 @@ class DictionaryController extends CrudController
             }
             DictionaryValue::where('parent_id', $input['id'])->update(['code' => $input['code']]);
             DB::commit();
+            // 同步到分站点
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $input['id'], true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             DB::rollback();
@@ -87,6 +90,10 @@ class DictionaryController extends CrudController
                 ReturnJson(FALSE, trans('lang.delete_error'));
             }
             DB::commit();
+            // 同步到分站点
+            foreach ($ids as $id) {
+                Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $id, true);
+            }
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
             DB::rollBack();
@@ -136,6 +143,7 @@ class DictionaryController extends CrudController
                     $model->save();
                 }
             }
+            Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE, $request->id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());

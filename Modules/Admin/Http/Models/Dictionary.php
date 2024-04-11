@@ -142,15 +142,23 @@ class Dictionary extends Base
                     // }
                 }
             } elseif ($type == self::SAVE_TYPE_SINGLE) {
+
                 // 处理字典表
-                $dictionarySiteExist = DB::table($dictionaryTableName)->select('id')->where(['id' => $id])->value('id');
-                if ($dictionarySiteExist) {
-                    DB::table($dictionaryTableName)->where(['id' => $id])->update((array)$dictionaryData);
+                // 总控有数据则进行增改操作
+                if ($dictionaryData) {
+                    $dictionarySiteExist = DB::table($dictionaryTableName)->select('id')->where(['id' => $id])->value('id');
+                    if ($dictionarySiteExist) {
+                        DB::table($dictionaryTableName)->where(['id' => $id])->update((array)$dictionaryData);
+                    } else {
+                        DB::table($dictionaryTableName)->insert((array)$dictionaryData);
+                    }
                 } else {
-                    DB::table($dictionaryTableName)->insert((array)$dictionaryData);
+                    // 总控没有数据则进行删除操作
+                    DB::table($dictionaryTableName)->delete($id);
                 }
                 // 处理字典表
                 $dictionaryValueExistIds = DB::table($dictionaryValueTableName)->select('id')->where(['parent_id' => $id])->pluck('id')->toArray() ?? [];
+
                 // return $dictionaryValueExistIds;
                 foreach ($dictionaryValueData as $record) {
                     $record = (array)$record;
@@ -160,6 +168,14 @@ class Dictionary extends Base
                         DB::table($dictionaryValueTableName)->insert($record);
                     }
                 }
+                // 删除多余版本
+                $dictionaryValueIds = array_column($dictionaryValueData, 'id');
+                foreach ($dictionaryValueExistIds as $existIds) {
+                    if (!in_array($existIds, $dictionaryValueIds)) {
+                        DB::table($dictionaryValueTableName)->delete($existIds);
+                    }
+                }
+
                 // return $dictionarySiteData;
 
             }
