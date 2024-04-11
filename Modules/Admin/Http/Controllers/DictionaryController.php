@@ -11,6 +11,32 @@ use Modules\Admin\Http\Models\Dictionary;
 
 class DictionaryController extends CrudController
 {
+    // 全量更新
+    protected function test(Request $request){
+        return Dictionary::SaveToSite(Dictionary::SAVE_TYPE_SINGLE,61,true);
+    }
+
+    /**
+     * 单个新增
+     * @param $request 请求信息
+     */
+    protected function store(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                ReturnJson(FALSE, trans('lang.add_error'));
+            }
+            // 同步到分站点
+            
+
+            ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 
     /**
      * AJax单个更新

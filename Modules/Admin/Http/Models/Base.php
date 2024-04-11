@@ -275,4 +275,19 @@ class Base extends Model
         }
         return array_merge($result,[$id]);
     }
+    
+
+
+    //打印sql
+    public function printSql($model)
+    {
+        $sql = $model->toSql();
+        $bindings = $model->getBindings();
+
+        // 替换问号占位符
+        foreach ($bindings as $binding) {
+            $sql = preg_replace('/\?/', "'$binding'", $sql, 1);
+        }
+        return $sql;
+    }
 }

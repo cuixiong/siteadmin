@@ -171,20 +171,6 @@ class Site extends Base
     }
 
 
-    //打印sql
-    public function printSql($model)
-    {
-        $sql = $model->toSql();
-        $bindings = $model->getBindings();
-
-        // 替换问号占位符
-        foreach ($bindings as $binding) {
-            $sql = preg_replace('/\?/', "'$binding'", $sql, 1);
-        }
-        return $sql;
-    }
-
-
     /**
      * 连接远程服务器 执行命令 处理输出
      * @param object $site 站点信息

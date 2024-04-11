@@ -285,7 +285,7 @@ class PriceEditionController extends CrudController
     /**
      * 更新全部的价格版本到Redis中
      */
-    public function ToReadis(Request $request)
+    public function ToRedis(Request $request)
     {
         try {
             $list = PriceEditionValue::get();

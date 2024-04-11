@@ -486,8 +486,14 @@ Route::middleware([
 
     //测试面板接口
     Route::get('admin/site/bt-test', 'SiteController@btTest')->name('测试接口');
-    Route::get('admin/price-edition/to-redis',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'ToReadis'])->name('价格版本管理:全量同步到redis');
+    Route::get('admin/price-edition/to-redis',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'ToRedis'])->name('价格版本管理:全量同步到redis');
     Route::get('admin/dictionary/to-redis',[Modules\Admin\Http\Controllers\DictionaryController::class, 'ToRedis'])->name('字典:全量同步到redis');
+    Route::get('admin/country/to-redis',[Modules\Admin\Http\Controllers\CountryController::class, 'ToRedis'])->name('国家:全量同步到redis');
+
+    
+    Route::get('admin/dictionary/save-to-site',[Modules\Admin\Http\Controllers\DictionaryController::class, 'test'])->name('测试:字典同步测试');
+
+    
 });
 
 // 暂时测试路由

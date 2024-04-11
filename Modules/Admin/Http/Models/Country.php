@@ -3,9 +3,13 @@
 namespace Modules\Admin\Http\Models;
 
 use Modules\Admin\Http\Models\Base;
+use Illuminate\Support\Facades\Redis;
 
 class Country extends Base
 {
+    // redis KEY名
+    protected static $RedisKey = 'Country';
+
     protected $table = 'countrys';
 
     // 设置允许入库字段,数组形式
@@ -136,5 +140,53 @@ class Country extends Base
             }
         }
         return $data;
+    }
+
+    /**
+     * 保存数据到Redis中
+     */
+    public static function SaveToRedis($data)
+    {
+        try {
+            $data = is_array($data) ? $data : $data->toArray();
+            $id = $data['id'];
+            Redis::hset(self::$RedisKey, $id, json_encode($data));
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * 更新数据到Redis中
+     */
+    public static function UpdateToRedis($data)
+    {
+        try {
+            $data = is_array($data) ? $data : $data->toArray();
+            $id = $data['id'];
+            // 先删除
+            Redis::hdel(self::$RedisKey, $id);
+            // 后新增
+            Redis::hset(self::$RedisKey, $id, json_encode($data));
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * 删除数据到Redis中
+     */
+    public static function DeteleToRedis($data)
+    {
+        try {
+            $data = is_array($data) ? $data : $data->toArray();
+            $id = $data['id'];
+            Redis::hdel(self::$RedisKey, $id);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }
