@@ -203,7 +203,7 @@ class Country extends Base
                     break;
 
                 default:
-                    $language = 'en';
+                    $language = $language_code;
                     break;
             };
             return $language;
