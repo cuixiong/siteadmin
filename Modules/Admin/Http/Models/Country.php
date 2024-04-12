@@ -224,7 +224,7 @@ class Country extends Base
 
                 // 根据语言调整数据
                 $countryDataSql = [];
-                foreach ($countryData as $record) {
+                foreach ($countryData as $aaa=>$record) {
                     $record = (array)$record;
                     // 含有单引号的处理
                     if (isset($record['name']) && !empty($record['name'])) {
@@ -253,24 +253,27 @@ class Country extends Base
                     }
                     $countryDataSql[] = "INSERT INTO $countryTableName (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $values) . ");";
                     // return [$record,$countryDataSql];
+                    if($aaa>2){
+                        break;
+                    }
                 }
 
                 // 复制数据到分站点数据库
                 if (count($countryDataSql) > 0) {
                     DB::table($countryTableName)->truncate(); // 清空目标表数据
-                    // foreach ($countryDataSql as $key => $sql) {
-                    //     // return $sql;
+                    foreach ($countryDataSql as $key => $sql) {
+                        // return $sql;
 
-                    //     try {
-                    //         DB::statement($sql);
-                    //     } catch (\Throwable $th) {
-                    //         return $sql;
-                    //         return $th->getMessage();
-                    //         return false;
-                    //     }
-                    // }
-                    // return $countryDataSql;
-                    return DB::statement(implode('', $countryDataSql));
+                        try {
+                            DB::statement($sql);
+                        } catch (\Throwable $th) {
+                            // return $sql;
+                            // return $th->getMessage();
+                            return false;
+                        }
+                    }
+                    // return implode('', $countryDataSql);
+                    // return DB::statement(implode('', $countryDataSql));
                 }
             } elseif ($type == self::SAVE_TYPE_SINGLE) {
 
