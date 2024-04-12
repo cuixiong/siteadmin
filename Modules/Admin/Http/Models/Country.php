@@ -187,7 +187,25 @@ class Country extends Base
         // return $countryDataSql;
 
         foreach ($site as $siteItem) {
-            $language = Language::where('id', $siteItem['language_id'])->value('code');
+            $language_code = Language::where('id', $siteItem['language_id'])->value('code');
+            $language = '';
+            switch ($language_code) {
+                case 'en':
+                    $language = 'en';
+                    break;
+
+                case 'zh':
+                    $language = 'zh-cn';
+                    break;
+
+                case 'jp':
+                    $language = 'jp';
+                    break;
+
+                default:
+                    $language = 'en';
+                    break;
+            };
             // return $language;
             // 获取当前租户信息,取消上一个租户的连接
             $currentTenant = tenancy()->tenant;
