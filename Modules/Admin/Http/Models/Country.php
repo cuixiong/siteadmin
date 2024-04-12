@@ -206,7 +206,7 @@ class Country extends Base
                     $language = $language_code;
                     break;
             };
-            return $language;
+            // return $language;
             // 获取当前租户信息,取消上一个租户的连接
             $currentTenant = tenancy()->tenant;
             if ($currentTenant) {
