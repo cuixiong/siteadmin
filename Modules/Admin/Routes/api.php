@@ -492,6 +492,7 @@ Route::middleware([
 
     
     Route::get('admin/dictionary/save-to-site',[Modules\Admin\Http\Controllers\DictionaryController::class, 'test'])->name('测试:字典同步测试');
+    Route::get('admin/country/save-to-site',[Modules\Admin\Http\Controllers\CountryController::class, 'test'])->name('测试:国家同步测试');
 
     
 });

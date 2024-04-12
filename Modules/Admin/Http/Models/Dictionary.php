@@ -53,7 +53,13 @@ class Dictionary extends Base
                 $values = [];
                 foreach ($record as $column => $value) {
                     $columns[] = "`$column`";
-                    $values[] = "'$value'";
+                    if ($value == null) {
+                        $values[] = "null";
+                    } elseif (is_numeric($value)) {
+                        $values[] = $value;
+                    } else {
+                        $values[] = "'$value'";
+                    }
                 }
                 $dictionaryDataSql[] = "INSERT INTO $dictionaryTableName (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $values) . ");";
             }
@@ -156,7 +162,7 @@ class Dictionary extends Base
                     // 总控没有数据则进行删除操作
                     DB::table($dictionaryTableName)->delete($id);
                 }
-                // 处理字典表
+                // 处理字典项表
                 $dictionaryValueExistIds = DB::table($dictionaryValueTableName)->select('id')->where(['parent_id' => $id])->pluck('id')->toArray() ?? [];
 
                 // return $dictionaryValueExistIds;
