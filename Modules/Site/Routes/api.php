@@ -237,6 +237,19 @@ Route::middleware([
 
     });
 
+    // 模版分类 控制器
+    Route::prefix('template-category')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'list'])->name('模版分类管理:模版分类列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'searchDroplist'])->name('模版分类管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'changeStatus'])->name('模版分类管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'changeSort'])->name('模版分类管理:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'store'])->name('模版分类管理:新增模版分类');
+        Route::post('update', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'update'])->name('模版分类管理:修改模版分类');
+        Route::post('destroy', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'destroy'])->name('模版分类管理:删除模版分类');
+
+    });
+
     // SearchRank 控制器
     Route::prefix('search-rank')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SearchRankController::class, 'list'])->name('搜索排行:搜索列表');
