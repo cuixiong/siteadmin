@@ -16,6 +16,11 @@ use Modules\Admin\Http\Models\ListStyle;
 class PriceEditionController extends CrudController
 {
 
+    // 全量更新
+    protected function test(Request $request)
+    {
+        return PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, null, true);
+    }
 
     /**
      * 新增价格版本及其子项
@@ -56,10 +61,10 @@ class PriceEditionController extends CrudController
                 }
             }
             DB::commit();
-            // 事务提交成功，入库redis
-            $editionToRedisData = array_map(function ($item) {
-                return PriceEditionValue::SaveToRedis($item);
-            }, $editionToRedisData);
+            
+            // 同步到分站点
+            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
+
             ReturnJson(TRUE, trans('lang.add_success'));
         } catch (\Exception $e) {
             // 回滚事务
@@ -144,10 +149,9 @@ class PriceEditionController extends CrudController
                 }
             }
             DB::commit();
-            // 事务提交成功，入库redis
-            $editionToRedisData = array_map(function ($item) {
-                return PriceEditionValue::UpdateToRedis($item);
-            }, $editionToRedisData);
+            
+            // 同步到分站点
+            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
@@ -183,10 +187,10 @@ class PriceEditionController extends CrudController
             PriceEditionValue::whereIn('edition_id', $ids)->delete();
 
             DB::commit();
-            $ids = PriceEditionValue::whereIn('edition_id', $ids)->pluck('id');
-            foreach($ids as $id){
-                PriceEditionValue::DeteleToRedis($id);
-            }
+            
+            // 同步到分站点
+            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
+
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
             // 回滚事务
@@ -281,35 +285,29 @@ class PriceEditionController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-
+    
     /**
-     * 更新全部的价格版本到Redis中
+     * 修改状态
+     * @param $request 请求信息
+     * @param $id 主键ID
      */
-    public function ToRedis(Request $request)
+    public function changeStatus(Request $request)
     {
         try {
-            $list = PriceEditionValue::get();
-            $count = PriceEditionValue::count();
-            $i = 0;
-            foreach ($list as $key => $value) {
-                $res = PriceEditionValue::UpdateToRedis($value);
-                if($res == true){
-                    $i = $i + 1;
-                }
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
             }
-            $langauges = Language::get();
-            foreach ($langauges as $key => $value) {
-                Language::UpdateToRedis($value);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->status = $request->status;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
             }
-            $priceEditions = PriceEdition::get();
-            foreach ($priceEditions as $key => $value) {
-                PriceEdition::UpdateToRedis($value);
-            }
-            echo '已成功同步：'.$i .' 总数量:'.$count;
-            exit;
+            // 同步到分站点
+            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
+            ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
-            echo $e->getMessage();
-            exit;
+            ReturnJson(FALSE, $e->getMessage());
         }
     }
+
 }

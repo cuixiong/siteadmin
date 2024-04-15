@@ -10,7 +10,7 @@ class PriceEditionValue extends Base
     // redis KEY名
     protected static $RedisKey = 'PriceEditionValue';
     // 设置可以入库的字段
-    protected $fillable = ['name', 'edition_id', 'language_id', 'rules', 'notice', 'sort', 'status', 'is_logistics', 'created_by', 'updated_by',];
+    protected $fillable = ['name', 'edition_id', 'bind_id', 'language_id', 'rules', 'notice', 'sort', 'status', 'is_logistics', 'created_by', 'updated_by',];
 
     //将虚拟字段追加到数据对象列表里去
     protected $appends = ['language', 'logistics'];
@@ -73,7 +73,7 @@ class PriceEditionValue extends Base
         try {
             $data = is_array($data) ? $data : $data->toArray();
             $id = $data['id'];
-            Redis::hset(self::$RedisKey,$id,json_encode($data));
+            Redis::hset(self::$RedisKey, $id, json_encode($data));
             return true;
         } catch (\Exception $e) {
             return false;
@@ -89,9 +89,9 @@ class PriceEditionValue extends Base
             $data = is_array($data) ? $data : $data->toArray();
             $id = $data['id'];
             // 先删除
-            Redis::hdel(self::$RedisKey,$id);
+            Redis::hdel(self::$RedisKey, $id);
             // 后新增
-            Redis::hset(self::$RedisKey,$id,json_encode($data));
+            Redis::hset(self::$RedisKey, $id, json_encode($data));
             return true;
         } catch (\Exception $e) {
             return false;
@@ -106,7 +106,7 @@ class PriceEditionValue extends Base
         try {
             $data = is_array($data) ? $data : $data->toArray();
             $id = $data['id'];
-            Redis::hdel(self::$RedisKey,$id);
+            Redis::hdel(self::$RedisKey, $id);
             return true;
         } catch (\Exception $e) {
             return false;

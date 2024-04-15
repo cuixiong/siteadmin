@@ -253,9 +253,6 @@ class Country extends Base
                     }
                     $countryDataSql[] = "INSERT INTO $countryTableName (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $values) . ");";
                     // return [$record,$countryDataSql];
-                    if($aaa>2){
-                        break;
-                    }
                 }
 
                 // 复制数据到分站点数据库
