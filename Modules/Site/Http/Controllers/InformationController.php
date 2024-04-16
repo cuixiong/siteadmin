@@ -77,7 +77,7 @@ class InformationController extends CrudController {
 
 
             if(empty($input['type'] )){
-                $input['type'] = 1;
+                $input['type'] = 2;
             }
 
             $record = $this->ModelInstance()->create($input);
