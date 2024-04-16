@@ -60,15 +60,14 @@ class InformationController extends CrudController {
                 $input['upload_at'] = time();
             }
             // 过滤url参数  过滤掉特殊符号%，&之类的
-            //$filterUrl = preg_replace('/[%&]/', '', $url);
             $urlFdModel = new UrlFilterEdition();
             $urlFilterList = $urlFdModel->where("status", 1)->pluck("name")->toArray();
-            $filterStrs = implode("", $urlFilterList);
             $url = $request->input('url');
-            // 构建正则表达式模式，匹配要过滤的任意字符
-            $pattern = '/['.preg_quote($filterStrs, '/').']/u';
+            // 转义规则字符，并使用 | 连接起来，形成正则表达式模式
+            $pattern = '/' . implode('|', array_map('preg_quote', $urlFilterList, array_fill(0, count($urlFilterList), '/'))) . '/u';
             $filteredString = preg_replace($pattern, '', $url);
             $input['url'] = $filteredString;
+
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
@@ -98,15 +97,14 @@ class InformationController extends CrudController {
                 $input['upload_at'] = time();
             }
             // 过滤url参数  过滤掉特殊符号%，&之类的
-            //$filterUrl = preg_replace('/[%&]/', '', $url);
             $urlFdModel = new UrlFilterEdition();
             $urlFilterList = $urlFdModel->where("status", 1)->pluck("name")->toArray();
-            $filterStrs = implode("", $urlFilterList);
             $url = $request->input('url');
-            // 构建正则表达式模式，匹配要过滤的任意字符
-            $pattern = '/['.preg_quote($filterStrs, '/').']/u';
+            // 转义规则字符，并使用 | 连接起来，形成正则表达式模式
+            $pattern = '/' . implode('|', array_map('preg_quote', $urlFilterList, array_fill(0, count($urlFilterList), '/'))) . '/u';
             $filteredString = preg_replace($pattern, '', $url);
             $input['url'] = $filteredString;
+
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));
             }
