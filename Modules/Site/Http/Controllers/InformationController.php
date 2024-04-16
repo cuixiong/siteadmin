@@ -7,6 +7,7 @@ use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\NewsCategory;
 use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Site\Http\Models\UrlFilterEdition;
 
 class InformationController extends CrudController {
     /**
@@ -58,12 +59,21 @@ class InformationController extends CrudController {
             if (!isset($input['upload_at']) || empty($input['upload_at'])) {
                 $input['upload_at'] = time();
             }
-
             // 过滤url参数  过滤掉特殊符号%，&之类的
+            //$filterUrl = preg_replace('/[%&]/', '', $url);
+            $urlFdModel = new UrlFilterEdition();
+            $urlFilterList = $urlFdModel->where("status", 1)->pluck("name")->toArray();
+            $filterStrs = implode("", $urlFilterList);
             $url = $request->input('url');
-            $filterUrl = preg_replace('/[%&]/', '', $url);
-            $input['url'] = $filterUrl;
-
+            $filteredUrlStr = '';
+            for ($i = 0; $i < strlen($url); $i++) {
+                $char = $url[$i];
+                if (strpos($filterStrs, $char) === false) {
+                    // 如果当前字符不在特殊字符列表中，则保留在结果字符串中
+                    $filteredUrlStr .= $char;
+                }
+            }
+            $input['url'] = $filteredUrlStr;
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
@@ -86,12 +96,29 @@ class InformationController extends CrudController {
             $record = $this->ModelInstance()->findOrFail($request->id);
             // 虚拟点击量
             if ((!isset($input['hits']) || empty($input['hits'])) && empty($record->hits)) {
-                $input['hits'] = mt_rand(100, 1000);
+                $input['hits'] = mt_rand(200, 500);
             }
             // 出版时间为空则设定为当前时间
             if ((!isset($input['upload_at']) || empty($input['upload_at'])) && empty($record->upload_at)) {
                 $input['upload_at'] = time();
             }
+
+            // 过滤url参数  过滤掉特殊符号%，&之类的
+            //$filterUrl = preg_replace('/[%&]/', '', $url);
+            $urlFdModel = new UrlFilterEdition();
+            $urlFilterList = $urlFdModel->where("status", 1)->pluck("name")->toArray();
+            $filterStrs = implode("", $urlFilterList);
+            $url = $request->input('url');
+            $filteredUrlStr = '';
+            for ($i = 0; $i < strlen($url); $i++) {
+                $char = $url[$i];
+                if (strpos($filterStrs, $char) === false) {
+                    // 如果当前字符不在特殊字符列表中，则保留在结果字符串中
+                    $filteredUrlStr .= $char;
+                }
+            }
+            $input['url'] = $filteredUrlStr;
+
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));
             }
