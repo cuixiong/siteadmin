@@ -52,12 +52,18 @@ class InformationController extends CrudController {
             $input = $request->all();
             // 虚拟点击量
             if (!isset($input['hits']) || empty($input['hits'])) {
-                $input['hits'] = mt_rand(100, 1000);
+                $input['hits'] = mt_rand(200, 500);
             }
             // 出版时间为空则设定为当前时间
             if (!isset($input['upload_at']) || empty($input['upload_at'])) {
                 $input['upload_at'] = time();
             }
+
+            // 过滤url参数  过滤掉特殊符号%，&之类的
+            $url = $request->input('url');
+            $filterUrl = preg_replace('/[%&]/', '', $url);
+            $input['url'] = $filterUrl;
+
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
