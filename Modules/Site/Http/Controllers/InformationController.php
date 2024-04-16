@@ -65,15 +65,10 @@ class InformationController extends CrudController {
             $urlFilterList = $urlFdModel->where("status", 1)->pluck("name")->toArray();
             $filterStrs = implode("", $urlFilterList);
             $url = $request->input('url');
-            $filteredUrlStr = '';
-            for ($i = 0; $i < strlen($url); $i++) {
-                $char = $url[$i];
-                if (strpos($filterStrs, $char) === false) {
-                    // 如果当前字符不在特殊字符列表中，则保留在结果字符串中
-                    $filteredUrlStr .= $char;
-                }
-            }
-            $input['url'] = $filteredUrlStr;
+            // 构建正则表达式模式，匹配要过滤的任意字符
+            $pattern = '/['.preg_quote($filterStrs, '/').']/u';
+            $filteredString = preg_replace($pattern, '', $url);
+            $input['url'] = $filteredString;
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
@@ -102,23 +97,16 @@ class InformationController extends CrudController {
             if ((!isset($input['upload_at']) || empty($input['upload_at'])) && empty($record->upload_at)) {
                 $input['upload_at'] = time();
             }
-
             // 过滤url参数  过滤掉特殊符号%，&之类的
             //$filterUrl = preg_replace('/[%&]/', '', $url);
             $urlFdModel = new UrlFilterEdition();
             $urlFilterList = $urlFdModel->where("status", 1)->pluck("name")->toArray();
             $filterStrs = implode("", $urlFilterList);
             $url = $request->input('url');
-            $filteredUrlStr = '';
-            for ($i = 0; $i < strlen($url); $i++) {
-                $char = $url[$i];
-                if (strpos($filterStrs, $char) === false) {
-                    // 如果当前字符不在特殊字符列表中，则保留在结果字符串中
-                    $filteredUrlStr .= $char;
-                }
-            }
-            $input['url'] = $filteredUrlStr;
-
+            // 构建正则表达式模式，匹配要过滤的任意字符
+            $pattern = '/['.preg_quote($filterStrs, '/').']/u';
+            $filteredString = preg_replace($pattern, '', $url);
+            $input['url'] = $filteredString;
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));
             }
