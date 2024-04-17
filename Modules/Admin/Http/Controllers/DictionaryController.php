@@ -149,5 +149,43 @@ class DictionaryController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+     /**
+     * 更新全部的价格版本到Redis中
+     */
+    public function ToRedis(Request $request)
+    {
+        try {
+            $list = Dictionary::select('id', 'code')->where('status', 1)->get()->toArray();
+
+            // $count = Dictionary::count();
+            // $i = 0;
+            if ($list && count($list) > 0) {
+
+                foreach ($list as $item) {
+
+                    $option = DictionaryValue::select('id', 'name', 'value', 'status')
+                        ->where(['status' => 1, 'parent_id' => $item['id']])
+                        ->orderBy('sort', 'asc')
+                        ->get()->toArray();
+
+                    if ($option && count($option) > 0 && !empty($item['code'])) {
+                        foreach ($option as $optionItem) {
+
+                            $res = Dictionary::UpdateToRedis('dictionary_' . $item['code'], $optionItem);
+                            // ReturnJson(FALSE, $res);
+                        }
+                        // if($res == true){
+                        //     $i = $i + 1;
+                        // }
+                    }
+                }
+            }
+            // echo '已成功同步：'.$i .' 总数量:'.$count;
+            // exit;
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+            exit;
+        }
+    }
 
 }
