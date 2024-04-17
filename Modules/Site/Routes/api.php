@@ -261,6 +261,8 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\TemplateController::class, 'update'])->name('模版管理:修改模版');
         Route::post('destroy', [Modules\Site\Http\Controllers\TemplateController::class, 'destroy'])->name('模版管理:删除模版');
 
+
+        Route::get('copy-word-by-template', [Modules\Site\Http\Controllers\TemplateController::class, 'copyWordByTemplate'])->name('模版管理:根据模板返回文字');
     });
 
     // SearchRank 控制器

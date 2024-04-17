@@ -53,6 +53,8 @@ class Template extends Base {
                 }
             }
         }
+        $type = $request->input('type');
+        $model->where("type", $type);
 
         return $model;
     }

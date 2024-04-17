@@ -5,10 +5,57 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 
 class TemplateController extends CrudController {
+    /**
+     * 查询列表页 (重写父类该方法)
+     *
+     * @param       $request  请求信息
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $recordList = $model->get();
+            foreach ($recordList as $recordInfo) {
+                //模板分类的文本
+                $cateNameList = $recordInfo->tempCates()->where("status", 1)->pluck('name')->toArray();
+                $recordInfo->cate_text = implode(",", $cateNameList);
+            }
+            $data = [
+                'total' => $total,
+                'list'  => $recordList
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
     /**
      * 获取搜索下拉列表
      *
@@ -105,7 +152,7 @@ class TemplateController extends CrudController {
                 $record = $this->ModelInstance()->find($id);
                 if ($record) {
                     $res = $record->delete();
-                    if($res > 0){
+                    if ($res > 0) {
                         $record->tempCates()->detach();
                     }
                 }
@@ -114,5 +161,102 @@ class TemplateController extends CrudController {
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    /**
+     *  根据模板返回拷贝内容
+     */
+    public function copyWordByTemplate(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $templateId = $input['templateId'];
+            $template = Template::findOrFail($templateId);
+            $productId = $input['productId'];
+            $product = Products::findOrFail($productId);
+            $templateWords = $this->templateWirteData($template, $product);
+            ReturnJson(true, trans('lang.copy_success'), ['words' => $templateWords]);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function templateWirteData($template, $product) {
+        $tempContent = $template->content;
+        // 处理模板变量   {{year}}
+        $tempContent = $this->writeTempWord($tempContent, '{{year}}', date("Y"));
+        // 处理模板变量   {{month}}
+        $tempContent = $this->writeTempWord($tempContent, '{{month}}', date("m"));
+        // 处理模板变量   {{day}}
+        $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("d"));
+        // 处理模板变量   @@@@
+        $keywords = $product->keywords;
+        $tempContent = $this->writeTempWord($tempContent, '@@@@', $keywords);
+
+        //查询模板描述数据
+        $productId = $product->id;
+        $pdModel = new ProductsDescription();
+        $pd_obj = $pdModel->where("product_id", $productId)->first();
+        // 处理模板变量   {{seo_description}}
+        if (!empty($pd_obj->description)) {
+            $replaceWords = $pd_obj->description;
+            //取描述第一段 ,  如果没有换行符就取一整段
+            $strIndex = strpos($replaceWords, "\n");
+            if ($strIndex !== false) {
+                // 使用 substr() 函数获取第一个段落
+                $replaceWords = substr($replaceWords, 0, $strIndex);
+            }
+        } else {
+            $replaceWords = '';
+        }
+        // 处理模板变量   {{toc}}
+        $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $replaceWords);
+        if (!empty($pd_obj->table_of_content)) {
+            $replaceWords = $pd_obj->table_of_content;
+        } else {
+            $replaceWords = '';
+        }
+        $tempContent = $this->writeTempWord($tempContent, '{{toc}}', $replaceWords);
+
+
+        // 处理模板变量   {{company}}   (换行)
+        if (!empty($pd_obj->companies_mentioned)) {
+            $replaceWords = $pd_obj->companies_mentioned;
+        }else{
+            $replaceWords = '';
+        }
+        // 处理模板变量  {{company_str}}  (不换行)
+        $tempContent = $this->writeTempWord($tempContent, '{{company}}', $replaceWords);
+
+        $replaceWords = $this->addChangeLineStr($replaceWords);
+        $tempContent = $this->writeTempWord($tempContent, '{{company}}', $replaceWords);
+
+
+        return $tempContent;
+    }
+
+    /**
+     *
+     * @param $sourceContent  string 源串
+     * @param $templateVar    string 模板变量
+     * @param $replaceWords   string 变量的值
+     *
+     * @return array|string|string[]|null
+     */
+    private function writeTempWord($sourceContent, $templateVar, $replaceWords) {
+        $pattern = '/'.preg_quote($templateVar).'/';
+
+        return preg_replace($pattern, $replaceWords, $sourceContent);
+    }
+
+    /**
+     * 添加换行符
+     *
+     * @param $sorceStr
+     *
+     * @return string
+     */
+    private function addChangeLineStr($sorceStr) {
+        return $sorceStr." <br/>";
     }
 }
