@@ -92,7 +92,7 @@ Route::middleware([
         Route::get('quick-search-dictionary', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearchDictionary'])->name('报告管理:快速搜索-字典数据');
 
     });
-    
+
     // ProductsUploadLog 控制器
     Route::prefix('products-upload-log')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'list'])->name('上传记录:记录列表');
@@ -102,14 +102,14 @@ Route::middleware([
         Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('上传记录:上传报告');
         Route::post('upload-process', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProcess'])->name('上传记录:上传进度');
         Route::get('example-file', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'exampleFile'])->name('上传记录:示例文件');
-        
+
     });
-    
+
     // ProductsExportLog 控制器
     Route::prefix('products-export-log')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\ProductsExportLogController::class, 'list'])->name('导出记录:导出列表');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsExportLogController::class, 'destroy'])->name('导出记录:删除记录');
-        
+
     });
 
     // ProductsCategory 控制器
@@ -122,14 +122,14 @@ Route::middleware([
         Route::post('set-header-title', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'setHeaderTitle'])->name('报告分类:设置自定义表头');
         Route::get('get-category', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'getCategory'])->name('报告分类:获取某层分类');
         Route::get('get-category-without-self', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'getCategoryWithoutSelf'])->name('报告分类:获取分类(不包含自身)');
-        
+
 
         Route::post('store', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'store'])->name('报告分类:新增分类');
         Route::post('update', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'update'])->name('报告分类:修改分类');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'destroy'])->name('报告分类:删除分类');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'discount'])->name('报告分类:设置折扣');
     });
-    
+
     // ProductsExcelField 控制器
     Route::prefix('products-excel-field')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'list'])->name('报告字段:字段列表');
@@ -144,7 +144,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsExcelFieldController::class, 'destroy'])->name('报告字段:删除字段');
 
     });
-    
+
     // Order 控制器
     Route::prefix('order')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\OrderController::class, 'list'])->name('订单管理:订单列表');
@@ -169,7 +169,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ShopCartController::class, 'destroy'])->name('购物车:删除购物车');
 
     });
-    
+
     // Invoice 控制器
     Route::prefix('invoice')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\InvoiceController::class, 'list'])->name('发票管理:发票列表');
@@ -182,7 +182,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\InvoiceController::class, 'destroy'])->name('发票管理:删除发票');
 
     });
-    
+
     // Coupon 控制器
     Route::prefix('coupon')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\CouponController::class, 'list'])->name('优惠券:字段列表');
@@ -195,7 +195,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\CouponController::class, 'destroy'])->name('优惠券:删除优惠券');
 
     });
-    
+
     // NewsCategory 控制器
     Route::prefix('news-category')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'list'])->name('新闻分类:新闻分类列表');
@@ -208,7 +208,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\NewsCategoryController::class, 'destroy'])->name('新闻分类:删除新闻');
 
     });
-    
+
     // News 控制器
     Route::prefix('news')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\NewsController::class, 'list'])->name('新闻管理:新闻列表');
@@ -220,6 +220,33 @@ Route::middleware([
         Route::post('store', [Modules\Site\Http\Controllers\NewsController::class, 'store'])->name('新闻管理:新增新闻');
         Route::post('update', [Modules\Site\Http\Controllers\NewsController::class, 'update'])->name('新闻管理:修改新闻');
         Route::post('destroy', [Modules\Site\Http\Controllers\NewsController::class, 'destroy'])->name('新闻管理:删除新闻');
+
+    });
+
+    // 热点资讯 控制器
+    Route::prefix('information')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\InformationController::class, 'list'])->name('资讯管理:资讯列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\InformationController::class, 'searchDroplist'])->name('资讯管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\InformationController::class, 'changeStatus'])->name('资讯管理:状态修改');
+        Route::post('change-home', [Modules\Site\Http\Controllers\InformationController::class, 'changeHome'])->name('资讯管理:首页状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\InformationController::class, 'changeSort'])->name('资讯管理:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\InformationController::class, 'store'])->name('资讯管理:新增资讯');
+        Route::post('update', [Modules\Site\Http\Controllers\InformationController::class, 'update'])->name('资讯管理:修改资讯');
+        Route::post('destroy', [Modules\Site\Http\Controllers\InformationController::class, 'destroy'])->name('资讯管理:删除资讯');
+
+    });
+
+    // 模版分类 控制器
+    Route::prefix('template-category')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'list'])->name('模版分类管理:模版分类列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'searchDroplist'])->name('模版分类管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'changeStatus'])->name('模版分类管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'changeSort'])->name('模版分类管理:排序修改');
+
+        Route::post('store', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'store'])->name('模版分类管理:新增模版分类');
+        Route::post('update', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'update'])->name('模版分类管理:修改模版分类');
+        Route::post('destroy', [Modules\Site\Http\Controllers\TemplateCategoryController::class, 'destroy'])->name('模版分类管理:删除模版分类');
 
     });
 
@@ -434,7 +461,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PartnerController::class, 'list'])->name('合作伙伴:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PartnerController::class, 'changeStatus'])->name('合作伙伴:状态修改');
     });
-    
+
     // LanguageWebsite控制器
     Route::prefix('language-website')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\LanguageWebsiteController::class, 'store'])->name('其它语言网站:数据新增');
@@ -460,7 +487,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('联系我们:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\ContactUsController::class, 'options'])->name('联系我们:字典数据');
     });
-    
+
     Route::prefix('message-language-version')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'store'])->name('其它语言网站:数据新增');
         Route::post('update', [Modules\Site\Http\Controllers\MessageLanguageVersionController::class, 'update'])->name('其它语言网站:数据更新');

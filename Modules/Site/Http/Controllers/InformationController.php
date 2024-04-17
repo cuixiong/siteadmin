@@ -7,8 +7,9 @@ use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\NewsCategory;
 use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Site\Http\Models\UrlFilterEdition;
 
-class NewsController extends CrudController {
+class InformationController extends CrudController {
     /**
      * 获取搜索下拉列表
      *
@@ -21,7 +22,7 @@ class NewsController extends CrudController {
                                                                    ['status' => 1]);
             //因为热门资讯是独立的一个表， 所以免费咨询需要去掉
             foreach ($data['pay_type'] as $key => $payType) {
-                if ($payType['value'] == 2) {
+                if ($payType['value'] != 2) {
                     unset($data['pay_type'][$key]);
                 }
             }
@@ -53,18 +54,32 @@ class NewsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    protected function store(Request $request) {
+    public function store(Request $request) {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
             // 虚拟点击量
             if (!isset($input['hits']) || empty($input['hits'])) {
-                $input['hits'] = mt_rand(100, 1000);
+                $input['hits'] = mt_rand(200, 500);
             }
             // 出版时间为空则设定为当前时间
             if (!isset($input['upload_at']) || empty($input['upload_at'])) {
                 $input['upload_at'] = time();
             }
+            // 过滤url参数  过滤掉特殊符号%，&之类的
+            $urlFdModel = new UrlFilterEdition();
+            $urlFilterList = $urlFdModel->where("status", 1)->orderBy('sort' , 'desc')->pluck("name")->toArray();
+            $url = $request->input('url');
+            // 转义规则字符，并使用 | 连接起来，形成正则表达式模式
+            $pattern = '/' . implode('|', array_map('preg_quote', $urlFilterList, array_fill(0, count($urlFilterList), '/'))) . '/u';
+            $filteredString = preg_replace($pattern, '', $url);
+            $input['url'] = $filteredString;
+
+
+            if(empty($input['type'] )){
+                $input['type'] = 2;
+            }
+
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
@@ -87,12 +102,22 @@ class NewsController extends CrudController {
             $record = $this->ModelInstance()->findOrFail($request->id);
             // 虚拟点击量
             if ((!isset($input['hits']) || empty($input['hits'])) && empty($record->hits)) {
-                $input['hits'] = mt_rand(100, 1000);
+                $input['hits'] = mt_rand(200, 500);
             }
             // 出版时间为空则设定为当前时间
             if ((!isset($input['upload_at']) || empty($input['upload_at'])) && empty($record->upload_at)) {
                 $input['upload_at'] = time();
             }
+            // 过滤url参数  过滤掉特殊符号%，&之类的
+            $urlFdModel = new UrlFilterEdition();
+            $urlFilterList = $urlFdModel->where("status", 1)->orderBy('sort' , 'desc')->pluck("name")->toArray();
+            $url = $request->input('url');
+            // 转义规则字符，并使用 | 连接起来，形成正则表达式模式
+            $pattern = '/' . implode('|', array_map('preg_quote', $urlFilterList, array_fill(0, count($urlFilterList), '/'))) . '/u';
+            $filteredString = preg_replace($pattern, '', $url);
+            $input['url'] = $filteredString;
+
+
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));
             }
