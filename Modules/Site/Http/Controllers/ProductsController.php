@@ -1297,8 +1297,9 @@ class ProductsController extends CrudController {
      *  根据报告描述，匹配模版数据
      */
     public function matchTemplateData($description) {
+        //测试需求, 模板分类必须所有关键词匹配, 且报告可以匹配多个模板分类
         $rdata = [
-            'template_cate_info'    => [],
+            'template_cate_list'    => [],
             'template_title_list'   => [],
             'template_content_list' => [],
         ];
@@ -1306,41 +1307,52 @@ class ProductsController extends CrudController {
             return $rdata;
         }
         $tcModel = new TemplateCategory();
-        $tc_list = $tcModel->where("status", 1)
-                           ->orderBy("sort", "desc")
-                           ->select('id', 'name', 'match_words')
-                           ->get()->toArray();
-        foreach ($tc_list as $tc_info) {
-            $match_words = $tc_info['match_words'];
-            if (empty($match_words)) {
+        $tcList = $tcModel->where("status", 1)
+                          ->orderBy("sort", "desc")
+                          ->select('id', 'name', 'match_words')
+                          ->get()->toArray();
+        $templateCateList = [];
+        foreach ($tcList as $tcInfo) {
+            $matchWords = $tcInfo['match_words'];
+            if (empty($matchWords)) {
                 continue;
             }
-            $match_words_list = explode(",", $match_words);
+            $matchWordsList = explode(",", $matchWords);
             //关键词， 匹配模版分类
-            foreach ($match_words_list as $match_words_for) {
-                $pattern = preg_quote($match_words_for);
-                $pattern = '/'.$pattern.'/';
-                if (preg_match($pattern, $description)) {
-                    $rdata['template_cate_info'] = $tc_info;
-                    break;
+            if (!empty($matchWordsList) && is_array($matchWordsList)) {
+                foreach ($matchWordsList as $matchWordsFor) {
+                    $pattern = preg_quote($matchWordsFor);
+                    $pattern = '/'.$pattern.'/';
+                    if (!preg_match($pattern, $description)) {
+                        break;
+                    }
                 }
+                //所有关键词匹配 , 放入数组
+                $templateCateList[] = $tcInfo;
             }
         }
         //一个都没有匹配上, 返回空数组
-        if (empty($rdata['template_cate_info'])) {
+        if (empty($templateCateList)) {
             return $rdata;
         }
-        //查询当前模版分类的标题模版
-        $tcInfo = $rdata['template_cate_info'];
-        $tcTempLate = TemplateCategory::find($tcInfo['id']);
-        $tempList = $tcTempLate->getTemps()
-                               ->where("status", 1)
-                               ->orderBy("sort", "desc")
-                               ->get()->toArray();
+        //查询模版分类列表的所有模版
+        $cateIdList = Arr::pluck($templateCateList, 'id');
+        $matchTempLateList = [];
+        foreach ($cateIdList as $forCateId) {
+            $tcTempCate = TemplateCategory::find($forCateId);
+            $forTempList = $tcTempCate->getTemps()
+                                      ->where("status", 1)
+                                      ->orderBy("sort", "desc")
+                                      ->get()->toArray();
+            $matchTempLateList = array_merge($matchTempLateList, $forTempList);
+        }
+        $matchTempLateList = collect($matchTempLateList)->unique('id')->values()->all();
         $template_content_list = [];
         $template_title_list = [];
-        foreach ($tempList as $tempInfo) {
-            $filterTempInfo = Arr::only($tempInfo, ['id', 'name', 'type', 'btn_color']);
+        //区分标题模板 , 内容模板
+        foreach ($matchTempLateList as $forTempInfo) {
+            //过滤无用字段
+            $filterTempInfo = Arr::only($forTempInfo, ['id', 'name', 'type', 'btn_color']);
             if ($filterTempInfo['type'] == 1) {
                 //内容模版
                 $template_content_list[] = $filterTempInfo;
@@ -1348,6 +1360,7 @@ class ProductsController extends CrudController {
                 $template_title_list[] = $filterTempInfo;
             }
         }
+        $rdata['template_cate_list'] = $templateCateList;
         $rdata['template_content_list'] = $template_content_list;
         $rdata['template_title_list'] = $template_title_list;
 
