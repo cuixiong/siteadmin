@@ -4,6 +4,7 @@ namespace Modules\Admin\Http\Models;
 
 use Modules\Admin\Http\Models\Base;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class Language extends Base
 {
