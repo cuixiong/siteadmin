@@ -494,6 +494,7 @@ Route::middleware([
     Route::get('admin/dictionary/save-to-site',[Modules\Admin\Http\Controllers\DictionaryController::class, 'test'])->name('测试:字典同步测试');
     Route::get('admin/country/save-to-site',[Modules\Admin\Http\Controllers\CountryController::class, 'test'])->name('测试:国家同步测试');
     Route::get('admin/price-edition/save-to-site',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'test'])->name('测试:价格同步测试');
+    Route::get('admin/language/save-to-site',[Modules\Admin\Http\Controllers\LanguageController::class, 'test'])->name('测试:语言同步测试');
 
     
 });
