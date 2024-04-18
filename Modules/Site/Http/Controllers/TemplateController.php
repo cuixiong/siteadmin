@@ -3,6 +3,7 @@
 namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Products;
@@ -185,8 +186,9 @@ class TemplateController extends CrudController {
         //查询模板描述数据
         $productId = $product->id;
         $pdModel = new ProductsDescription();
-        $pd_obj = $pdModel->where("product_id", $productId)->first();
+        $pdObj = $pdModel->where("product_id", $productId)->first();
 
+        list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
         $tempContent = $template->content;
         // 处理模板变量   {{year}}
@@ -196,62 +198,35 @@ class TemplateController extends CrudController {
         // 处理模板变量   {{day}}
         $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("d"));
         // 处理模板变量   @@@@
-        $keywords = $product->keywords;
-        $tempContent = $this->writeTempWord($tempContent, '@@@@', $keywords);
-
+        $tempContent = $this->writeTempWord($tempContent, '@@@@', $productArrData['keywords']);
         // 处理模板变量   {{seo_description}}
-        $replaceWords = $pd_obj->description;
-        //取描述第一段 ,  如果没有\n换行符就取一整段
-        $strIndex = strpos($replaceWords, "\n");
-        if ($strIndex !== false) {
-            // 使用 substr() 函数获取第一个段落
-            $replaceWords = substr($replaceWords, 0, $strIndex);
-        }
-        $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $replaceWords);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $pdArrData['description']);
         // 处理模板变量   {{toc}}
-        $replaceWords = $pd_obj->table_of_content;
-        $tempContent = $this->writeTempWord($tempContent, '{{toc}}', $replaceWords);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{toc}}', $pdArrData['table_of_content']);
         // 处理模板变量   {{company}}   (换行)
-        $replaceWords = $pd_obj->companies_mentioned;
+        $replaceWords = $pdArrData['companies_mentioned'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{company}}', $replaceWords);
-
         // 处理模板变量  {{company_str}}  (不换行)
-        $replaceWords = $pd_obj->companies_mentioned;
-        $tempContent = $this->writeTempWord($tempContent, '{{company_str}}', $replaceWords);
-
-
+        $tempContent = $this->writeTempWord($tempContent, '{{company_str}}', $pdArrData['companies_mentioned']);
         // 处理模板变量  {{definition}}
-        $replaceWords = $pd_obj->definition;
-        $tempContent = $this->writeTempWord($tempContent, '{{definition}}', $replaceWords);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{definition}}', $pdArrData['definition']);
         // 处理模板变量  {{overview}}
-        $replaceWords = $pd_obj->overview;
-        $tempContent = $this->writeTempWord($tempContent, '{{overview}}', $replaceWords);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{overview}}', $pdArrData['overview']);
         // 处理模板变量  {{type}}   换行
-        $replaceWords = $product->classification;
+        $replaceWords = $productArrData['classification'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{type}}', $replaceWords);
-
         // 处理模板变量  {{type_str}}
-        $replaceWords = $product->classification;
-        $tempContent = $this->writeTempWord($tempContent, '{{type_str}}', $replaceWords);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{type_str}}', $productArrData['classification']);
         // 处理模板变量  {{application}}   换行
-        $replaceWords = $product->application;
+        $replaceWords = $productArrData['application'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{application}}', $replaceWords);
-
         // 处理模板变量  {{application_str}}
-        $replaceWords = $product->application;
-        $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $replaceWords);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $productArrData['application']);
         // 处理模板变量  {{link}}
-        $replaceWords = $product->url;
-        $tempContent = $this->writeTempWord($tempContent, '{{link}}', $replaceWords);
+        $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
 
         return $tempContent;
     }
@@ -266,11 +241,10 @@ class TemplateController extends CrudController {
      */
     private function writeTempWord($sourceContent, $templateVar, $replaceWords) {
         $pattern = '/'.preg_quote($templateVar).'/';
-
-        //变量不存在, 为空字符串
-        if(!isset($replaceWords)){
+        if (!isset($replaceWords)) {
             $replaceWords = '';
         }
+
         return preg_replace($pattern, $replaceWords, $sourceContent);
     }
 
@@ -283,5 +257,79 @@ class TemplateController extends CrudController {
      */
     private function addChangeLineStr($sorceStr) {
         return $sorceStr." <br/>";
+    }
+
+    public function getReportUrl($product) {
+        //获取当前站点域名
+        $domain = Site::where('name', request()->header('Site'))->value('domain') ?? '';
+        if (!empty($product->url)) {
+            return $domain."/reports/{$product->id}/$product->url";
+        } else {
+            return $domain."/reports/{$product->id}";
+        }
+    }
+
+    public function handlerData($product, $pdObj) {
+        $productArrData = [];
+        //关键字
+        if (isset($product->keywords)) {
+            $productArrData['keywords'] = $product->keywords;
+        } else {
+            $productArrData['keywords'] = '';
+        }
+        //类型
+        if (isset($product->classification)) {
+            $productArrData['classification'] = $product->classification;
+        } else {
+            $productArrData['classification'] = '';
+        }
+        //应用
+        if (isset($product->application)) {
+            $productArrData['application'] = $product->application;
+        } else {
+            $productArrData['application'] = '';
+        }
+        //访问url
+        $productArrData['url'] = $this->getReportUrl($product);
+        $pdArrData = [];
+        //描述第一段
+        if (!empty($pdObj->description)) {
+            $replaceWords = $pdObj->description;
+            //取描述第一段 ,  如果没有\n换行符就取一整段
+            $strIndex = strpos($replaceWords, "\n");
+            if ($strIndex !== false) {
+                // 使用 substr() 函数获取第一个段落
+                $pdArrData['description'] = substr($replaceWords, 0, $strIndex);
+            }
+            $pdArrData['description'] = $pdObj->description;
+        } else {
+            $pdArrData['description'] = '';
+        }
+        //目录
+        if (isset($pdObj->table_of_content)) {
+            $pdArrData['table_of_content'] = $pdObj->table_of_content;
+        } else {
+            $pdArrData['table_of_content'] = '';
+        }
+        //企业
+        if (isset($pdObj->companies_mentioned)) {
+            $pdArrData['companies_mentioned'] = $pdObj->companies_mentioned;
+        } else {
+            $pdArrData['companies_mentioned'] = '';
+        }
+        //定义
+        if (isset($pdObj->definition)) {
+            $pdArrData['definition'] = $pdObj->definition;
+        } else {
+            $pdArrData['definition'] = '';
+        }
+        //概况
+        if (isset($pdObj->overview)) {
+            $pdArrData['overview'] = $pdObj->overview;
+        } else {
+            $pdArrData['overview'] = '';
+        }
+
+        return [$productArrData, $pdArrData];
     }
 }
