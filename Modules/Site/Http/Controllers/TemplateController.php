@@ -182,6 +182,12 @@ class TemplateController extends CrudController {
     }
 
     public function templateWirteData($template, $product) {
+        //查询模板描述数据
+        $productId = $product->id;
+        $pdModel = new ProductsDescription();
+        $pd_obj = $pdModel->where("product_id", $productId)->first();
+
+        // TODO List 处理所有模板变量
         $tempContent = $template->content;
         // 处理模板变量   {{year}}
         $tempContent = $this->writeTempWord($tempContent, '{{year}}', date("Y"));
@@ -193,44 +199,59 @@ class TemplateController extends CrudController {
         $keywords = $product->keywords;
         $tempContent = $this->writeTempWord($tempContent, '@@@@', $keywords);
 
-        //查询模板描述数据
-        $productId = $product->id;
-        $pdModel = new ProductsDescription();
-        $pd_obj = $pdModel->where("product_id", $productId)->first();
         // 处理模板变量   {{seo_description}}
-        if (!empty($pd_obj->description)) {
-            $replaceWords = $pd_obj->description;
-            //取描述第一段 ,  如果没有换行符就取一整段
-            $strIndex = strpos($replaceWords, "\n");
-            if ($strIndex !== false) {
-                // 使用 substr() 函数获取第一个段落
-                $replaceWords = substr($replaceWords, 0, $strIndex);
-            }
-        } else {
-            $replaceWords = '';
+        $replaceWords = $pd_obj->description;
+        //取描述第一段 ,  如果没有\n换行符就取一整段
+        $strIndex = strpos($replaceWords, "\n");
+        if ($strIndex !== false) {
+            // 使用 substr() 函数获取第一个段落
+            $replaceWords = substr($replaceWords, 0, $strIndex);
         }
-        // 处理模板变量   {{toc}}
         $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $replaceWords);
-        if (!empty($pd_obj->table_of_content)) {
-            $replaceWords = $pd_obj->table_of_content;
-        } else {
-            $replaceWords = '';
-        }
+
+        // 处理模板变量   {{toc}}
+        $replaceWords = $pd_obj->table_of_content;
         $tempContent = $this->writeTempWord($tempContent, '{{toc}}', $replaceWords);
 
-
         // 处理模板变量   {{company}}   (换行)
-        if (!empty($pd_obj->companies_mentioned)) {
-            $replaceWords = $pd_obj->companies_mentioned;
-        }else{
-            $replaceWords = '';
-        }
-        // 处理模板变量  {{company_str}}  (不换行)
-        $tempContent = $this->writeTempWord($tempContent, '{{company}}', $replaceWords);
-
+        $replaceWords = $pd_obj->companies_mentioned;
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{company}}', $replaceWords);
 
+        // 处理模板变量  {{company_str}}  (不换行)
+        $replaceWords = $pd_obj->companies_mentioned;
+        $tempContent = $this->writeTempWord($tempContent, '{{company_str}}', $replaceWords);
+
+
+        // 处理模板变量  {{definition}}
+        $replaceWords = $pd_obj->definition;
+        $tempContent = $this->writeTempWord($tempContent, '{{definition}}', $replaceWords);
+
+        // 处理模板变量  {{overview}}
+        $replaceWords = $pd_obj->overview;
+        $tempContent = $this->writeTempWord($tempContent, '{{overview}}', $replaceWords);
+
+        // 处理模板变量  {{type}}   换行
+        $replaceWords = $product->classification;
+        $replaceWords = $this->addChangeLineStr($replaceWords);
+        $tempContent = $this->writeTempWord($tempContent, '{{type}}', $replaceWords);
+
+        // 处理模板变量  {{type_str}}
+        $replaceWords = $product->classification;
+        $tempContent = $this->writeTempWord($tempContent, '{{type_str}}', $replaceWords);
+
+        // 处理模板变量  {{application}}   换行
+        $replaceWords = $product->application;
+        $replaceWords = $this->addChangeLineStr($replaceWords);
+        $tempContent = $this->writeTempWord($tempContent, '{{application}}', $replaceWords);
+
+        // 处理模板变量  {{application_str}}
+        $replaceWords = $product->application;
+        $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $replaceWords);
+
+        // 处理模板变量  {{link}}
+        $replaceWords = $product->url;
+        $tempContent = $this->writeTempWord($tempContent, '{{link}}', $replaceWords);
 
         return $tempContent;
     }
@@ -246,6 +267,10 @@ class TemplateController extends CrudController {
     private function writeTempWord($sourceContent, $templateVar, $replaceWords) {
         $pattern = '/'.preg_quote($templateVar).'/';
 
+        //变量不存在, 为空字符串
+        if(!isset($replaceWords)){
+            $replaceWords = '';
+        }
         return preg_replace($pattern, $replaceWords, $sourceContent);
     }
 
