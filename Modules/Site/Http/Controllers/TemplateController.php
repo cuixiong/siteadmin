@@ -3,6 +3,7 @@
 namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -42,7 +43,18 @@ class TemplateController extends CrudController {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
             $recordList = $model->get();
+            $dictModel = (new DictionaryValue());
             foreach ($recordList as $recordInfo) {
+                //模板分类按钮信息
+                $btnColorId = $recordInfo->btn_color;
+                $dictInfo = $dictModel->find($btnColorId);
+                if (!empty($dictInfo)) {
+                    $dictInfo = $dictInfo->toArray();
+                    $dictInfo = Arr::only($dictInfo, ['name', 'id', 'value']);
+                    $recordInfo->btn_info = $dictInfo;
+                } else {
+                    $recordInfo->btn_info = [];
+                }
                 //模板分类的文本
                 $cateNameList = $recordInfo->tempCates()->where("status", 1)->pluck('name')->toArray();
                 $recordInfo->cate_text = implode(",", $cateNameList);
@@ -66,8 +78,10 @@ class TemplateController extends CrudController {
         try {
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
+                $lngField = 'english_name as label';
             } else {
                 $field = ['name as label', 'value'];
+                $lngField = 'name as label';
             }
             //模版分类列表
             $model = new TemplateCategory();
@@ -76,7 +90,7 @@ class TemplateController extends CrudController {
             $data['temp_cate_list'] = $temp_cate_list;
             // 颜色列表
             $data['color_list'] = (new DictionaryValue())->GetListLabel(
-                $field, false, '', ['code' => 'template_color', 'status' => 1], ['sort' => 'ASC']
+                ['id as value', $lngField], false, '', ['code' => 'template_color', 'status' => 1], ['sort' => 'ASC']
             );
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel(
@@ -187,7 +201,6 @@ class TemplateController extends CrudController {
         $productId = $product->id;
         $pdModel = new ProductsDescription();
         $pdObj = $pdModel->where("product_id", $productId)->first();
-
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
         $tempContent = $template->content;

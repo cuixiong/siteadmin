@@ -34,7 +34,7 @@ class Template extends Base {
         $search = json_decode($request->input('search'), true);
         if (!empty($search)) {
             $textField = ['name'];
-            $numberField = ['id', 'sort', 'status'];
+            $numberField = ['id', 'sort', 'status' , 'btn_color'];
             $timeField = ['created_at', 'updated_at'];
             $userField = ['created_by', 'updated_by'];
             foreach ($search as $key => $value) {
@@ -53,9 +53,17 @@ class Template extends Base {
                 }
             }
         }
+        //区分是内容模板,还是标题模版
         $type = $request->input('type');
         $model->where("type", $type);
 
+        //分类查询
+        if(!empty($search['cate_ids'] )){
+            $cateIdList = explode("," , $search['cate_ids']);
+            $tcmModel = new TemplateCateMapping();
+            $template_id_list = $tcmModel->whereIn("cate_id", $cateIdList)->pluck("temp_id")->toArray();
+            $model->whereIn("id", $template_id_list);
+        }
         return $model;
     }
 }
