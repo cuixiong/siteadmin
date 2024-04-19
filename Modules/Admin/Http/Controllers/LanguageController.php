@@ -85,6 +85,7 @@ class LanguageController extends CrudController
                 $record = $this->ModelInstance()->find($id);
                 if($record){
                     $record->delete();
+                    Language::SaveToSite(Language::SAVE_TYPE_SINGLE, $id, true);
                 }
             }
             ReturnJson(TRUE, trans('lang.delete_success'));
@@ -106,6 +107,8 @@ class LanguageController extends CrudController
             if (!$record->update($input)) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
+            // 同步到分站点
+            Language::SaveToSite(Language::SAVE_TYPE_SINGLE, $record->id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -129,6 +132,8 @@ class LanguageController extends CrudController
             if (!$record->save()) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
+            // 同步到分站点
+            Language::SaveToSite(Language::SAVE_TYPE_SINGLE, $record->id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
@@ -152,6 +157,8 @@ class LanguageController extends CrudController
             if (!$record->save()) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
+            // 同步到分站点
+            Language::SaveToSite(Language::SAVE_TYPE_SINGLE, $record->id, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
