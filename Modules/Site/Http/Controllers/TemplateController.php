@@ -75,7 +75,7 @@ class TemplateController extends CrudController {
                                                    ['status' => 1]);
             $data['temp_cate_list'] = $temp_cate_list;
             // 颜色列表
-            $data['show_home'] = (new DictionaryValue())->GetListLabel(
+            $data['color_list'] = (new DictionaryValue())->GetListLabel(
                 $field, false, '', ['code' => 'template_color', 'status' => 1], ['sort' => 'ASC']
             );
             // 状态开关
