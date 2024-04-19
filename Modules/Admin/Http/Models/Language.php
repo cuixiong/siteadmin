@@ -21,20 +21,6 @@ class Language extends Base
     {
         parent::boot();
 
-        // 在创建成功后触发
-        static::created(function ($model) {
-            self::SaveToRedis($model);
-        });
-
-        // 在更新成功后触发
-        static::updating(function ($model) {
-            self::DeteleToRedis($model);
-        });
-
-        // 在删除成功后触发
-        static::deleted(function ($mode) {
-            self::DeteleToRedis($mode->id);
-        });
     }
     /**
      * 处理查询列表条件数组

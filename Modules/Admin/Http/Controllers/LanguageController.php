@@ -85,8 +85,10 @@ class LanguageController extends CrudController
                 $record = $this->ModelInstance()->find($id);
                 if($record){
                     $record->delete();
-                    Language::SaveToSite(Language::SAVE_TYPE_SINGLE, $id, true);
                 }
+            }
+            foreach ($ids as $id) {
+                Language::SaveToSite(Language::SAVE_TYPE_SINGLE, $id, true);
             }
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
