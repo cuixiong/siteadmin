@@ -56,8 +56,15 @@ class TemplateController extends CrudController {
                     $recordInfo->btn_info = [];
                 }
                 //模板分类的文本
-                $cateNameList = $recordInfo->tempCates()->where("status", 1)->pluck('name')->toArray();
-                $recordInfo->cate_text = implode(",", $cateNameList);
+                $cateNameList = $recordInfo->tempCates()->where("status", 1)->pluck('name', 'cate_id')->toArray();
+                if(!empty($cateNameList)){
+                    [$keys, $values] = Arr::divide($cateNameList);
+                    $cateInfo['cate_text'] = implode(",", $values);
+                    $cateInfo['cate_ids'] = implode(",", $keys);
+                    $recordInfo->cate_info = $cateInfo;
+                }else{
+                    $recordInfo->cate_info = [];
+                }
             }
             $data = [
                 'total' => $total,
