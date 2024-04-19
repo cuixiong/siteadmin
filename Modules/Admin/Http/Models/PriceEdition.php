@@ -160,8 +160,6 @@ class PriceEdition extends Base
             return false;
         }
 
-        $priceEditionDataSql = [];
-        $priceEditionValueDataSql = [];
         // 价格版本表
         $priceEditionTableName = (new PriceEdition())->getTable();
         // 价格版本项表
@@ -217,6 +215,8 @@ class PriceEdition extends Base
             // 获取当前租户信息
             $currentTenant = tenancy()->tenant;
 
+            $priceEditionDataSql = [];
+            $priceEditionValueDataSql = [];
             if ($type == self::SAVE_TYPE_FULL) {
                 // 假定分站点已经有这个表了,这里我不建表
                 $publishers = explode(',', $siteItem['publisher_id'] ?? '');
