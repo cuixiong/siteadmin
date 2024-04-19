@@ -58,10 +58,9 @@ class Template extends Base {
         $model->where("type", $type);
 
         //分类查询
-        if(!empty($search['cate_ids'] )){
-            $cateIdList = explode("," , $search['cate_ids']);
+        if(!empty($search['cate_id'] )){
             $tcmModel = new TemplateCateMapping();
-            $template_id_list = $tcmModel->whereIn("cate_id", $cateIdList)->pluck("temp_id")->toArray();
+            $template_id_list = $tcmModel->where("cate_id", $search['cate_id'])->pluck("temp_id")->toArray();
             $model->whereIn("id", $template_id_list);
         }
         return $model;
