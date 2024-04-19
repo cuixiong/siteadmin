@@ -6,22 +6,23 @@ use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\User as Admin;
 
-class TemplateCategory extends Base {
-    protected $table = 'template_category';
-    // 设置允许入库字段,数组形式
+class Template extends Base {
+    protected $table = 'template';
     protected $fillable
-        = [
-            'name',             // 名称
-            'match_words',      // 匹配词
-            'sort',             // 排序
+                     = [
+            'name',            // 名称
+            'type',           // 模版类型
+            'btn_color',      // 按钮颜色
+            'content',        // 模版内容
             'status',           // 状态
+            'sort',             // 排序
             'created_by',       // 创建者
             'updated_by',       // 编辑者
         ];
 
-    //模型关联 多对多
-    public function getTemps() {
-        return $this->belongsToMany(Template::class, 'template_cate_mapping', 'cate_id', 'temp_id');
+    //模型关联
+    public function tempCates() {
+        return $this->belongsToMany(TemplateCategory::class, 'template_cate_mapping', 'temp_id', 'cate_id');
     }
 
     /**
@@ -32,7 +33,7 @@ class TemplateCategory extends Base {
     public function HandleWhere($model, $request) {
         $search = json_decode($request->input('search'), true);
         if (!empty($search)) {
-            $textField = ['name', 'match_words'];
+            $textField = ['name'];
             $numberField = ['id', 'sort', 'status'];
             $timeField = ['created_at', 'updated_at'];
             $userField = ['created_by', 'updated_by'];
@@ -52,6 +53,8 @@ class TemplateCategory extends Base {
                 }
             }
         }
+        $type = $request->input('type');
+        $model->where("type", $type);
 
         return $model;
     }

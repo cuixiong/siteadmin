@@ -91,4 +91,5 @@ return [
     'export_merging_msg' => '正在合并文件',
     'export_complete_msg' => '完成',
     'file_not_exist' => '文件不存在',
+    'copy_success' => '复制成功'
 ];

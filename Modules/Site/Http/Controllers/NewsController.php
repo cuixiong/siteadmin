@@ -19,12 +19,6 @@ class NewsController extends CrudController {
             // 新闻类型
             $data['pay_type'] = (new NewsCategory())->GetListLabel(['id as value', 'name as label'], false, '',
                                                                    ['status' => 1]);
-            //因为热门资讯是独立的一个表， 所以免费咨询需要去掉
-            foreach ($data['pay_type'] as $key => $payType) {
-                if ($payType['value'] == 2) {
-                    unset($data['pay_type'][$key]);
-                }
-            }
 
             // 行业分类
             $data['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true,

@@ -6,23 +6,16 @@ use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\User as Admin;
 
-class TemplateCategory extends Base {
-    protected $table = 'template_category';
-    // 设置允许入库字段,数组形式
+class TemplateCateMapping extends Base {
+    protected $table = 'template_cate_mapping';
     protected $fillable
-        = [
-            'name',             // 名称
-            'match_words',      // 匹配词
-            'sort',             // 排序
-            'status',           // 状态
+                     = [
+            'cate_id',          // 模版分类id
+            'temp_id',          // 模版id
             'created_by',       // 创建者
             'updated_by',       // 编辑者
         ];
-
-    //模型关联 多对多
-    public function getTemps() {
-        return $this->belongsToMany(Template::class, 'template_cate_mapping', 'cate_id', 'temp_id');
-    }
+    // 设置允许入库字段,数组形式
 
     /**
      * 处理查询列表条件数组
@@ -32,7 +25,7 @@ class TemplateCategory extends Base {
     public function HandleWhere($model, $request) {
         $search = json_decode($request->input('search'), true);
         if (!empty($search)) {
-            $textField = ['name', 'match_words'];
+            $textField = [];
             $numberField = ['id', 'sort', 'status'];
             $timeField = ['created_at', 'updated_at'];
             $userField = ['created_by', 'updated_by'];

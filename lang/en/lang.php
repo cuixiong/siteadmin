@@ -61,7 +61,7 @@ return [
     'database_password_empty' => 'database passsword is empty',
     'server_login_fail' => 'login fail',
 
-    
+
     /**分站点 */
     'time_out'=>'Time Out',
     // 上传报告
@@ -92,5 +92,6 @@ return [
     'export_merging_msg' => 'Merging file...',
     'export_complete_msg' => 'Complete',
     'file_not_exist' => 'File is not exist',
+    'copy_success' => 'Copy Success'
 
 ];
