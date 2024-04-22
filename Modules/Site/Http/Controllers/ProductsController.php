@@ -1320,15 +1320,19 @@ class ProductsController extends CrudController {
             $matchWordsList = explode(",", $matchWords);
             //关键词， 匹配模版分类
             if (!empty($matchWordsList) && is_array($matchWordsList)) {
+                $matchRes = true;
                 foreach ($matchWordsList as $matchWordsFor) {
-                    $pattern = preg_quote($matchWordsFor);
+                    $pattern = preg_quote($matchWordsFor , '/');
                     $pattern = '/'.$pattern.'/';
                     if (!preg_match($pattern, $description)) {
+                        $matchRes = false;
                         break;
                     }
                 }
-                //所有关键词匹配 , 放入数组
-                $templateCateList[] = $tcInfo;
+                if($matchRes) {
+                    //所有关键词匹配 , 放入数组
+                    $templateCateList[] = $tcInfo;
+                }
             }
         }
         //一个都没有匹配上, 返回空数组
