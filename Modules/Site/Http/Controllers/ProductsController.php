@@ -124,16 +124,29 @@ class ProductsController extends CrudController {
                     continue;
                 }
                 $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
-                //根据描述匹配 模版分类
-                $templateData = $this->matchTemplateData($descriptionData['description']);
-                $record[$key]['template_data'] = $templateData;
-                $record[$key]['description'] = $descriptionData['description'] ?? '';
-                $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
-                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
-                $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
-                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
-                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
-                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+                if (empty($descriptionData)) {
+                    $templateData = $this->matchTemplateData('');
+                    $record[$key]['template_data'] = $templateData;
+                    $record[$key]['description'] = '';
+                    $record[$key]['table_of_content'] = '';
+                    $record[$key]['tables_and_figures'] = '';
+                    $record[$key]['description_en'] = '';
+                    $record[$key]['table_of_content_en'] = '';
+                    $record[$key]['tables_and_figures_en'] = '';
+                    $record[$key]['companies_mentioned'] = '';
+                } else {
+                    $descriptionData = $descriptionData->toArray();
+                    //根据描述匹配 模版分类
+                    $templateData = $this->matchTemplateData($descriptionData['description']);
+                    $record[$key]['template_data'] = $templateData;
+                    $record[$key]['description'] = $descriptionData['description'] ?? '';
+                    $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                    $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                    $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
+                    $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                    $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                    $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+                }
             }
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
@@ -1322,14 +1335,14 @@ class ProductsController extends CrudController {
             if (!empty($matchWordsList) && is_array($matchWordsList)) {
                 $matchRes = true;
                 foreach ($matchWordsList as $matchWordsFor) {
-                    $pattern = preg_quote($matchWordsFor , '/');
+                    $pattern = preg_quote($matchWordsFor, '/');
                     $pattern = '/'.$pattern.'/';
                     if (!preg_match($pattern, $description)) {
                         $matchRes = false;
                         break;
                     }
                 }
-                if($matchRes) {
+                if ($matchRes) {
                     //所有关键词匹配 , 放入数组
                     $templateCateList[] = $tcInfo;
                 }
