@@ -1366,10 +1366,20 @@ class ProductsController extends CrudController {
         $matchTempLateList = collect($matchTempLateList)->unique('id')->values()->all();
         $template_content_list = [];
         $template_title_list = [];
+        $dictModel = (new DictionaryValue());
         //区分标题模板 , 内容模板
         foreach ($matchTempLateList as $forTempInfo) {
             //过滤无用字段
             $filterTempInfo = Arr::only($forTempInfo, ['id', 'name', 'type', 'btn_color']);
+            //按钮颜色详情
+            $dictInfo = $dictModel->find($filterTempInfo['btn_color']);
+            if (!empty($dictInfo)) {
+                $dictInfo = $dictInfo->toArray();
+                $dictInfo = Arr::only($dictInfo, ['name', 'id', 'value']);
+                $filterTempInfo['btn_info'] = $dictInfo;
+            } else {
+                $filterTempInfo['btn_info'] = [];
+            }
             if ($filterTempInfo['type'] == 1) {
                 //内容模版
                 $template_content_list[] = $filterTempInfo;
