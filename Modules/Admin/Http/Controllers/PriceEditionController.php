@@ -61,7 +61,7 @@ class PriceEditionController extends CrudController
                 }
             }
             DB::commit();
-            
+
             // 同步到分站点
             PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
 
@@ -100,7 +100,7 @@ class PriceEditionController extends CrudController
             $editionData = $input['edition_data'] ?? null;
             if ($editionId && $editionData) {
                 $editionData = json_decode($editionData, true);
-                
+
                 // 需要更新的id
                 // $editionDataIds = array_column($editionData,'id');
                 $editionDataIds = [];
@@ -145,11 +145,11 @@ class PriceEditionController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.update_error'));
                     }
-                    
+
                 }
             }
             DB::commit();
-            
+
             // 同步到分站点
             PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
             ReturnJson(TRUE, trans('lang.update_success'));
@@ -187,7 +187,7 @@ class PriceEditionController extends CrudController
             PriceEditionValue::whereIn('edition_id', $ids)->delete();
 
             DB::commit();
-            
+
             // 同步到分站点
             PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
 
@@ -235,7 +235,7 @@ class PriceEditionController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort')
+                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort' , 'bind_id')
                         ->where('edition_id', $item['id'])
                         ->orderBy('sort', 'ASC')
                         ->get();
@@ -285,7 +285,7 @@ class PriceEditionController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
+
     /**
      * 修改状态
      * @param $request 请求信息
