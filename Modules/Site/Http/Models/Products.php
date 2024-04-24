@@ -6,6 +6,8 @@ use App\Services\RabbitmqService;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\Publisher;
+use XS;
+use XSDocument;
 
 class Products extends Base {
     protected $table = 'product_routine';
@@ -291,6 +293,40 @@ class Products extends Base {
         ];
     }
 
+    /**
+     * 推送消息队列
+     *
+     * @param $id
+     * @param $action
+     * @param $siteName
+     *
+     */
+    public function PushNewXunSearchMQ($id, $action, $siteName = '') {
+        //先测试讯搜数据业务数据
+        $data = $this->handlerProductData($id);
+        if (empty($data)) {
+            return false;
+        }
+        $siteName = $siteName ? $siteName : request()->header('Site');
+        $confIniPath = base_path("Modules/Site/Config/xunsearch/{$siteName}.ini");
+        $xs = new XS($confIniPath);
+        $index = $xs->index;
+        if ($action == 'add') {
+            // 创建文档对象
+            $doc = new XSDocument;
+            $doc->setFields($data);
+            $index->add($doc);
+        } elseif ($action == 'update') {
+            // 创建文档对象
+            $doc = new XSDocument;
+            $doc->setFields($data);
+            $index->update($doc);
+        } elseif ($action == 'delete') {
+            $index->del($id);
+        }
+        return true;
+    }
+
     public function PushXunSearchMQ($model, $action, $siteName = '') {
         if (in_array($action, ['add', 'update'])) {
             $data = $this->GetProductData($model);
@@ -305,6 +341,33 @@ class Products extends Base {
         $RabbitMQ->close();
 
         return true;
+    }
+    private function handlerProductData($id) {
+        if ($id) {
+            $data = Products::find($id);
+            $ini = [
+                'id'              => $data['id'],
+                'name'            => $data['name'],
+                'english_name'    => $data['english_name'],
+                'country_id'      => $data['country_id'],
+                'category_id'     => $data['category_id'],
+                'price'           => $data['price'],
+                'discount'        => $data['discount'],
+                'discount_amount' => $data['discount_amount'],
+                'created_at'      => $data['created_at'],
+                'published_date'  => $data['published_date'],
+                'author'          => $data['author'],
+                'show_hot'        => $data['show_hot'],
+                'show_recommend'  => $data['show_recommend'],
+                'status'          => $data['status'],
+                'keywords'        => $data['keywords'],
+                'sort'            => $data['sort'],
+            ];
+        } else {
+            $ini = [];
+        }
+
+        return $ini;
     }
 
     /**
