@@ -210,71 +210,47 @@ class ProductsController extends CrudController {
         $search = $xs->search;
         $keyword = $request->keyword || $request->keyword == '0' ? $request->keyword : '';
         $type = $request->type;
-        if (($type != '' || $type != null)
+        if (filled($keyword)
             && in_array(
                 $type, ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
                         'show_recommend', 'status']
             )
-            && (!empty($keyword) || $keyword == '0')) {
+        ) {
             $keyword = $type.':'.$keyword;
-            $sorts = array('published_date' => false);
-            // 设置搜索排序
+            //排序字段倒序 , 发布日期倒序
+            $sorts = ['sort' => false, 'published_date' => false];
             $search->setMultiSort($sorts);
             $search->setFuzzy()->setQuery($keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
-            $sorts = array('published_date' => false);
             // 设置搜索排序
+            $sorts = array('published_date' => false);
             $search->setMultiSort($sorts);
             $search->setQuery('')->addRange($type, $keyword[0], $keyword[1]);
-        } else if (empty($keyword)) {
-            $sorts = array('published_date' => false);
-            // 设置搜索排序
+        } else if ($type == 'name') {
+            //中文搜索, 开启模糊搜索
+            $queryWords = "name:{$keyword}";
+            $search->setFuzzy()->setQuery($queryWords);
+        } elseif ($type == 'english_name') {
+            //英文搜索, 需要精确搜索
+            //$search->setFuzzy()->setQuery($keyword);
+            $sorts = ['sort' => false, 'published_date' => false];
             $search->setMultiSort($sorts);
-            $search->setFuzzy()->setQuery($keyword);
-        } else if ($type == 'name' || $type == 'english_name') {
-            $search->setFuzzy()->setQuery($keyword);
+            $queryWords = 'english_name:"'.$keyword.'"';
+            $search->setQuery($queryWords);
         }
         // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
-        $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
+        //$search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
+        $search->setLimit($request->pageSize, 0);
         $docs = $search->search();
         $count = $search->count();
         $products = [];
         if (!empty($docs)) {
             foreach ($docs as $key => $doc) {
-                $product = [];
-                foreach ($doc as $key2 => $value2) {
-                    if (in_array($key2, ['created_at', 'published_date', 'updated_at'])) {
-                        $value2 = $value2 ? date('Y-m-d H:i:s', intval($value2)) : '';
-                    }
-                    $IntvalKey = [
-                        'publisher_id',
-                        'category_id',
-                        'country_id',
-                        'status',
-                        'show_home',
-                        'have_sample',
-                        'discount',
-                        'discount_type',
-                        'discount_time_begin',
-                        'discount_time_end',
-                        'pages',
-                        'tables',
-                        'hits',
-                        'show_hot',
-                        'show_recommend',
-                        'sort',
-                        'id'
-                    ];
-                    if (in_array($key2, $IntvalKey)) {
-                        if ($value2 != null) {
-                            $value2 = intval($value2);
-                        }
-                    }
-                    $product[$key2] = $value2;
+                if (!empty($doc['id'])) {
+                    $product = Products::find($doc['id']);
+                } else {
+                    continue;
                 }
-                $product['category'] = ProductsCategory::where('id', $product['category_id'])->value('name') ?? '';
-                $product['country'] = Region::where('id', $product['country_id'])->value('name') ?? '';
-                $product['Publisher'] = Publisher::where('id', $product['publisher_id'])->value('name') ?? '';
                 $products[] = $product;
             }
             $data = [
@@ -338,7 +314,7 @@ class ProductsController extends CrudController {
             // DB::connection($currentTenant->getConnectionName())->commit();
             DB::commit();
             // 创建完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record, 'add');
+            $this->ModelInstance()->PushXunSearchMQ($record->id, 'add');
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
@@ -462,7 +438,7 @@ class ProductsController extends CrudController {
             }
             DB::commit();
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record, 'update');
+            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
@@ -764,7 +740,7 @@ class ProductsController extends CrudController {
                 if ($record) {
                     $record->$keyword = $value;
                     $record->save();
-                    $this->ModelInstance()->PushXunSearchMQ($record, 'update');
+                    $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
                 }
             }
             ReturnJson(true, trans('lang.update_success'));
@@ -1352,9 +1328,8 @@ class ProductsController extends CrudController {
                 }
             }
         }
-
         //一个都没有匹配上  或 报告描述为空  需要匹配没有关键词的模版分类
-        if (empty($templateCateList) || empty($description )) {
+        if (empty($templateCateList) || empty($description)) {
             $templateCateList = TemplateCategory::where("status", 1)
                                                 ->where(function ($query) {
                                                     $query->whereNull("match_words")

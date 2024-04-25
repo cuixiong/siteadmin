@@ -296,12 +296,12 @@ class Products extends Base {
     /**
      * 推送消息队列
      *
-     * @param $id
-     * @param $action
-     * @param $siteName
+     * @param $id           报告id
+     * @param $action       操作类型
+     * @param $siteName     站点标识
      *
      */
-    public function PushNewXunSearchMQ($id, $action, $siteName = '') {
+    public function excuteXunSearchReq($id, $action, $siteName = '') {
         //先测试讯搜数据业务数据
         $data = $this->handlerProductData($id);
         if (empty($data)) {
@@ -324,24 +324,29 @@ class Products extends Base {
         } elseif ($action == 'delete') {
             $index->del($id)->flushIndex();;
         }
-        return true;
-    }
-
-    public function PushXunSearchMQ($model, $action, $siteName = '') {
-        if (in_array($action, ['add', 'update'])) {
-            $data = $this->GetProductData($model);
-        } else {
-            $data = ['id' => $model];
-        }
-        $request = request();
-        $siteName = $siteName ? $siteName : $request->header('Site');
-        $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('xunsearch_'.$siteName);
-        $RabbitMQ->WorkModePush('', '', ['data' => $data, 'action' => $action]);
-        $RabbitMQ->close();
 
         return true;
     }
+
+    public function PushXunSearchMQ($productId, $action, $siteName = '') {
+        //先 暂时不使用队列, 立即处理
+        return $this->excuteXunSearchReq($productId, $action, $siteName);
+
+//        if (in_array($action, ['add', 'update'])) {
+//            $data = $this->GetProductData($model);
+//        } else {
+//            $data = ['id' => $model];
+//        }
+//        $request = request();
+//        $siteName = $siteName ? $siteName : $request->header('Site');
+//        $RabbitMQ = new RabbitmqService();
+//        $RabbitMQ->setQueueName('xunsearch_'.$siteName);
+//        $RabbitMQ->WorkModePush('', '', ['data' => $data, 'action' => $action]);
+//        $RabbitMQ->close();
+//
+//        return true;
+    }
+
     private function handlerProductData($id) {
         if ($id) {
             $data = Products::find($id);

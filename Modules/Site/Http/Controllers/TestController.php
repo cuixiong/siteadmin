@@ -16,12 +16,13 @@ class TestController extends CrudController
         $id = $input['id'];
         $proModel = new Products();
         dump(microtime(true));
-        $rs = $proModel->PushNewXunSearchMQ($id , $optType);
+        $rs = $proModel->excuteXunSearchReq($id , $optType);
         dump(microtime(true));
         dd($rs);
     }
 
     public function searchTest(Request $request) {
+
         $input = $request->all();
         $searchword = $input['searchword'];
         $SiteName = $request->header('Site');
@@ -30,6 +31,9 @@ class TestController extends CrudController
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
         $docs = $search->setFuzzy()->search($searchword);
+        foreach ($docs as $doc){
+            dd($doc['keywords']);
+        }
         dump(microtime(true));
         dd([$docs]);
     }
