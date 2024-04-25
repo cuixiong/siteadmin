@@ -315,14 +315,14 @@ class Products extends Base {
             // 创建文档对象
             $doc = new XSDocument;
             $doc->setFields($data);
-            $index->add($doc);
+            $index->add($doc)->flushIndex();
         } elseif ($action == 'update') {
             // 创建文档对象
             $doc = new XSDocument;
             $doc->setFields($data);
-            $index->update($doc);
+            $index->update($doc)->flushIndex();
         } elseif ($action == 'delete') {
-            $index->del($id);
+            $index->del($id)->flushIndex();;
         }
         return true;
     }
