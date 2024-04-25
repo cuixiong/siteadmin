@@ -118,13 +118,20 @@ class TemplateController extends CrudController {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            $cate_ids = $input['cate_ids'];
-            $cate_id_list = explode(",", $cate_ids);
+            $cate_id_list = [];
+            if(!empty($input['cate_ids'] )){
+                $cate_ids = $input['cate_ids'];
+                $cate_id_list = explode(",", $cate_ids);
+            }
+
             $modelInstance = $this->ModelInstance();
             $record = $modelInstance->create($input);
             //先移除后添加
             $record->tempCates()->detach();
-            $record->tempCates()->attach($cate_id_list);
+            if(!empty($cate_id_list )) {
+                $record->tempCates()->attach($cate_id_list);
+            }
+
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
@@ -148,10 +155,15 @@ class TemplateController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             //维护中间表
-            $cate_ids = $input['cate_ids'];
-            $cate_id_list = explode(",", $cate_ids);
+            $cate_id_list = [];
+            if(!empty($input['cate_ids'] )) {
+                $cate_ids = $input['cate_ids'];
+                $cate_id_list = explode(",", $cate_ids);
+            }
             $record->tempCates()->detach();
-            $record->tempCates()->attach($cate_id_list);
+            if(!empty($cate_id_list )) {
+                $record->tempCates()->attach($cate_id_list);
+            }
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());

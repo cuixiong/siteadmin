@@ -43,14 +43,14 @@ class TemplateRequest extends BaseRequest {
         $rules = [
             'name'      => 'required',
             'type'      => 'required',
-            'cate_ids'  => 'required',
+            //'cate_ids'  => 'required',
             'btn_color' => 'required',
             //'content'   => 'required',
         ];
         $message = [
             'name.required'      => '模版昵称不能为空',
             'type.required'      => '类型不能为空',
-            'cate_ids.required'  => '模版分类不能为空',
+            //'cate_ids.required'  => '模版分类不能为空',
             'btn_color.required' => '按钮颜色不能为空',
             //'content.required'   => '模版内容不能为空',
         ];
@@ -68,7 +68,7 @@ class TemplateRequest extends BaseRequest {
             'id'        => 'required',
             'name'      => 'required',
             //'type'      => 'required',
-            'cate_ids'  => 'required',
+            //'cate_ids'  => 'required',
             'btn_color' => 'required',
             //'content'   => 'required',
         ];
@@ -76,7 +76,7 @@ class TemplateRequest extends BaseRequest {
             'id.required'        => 'id不能为空',
             'name.required'      => '模版昵称不能为空',
             //'type.required'      => '类型不能为空',
-            'cate_ids.required'  => '模版分类不能为空',
+            //'cate_ids.required'  => '模版分类不能为空',
             'btn_color.required' => '按钮颜色不能为空',
             //'content.required'   => '模版内容不能为空',
         ];
