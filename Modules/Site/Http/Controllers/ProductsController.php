@@ -1321,40 +1321,40 @@ class ProductsController extends CrudController {
             'template_title_list'   => [],
             'template_content_list' => [],
         ];
-        if (empty($description)) {
-            return $rdata;
-        }
-        $tcModel = new TemplateCategory();
-        $tcList = $tcModel->where("status", 1)
-                          ->orderBy("sort", "desc")
-                          ->select('id', 'name', 'match_words')
-                          ->get()->toArray();
-        $templateCateList = [];
-        foreach ($tcList as $tcInfo) {
-            $matchWords = $tcInfo['match_words'];
-            if (empty($matchWords)) {
-                continue;
-            }
-            $matchWordsList = explode(",", $matchWords);
-            //关键词， 匹配模版分类
-            if (!empty($matchWordsList) && is_array($matchWordsList)) {
-                $matchRes = true;
-                foreach ($matchWordsList as $matchWordsFor) {
-                    $pattern = preg_quote($matchWordsFor, '/');
-                    $pattern = '/'.$pattern.'/';
-                    if (!preg_match($pattern, $description)) {
-                        $matchRes = false;
-                        break;
+        if (!empty($description)) {
+            $tcModel = new TemplateCategory();
+            $tcList = $tcModel->where("status", 1)
+                              ->orderBy("sort", "desc")
+                              ->select('id', 'name', 'match_words')
+                              ->get()->toArray();
+            $templateCateList = [];
+            foreach ($tcList as $tcInfo) {
+                $matchWords = $tcInfo['match_words'];
+                if (empty($matchWords)) {
+                    continue;
+                }
+                $matchWordsList = explode(",", $matchWords);
+                //关键词， 匹配模版分类
+                if (!empty($matchWordsList) && is_array($matchWordsList)) {
+                    $matchRes = true;
+                    foreach ($matchWordsList as $matchWordsFor) {
+                        $pattern = preg_quote($matchWordsFor, '/');
+                        $pattern = '/'.$pattern.'/';
+                        if (!preg_match($pattern, $description)) {
+                            $matchRes = false;
+                            break;
+                        }
+                    }
+                    if ($matchRes) {
+                        //所有关键词匹配 , 放入数组
+                        $templateCateList[] = $tcInfo;
                     }
                 }
-                if ($matchRes) {
-                    //所有关键词匹配 , 放入数组
-                    $templateCateList[] = $tcInfo;
-                }
             }
         }
-        //一个都没有匹配上, 匹配没有关键词的模版分类
-        if (empty($templateCateList)) {
+
+        //一个都没有匹配上  或 报告描述为空  需要匹配没有关键词的模版分类
+        if (empty($templateCateList) || empty($description )) {
             $templateCateList = TemplateCategory::where("status", 1)
                                                 ->where(function ($query) {
                                                     $query->whereNull("match_words")
