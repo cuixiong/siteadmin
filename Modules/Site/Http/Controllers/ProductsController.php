@@ -165,6 +165,7 @@ class ProductsController extends CrudController {
     public function GetProductList($request) {
         try {
             $hidden = SystemValue::where('key', 'xunsearch')->value('hidden');
+            $hidden = 1;
             if ($hidden == 1) {
                 return $this->SearchForXunsearch($request);
             } else {
@@ -229,7 +230,7 @@ class ProductsController extends CrudController {
         } else if ($type == 'name') {
             //中文搜索, 开启模糊搜索
             $queryWords = "name:{$keyword}";
-            $search->setFuzzy()->setQuery($queryWords);
+            $search->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
             //$search->setFuzzy()->setQuery($keyword);
