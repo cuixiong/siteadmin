@@ -1307,7 +1307,12 @@ class ProductsController extends CrudController {
     }
 
     /**
-     *  根据报告描述，匹配模版数据
+     * 根据报告描述，匹配模版数据
+     *
+     * @param $description  模版描述
+     * @param $productsId   报告id
+     *
+     * @return array[]
      */
     public function matchTemplateData($description) {
         //测试需求, 模板分类必须所有关键词匹配, 且报告可以匹配多个模板分类
@@ -1348,7 +1353,17 @@ class ProductsController extends CrudController {
                 }
             }
         }
-        //一个都没有匹配上, 返回空数组
+        //一个都没有匹配上, 匹配没有关键词的模版分类
+        if (empty($templateCateList)) {
+            $templateCateList = TemplateCategory::where("status", 1)
+                                                ->where(function ($query) {
+                                                    $query->whereNull("match_words")
+                                                          ->orWhere("match_words", "");
+                                                })
+                                                ->select('id', 'name', 'match_words')
+                                                ->get()->toArray();
+        }
+        //关键词一个没有匹配上 或者 没有无关键词的模版分类
         if (empty($templateCateList)) {
             return $rdata;
         }

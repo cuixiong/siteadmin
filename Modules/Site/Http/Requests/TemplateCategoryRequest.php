@@ -13,13 +13,13 @@ class TemplateCategoryRequest extends BaseRequest {
     public function store($request) {
         $rules = [
             'name'        => 'required',
-            'match_words' => 'required',
+            //'match_words' => 'required',
             'sort'        => 'required',
             'status'      => 'required',
         ];
         $message = [
             'name.required'        => '名称不能为空',
-            'match_words.required' => '匹配词不能为空',
+            //'match_words.required' => '匹配词不能为空',
             'sort.required'        => '排序不能为空',
             'status.required'      => '状态不能为空',
         ];
@@ -36,14 +36,14 @@ class TemplateCategoryRequest extends BaseRequest {
         $rules = [
             'id'          => 'required',
             'name'        => 'required',
-            'match_words' => 'required',
+            //'match_words' => 'required',
             'sort'        => 'required',
             'status'      => 'required',
         ];
         $message = [
             'id.required'          => 'id不能为空',
             'name.required'        => '名称不能为空',
-            'match_words.required' => '匹配词不能为空',
+            //'match_words.required' => '匹配词不能为空',
             'sort.required'        => '排序不能为空',
             'status.required'      => '状态不能为空',
         ];
