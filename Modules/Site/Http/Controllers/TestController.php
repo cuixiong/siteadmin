@@ -10,20 +10,28 @@ use Modules\Site\Http\Models\Products;
 
 class TestController extends CrudController
 {
-    public function test() {
-
+    public function test(Request $request) {
+        $input = $request->all();
+        $optType = $input['opt_type'];
+        $id = $input['id'];
         $proModel = new Products();
-        // 2.88s
-        $rs = $proModel->PushNewXunSearchMQ(478 , 'add');
-
-        // 2.81s
-      //  $rs = $proModel->PushNewXunSearchMQ(478 , 'update');
-
-        //3.83s
-//        $rs = $proModel->PushNewXunSearchMQ(478 , 'delete');
+        dump(microtime(true));
+        $rs = $proModel->PushNewXunSearchMQ($id , $optType);
+        dump(microtime(true));
         dd($rs);
+    }
 
-
+    public function searchTest(Request $request) {
+        $input = $request->all();
+        $searchword = $input['searchword'];
+        $SiteName = $request->header('Site');
+        dump(microtime(true));
+        $RootPath = base_path();
+        $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
+        $search = $xs->search;
+        $docs = $search->setFuzzy()->search($searchword);
+        dump(microtime(true));
+        dd([$docs]);
     }
 
 
