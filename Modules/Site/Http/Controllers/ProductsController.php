@@ -25,7 +25,9 @@ use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Modules\Site\Http\Models\SystemValue;
+use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
+use Modules\Site\Http\Models\TemplateCateMapping;
 use XS;
 
 class ProductsController extends CrudController {
@@ -1287,7 +1289,7 @@ class ProductsController extends CrudController {
             'template_title_list'   => [],
             'template_content_list' => [],
         ];
-        return $rdata;
+
         $tcModel = new TemplateCategory();
         $tcWordsList = [];
         $tcNoWordsList = [];
@@ -1297,9 +1299,9 @@ class ProductsController extends CrudController {
                           ->get()->toArray();
         foreach ($tcList as $tcInfo){
             if(!empty($tcInfo['match_words'])){
-
+                $tcWordsList[] = $tcInfo;
             }else{
-
+                $tcNoWordsList[] = $tcInfo;
             }
         }
 
@@ -1331,51 +1333,35 @@ class ProductsController extends CrudController {
         }
         //一个都没有匹配上  或 报告描述为空  需要匹配没有关键词的模版分类
         if (empty($templateCateList) || empty($description)) {
-            $templateCateList = TemplateCategory::where("status", 1)
-                                                ->where(function ($query) {
-                                                    $query->whereNull("match_words")
-                                                          ->orWhere("match_words", "");
-                                                })
-                                                ->select('id', 'name', 'match_words')
-                                                ->get()->toArray();
+            $templateCateList = $tcNoWordsList;
         }
         //关键词一个没有匹配上 或者 没有无关键词的模版分类
         if (empty($templateCateList)) {
             return $rdata;
         }
-        //查询模版分类列表的所有模版
+        //根据模版分类id, 获取模版id
         $cateIdList = Arr::pluck($templateCateList, 'id');
-        $matchTempLateList = [];
-        foreach ($cateIdList as $forCateId) {
-            $tcTempCate = TemplateCategory::find($forCateId);
-            $forTempList = $tcTempCate->getTemps()
-                                      ->where("status", 1)
-                                      ->orderBy("sort", "desc")
-                                      ->get()->toArray();
-            $matchTempLateList = array_merge($matchTempLateList, $forTempList);
-        }
-        $matchTempLateList = collect($matchTempLateList)->unique('id')->values()->all();
+        $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
+        $matchTempLateList = Template::whereIn('id' , $tempIdList)->select(['id' , 'name', 'type', 'btn_color'])->get()->toArray();
         $template_content_list = [];
         $template_title_list = [];
         $dictModel = (new DictionaryValue());
+        $dictList = $dictModel->where("code" , 'template_color')->where("status" , 1)->select(['id', 'name', 'value'])->get()->keyBy("id")->toArray();
         //区分标题模板 , 内容模板
         foreach ($matchTempLateList as $forTempInfo) {
-            //过滤无用字段
-            $filterTempInfo = Arr::only($forTempInfo, ['id', 'name', 'type', 'btn_color']);
             //按钮颜色详情
-            $dictInfo = $dictModel->find($filterTempInfo['btn_color']);
-            if (!empty($dictInfo)) {
-                $dictInfo = $dictInfo->toArray();
-                $dictInfo = Arr::only($dictInfo, ['name', 'id', 'value']);
-                $filterTempInfo['btn_info'] = $dictInfo;
-            } else {
-                $filterTempInfo['btn_info'] = [];
+            $btnColorId = $forTempInfo['btn_color'];
+            if(!empty($dictList[$btnColorId])){
+                $forTempInfo['btn_info'] = $dictList[$btnColorId];
+            }else{
+                $forTempInfo['btn_info'] = [];
             }
-            if ($filterTempInfo['type'] == 1) {
+
+            if ($forTempInfo['type'] == 1) {
                 //内容模版
-                $template_content_list[] = $filterTempInfo;
+                $template_content_list[] = $forTempInfo;
             } else {
-                $template_title_list[] = $filterTempInfo;
+                $template_title_list[] = $forTempInfo;
             }
         }
         $rdata['template_cate_list'] = $templateCateList;
