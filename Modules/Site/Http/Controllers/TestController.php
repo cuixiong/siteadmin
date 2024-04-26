@@ -11,13 +11,17 @@ use Modules\Site\Http\Models\Products;
 class TestController extends CrudController
 {
     public function test(Request $request) {
+
+
+
 //        $input = $request->all();
 //        $optType = $input['opt_type'];
 //        $id = $input['id'];
-        $proModel = new Products();
-        $data = $proModel->findOrCache(2);
-        $dataDesc = $proModel->findDescCache(2);
-        dd([$data , $dataDesc]);
+
+//        $proModel = new Products();
+//        $data = $proModel->findOrCache(2);
+//        $dataDesc = $proModel->findDescCache(2);
+//        dd([$data , $dataDesc]);
 
 //        dump(microtime(true));
 //        $rs = $proModel->excuteXunSearchReq($id , $optType);
