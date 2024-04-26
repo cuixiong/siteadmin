@@ -3,6 +3,7 @@
 namespace Modules\Site\Http\Models;
 
 use App\Services\RabbitmqService;
+use Illuminate\Support\Facades\Redis;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\Publisher;
@@ -331,7 +332,6 @@ class Products extends Base {
     public function PushXunSearchMQ($productId, $action, $siteName = '') {
         //先 暂时不使用队列, 立即处理
         return $this->excuteXunSearchReq($productId, $action, $siteName);
-
 //        if (in_array($action, ['add', 'update'])) {
 //            $data = $this->GetProductData($model);
 //        } else {
@@ -433,4 +433,78 @@ class Products extends Base {
 
         return $ini;
     }
+
+    /**
+     *
+     * @param $id
+     *
+     * @return string
+     */
+    public function getRedisKey($id): string {
+        $site = request()->header('Site', '');
+        $redisKey = $site."_".class_basename($this)."_".$id;
+
+        return $redisKey;
+    }
+
+    /**
+     *
+     * @param $id
+     * @param $isExt  是否查询扩展字段, 默认不查询
+     *
+     * @return array|mixed
+     */
+    public function findOrCache($id) {
+        $cacheKey = $this->getRedisKey($id);
+        $data = Redis::get($cacheKey);
+        //缓存命中直接返回
+        if (!empty($data)) {
+            return json_decode($data, true);
+        }
+        $data = self::find($id);
+        if (!empty($data)) {
+            //放入缓存
+            $data = $data->toArray();
+            Redis::set($cacheKey, json_encode($data));
+
+            return $data;
+        }
+
+        return [];
+    }
+
+    public function findDescCache($id) {
+        $pdescRedisKey = $this->getPDescRedisKey($id);
+        $pdescData = Redis::get($pdescRedisKey);
+        if(!empty($pdescData )){
+            return $pdescData;
+        }else{
+            return $this->getPdescDataByProductId($id);
+        }
+        return [];
+    }
+
+    public function getPdescDataByProductId($productId) {
+        $products = $this->findOrCache($productId);
+        if(!empty($products )){
+            $year = date('Y', $products['published_date']);
+            $descriptionData = (new ProductsDescription($year))->where('product_id', $products['id'])->first();
+            if(!empty($descriptionData )){
+                $descriptionData = $descriptionData->toArray();
+                $pdescRedisKey = $this->getPDescRedisKey($productId);
+                Redis::set($pdescRedisKey, json_encode($descriptionData));
+                return $descriptionData;
+            }
+        }
+        return [];
+    }
+
+    public function getPDescRedisKey($id): string {
+        $site = request()->header('Site', '');
+        $redisKey = $site."_".class_basename(ProductsDescription::class)."_".$id;
+
+        return $redisKey;
+    }
+
+
 }

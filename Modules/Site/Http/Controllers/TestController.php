@@ -11,14 +11,29 @@ use Modules\Site\Http\Models\Products;
 class TestController extends CrudController
 {
     public function test(Request $request) {
-        $input = $request->all();
-        $optType = $input['opt_type'];
-        $id = $input['id'];
+//        $input = $request->all();
+//        $optType = $input['opt_type'];
+//        $id = $input['id'];
         $proModel = new Products();
-        dump(microtime(true));
-        $rs = $proModel->excuteXunSearchReq($id , $optType);
-        dump(microtime(true));
-        dd($rs);
+        $data = $proModel->findOrCache(2);
+        $dataDesc = $proModel->findDescCache(2);
+        dd([$data , $dataDesc]);
+
+//        dump(microtime(true));
+//        $rs = $proModel->excuteXunSearchReq($id , $optType);
+//        dump(microtime(true));
+//        dd($rs);
+
+        $model = new Products();
+        $record = $model->findOrCache(1);
+        dump($record);
+//        $record = $model::find(1);
+//        $record->delete();
+//        $record->name = '广州东站';
+//        $record->english_name = 'word';
+//        $record->save();
+        $record = $model->findOrCache(1);
+        dd($record);
     }
 
     public function searchTest(Request $request) {

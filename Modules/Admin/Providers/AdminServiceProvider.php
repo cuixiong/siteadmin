@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Providers;
 
+use App\Observers\ProductsObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
 use Modules\Admin\Http\Models\Role;
@@ -49,10 +50,12 @@ class AdminServiceProvider extends ServiceProvider
         Database::observe(OperationLog::class);
         Site::observe(OperationLog::class);
         //分站点
-        Products::observe(OperationLog::class);
+        Products::observe([ProductsObserver::class , OperationLog::class]);
         News::observe(OperationLog::class);
         Order::observe(OperationLog::class);
         Menu::observe(OperationLog::class);
+
+
     }
 
     /**

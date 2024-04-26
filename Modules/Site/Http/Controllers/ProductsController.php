@@ -112,41 +112,13 @@ class ProductsController extends CrudController {
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             //附加详情数据
+            $productsModel = new Products();
             foreach ($record as $key => $item) {
-                $year = is_int($item['published_date'])
-                    ? date('Y', $item['published_date'])
-                    : date(
-                        'Y', strtotime(
-                               $item['published_date']
-                           )
-                    );
-                if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
-                    continue;
-                }
-                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
-                if (empty($descriptionData)) {
-                    $templateData = $this->matchTemplateData('');
-                    $record[$key]['template_data'] = $templateData;
-                    $record[$key]['description'] = '';
-                    $record[$key]['table_of_content'] = '';
-                    $record[$key]['tables_and_figures'] = '';
-                    $record[$key]['description_en'] = '';
-                    $record[$key]['table_of_content_en'] = '';
-                    $record[$key]['tables_and_figures_en'] = '';
-                    $record[$key]['companies_mentioned'] = '';
-                } else {
-                    $descriptionData = $descriptionData->toArray();
-                    //根据描述匹配 模版分类
-                    $templateData = $this->matchTemplateData($descriptionData['description']);
-                    $record[$key]['template_data'] = $templateData;
-                    $record[$key]['description'] = $descriptionData['description'] ?? '';
-                    $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
-                    $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
-                    $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
-                    $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
-                    $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
-                    $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
-                }
+                $descriptionData = $productsModel->findDescCache($item['id']);
+                //根据描述匹配 模版分类
+                $description = $descriptionData['description'] ?? '';
+                $templateData = $this->matchTemplateData($description);
+                $record[$key]['template_data'] = $templateData;
             }
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
@@ -239,16 +211,17 @@ class ProductsController extends CrudController {
             $queryWords = 'english_name:"'.$keyword.'"';
             $search->setQuery($queryWords);
         }
-        // 设置返回结果为 5 条，但要先跳过 15 条，即第 16～20 条。
-        //$search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
-        $search->setLimit($request->pageSize, 0);
+        //查询结果分页
+        $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
+
         $docs = $search->search();
         $count = $search->count();
         $products = [];
         if (!empty($docs)) {
+            $productsModel = new Products();
             foreach ($docs as $key => $doc) {
                 if (!empty($doc['id'])) {
-                    $product = Products::find($doc['id']);
+                    $product = $productsModel->findOrCache($doc['id']);
                 } else {
                     continue;
                 }
