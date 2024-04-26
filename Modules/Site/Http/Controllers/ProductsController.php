@@ -109,18 +109,31 @@ class ProductsController extends CrudController {
     protected function QuickSearch(Request $request) {
         try {
             $ModelInstance = $this->ModelInstance();
+            $input = $request->all();
+            if(!empty($input['debug'] )) {
+                dump(['开始讯搜查询', microtime(true)]);
+            }
             $data = $this->GetProductList($request);
+            if(!empty($input['debug'] )) {
+                dump(['讯搜查询结束', microtime(true)]);
+            }
             $record = $data['list'];
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             //附加详情数据
             $productsModel = new Products();
+            if(!empty($input['debug'] )) {
+                dump(['匹配模版开始', microtime(true)]);
+            }
             foreach ($record as $key => $item) {
                 //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
                 $description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
+            }
+            if(!empty($input['debug'] )) {
+                dump(['匹配模版结束', microtime(true)]);
             }
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
