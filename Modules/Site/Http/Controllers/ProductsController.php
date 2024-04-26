@@ -210,6 +210,10 @@ class ProductsController extends CrudController {
             $search->setMultiSort($sorts);
             $queryWords = 'english_name:"'.$keyword.'"';
             $search->setQuery($queryWords);
+        }elseif(empty($type) && empty($keyword)){
+            $sorts = ['sort' => false, 'published_date' => false];
+            $search->setMultiSort($sorts);
+            $search->setQuery('');
         }
         //查询结果分页
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
@@ -1284,14 +1288,24 @@ class ProductsController extends CrudController {
             'template_content_list' => [],
         ];
         return $rdata;
+        $tcModel = new TemplateCategory();
+        $tcWordsList = [];
+        $tcNoWordsList = [];
+        $tcList = $tcModel->where("status", 1)
+                          ->orderBy("sort", "desc")
+                          ->select('id', 'name', 'match_words')
+                          ->get()->toArray();
+        foreach ($tcList as $tcInfo){
+            if(!empty($tcInfo['match_words'])){
+
+            }else{
+
+            }
+        }
+
         if (!empty($description)) {
-            $tcModel = new TemplateCategory();
-            $tcList = $tcModel->where("status", 1)
-                              ->orderBy("sort", "desc")
-                              ->select('id', 'name', 'match_words')
-                              ->get()->toArray();
             $templateCateList = [];
-            foreach ($tcList as $tcInfo) {
+            foreach ($tcWordsList as $tcInfo) {
                 $matchWords = $tcInfo['match_words'];
                 if (empty($matchWords)) {
                     continue;
