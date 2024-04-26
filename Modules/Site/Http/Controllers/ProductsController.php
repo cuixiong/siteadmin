@@ -107,15 +107,12 @@ class ProductsController extends CrudController {
     protected function QuickSearch(Request $request) {
         try {
             $ModelInstance = $this->ModelInstance();
-            dump(['索引查询开始' , microtime(true)]);
             $data = $this->GetProductList($request);
-            dump(['索引拿到结果结束' ,microtime(true)]);
             $record = $data['list'];
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             //附加详情数据
             $productsModel = new Products();
-            dump(['匹配模版开始' , microtime(true)]);
             foreach ($record as $key => $item) {
                 //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
@@ -123,7 +120,6 @@ class ProductsController extends CrudController {
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
             }
-            dump(['匹配模版结束' , microtime(true)]);
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
@@ -1287,6 +1283,7 @@ class ProductsController extends CrudController {
             'template_title_list'   => [],
             'template_content_list' => [],
         ];
+        return $rdata;
         if (!empty($description)) {
             $tcModel = new TemplateCategory();
             $tcList = $tcModel->where("status", 1)
