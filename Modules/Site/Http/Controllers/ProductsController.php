@@ -218,22 +218,18 @@ class ProductsController extends CrudController {
         $count = $search->count();
         $products = [];
         if (!empty($docs)) {
-//            $productsModel = new Products();
-//            foreach ($docs as $key => $doc) {
-//                if (!empty($doc['id'])) {
-//                    $product = $productsModel->findOrCache($doc['id']);
-//                } else {
-//                    continue;
-//                }
-//                $products[] = $product;
-//            }
-            $products = $docs;
+            foreach ($docs as $key => $doc) {
+                $product = [];
+                foreach ($doc as $key2 => $value2) {
+                    $product[$key2] = $value2;
+                }
+                $products[] = $product;
+            }
             $data = [
                 'list'  => $products,
                 'total' => $count,
                 'type'  => 'xunsearch'
             ];
-
             return $data;
         } else {
             // return $this->SearchForMysql($request);
