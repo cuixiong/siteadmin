@@ -213,16 +213,30 @@ class ProductsController extends CrudController {
         }
         //查询结果分页
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
-
         $docs = $search->search();
         $count = $search->count();
         $products = [];
         if (!empty($docs)) {
             foreach ($docs as $key => $doc) {
-                $product = [];
-                foreach ($doc as $key2 => $value2) {
-                    $product[$key2] = $value2;
-                }
+                $product = [
+                    'id'              => $doc->id,
+                    'name'            => $doc->name,
+                    'english_name'    => $doc->english_name,
+                    'category_id'     => $doc->category_id,
+                    'country_id'      => $doc->country_id,
+                    'price'           => $doc->price,
+                    'keywords'        => $doc->keywords,
+                    'url'             => $doc->url,
+                    'published_date'  => $doc->published_date,
+                    'status'          => $doc->status,
+                    'author'          => $doc->author,
+                    'discount'        => $doc->discount,
+                    'discount_amount' => $doc->discount_amount,
+                    'show_hot'        => $doc->show_hot,
+                    'show_recommend'  => $doc->show_recommend,
+                    'sort'            => $doc->sort,
+                    'description'     => $doc->description,
+                ];
                 $products[] = $product;
             }
             $data = [
@@ -230,6 +244,7 @@ class ProductsController extends CrudController {
                 'total' => $count,
                 'type'  => 'xunsearch'
             ];
+
             return $data;
         } else {
             // return $this->SearchForMysql($request);
