@@ -350,7 +350,7 @@ class Products extends Base {
     private function handlerProductData($id) {
         if ($id) {
             $data = Products::find($id);
-            $ini = [
+            $handlerData = [
                 'id'              => $data['id'],
                 'name'            => $data['name'],
                 'english_name'    => $data['english_name'],
@@ -367,12 +367,17 @@ class Products extends Base {
                 'status'          => $data['status'],
                 'keywords'        => $data['keywords'],
                 'sort'            => $data['sort'],
+                'url'             => $data['url'],
             ];
+
+            $year = date('Y', $data['published_date']);
+            $description = (new ProductsDescription($year))->where('product_id', $data['id'])->value('description');
+            $handlerData['description'] = $description;
         } else {
-            $ini = [];
+            $handlerData = [];
         }
 
-        return $ini;
+        return $handlerData;
     }
 
     /**
@@ -476,26 +481,29 @@ class Products extends Base {
     public function findDescCache($id) {
         $pdescRedisKey = $this->getPDescRedisKey($id);
         $pdescData = Redis::get($pdescRedisKey);
-        if(!empty($pdescData )){
-            return $pdescData;
-        }else{
+        if (!empty($pdescData)) {
+            return json_decode($pdescData, true);
+        } else {
             return $this->getPdescDataByProductId($id);
         }
+
         return [];
     }
 
     public function getPdescDataByProductId($productId) {
         $products = $this->findOrCache($productId);
-        if(!empty($products )){
+        if (!empty($products)) {
             $year = date('Y', $products['published_date']);
             $descriptionData = (new ProductsDescription($year))->where('product_id', $products['id'])->first();
-            if(!empty($descriptionData )){
+            if (!empty($descriptionData)) {
                 $descriptionData = $descriptionData->toArray();
                 $pdescRedisKey = $this->getPDescRedisKey($productId);
                 Redis::set($pdescRedisKey, json_encode($descriptionData));
+
                 return $descriptionData;
             }
         }
+
         return [];
     }
 
@@ -505,6 +513,4 @@ class Products extends Base {
 
         return $redisKey;
     }
-
-
 }

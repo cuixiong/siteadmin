@@ -114,9 +114,9 @@ class ProductsController extends CrudController {
             //附加详情数据
             $productsModel = new Products();
             foreach ($record as $key => $item) {
-                $descriptionData = $productsModel->findDescCache($item['id']);
+                //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
-                $description = $descriptionData['description'] ?? '';
+                $description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
             }
@@ -218,15 +218,16 @@ class ProductsController extends CrudController {
         $count = $search->count();
         $products = [];
         if (!empty($docs)) {
-            $productsModel = new Products();
-            foreach ($docs as $key => $doc) {
-                if (!empty($doc['id'])) {
-                    $product = $productsModel->findOrCache($doc['id']);
-                } else {
-                    continue;
-                }
-                $products[] = $product;
-            }
+//            $productsModel = new Products();
+//            foreach ($docs as $key => $doc) {
+//                if (!empty($doc['id'])) {
+//                    $product = $productsModel->findOrCache($doc['id']);
+//                } else {
+//                    continue;
+//                }
+//                $products[] = $product;
+//            }
+            $products = $docs;
             $data = [
                 'list'  => $products,
                 'total' => $count,
