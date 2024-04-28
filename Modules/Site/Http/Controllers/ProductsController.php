@@ -55,7 +55,10 @@ class ProductsController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $model = $model->select($ModelInstance->ListSelect);
+            $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
+                       'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
+                       'discount_amount'];
+            $model = $model->select($fields);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {
@@ -64,33 +67,11 @@ class ProductsController extends CrudController {
                 $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
             }
             $record = $model->get();
-            //附加详情数据
-            foreach ($record as $key => $item) {
-                $year = is_int($item['published_date'])
-                    ? date('Y', $item['published_date'])
-                    : date(
-                        'Y', strtotime(
-                               $item['published_date']
-                           )
-                    );
-                if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
-                    continue;
-                }
-                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
-                $record[$key]['description'] = $descriptionData['description'] ?? '';
-                $record[$key]['table_of_content'] = $descriptionData['table_of_content'] ?? '';
-                $record[$key]['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
-                $record[$key]['description_en'] = $descriptionData['description_en'] ?? '';
-                $record[$key]['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
-                $record[$key]['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
-                $record[$key]['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
-            }
-            //表头排序
-            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
+
             $data = [
                 'total'       => $total,
                 'list'        => $record,
-                'headerTitle' => $headerTitle ?? [],
+                'headerTitle' => [],
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -110,11 +91,11 @@ class ProductsController extends CrudController {
         try {
             $ModelInstance = $this->ModelInstance();
             $input = $request->all();
-            if(!empty($input['debug'] )) {
+            if (!empty($input['debug'])) {
                 dump(['开始讯搜查询', microtime(true)]);
             }
             $data = $this->GetProductList($request);
-            if(!empty($input['debug'] )) {
+            if (!empty($input['debug'])) {
                 dump(['讯搜查询结束', microtime(true)]);
             }
             $record = $data['list'];
@@ -122,7 +103,7 @@ class ProductsController extends CrudController {
             $type = '当前查询方式是：'.$data['type'];
             //附加详情数据
             $productsModel = new Products();
-            if(!empty($input['debug'] )) {
+            if (!empty($input['debug'])) {
                 dump(['匹配模版开始', microtime(true)]);
             }
             foreach ($record as $key => $item) {
@@ -132,15 +113,14 @@ class ProductsController extends CrudController {
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
             }
-            if(!empty($input['debug'] )) {
+            if (!empty($input['debug'])) {
                 dump(['匹配模版结束', microtime(true)]);
             }
-            //表头排序
-            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
+
             $data = [
                 'total'       => $total,
                 'list'        => $record,
-                'headerTitle' => $headerTitle ?? [],
+                'headerTitle' => [],
                 'type'        => $type
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
@@ -225,7 +205,7 @@ class ProductsController extends CrudController {
             $search->setMultiSort($sorts);
             $queryWords = 'english_name:"'.$keyword.'"';
             $search->setQuery($queryWords);
-        }elseif(empty($type) && empty($keyword)){
+        } elseif (empty($type) && empty($keyword)) {
             $sorts = ['sort' => false, 'published_date' => false];
             $search->setMultiSort($sorts);
             $search->setQuery('');
@@ -362,9 +342,8 @@ class ProductsController extends CrudController {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
             $year = date('Y', $record['published_date']);
-            if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
-            } else {
-                $descriptionData = (new ProductsDescription($year))->where('product_id', $record['id'])->first();
+            $descriptionData = (new ProductsDescription($year))->where('product_id', $record['id'])->first();
+            if (!empty($descriptionData)) {
                 $record['description'] = $descriptionData['description'] ?? '';
                 $record['table_of_content'] = $descriptionData['table_of_content'] ?? '';
                 $record['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
@@ -372,6 +351,18 @@ class ProductsController extends CrudController {
                 $record['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
                 $record['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
                 $record['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+                $record['definition'] = $descriptionData['definition'] ?? '';
+                $record['overview'] = $descriptionData['overview'] ?? '';
+            } else {
+                $record['description'] = '';
+                $record['table_of_content'] = '';
+                $record['tables_and_figures'] = '';
+                $record['description_en'] = '';
+                $record['table_of_content_en'] = '';
+                $record['tables_and_figures_en'] = '';
+                $record['companies_mentioned'] = '';
+                $record['definition'] = '';
+                $record['overview'] = '';
             }
             ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {
@@ -468,17 +459,17 @@ class ProductsController extends CrudController {
             }
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
-                $year = Products::publishedDateFormatYear($record->published_date);
-                if ($year) {
-                    $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
-                }
-                if ($recordDescription) {
-                    $recordDescription->delete();
-                }
-                if ($record) {
+                if(!empty($record )) {
+                    $year = Products::publishedDateFormatYear($record->published_date);
+                    if ($year) {
+                        $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
+                    }
+                    if ($recordDescription) {
+                        $recordDescription->delete();
+                    }
                     $record->delete();
                     // 删除完成后同步到xunsearch
-                    $this->ModelInstance()->PushXunSearchMQ($record->id, 'delete');
+                    $this->ModelInstance()->PushXunSearchMQ($id, 'delete');
                 }
             }
             ReturnJson(true, trans('lang.delete_success'));
@@ -1302,7 +1293,6 @@ class ProductsController extends CrudController {
             'template_title_list'   => [],
             'template_content_list' => [],
         ];
-
         $tcModel = new TemplateCategory();
         $tcWordsList = [];
         $tcNoWordsList = [];
@@ -1310,14 +1300,13 @@ class ProductsController extends CrudController {
                           ->orderBy("sort", "desc")
                           ->select('id', 'name', 'match_words')
                           ->get()->toArray();
-        foreach ($tcList as $tcInfo){
-            if(!empty($tcInfo['match_words'])){
+        foreach ($tcList as $tcInfo) {
+            if (!empty($tcInfo['match_words'])) {
                 $tcWordsList[] = $tcInfo;
-            }else{
+            } else {
                 $tcNoWordsList[] = $tcInfo;
             }
         }
-
         if (!empty($description)) {
             $templateCateList = [];
             foreach ($tcWordsList as $tcInfo) {
@@ -1355,21 +1344,22 @@ class ProductsController extends CrudController {
         //根据模版分类id, 获取模版id
         $cateIdList = Arr::pluck($templateCateList, 'id');
         $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
-        $matchTempLateList = Template::whereIn('id' , $tempIdList)->select(['id' , 'name', 'type', 'btn_color'])->get()->toArray();
+        $matchTempLateList = Template::whereIn('id', $tempIdList)->select(['id', 'name', 'type', 'btn_color'])->get()
+                                     ->toArray();
         $template_content_list = [];
         $template_title_list = [];
         $dictModel = (new DictionaryValue());
-        $dictList = $dictModel->where("code" , 'template_color')->where("status" , 1)->select(['id', 'name', 'value'])->get()->keyBy("id")->toArray();
+        $dictList = $dictModel->where("code", 'template_color')->where("status", 1)->select(['id', 'name', 'value'])
+                              ->get()->keyBy("id")->toArray();
         //区分标题模板 , 内容模板
         foreach ($matchTempLateList as $forTempInfo) {
             //按钮颜色详情
             $btnColorId = $forTempInfo['btn_color'];
-            if(!empty($dictList[$btnColorId])){
+            if (!empty($dictList[$btnColorId])) {
                 $forTempInfo['btn_info'] = $dictList[$btnColorId];
-            }else{
+            } else {
                 $forTempInfo['btn_info'] = [];
             }
-
             if ($forTempInfo['type'] == 1) {
                 //内容模版
                 $template_content_list[] = $forTempInfo;

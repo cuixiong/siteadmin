@@ -72,6 +72,7 @@ Route::middleware([
         Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsController::class, 'changeSort'])->name('报告管理:排序修改');
         Route::post('change-price', [Modules\Site\Http\Controllers\ProductsController::class, 'changePrice'])->name('报告管理:基础价修改');
         Route::post('set-header-title', [Modules\Site\Http\Controllers\ProductsController::class, 'setHeaderTitle'])->name('报告管理:设置自定义表头');
+        Route::any('get-header-title', [Modules\Site\Http\Controllers\ProductsController::class, 'getHeaderTitle'])->name('报告管理:获取自定义表头');
 
 
         Route::post('store', [Modules\Site\Http\Controllers\ProductsController::class, 'store'])->name('报告管理:新增报告');
@@ -151,6 +152,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\OrderController::class, 'searchDroplist'])->name('订单管理:订单下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\OrderController::class, 'changeStatus'])->name('订单管理:状态修改');
 
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\OrderController::class, 'form'])->name('订单管理:根据id查询订单');
         Route::post('update', [Modules\Site\Http\Controllers\OrderController::class, 'update'])->name('订单管理:修改订单');
         Route::post('destroy', [Modules\Site\Http\Controllers\OrderController::class, 'destroy'])->name('订单管理:删除订单');
 

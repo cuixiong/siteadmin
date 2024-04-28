@@ -305,7 +305,7 @@ class Products extends Base {
     public function excuteXunSearchReq($id, $action, $siteName = '') {
         //先测试讯搜数据业务数据
         $data = $this->handlerProductData($id);
-        if (empty($data)) {
+        if (empty($data) && $action != 'delete') {
             return false;
         }
         $siteName = $siteName ? $siteName : request()->header('Site');
@@ -350,6 +350,7 @@ class Products extends Base {
     private function handlerProductData($id) {
         if ($id) {
             $data = Products::find($id);
+            if(empty($data )) return [];
             $handlerData = [
                 'id'              => $data['id'],
                 'name'            => $data['name'],

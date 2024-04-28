@@ -38,7 +38,8 @@ class OrderController extends CrudController
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $model = $model->select($ModelInstance->ListSelect);
+            $fieldsList = ['id', 'order_number', 'user_id', 'is_pay', 'pay_time', 'pay_type', 'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at'];
+            $model = $model->select($fieldsList);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {
@@ -49,26 +50,10 @@ class OrderController extends CrudController
 
             $record = $model->get();
 
-            if ($record) {
-                foreach ($record as $key => $item) {
-                    $record[$key]['order_goods'] = [];
-                    // $record[$key]['product_name'] = '';
-                    $orderGoods = OrderGoods::query()->where('order_id', $item['id'])->get()->toArray();
-                    if ($orderGoods) {
-                        $record[$key]['order_goods'] = $orderGoods;
-                        // $productIds = array_column($orderGoods, 'goods_id');
-                        // $productNames = Products::query()->select('name')->whereIn('id', $productIds)->pluck('name')->toArray();
-                        // $record[$key]['product_name'] = ($productNames && count($productNames)) ? implode("\n", $productNames) : '';
-                    }
-                }
-            }
-
-            //表头排序
-            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
                 'total' => $total,
                 'list' => $record,
-                'headerTitle' => $headerTitle ?? [],
+                'headerTitle' => [],
             ];
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -118,7 +103,7 @@ class OrderController extends CrudController
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            
+
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
                 if ($record) {
@@ -133,5 +118,27 @@ class OrderController extends CrudController
         }
     }
 
+    /**
+     * 重写单查接口
+     * @param Request $request
+     *
+     */
+    protected function form(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $modelInstance = $this->ModelInstance();
+            $record = $modelInstance->findOrFail($request->id);
+
+            if(!empty($modelInstance->formAppends )){
+                foreach ($modelInstance->formAppends as $forField){
+                    $record->$forField = $record->$forField;
+                }
+            }
+
+            ReturnJson(true, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
 
 }

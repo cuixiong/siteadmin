@@ -156,37 +156,6 @@ class ProductsCategoryController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            // $model = $ModelInstance->query();
-            // $model = $ModelInstance->HandleWhere($model, $request);
-            // $modelCount = clone $model;
-            // // 总数量
-            // $total = $modelCount->where('pid', 0)->count();
-            // // 查询偏移量
-            // if (!empty($request->pageNum) && !empty($request->pageSize)) {
-            //     $model->offset(($request->pageNum - 1) * $request->pageSize);
-            // }
-            // // 查询条数
-            // if (!empty($request->pageSize)) {
-            //     $model->limit($request->pageSize);
-            // }
-            // $model = $model->select($ModelInstance->ListSelect);
-            // // 数据排序
-            // $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            // if (!empty($request->order)) {
-            //     $model = $model->orderBy($request->order, $sort);
-            // } else {
-            //     $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
-            // }
-
-            // $model = $model->where('pid', 0);
-            // $record = $model->get()->toArray();
-
-
-            // //pid需要改成多级结构
-            // foreach ($record as $key => $item) {
-            //     $record[$key]['pid_array'] = [$item['pid']];
-            // }
-            // $record = (new ProductsCategory())->tree($record, 'pid', []);
 
             $search = json_decode($request->input('search'));
             $record = (new ProductsCategory())->GetList('*', true, 'pid', $search);

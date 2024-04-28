@@ -4,37 +4,36 @@ namespace Modules\Admin\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Admin\Http\Models\ListStyle;
 
-class CrudController extends Controller
-{
+class CrudController extends Controller {
     protected $model; // 模型类名:若没有指定模型，则根据控制器名找到对应的模型
     protected $action; // 请求方法名称
     protected $validate; // 请求方法名称
-    public function __construct()
-    {
+
+    public function __construct() {
         // 模型类名:若没有指定模型，则根据控制器名找到对应的模型
         if (empty($this->model)) {
             $Controller = (new \ReflectionClass($this))->getShortName(); // 控制器名
             $name = str_replace('Controller', '', $Controller);
-            $model = 'Modules\Admin\Http\Models\\' . $name; // Model(模型)
-            $validate = 'Modules\Admin\Http\Requests\\' . $name . 'Request'; // Validate(数据验证)
+            $model = 'Modules\Admin\Http\Models\\'.$name; // Model(模型)
+            $validate = 'Modules\Admin\Http\Requests\\'.$name.'Request'; // Validate(数据验证)
             $this->model = $model;
             $this->validate = $validate;
         }
     }
+
     /**
      *  获取模型实例
      */
-    protected function ModelInstance()
-    {
+    protected function ModelInstance() {
         return new $this->model();
     }
 
     /**
      * 获取表单验证规则
      */
-    protected function ValidateInstance($request)
-    {
+    protected function ValidateInstance($request) {
         $class = $this->validate;
         $validator = new $class(); // 实例表单验证类
         $validator = $validator->DoVlidate($request);
@@ -42,29 +41,29 @@ class CrudController extends Controller
 
     /**
      * 单个新增
+     *
      * @param $request 请求信息
      */
-    protected function store(Request $request)
-    {
+    protected function store(Request $request) {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
-                ReturnJson(FALSE, trans('lang.add_error'));
+                ReturnJson(false, trans('lang.add_error'));
             }
-            ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
+            ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * AJax单行删除
+     *
      * @param $ids 主键ID
      */
-    protected function destroy(Request $request)
-    {
+    protected function destroy(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
@@ -73,61 +72,59 @@ class CrudController extends Controller
             }
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
-                if($record){
+                if ($record) {
                     $record->delete();
                 }
             }
-            ReturnJson(TRUE, trans('lang.delete_success'));
+            ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * AJax单个更新
+     *
      * @param $request 请求信息
      */
-    protected function update(Request $request)
-    {
+    protected function update(Request $request) {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
             if (!$record->update($input)) {
-                ReturnJson(FALSE, trans('lang.update_error'));
+                ReturnJson(false, trans('lang.update_error'));
             }
-            ReturnJson(TRUE, trans('lang.update_success'));
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
-
-
     /**
      * AJax单个查询
+     *
      * @param $request 请求信息
      */
-    protected function form(Request $request)
-    {
+    protected function form(Request $request) {
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
-            ReturnJson(TRUE, trans('lang.request_success'), $record);
+            ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 查询列表页
-     * @param $request 请求信息
-     * @param int $page 页码
-     * @param int $pageSize 页数
-     * @param Array $where 查询条件数组 默认空数组
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
      */
-    protected function list(Request $request)
-    {
+    protected function list(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
@@ -151,101 +148,115 @@ class CrudController extends Controller
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-
             $record = $model->get();
-
             $data = [
                 'total' => $total,
-                'list' => $record
+                'list'  => $record
             ];
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 查询value-label格式列表
-     * @param $request 请求信息
-     * @param Array $where 查询条件数组 默认空数组
+     *
+     * @param       $request 请求信息
+     * @param Array $where   查询条件数组 默认空数组
      */
-    public function option(Request $request)
-    {
+    public function option(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $record = $ModelInstance->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
-            ReturnJson(TRUE, trans('lang.request_success'), $record);
+            ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 修改状态
+     *
      * @param $request 请求信息
-     * @param $id 主键ID
+     * @param $id      主键ID
      */
-    public function changeStatus(Request $request)
-    {
+    public function changeStatus(Request $request) {
         try {
             if (empty($request->id)) {
-                ReturnJson(FALSE, 'id is empty');
+                ReturnJson(false, 'id is empty');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             $record->status = $request->status;
             if (!$record->save()) {
-                ReturnJson(FALSE, trans('lang.update_error'));
+                ReturnJson(false, trans('lang.update_error'));
             }
-            ReturnJson(TRUE, trans('lang.update_success'));
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
-
     /**
      * 修改排序
+     *
      * @param $request 请求信息
-     * @param $id 主键ID
+     * @param $id      主键ID
      */
-    public function changeSort(Request $request)
-    {
+    public function changeSort(Request $request) {
         try {
             if (empty($request->id)) {
-                ReturnJson(FALSE, 'id is empty');
+                ReturnJson(false, 'id is empty');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             $record->sort = $request->sort;
             if (!$record->save()) {
-                ReturnJson(FALSE, trans('lang.update_error'));
+                ReturnJson(false, trans('lang.update_error'));
             }
-            ReturnJson(TRUE, trans('lang.update_success'));
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
-
     /**
      * 为用户设置自定义表头
+     *
      * @param Request $request 请求信息
-     * @param int $id 主键ID
+     * @param int     $id      主键ID
      */
-    public function setHeaderTitle(Request $request)
-    {
+    public function setHeaderTitle(Request $request) {
         $titleJson = $request->input('title_json');
         $userId = $request->user->id;
         try {
             if (empty($userId)) {
-                ReturnJson(FALSE, trans('lang.param_empty') . ':user_id');
+                ReturnJson(false, trans('lang.param_empty').':user_id');
             } elseif (empty($titleJson)) {
-                ReturnJson(FALSE, trans('lang.param_empty') . ':title_json');
+                ReturnJson(false, trans('lang.param_empty').':title_json');
             }
-
             $ModelInstance = $this->ModelInstance();
-            $data = (new \Modules\Admin\Http\Models\ListStyle())->setHeaderTitle(class_basename($ModelInstance::class), $userId, $titleJson);
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            $data = (new \Modules\Admin\Http\Models\ListStyle())->setHeaderTitle(
+                class_basename($ModelInstance::class), $userId, $titleJson
+            );
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
+     * 获取自定义表头
+     *
+     * @param Request $request
+     *
+     */
+    public function getHeaderTitle(Request $request) {
+        try {
+            $ModelInstance = $this->ModelInstance();
+            $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
+            $data['headerTitle'] = $headerTitle;
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
