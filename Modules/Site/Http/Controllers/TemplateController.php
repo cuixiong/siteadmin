@@ -218,7 +218,8 @@ class TemplateController extends CrudController {
     public function templateWirteData($template, $product) {
         //查询模板描述数据
         $productId = $product->id;
-        $pdModel = new ProductsDescription();
+        $year = date("Y" , $product->published_date);
+        $pdModel = new ProductsDescription($year);
         $pdObj = $pdModel->where("product_id", $productId)->first();
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
