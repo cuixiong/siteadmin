@@ -27,7 +27,7 @@ class ContactUsController extends CrudController
 
         $options['language_version'] = (new MessageLanguageVersion())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
 
-        $options['country'] = Country::where('status', 1)->select('id as value', 'code as label')->orderBy('sort', 'asc')->get()->toArray();
+        $options['country'] = Country::where('status', 1)->select('id as value', 'name as label')->orderBy('sort', 'asc')->get()->toArray();
 
 
         $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy('id', 'asc')->get()->toArray();
