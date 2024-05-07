@@ -882,6 +882,7 @@ class ProductsController extends CrudController {
                 $fieldData = ProductsExcelField::where(['status' => 1])->select(['name', 'field'])->orderBy(
                     'sort', 'asc'
                 )->get()->toArray();
+
                 $titleData = array_column($fieldData, 'name');
                 foreach ($fieldData as $key => $value) {
                     $fieldData[$key]['sort'] = $key;
@@ -955,6 +956,10 @@ class ProductsController extends CrudController {
                 $item['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
                 $item['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
                 $item['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+
+                $item['definition'] = $descriptionData['definition'] ?? '';
+                $item['overview'] = $descriptionData['overview'] ?? '';
+
                 $row = [];
                 foreach ($field as $value) {
                     if (empty($value) || !isset($item[$value])) {
