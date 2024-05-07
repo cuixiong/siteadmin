@@ -205,7 +205,7 @@ class ProductsUploadLogController extends CrudController
 
     /**
      * 批量上传报告/队列处理文件
-     * @param $params 
+     * @param $params
      */
     public function handleExcelFile($params = null)
     {
@@ -358,6 +358,13 @@ class ProductsUploadLogController extends CrudController
                 $item['url'] = strtolower(preg_replace('/%[0-9A-Fa-f]{2}/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
                 $item['url'] = strtolower(preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url'])))));
                 $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
+                //新增其他扩展字段
+                $item['classification'] = isset($row['classification']) ?? '';
+                $item['application'] = isset($row['application']) ?? '';
+                $item['last_scale'] = isset($row['last_scale']) ?? '';
+                $item['current_scale'] = isset($row['current_scale']) ?? '';
+                $item['future_scale'] = isset($row['future_scale']) ?? '';
+                $item['cagr'] = isset($row['cagr']) ?? '';
 
                 //详情数据
                 $itemDescription = [];
@@ -368,10 +375,12 @@ class ProductsUploadLogController extends CrudController
                 isset($row['table_of_content_en']) && $itemDescription['table_of_content_en'] = str_replace('_x000D_', '', $row['table_of_content_en']);
                 isset($row['tables_and_figures_en']) && $itemDescription['tables_and_figures_en'] = str_replace('_x000D_', '', $row['tables_and_figures_en']);
                 isset($row['companies_mentioned']) && $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row['companies_mentioned']);
+                //新增详情字段
+                isset($row['definition']) && $itemDescription['definition'] = str_replace('_x000D_', '', $row['definition']);
+                isset($row['overview']) && $itemDescription['overview'] = str_replace('_x000D_', '', $row['overview']);
 
 
-
-                /** 
+                /**
                  * 不合格的数据过滤
                  */
 
@@ -430,7 +439,7 @@ class ProductsUploadLogController extends CrudController
 
                 //新纪录年份
                 $newYear = Products::publishedDateFormatYear($item['published_date']);
-                /** 
+                /**
                  * 数据库操作
                  */
                 if ($product) {
@@ -476,6 +485,12 @@ class ProductsUploadLogController extends CrudController
                     // (new Products)->PushXunSearchMQ(['id' => $product->id],'add',$params['site']);
 
                 }
+
+                if(!empty($product )){
+                    //维护xunSearch索引
+                    (new Products())->PushXunSearchMQ(['id' => $product->id],'update',$params['site']);
+                }
+
                 //code...
             } catch (\Throwable $th) {
                 //throw $th;
