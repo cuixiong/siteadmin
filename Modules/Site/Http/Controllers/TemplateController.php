@@ -333,8 +333,9 @@ class TemplateController extends CrudController {
             if ($strIndex !== false) {
                 // 使用 substr() 函数获取第一个段落
                 $pdArrData['description'] = substr($replaceWords, 0, $strIndex);
+            }else {
+                $pdArrData['description'] = $pdObj->description;
             }
-            $pdArrData['description'] = $pdObj->description;
         } else {
             $pdArrData['description'] = '';
         }
