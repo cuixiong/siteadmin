@@ -267,6 +267,17 @@ Route::middleware([
         Route::get('copy-word-by-template', [Modules\Site\Http\Controllers\TemplateController::class, 'copyWordByTemplate'])->name('模版管理:根据模板返回文字');
     });
 
+    // 敏感词路由
+    Route::prefix('senwords')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'list'])->name('敏感词管理:模版列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'searchDroplist'])->name('敏感词管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeStatus'])->name('敏感词管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeSort'])->name('敏感词管理:排序修改');
+        Route::post('store', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'store'])->name('敏感词管理:新增模版');
+        Route::post('update', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'update'])->name('敏感词管理:修改模版');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'destroy'])->name('敏感词管理:删除模版');
+    });
+
     // SearchRank 控制器
     Route::prefix('search-rank')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SearchRankController::class, 'list'])->name('搜索排行:搜索列表');
