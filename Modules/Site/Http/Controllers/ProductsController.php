@@ -174,7 +174,7 @@ class ProductsController extends CrudController {
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-        if (!empty($request->type) && filled($request->keyword)) {
+        if (!empty($request->type)) {
             $type = $request->type;
             $keyword = $request->keyword;
         } elseif (!empty($request->input('search'))) {
