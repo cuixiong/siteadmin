@@ -188,7 +188,7 @@ class ProductsController extends CrudController {
             //排序字段倒序 , 发布日期倒序
             $sorts = ['sort' => false, 'published_date' => false];
             $search->setMultiSort($sorts);
-            $search->setFuzzy()->setQuery($keyword);
+            $search->setQuery($keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
             // 设置搜索排序
             $sorts = array('published_date' => false);
@@ -197,7 +197,7 @@ class ProductsController extends CrudController {
         } else if ($type == 'name') {
             //中文搜索, 开启模糊搜索
             $queryWords = "name:{$keyword}";
-            $search->setQuery($queryWords);
+            $search->setFuzzy()->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
             //$search->setFuzzy()->setQuery($keyword);
