@@ -10,8 +10,8 @@
  * @version : 1.0
  */
 
-
 namespace Modules\Site\Services;
+
 use Modules\Site\Http\Models\SensitiveWords;
 
 class SenWordsService {
@@ -44,5 +44,20 @@ class SenWordsService {
         }
 
         return $checkRes;
+    }
+
+    public static function checkNewFitter($content) {
+        $senWordsList = self::getSenWords();
+        $checkRes = false;
+        $matchRules = '';
+        foreach ($senWordsList as $fillterRules) {
+            if (mb_strpos($content, $fillterRules) !== false) {
+                $checkRes = true;
+                $matchRules = $fillterRules;
+                break;
+            }
+        }
+
+        return [$checkRes, $matchRules];
     }
 }

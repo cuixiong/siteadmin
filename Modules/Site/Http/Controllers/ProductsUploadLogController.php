@@ -24,6 +24,7 @@ use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\ProductsExcelField;
+use Modules\Site\Services\SenWordsService;
 
 class ProductsUploadLogController extends CrudController {
     // /**
@@ -377,6 +378,14 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
+
+                // 含有敏感词的报告需要过滤
+                if(SenWordsService::checkFitter($item['name'])){
+                    $details .= "该报告名称{$item['name']}含有敏感词,请检查\r\n";
+                    $errorCount++;
+                    continue;
+                }
+
                 // 忽略基础价为空的数据
                 if (empty($item['price'])) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.price_empty')."\r\n";
