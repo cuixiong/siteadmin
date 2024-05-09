@@ -176,8 +176,21 @@ class ProductsController extends CrudController {
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-        $keyword = $request->keyword || $request->keyword == '0' ? $request->keyword : '';
-        $type = $request->type;
+
+        if(!empty($request->type) && filled($request->keyword) ){
+            $type = $request->type;
+            $keyword = $request->keyword;
+        }elseif(!empty($request->input('search'))) {
+            $searchData = json_decode($request->input('search'), true);
+            if (!empty($searchData) && is_array($searchData)) {
+                $type = key($searchData);
+                $keyword = current($searchData);
+            }
+        }
+        if(empty($type )){
+            throw new \Exception('参数异常:搜索类型不能为空');
+        }
+
         if (filled($keyword)
             && in_array(
                 $type, ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
