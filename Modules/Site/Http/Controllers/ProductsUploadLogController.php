@@ -367,7 +367,7 @@ class ProductsUploadLogController extends CrudController {
                 isset($row['definition'])
                 && $itemDescription['definition'] = str_replace('_x000D_', '', $row['definition']);
                 isset($row['overview']) && $itemDescription['overview'] = str_replace('_x000D_', '', $row['overview']);
-                $row['year'] = date('Y', $item['published_date']);
+                $item['year'] = date('Y', $item['published_date']);
                 /**
                  * 不合格的数据过滤
                  */
