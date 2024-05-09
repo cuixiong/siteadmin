@@ -67,7 +67,6 @@ class ProductsController extends CrudController {
                 $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
             }
             $record = $model->get();
-
             $data = [
                 'total'       => $total,
                 'list'        => $record,
@@ -116,7 +115,6 @@ class ProductsController extends CrudController {
             if (!empty($input['debug'])) {
                 dump(['匹配模版结束', microtime(true)]);
             }
-
             $data = [
                 'total'       => $total,
                 'list'        => $record,
@@ -176,21 +174,19 @@ class ProductsController extends CrudController {
         $RootPath = base_path();
         $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
         $search = $xs->search;
-
-        if(!empty($request->type) && filled($request->keyword) ){
+        if (!empty($request->type) && filled($request->keyword)) {
             $type = $request->type;
             $keyword = $request->keyword;
-        }elseif(!empty($request->input('search'))) {
+        } elseif (!empty($request->input('search'))) {
             $searchData = json_decode($request->input('search'), true);
             if (!empty($searchData) && is_array($searchData)) {
                 $type = key($searchData);
                 $keyword = current($searchData);
             }
         }
-        if(empty($type )){
+        if (empty($type)) {
             throw new \Exception('参数异常:搜索类型不能为空');
         }
-
         if (filled($keyword)
             && in_array(
                 $type, ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
@@ -472,7 +468,7 @@ class ProductsController extends CrudController {
             }
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
-                if(!empty($record )) {
+                if (!empty($record)) {
                     $year = Products::publishedDateFormatYear($record->published_date);
                     if ($year) {
                         $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
@@ -898,15 +894,19 @@ class ProductsController extends CrudController {
                     @mkdir($dirPath, 0777, true);
                 }
                 //获取表头与字段关系
-                $fieldData = ProductsExcelField::where(['status' => 1])->select(['name', 'field'])->orderBy(
-                    'sort', 'asc'
-                )->get()->toArray();
+                $excelTitleList = ProductsExcelField::where(['status' => 1])
+                                                    ->orderBy('sort', 'asc')
+                                                    ->get()
+                                                    ->pluck('name', 'field')
+                                                    ->toArray();
 
-                $titleData = array_column($fieldData, 'name');
-                foreach ($fieldData as $key => $value) {
-                    $fieldData[$key]['sort'] = $key;
-                }
-                $fieldData = array_column($fieldData, 'field', 'sort');
+                //新增需求, 规模字段根据当前导出的时间为准
+                $currentDate = intval(date('Y', time()));
+                $excelTitleList['last_scale'] = $currentDate - 1;
+                $excelTitleList['current_scale'] = $currentDate;
+                $excelTitleList['future_scale'] = $currentDate + 6;
+
+                list($fieldData, $titleData) = Arr::divide($excelTitleList);
                 // return $fieldData;
                 //查询出的id数据分割加入队列
                 $groupData = array_chunk($idsData, 100);
@@ -975,10 +975,8 @@ class ProductsController extends CrudController {
                 $item['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
                 $item['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
                 $item['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
-
                 $item['definition'] = $descriptionData['definition'] ?? '';
                 $item['overview'] = $descriptionData['overview'] ?? '';
-
                 $row = [];
                 foreach ($field as $value) {
                     if (empty($value) || !isset($item[$value])) {
@@ -1445,6 +1443,4 @@ class ProductsController extends CrudController {
             ReturnJson(false, $e->getMessage());
         }
     }
-
-
 }
