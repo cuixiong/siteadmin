@@ -226,9 +226,9 @@ class ProductsController extends CrudController {
             $search->setQuery('');
         }
         //查询结果分页
+        $count = $search->count();
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
         $docs = $search->search();
-        $count = $search->count();
         $products = [];
         if (!empty($docs)) {
             foreach ($docs as $key => $doc) {
