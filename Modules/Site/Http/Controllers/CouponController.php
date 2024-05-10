@@ -26,7 +26,7 @@ class CouponController extends CrudController
         try {
 
             //用户名单
-            $data['users'] = (new User())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            $data['users'] = (new User())->GetListLabel(['id as value', 'username as label'], false, '', ['status' => 1]);
 
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
@@ -39,7 +39,7 @@ class CouponController extends CrudController
             $data['is_effect'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Coupon_State', 'status' => 1], ['sort' => 'ASC']);
             // 优惠类型
             $data['type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Coupon_Type', 'status' => 1], ['sort' => 'ASC']);
-            
+
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
