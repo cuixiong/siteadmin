@@ -187,7 +187,13 @@ class ProductsController extends CrudController {
         if (empty($type)) {
             throw new \Exception('参数异常:搜索类型不能为空');
         }
-        if (filled($keyword)
+
+
+        if(!empty($type ) && (!isset($keyword) || $keyword == '')){
+            $sorts = ['sort' => false, 'published_date' => false];
+            $search->setMultiSort($sorts);
+            $search->setQuery($keyword);
+        } elseif (filled($keyword)
             && in_array(
                 $type, ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
                         'show_recommend', 'status']
@@ -205,13 +211,7 @@ class ProductsController extends CrudController {
             $search->setQuery('')->addRange($type, $keyword[0], $keyword[1]);
         } else if ($type == 'name') {
             //中文搜索, 开启模糊搜索
-            if(!empty($keyword )) {
-                $queryWords = "name:{$keyword}";
-            }else{
-                $sorts = ['sort' => false, 'published_date' => false];
-                $search->setMultiSort($sorts);
-                $queryWords = '';
-            }
+            $queryWords = "name:{$keyword}";
             $search->setFuzzy()->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
