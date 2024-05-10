@@ -192,7 +192,7 @@ class ProductsController extends CrudController {
         if(!empty($type ) && (!isset($keyword) || $keyword == '')){
             $sorts = ['sort' => false, 'published_date' => false];
             $search->setMultiSort($sorts);
-            $search->setQuery($keyword);
+            $search->setQuery('');
         } elseif (filled($keyword)
             && in_array(
                 $type, ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
