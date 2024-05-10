@@ -42,7 +42,7 @@ class InvoiceController extends CrudController
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                $model = $model->orderBy('id', $sort)->orderBy('created_at', 'DESC');
+                $model = $model->orderBy('id', 'DESC')->orderBy('created_at', 'DESC');
             }
 
             $record = $model->get();
@@ -93,7 +93,7 @@ class InvoiceController extends CrudController
         }
     }
 
-    
+
     /**
      * 修改开票状态
      * @param $request 请求信息

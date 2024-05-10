@@ -36,7 +36,7 @@ class Coupon extends Base
 
         $search = json_decode($request->input('search'));
 
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -46,26 +46,26 @@ class Coupon extends Base
             $model = $model->where('code', 'like', '%' . $search->code . '%');
         }
 
-        // is_pay 
+        // is_pay
         if (isset($search->type) && $search->type != '') {
             $model = $model->where('type', $search->type);
         }
-        // value 
+        // value
         if (isset($search->value) && $search->value != '') {
             $model = $model->where('value', $search->value);
         }
 
-        // user_ids 
+        // user_ids
         if (isset($search->user_ids) && $search->user_ids != '') {
             $model = $model->where('user_ids', $search->user_ids);
         }
 
-        // sort 
+        // sort
         if (isset($search->sort) && $search->sort != '') {
             $model = $model->where('sort', $search->sort);
         }
 
-        // status 
+        // status
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
         }
@@ -112,7 +112,7 @@ class Coupon extends Base
             }
         }
 
-        
+
         //创建者
         if (isset($search->created_by) && !empty($search->created_by)) {
             $userIds = Admin::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
@@ -189,7 +189,7 @@ class Coupon extends Base
         $text = '';
         if (isset($this->attributes['user_ids'])) {
             $userIdsArray = explode(',', $this->attributes['user_ids']);
-            $nameArray = User::query()->whereIn('id', $userIdsArray)->pluck('name')->toArray();
+            $nameArray = User::query()->whereIn('id', $userIdsArray)->pluck('username')->toArray();
             $text = ($nameArray && count($nameArray) > 0) ? implode(',', $nameArray) : '';
         }
         return $text;

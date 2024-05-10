@@ -40,7 +40,7 @@ class Invoice extends Base
     {
 
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -69,16 +69,16 @@ class Invoice extends Base
             $model = $model->where('tax_code', 'like', '%' . $search->tax_code . '%');
         }
 
-        // invoice_type 
+        // invoice_type
         if (isset($search->invoice_type) && $search->invoice_type != '') {
             $model = $model->where('invoice_type', $search->invoice_type);
         }
-        // price 
+        // price
         if (isset($search->price) && $search->price != '') {
             $model = $model->where('price', $search->price);
         }
 
-        // user_id 
+        // user_id
         if (isset($search->user_id) && $search->user_id != '') {
             if (is_numeric($search->user_id)) {
                 $model = $model->where('user_id', $search->user_id);
@@ -88,7 +88,7 @@ class Invoice extends Base
             }
         }
 
-        // order_id 
+        // order_id
         if (isset($search->order_id) && $search->order_id != '') {
             $model = $model->where('order_id', $search->order_id);
         }
@@ -105,11 +105,11 @@ class Invoice extends Base
             $model = $model->where('contact_detail', 'like', '%' . $search->contact_detail . '%');
         }
 
-        // status 
+        // status
         if (isset($search->status) && $search->status != '') {
             $model = $model->where('status', $search->status);
         }
-        // apply_status 
+        // apply_status
         if (isset($search->apply_status) && $search->apply_status != '') {
             $model = $model->where('apply_status', $search->apply_status);
         }
@@ -154,7 +154,7 @@ class Invoice extends Base
     {
         $text = '';
         if (isset($this->attributes['user_id'])) {
-            $text = User::query()->where('id', $this->attributes['user_id'])->value('name') ?? '';
+            $text = User::query()->where('id', $this->attributes['user_id'])->value('username') ?? '';
         }
         return $text;
     }
