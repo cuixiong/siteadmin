@@ -24,6 +24,7 @@ use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\ProductsExcelField;
+use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Services\SenWordsService;
 
 class ProductsUploadLogController extends CrudController {
@@ -284,6 +285,9 @@ class ProductsUploadLogController extends CrudController {
         //移除事件监听
         $dispatcher = Products::getEventDispatcher();
         Products::unsetEventDispatcher();
+        //获取敏感词列表
+        $senWords = SensitiveWords::query()->where("status", 1)
+                                  ->pluck("word")->toArray();
         foreach ($params['data'] as $row) {
             // $count++;
             try {
@@ -378,10 +382,10 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-
                 // 含有敏感词的报告需要过滤
-                if(SenWordsService::checkFitter($item['name'])){
-                    $details .= "该报告名称{$item['name']}含有敏感词,请检查\r\n";
+                $matchSenWord = $this->checkFitter($senWords, $item['name']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该报告名称{$item['name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
                     $errorCount++;
                     continue;
                 }
@@ -644,5 +648,23 @@ class ProductsUploadLogController extends CrudController {
             }
         }
         $writer->close();
+    }
+
+    /**
+     *
+     * @param array $senWords
+     * @param       $name
+     *
+     */
+    private function checkFitter(array $senWords, $name) {
+        $checkRes = false;
+        foreach ($senWords as $fillterRules) {
+            if (mb_strpos($name, $fillterRules) !== false) {
+                $checkRes = $fillterRules;
+                break;
+            }
+        }
+
+        return $checkRes;
     }
 }
