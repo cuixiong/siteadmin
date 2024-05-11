@@ -13,11 +13,14 @@ class ProductsRequest extends BaseRequest {
      */
     public function store($request) {
         $rules = [
-            'name'           => ['required','unique:product_routine,name', new SensitiveWord() ],
+            'name'           => ['required', 'unique:product_routine,name', new SensitiveWord()],
             'published_date' => 'required',
             'keywords'       => 'required',
             'url'            => 'required',
-            'price'          => 'required',
+            'price'          => ['required', 'numeric', 'between:0.01,999999.99'],
+            'tables'         => 'numeric|between:0,32767',
+            'pages'          => 'numeric|between:0,32767',
+            'sort'           => 'numeric|between:0,127',
         ];
         $message = [
             'name.required'           => '名称不能为空',
@@ -26,6 +29,10 @@ class ProductsRequest extends BaseRequest {
             'keywords.required'       => '关键词不能为空',
             'url.required'            => '自定义链接不能为空',
             'price.required'          => '基础价不能为空',
+            'price.between'           => '价格必须在:min - :max之间',
+            'sort.between'            => '排序必须在:min - :max之间',
+            'tables.between'          => '表格必须在:min - :max之间',
+            'pages.between'           => '页数必须在:min - :max之间',
         ];
 
         return $this->validateRequest($request, $rules, $message);
@@ -47,7 +54,10 @@ class ProductsRequest extends BaseRequest {
             'published_date' => 'required',
             'keywords'       => 'required',
             'url'            => 'required',
-            'price'          => 'required',
+            'price'          => ['required', 'numeric', 'between:0.01,999999.99'],
+            'tables'         => 'numeric|between:0,32767',
+            'pages'          => 'numeric|between:0,32767',
+            'sort'           => 'numeric|between:0,127',
         ];
         $message = [
             'name.required'           => '名称不能为空',
@@ -58,6 +68,10 @@ class ProductsRequest extends BaseRequest {
             'keywords.required'       => '关键词不能为空',
             'url.required'            => '自定义链接不能为空',
             'price.required'          => '基础价不能为空',
+            'price.between'           => '价格必须在:min - :max之间',
+            'sort.between'            => '排序必须在:min - :max之间',
+            'tables.between'          => '表格必须在:min - :max之间',
+            'pages.between'           => '页数必须在:min - :max之间',
         ];
 
         return $this->validateRequest($request, $rules, $message);

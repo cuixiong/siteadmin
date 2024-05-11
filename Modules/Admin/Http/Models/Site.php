@@ -27,12 +27,12 @@ class Site extends Base
         'frontend_repository',
         'api_path',
         'frontend_path',
-        // 'db_host', 
-        // 'db_port', 
-        // 'db_database', 
-        // 'db_username', 
-        // 'db_password', 
-        // 'table_prefix', 
+        // 'db_host',
+        // 'db_port',
+        // 'db_database',
+        // 'db_username',
+        // 'db_password',
+        // 'table_prefix',
         'updated_by',
         'created_by'
     ];
@@ -112,7 +112,7 @@ class Site extends Base
     public function HandleWhere($model, $request)
     {
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -399,7 +399,7 @@ class Site extends Base
 
     /**
      * 远程服务器执行命令
-     * @param \phpseclib3\Net\SSH2 $ssh 
+     * @param \phpseclib3\Net\SSH2 $ssh
      * @param array|string $commands
      */
     private static function executeCommands($ssh, $commands)
@@ -488,7 +488,7 @@ class Site extends Base
         //前台暂未部署
 
         $commands = [
-            /** 
+            /**
              * 一、第一次克隆代码
              * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
              * 原：git clone 仓库地址 [新建的目录名]
@@ -508,8 +508,8 @@ class Site extends Base
              * 复制env模板文件,替换其中的占位符，如果已存在env文件，须事先进行备份以免误覆盖
              */
             // 检查是否存在 .env 文件,备份当前的 .env 文件为时间戳命名的文件
-            'cd ' . $apiDirName . ' && if [ -f .env ]; then 
-                mv .env "env.backup' . date('YmdHis', time()) . '" 
+            'cd ' . $apiDirName . ' && if [ -f .env ]; then
+                mv .env "env.backup' . date('YmdHis', time()) . '"
             fi',
             // 替换操作
             'cd ' . $apiDirName . ' && cp .env.template .env',
@@ -519,7 +519,7 @@ class Site extends Base
             'cd ' . $apiDirName . ' && sed -i "s/{{DB_PASSWORD}}/' . $dbPassword . '/g" .env',
 
             /**
-         * 
+         *
          * 三、修改项目的权限
          * 因为每一句命令独立运行，所以每次都要指定目录
          */
@@ -543,7 +543,7 @@ class Site extends Base
     {
 
         $commands = [
-            /** 
+            /**
              * 克隆代码时需事先在服务器记住码云用户名密码，不然在克隆时需携带用户名及密码：
              * 原：git clone 仓库地址 [新建的目录名]
              * 例: git clone https://gitee.com/qyresearch/admin.qyrsearch.com.git qy_en
@@ -565,7 +565,7 @@ class Site extends Base
     {
 
         $commands = [
-            /** 
+            /**
              * 下载依赖
              */
             'cd ' . $dirName . ' &&  composer install ',
@@ -582,7 +582,7 @@ class Site extends Base
     {
 
         $commands = [
-            /** 
+            /**
              * 下载依赖
              */
             'cd ' . $dirName . ' && npm i ',
@@ -611,8 +611,8 @@ class Site extends Base
          */
         $commands = [
             // 检查是否存在 .env 文件,备份当前的 .env 文件为时间戳命名的文件
-            'cd ' . $dirName . ' && if [ -f .env ]; then 
-                mv .env "env.backup' . date('YmdHis', time()) . '" 
+            'cd ' . $dirName . ' && if [ -f .env ]; then
+                mv .env "env.backup' . date('YmdHis', time()) . '"
             fi',
             // 替换操作
             'cd ' . $dirName . ' && cp .env.template .env',
@@ -633,7 +633,7 @@ class Site extends Base
     private static function getPullCodeCommands($dirName)
     {
         $commands = [
-            /** 
+            /**
              * 拉取代码命令
              * 所有者的更改(部署项目时chown命令)可能导致提示
              * fatal: detected dubious ownership in repository at 'xxx' To add an exception for this directory, call:
@@ -664,7 +664,7 @@ class Site extends Base
         }
         $paramStr = implode(' ', $param);
         $commands = [
-            /** 
+            /**
              * 提交记录命令
              * 参数:
              * -n 5 指定返回5条
@@ -684,7 +684,7 @@ class Site extends Base
     private static function getCommitHistoryCountCommands($dirName)
     {
         $commands = [
-            /** 
+            /**
              * 获取提交记录总数量命令
              * 参数:
              * count 总数，需git 2.7以上版本
@@ -718,7 +718,7 @@ class Site extends Base
     private static function getAvailablePullCommands($dirName)
     {
         $commands = [
-            /** 
+            /**
              * 是否可更新
              * 首先 git fetch 先获取远程仓库的更新，再使用 git status 去获取是否含有以下信息：
              * ---------------------------------------------------------------------------------------
@@ -729,7 +729,7 @@ class Site extends Base
              *  (use "git add <file>..." to include in what will be committed)
              * ---------------------------------------------------------------------------------------
              * 一般判断 Your branch is behind 即可
-             * 
+             *
              * 如果没有可更新则显示：
              * ---------------------------------------------------------------------------------------
              * On branch master
@@ -737,7 +737,7 @@ class Site extends Base
              * nothing to commit, working tree clean
              * -------------------------------------------------------------------------------------
              * 则判断 Your branch is up to date 即可
-             * 
+             *
              */
             'cd ' . $dirName . ' &&  git fetch && git status',
 
@@ -761,7 +761,7 @@ class Site extends Base
              * 其实也可以用于往前推进几个版本(只要远程仓库更新了)
              * 回退了就不要用强制git push了，不然这版本之后的代码都没了(好像阿里云的服务器有限制无法推送)
              * git revert [hash值] 也是回退到之前的代码，但本质是一个新的提交
-             * 
+             *
              */
             'cd ' . $dirName . ' &&  git reset --hard ' . $hash,
 
@@ -857,7 +857,7 @@ class Site extends Base
                 $result = (new BtPanel($bt_link, $bt_apisecret))->setSSL($site->domain, $option['private_key'], $option['csr']);
                 // return $result;
                 break;
-            
+
             case 'add_bt_frontend_site':
                 // $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点

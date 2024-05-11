@@ -16,7 +16,7 @@ class LanguageController extends CrudController
 
     /**
      * 获取语言下拉框数据
-     * 
+     *
      */
     public function getLanguage(Request $request)
     {
@@ -25,7 +25,7 @@ class LanguageController extends CrudController
         ReturnJson(TRUE,trans('lang.request_success'),$data);
     }
 
-    
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -47,7 +47,7 @@ class LanguageController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
+
     /**
      * 单个新增
      * @param $request 请求信息
@@ -117,7 +117,7 @@ class LanguageController extends CrudController
         }
     }
 
-    
+
     /**
      * 修改状态
      * @param $request 请求信息
@@ -142,7 +142,7 @@ class LanguageController extends CrudController
         }
     }
 
-    
+
     /**
      * 修改排序
      * @param $request 请求信息
