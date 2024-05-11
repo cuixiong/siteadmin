@@ -216,10 +216,15 @@ class ProductsUploadLogController extends CrudController {
                     $row = [];
                     foreach ($tempRow as $tempKey => $tempValue) {
                         if (in_array($tempKey, $fieldSort)) {
-                            $row[$fieldData[$tempKey]] = $tempValue;
+                            $field = $fieldData[$tempKey];
+                            if($field == 'name' && empty($tempValue )){
+                                //没有报告名称直接过滤
+                                break;
+                            }
+                            $row[$field] = $tempValue;
                         }
                     }
-                    if (count($row) > 0) {
+                    if(!empty($row )){
                         $excelData[] = $row;
                     }
                 }
