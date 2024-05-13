@@ -66,7 +66,7 @@ return [
     /**分站点 */
     'time_out'                       => '超时',
     // 上传报告
-    'name_empty'                     => '报告名为空',
+    'product_name_empty'             => '报告名为空',
     'category_empty'                 => '分类不存在',
     'keywords_empty'                 => '关键词不存在',
     'url_empty'                      => '自定义链接不存在',

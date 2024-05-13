@@ -62,7 +62,7 @@ return [
     /**分站点 */
     'time_out'                       => 'Time Out',
     // 上传报告
-    'name_empty'                     => 'Report Name is blank',
+    'product_name_empty'             => 'Report Name is blank',
     'category_empty'                 => 'Category is empty',
     'keywords_empty'                 => 'Keywords is empty',
     'url_empty'                      => 'Url is empty',
