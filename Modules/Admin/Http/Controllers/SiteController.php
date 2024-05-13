@@ -118,7 +118,9 @@ class SiteController extends CrudController {
         $siteId = $request->input('site_id');
         $step = $request->input('step');
         $param = $request->input('param');
-        $param = $param ? json_decode($param, true) : [];
+        if(!empty($param ) && !is_array($param)) {
+            $param = $param ? json_decode($param, true) : [];
+        }
         // 创建者ID
         $created_by = $request->user->id;
         //获取站点配置
