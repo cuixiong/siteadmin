@@ -1345,13 +1345,15 @@ class ProductsController extends CrudController {
                 $matchWordsList = explode(",", $matchWords);
                 //关键词， 匹配模版分类
                 if (!empty($matchWordsList) && is_array($matchWordsList)) {
-                    $matchRes = true;
+                    $matchRes = false;
                     foreach ($matchWordsList as $matchWordsFor) {
                         $pattern = preg_quote($matchWordsFor, '/');
                         $pattern = '/'.$pattern.'/';
                         if (!preg_match($pattern, $description)) {
                             $matchRes = false;
                             break;
+                        }else{
+                            $matchRes = true;
                         }
                     }
                     if ($matchRes) {

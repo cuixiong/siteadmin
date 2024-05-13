@@ -14,6 +14,7 @@ use Modules\Admin\Http\Models\Rule;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\ProductsCategory;
+use Stancl\Tenancy\Facades\Tenancy;
 
 class OperationLogController extends CrudController
 {
@@ -63,6 +64,11 @@ class OperationLogController extends CrudController
     public function SaveLog($params = [])
     {
         try {
+            $currentTenant = tenancy()->tenant;
+            if ($currentTenant) {
+                // 如果当前处于租户则切换回中央数据库
+                tenancy()->end();
+            }
             $params = $params['data'];
             if(!empty($params)){
                 $model = new OperationLog();
@@ -79,7 +85,9 @@ class OperationLogController extends CrudController
                 return true;
             }
         } catch (\Exception $e) {
-            file_put_contents(storage_path('logs').'/'.'operation_log_error.log',"\r".$e->getMessage(),FILE_APPEND);
+            $fileName = base_path()."/storage/logs/operation_log_error";
+            file_put_contents($fileName,"\r".$e->getMessage(),FILE_APPEND);
+            //file_put_contents(storage_path('logs').'/'.'operation_log_error.log',"\r".$e->getMessage(),FILE_APPEND);
             return false;
         }
     }
@@ -456,7 +464,7 @@ class OperationLogController extends CrudController
         return $contents;
     }
 
-    
+
     private static function News($model)
     {
 

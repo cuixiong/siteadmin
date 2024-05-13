@@ -3,6 +3,7 @@
 namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -75,7 +76,7 @@ class ShopCartController extends CrudController
             ->whereIn('id', $priceEditionIds ?? [])
             ->get()
             ->makeHidden((new PriceEditionValue())->getAppends());
-            
+
         //用户
         $userIds = ShopCart::query()->select(['user_id'])->distinct()->pluck('user_id');
         $data['user_id'] = User::query()
