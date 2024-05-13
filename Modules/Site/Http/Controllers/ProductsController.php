@@ -187,17 +187,16 @@ class ProductsController extends CrudController {
         if (empty($type)) {
             throw new \Exception('参数异常:搜索类型不能为空');
         }
-
-
-        if(!empty($type ) && (!isset($keyword) || $keyword == '')){
+        if (!empty($type) && (!isset($keyword) || $keyword == '')) {
             $sorts = ['sort' => false, 'published_date' => false];
             $search->setMultiSort($sorts);
             $search->setQuery('');
         } elseif (filled($keyword)
-            && in_array(
-                $type, ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
-                        'show_recommend', 'status']
-            )
+                  && in_array(
+                      $type,
+                      ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
+                       'show_recommend', 'status']
+                  )
         ) {
             $keyword = $type.':'.$keyword;
             //排序字段倒序 , 发布日期倒序
@@ -664,6 +663,7 @@ class ProductsController extends CrudController {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
+            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -905,13 +905,11 @@ class ProductsController extends CrudController {
                                                     ->get()
                                                     ->pluck('name', 'field')
                                                     ->toArray();
-
                 //新增需求, 规模字段根据当前导出的时间为准
                 $currentDate = intval(date('Y', time()));
                 $excelTitleList['last_scale'] = $currentDate - 1;
                 $excelTitleList['current_scale'] = $currentDate;
                 $excelTitleList['future_scale'] = $currentDate + 6;
-
                 list($fieldData, $titleData) = Arr::divide($excelTitleList);
                 // return $fieldData;
                 //查询出的id数据分割加入队列
@@ -1352,7 +1350,7 @@ class ProductsController extends CrudController {
                         if (!preg_match($pattern, $description)) {
                             $matchRes = false;
                             break;
-                        }else{
+                        } else {
                             $matchRes = true;
                         }
                     }

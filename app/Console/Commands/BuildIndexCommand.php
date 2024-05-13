@@ -22,8 +22,7 @@ class BuildIndexCommand extends Command {
         //抓取索引所需的数据 , 添加到新表里
         $product_fields = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords', 'url',
                            'published_date', 'status', 'author', 'discount', 'discount_amount', 'show_hot',
-                           'show_recommend',
-                           'sort'];
+                           'show_recommend', 'sort'];
         $xpiModel = new XunsearchProductIndex();
         $products_list = Products::select($product_fields)->get()->toArray();
         $index = 0;
