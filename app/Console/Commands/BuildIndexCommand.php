@@ -27,7 +27,6 @@ class BuildIndexCommand extends Command {
         $products_list = Products::select($product_fields)->get()->toArray();
         $index = 0;
         foreach ($products_list as $key => $products_data) {
-
             $year = date('Y', $products_data['published_date']);
             $description = (new ProductsDescription($year))->where('product_id', $products_data['id'])->value('description');
             $products_data['description'] = $description;

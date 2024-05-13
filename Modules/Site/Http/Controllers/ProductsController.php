@@ -28,6 +28,7 @@ use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 use Modules\Site\Http\Models\TemplateCateMapping;
+use Modules\Site\Services\SenWordsService;
 use XS;
 
 class ProductsController extends CrudController {
@@ -340,6 +341,23 @@ class ProductsController extends CrudController {
                 ReturnJson(true, trans('lang.request_success'), $id);
             } else {
                 ReturnJson(true, trans('lang.request_success'), '');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function checkSensitiveWord(Request $request) {
+        try {
+            $name = $request->name;
+            if (!isset($name) || empty(trim($name))) {
+                ReturnJson(true, trans('lang.request_success'), '');
+            }
+            $checkRes = SenWordsService::checkFitter($name);
+            if ($checkRes) {
+                ReturnJson(false, trans('lang.exist_sensitive_words'));
+            } else {
+                ReturnJson(true, trans('lang.request_success'));
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
