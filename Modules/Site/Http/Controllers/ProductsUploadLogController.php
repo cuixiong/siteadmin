@@ -420,6 +420,15 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
+
+                // 关键词 含有敏感词的报告需要过滤
+                $matchSenWord = $this->checkFitter($senWords, $item['keywords']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该报告名称{$item['name']} , 关键词:{$item['keywords']} 含有{$matchSenWord} 敏感词,请检查\r\n";
+                    $errorCount++;
+                    continue;
+                }
+
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.url_empty')."\r\n";

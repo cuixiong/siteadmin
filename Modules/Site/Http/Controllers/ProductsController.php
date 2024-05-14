@@ -24,6 +24,7 @@ use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
@@ -359,6 +360,34 @@ class ProductsController extends CrudController {
             } else {
                 ReturnJson(true, trans('lang.request_success'));
             }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function handlerSenWordsProduct(Request $request) {
+        try {
+            //检测数据库 报告昵称已存在的敏感词, 需要筛选出来 , 然后关闭状态,  然后删除索引
+            $sensitiveWordsList = SenWordsService::getSenWords();
+            $productIdList = Products::query()->where("status", 1)
+                                     ->where(function ($query) use ($sensitiveWordsList) {
+                                         foreach ($sensitiveWordsList as $value) {
+                                             $query->orWhere('name', 'like', "%{$value}%");
+                                         }
+                                     })->pluck('id')->toArray();
+            $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
+            if ($res) {
+                $SiteName = $request->header('Site');
+                $RootPath = base_path();
+                $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
+                $index = $xs->index;
+                $index->openBuffer(); // 开启缓冲区，默认 4MB，如 $index->openBuffer(8) 则表示 8MB
+                // 在此进行批量的删除操作
+                $index->del($productIdList);
+                $index->closeBuffer(); // 关闭缓冲区，必须和 openBuffer 成对使用
+                $index->flushIndex();
+            }
+            ReturnJson(true, trans('lang.request_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
