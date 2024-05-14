@@ -353,9 +353,9 @@ class ProductsController extends CrudController {
             if (!isset($name) || empty(trim($name))) {
                 ReturnJson(true, trans('lang.request_success'), '');
             }
-            $checkRes = SenWordsService::checkFitter($name);
+            $checkRes = SenWordsService::checkNewFitter($name);
             if ($checkRes) {
-                ReturnJson(false, trans('lang.exist_sensitive_words'));
+                ReturnJson(false, trans('lang.exist_sensitive_words')." ['{$checkRes}']");
             } else {
                 ReturnJson(true, trans('lang.request_success'));
             }

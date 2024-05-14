@@ -45,4 +45,22 @@ class RegionRequest extends BaseRequest {
 
         return $this->validateRequest($request, $rules, $message);
     }
+
+    /**
+     * 修改排序数据验证
+     *
+     * @param \Illuminate\Http\Request $request
+     */
+    public function changeSort($request) {
+        $rules = [
+            'id'   => 'required',
+            'sort' => 'numeric|between:0,127',
+        ];
+        $message = [
+            'id.required'  => 'ID不能为空',
+            'sort.between' => '排序必须在:min - :max之间',
+        ];
+
+        return $this->validateRequest($request, $rules, $message);
+    }
 }

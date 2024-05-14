@@ -46,18 +46,20 @@ class SenWordsService {
         return $checkRes;
     }
 
-    public static function checkNewFitter($content) {
+    /**
+     * @param       $name
+     */
+    public static function checkNewFitter($name) {
         $senWordsList = self::getSenWords();
         $checkRes = false;
-        $matchRules = '';
         foreach ($senWordsList as $fillterRules) {
-            if (mb_strpos($content, $fillterRules) !== false) {
-                $checkRes = true;
-                $matchRules = $fillterRules;
+            if (mb_strpos($name, $fillterRules) !== false) {
+                $checkRes = $fillterRules;
                 break;
             }
         }
 
-        return [$checkRes, $matchRules];
+        return $checkRes;
     }
+
 }

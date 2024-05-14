@@ -9,7 +9,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 
 class SearchRankController extends CrudController
 {
-    
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -31,4 +31,28 @@ class SearchRankController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+    /**
+     * 修改排序
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeSort(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->sort = $request->sort;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
 }
