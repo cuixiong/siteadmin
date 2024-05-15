@@ -299,10 +299,7 @@ class TemplateController extends CrudController {
      *
      */
     private function handlerLineSymbol($lineStr) {
-        $pattern = '/'.preg_quote('\n').'/';
-        $replaceWords = "、";
-
-        return preg_replace($pattern, $replaceWords, $lineStr);
+        return str_replace("\n", ",", $lineStr);
     }
 
     public function getReportUrl($product) {
