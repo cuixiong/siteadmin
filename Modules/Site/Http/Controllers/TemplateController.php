@@ -241,7 +241,8 @@ class TemplateController extends CrudController {
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{company}}', $replaceWords);
         // 处理模板变量  {{company_str}}  (不换行)
-        $tempContent = $this->writeTempWord($tempContent, '{{company_str}}', $pdArrData['companies_mentioned']);
+        $temp_companies_mentioned = $this->handlerLineSymbol($pdArrData['companies_mentioned']);
+        $tempContent = $this->writeTempWord($tempContent, '{{company_str}}', $temp_companies_mentioned);
         // 处理模板变量  {{definition}}
         $tempContent = $this->writeTempWord($tempContent, '{{definition}}', $pdArrData['definition']);
         // 处理模板变量  {{overview}}
@@ -250,14 +251,16 @@ class TemplateController extends CrudController {
         $replaceWords = $productArrData['classification'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{type}}', $replaceWords);
-        // 处理模板变量  {{type_str}}
-        $tempContent = $this->writeTempWord($tempContent, '{{type_str}}', $productArrData['classification']);
+        // 处理模板变量  {{type_str}}  不换行
+        $tempClassification = $this->handlerLineSymbol($productArrData['classification']);
+        $tempContent = $this->writeTempWord($tempContent, '{{type_str}}', $tempClassification);
         // 处理模板变量  {{application}}   换行
         $replaceWords = $productArrData['application'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{application}}', $replaceWords);
         // 处理模板变量  {{application_str}}
-        $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $productArrData['application']);
+        $tempApplication = $this->handlerLineSymbol($productArrData['application']);
+        $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
 
@@ -290,6 +293,16 @@ class TemplateController extends CrudController {
      */
     private function addChangeLineStr($sorceStr) {
         return $sorceStr." <br/>";
+    }
+
+    /**
+     *
+     */
+    private function handlerLineSymbol($lineStr) {
+        $pattern = '/'.preg_quote('\n').'/';
+        $replaceWords = "、";
+
+        return preg_replace($pattern, $replaceWords, $lineStr);
     }
 
     public function getReportUrl($product) {

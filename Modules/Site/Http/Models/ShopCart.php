@@ -116,7 +116,7 @@ class ShopCart extends Base {
     public function getUsernameAttribute() {
         $text = '';
         if (isset($this->attributes['user_id'])) {
-            $text = User::query()->where('id', $this->attributes['user_id'])->value('name');
+            $text = User::query()->where('id', $this->attributes['user_id'])->value('username');
         }
 
         return $text;
