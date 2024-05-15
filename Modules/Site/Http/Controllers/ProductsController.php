@@ -1419,7 +1419,9 @@ class ProductsController extends CrudController {
         //根据模版分类id, 获取模版id
         $cateIdList = Arr::pluck($templateCateList, 'id');
         $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
-        $matchTempLateList = Template::whereIn('id', $tempIdList)->select(['id', 'name', 'type', 'btn_color'])->get()
+        $matchTempLateList = Template::whereIn('id', $tempIdList)
+                                     ->where("status" , 1)
+                                     ->select(['id', 'name', 'type', 'btn_color'])->get()
                                      ->toArray();
         $template_content_list = [];
         $template_title_list = [];
