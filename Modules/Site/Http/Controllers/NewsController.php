@@ -53,7 +53,7 @@ class NewsController extends CrudController {
             $input = $request->all();
             // 虚拟点击量
             if (!isset($input['hits']) || empty($input['hits'])) {
-                $input['hits'] = mt_rand(100, 1000);
+                $input['hits'] = mt_rand(200, 500);
             }
             // 出版时间为空则设定为当前时间
             if (!isset($input['upload_at']) || empty($input['upload_at'])) {

@@ -4,6 +4,8 @@ namespace Modules\Site\Http\Requests;
 
 use Modules\Admin\Http\Requests\BaseRequest;
 use Modules\Site\Http\Rules\SensitiveWord;
+use Modules\Site\Http\Rules\UppercaseRule;
+use Modules\Site\Http\Rules\ValueInRange;
 
 class ProductsRequest extends BaseRequest {
     /**
@@ -20,7 +22,7 @@ class ProductsRequest extends BaseRequest {
             'price'          => ['required', 'numeric', 'between:0.01,999999.99'],
             'tables'         => 'numeric|between:0,32767',
             'pages'          => 'numeric|between:0,32767',
-            'sort'           => 'numeric|between:0,127',
+            'sort'           => new ValueInRange(0, 127),
         ];
         $message = [
             'name.required'           => '名称不能为空',
@@ -30,9 +32,9 @@ class ProductsRequest extends BaseRequest {
             'url.required'            => '自定义链接不能为空',
             'price.required'          => '基础价不能为空',
             'price.between'           => '价格必须在:min - :max之间',
-            'sort.between'            => '排序必须在:min - :max之间',
             'tables.between'          => '表格必须在:min - :max之间',
             'pages.between'           => '页数必须在:min - :max之间',
+            'sort.valueinrange'       => '排序必须在:min - :max之间',
         ];
 
         return $this->validateRequest($request, $rules, $message);

@@ -3,6 +3,7 @@
 namespace Modules\Site\Http\Requests;
 
 use Modules\Admin\Http\Requests\BaseRequest;
+use Modules\Site\Http\Rules\ValueInRange;
 
 class InformationRequest extends BaseRequest {
     /**
@@ -17,7 +18,7 @@ class InformationRequest extends BaseRequest {
             'url'         => 'required',
             'upload_at'   => 'required',
             'sort'        => 'numeric|between:0,32767',
-            'hits'        => 'numeric|between:1, 99999999',
+            'hits'        =>  new ValueInRange(1, 99999999),
         ];
         $message = [
             'title.required'       => '标题不能为空',
