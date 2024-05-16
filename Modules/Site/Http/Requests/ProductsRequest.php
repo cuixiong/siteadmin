@@ -25,16 +25,16 @@ class ProductsRequest extends BaseRequest {
             'sort'           => new ValueInRange(0, 127),
         ];
         $message = [
-            'name.required'           => '名称不能为空',
-            'name.unique'             => '名称不能重复',
-            'published_date.required' => '出版时间不能为空',
-            'keywords.required'       => '关键词不能为空',
-            'url.required'            => '自定义链接不能为空',
-            'price.required'          => '基础价不能为空',
-            'price.between'           => '价格必须在:min - :max之间',
-            'tables.between'          => '表格必须在:min - :max之间',
-            'pages.between'           => '页数必须在:min - :max之间',
-            'sort.valueinrange'       => '排序必须在:min - :max之间',
+            'name.required'                             => '名称不能为空',
+            'name.unique'                               => '名称不能重复',
+            'published_date.required'                   => '出版时间不能为空',
+            'keywords.required'                         => '关键词不能为空',
+            'url.required'                              => '自定义链接不能为空',
+            'price.required'                            => '基础价不能为空',
+            'price.between'                             => '价格必须在:min - :max之间',
+            'tables.between'                            => '表格必须在:min - :max之间',
+            'pages.between'                             => '页数必须在:min - :max之间',
+            'sort.Modules\Site\Http\Rules\ValueInRange' => "排序必须在0 - 127之间",
         ];
 
         return $this->validateRequest($request, $rules, $message);
