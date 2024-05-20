@@ -211,9 +211,9 @@ class ProductsController extends CrudController {
             $search->setMultiSort($sorts);
             $search->setQuery('')->addRange($type, $keyword[0], $keyword[1]);
         } else if ($type == 'name') {
-            //中文搜索, 开启模糊搜索
+            //中文搜索, 测试明确 需要精确搜索
             $queryWords = "name:{$keyword}";
-            $search->setFuzzy()->setQuery($queryWords);
+            $search->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
             //$search->setFuzzy()->setQuery($keyword);
