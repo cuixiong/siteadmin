@@ -2,7 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
-use App\Services\RabbitmqService;
+use App\Const\QueueConst;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\OperationLog;
@@ -16,21 +16,20 @@ use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\ProductsCategory;
 use Stancl\Tenancy\Facades\Tenancy;
 
-class OperationLogController extends CrudController
-{
-    public static function AddLog($model, $type)
-    {
+class OperationLogController extends CrudController {
+    public static function AddLog($model, $type) {
         $ClassName = class_basename($model);
+        $content = '';
         if ($type == 'update') {
-            $content = method_exists(new OperationLogController, $ClassName) ? self::$ClassName($model) : self::getContent($model);
+            $content = method_exists(new OperationLogController, $ClassName) ? self::$ClassName($model)
+                : self::getContent($model);
         } else if ($type == 'insert') {
-            $content = "新增了ID=" . $model->id;
+            $content = "新增了ID=".$model->id;
         } else if ($type == 'delete') {
-            $content = '删除了ID=' . $model->id . '的数据行。';
+            $content = '删除了ID='.$model->id.'的数据行。';
         }
         $request = request();
         $site = $request->header('Site');
-
         $category = $site ? 2 : 1;
         // if(!empty($site)){
         //     $site = Site::where('english_name',$site)->value('name');
@@ -38,31 +37,28 @@ class OperationLogController extends CrudController
         $name = $request->route()->getName();
         $route = request()->path();
 
-        // $model = new OperationLog();
-
         $data = [
-            'type' => $type,
-            'category' => $category,
-            'route' => $route,
-            'title' => $name,
-            'content' => $content,
-            'site' => $site,
-            'module' => strtolower($ClassName),
+            'class'      => OperationLogController::class,
+            'method'     => 'SaveLog',
+            'type'       => $type,
+            'category'   => $category,
+            'route'      => $route,
+            'title'      => $name,
+            'content'    => $content,
+            'site'       => $site,
+            'module'     => strtolower($ClassName),
             'created_by' => request()->user->id,
             'created_at' => time(),
         ];
-        $RabbmitMQ = new RabbitmqService;
-        $RabbmitMQ->setQueueName('OperationLog');
-        $RabbmitMQ->SimpleModePush("Modules\Admin\Http\Controllers\OperationLogController",'SaveLog',$data);
-        $RabbmitMQ->close();
+        \App\Jobs\OperationLog::dispatch($data)->onQueue(QueueConst::QUEEU_OPERATION_LOG);
+
     }
 
     /**
      * 日志入库（废弃，因为MQ挂了这个日志搜集不到，而且在操作性能上会更差   ）
      * 通过MQ入库是在租户端新增日志会导致日志MYSQL按年份的分表出现错误，中央端则没任何问题
      */
-    public function SaveLog($params = [])
-    {
+    public function SaveLog($params = []) {
         try {
             $currentTenant = tenancy()->tenant;
             if ($currentTenant) {
@@ -70,7 +66,7 @@ class OperationLogController extends CrudController
                 tenancy()->end();
             }
             $params = $params['data'];
-            if(!empty($params)){
+            if (!empty($params)) {
                 $model = new OperationLog();
                 $model->type = $params['type'];
                 $model->category = $params['category'];
@@ -82,18 +78,19 @@ class OperationLogController extends CrudController
                 $model->created_by = $params['created_by'];
                 $model->created_at = $params['created_at'];
                 $res = $model->save();
+
                 return true;
             }
         } catch (\Exception $e) {
             $fileName = base_path()."/storage/logs/operation_log_error";
-            file_put_contents($fileName,"\r".$e->getMessage(),FILE_APPEND);
+            file_put_contents($fileName, "\r".$e->getMessage(), FILE_APPEND);
+
             //file_put_contents(storage_path('logs').'/'.'operation_log_error.log',"\r".$e->getMessage(),FILE_APPEND);
             return false;
         }
     }
 
-    private static function getContent($model)
-    {
+    private static function getContent($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
@@ -104,16 +101,16 @@ class OperationLogController extends CrudController
                 $OriginalValue = $model->getOriginal($field);
                 $OriginalValue = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                 $NewValue = is_array($value) ? implode(',', $value) : $value;
-                $title = $ColumnComment . '从' . $OriginalValue . '更新为：' . $NewValue;
+                $title = $ColumnComment.'从'.$OriginalValue.'更新为：'.$NewValue;
                 $contents[] = $title;
             }
         }
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-    private static function Rule($model)
-    {
+    private static function Rule($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
@@ -126,34 +123,27 @@ class OperationLogController extends CrudController
                     case 'parent_id':
                         $OriginalName = Rule::where('id', $OriginalValue)->value('name');
                         $NewName = Rule::where('id', $value)->value('name');
-
                         break;
-
                     case 'type':
                         $OriginalName = DictionaryValue::GetNameAsCode('Menu_Type', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Menu_Type', $value);
                         break;
-
                     case 'category':
                         $OriginalName = DictionaryValue::GetNameAsCode('Route_Classification', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Route_Classification', $value);
                         break;
-
                     case 'visible':
                         $OriginalName = $OriginalValue == 1 ? '显示' : '隐藏';
                         $NewName = $value == 1 ? '显示' : '隐藏';
                         break;
-
                     case 'keepAlive':
                         $OriginalName = DictionaryValue::GetNameAsCode('Cache', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Cache', $value);
                         break;
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
                         break;
-
                     default:
                         $OriginalName = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                         $NewName = is_array($value) ? implode(',', $value) : $value;
@@ -164,12 +154,11 @@ class OperationLogController extends CrudController
             }
         }
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-
-    private static function Role($model)
-    {
+    private static function Role($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
@@ -186,9 +175,7 @@ class OperationLogController extends CrudController
                         $value = is_array($value) ? $value : ($value ? explode(',', $value) : []);
                         $NewName = Rule::whereIn('id', $value)->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',', $NewName) : '';
-
                         break;
-
                     case 'site_rule_id':
                         $OriginalValue = $OriginalValue ? $OriginalValue : [];
                         $OriginalName = Rule::whereIn('id', $OriginalValue)->pluck('name')->toArray();
@@ -197,7 +184,6 @@ class OperationLogController extends CrudController
                         $NewName = Rule::whereIn('id', $value)->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',', $NewName) : '';
                         break;
-
                     case 'site_id':
                         $OriginalName = Site::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',', $OriginalName) : '';
@@ -205,17 +191,14 @@ class OperationLogController extends CrudController
                         $NewName = Site::whereIn('id', $value)->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',', $NewName) : '';
                         break;
-
                     case 'is_super':
                         $OriginalName = DictionaryValue::GetNameAsCode('Administrator', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Administrator', $value);
                         break;
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
                         break;
-
                     default:
                         $OriginalName = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                         $NewName = is_array($value) ? implode(',', $value) : $value;
@@ -226,11 +209,11 @@ class OperationLogController extends CrudController
             }
         }
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-    private static function Department($model)
-    {
+    private static function Department($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
@@ -244,19 +227,16 @@ class OperationLogController extends CrudController
                         $OriginalName = Department::where('id', $OriginalValue)->value('name');
                         $NewName = Department::where('id', $value)->value('name');
                         break;
-
                     case 'default_role':
                         $OriginalName = Role::whereIn('id', $OriginalValue)->pluck('name')->toArray();
                         $OriginalName = $OriginalName ? implode(',', $OriginalName) : '';
                         $NewName = Role::whereIn('id', explode(',', $value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',', $NewName) : '';
                         break;
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
                         break;
-
                     default:
                         $OriginalName = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                         $NewName = is_array($value) ? implode(',', $value) : $value;
@@ -267,11 +247,11 @@ class OperationLogController extends CrudController
             }
         }
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-    private static function User($model)
-    {
+    private static function User($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
@@ -287,24 +267,20 @@ class OperationLogController extends CrudController
                         $NewName = Role::whereIn('id', explode(',', $value))->pluck('name')->toArray();
                         $NewName = $NewName ? implode(',', $NewName) : '';
                         break;
-
                     case 'department_id':
                         $OriginalName = Department::where('id', $OriginalValue)->value('name');
                         $OriginalName = $OriginalName ? $OriginalName : '';
                         $NewName = Department::where('id', $value)->value('name');
                         $NewName = $NewName ? $NewName : '';
                         break;
-
                     case 'gender':
                         $OriginalName = DictionaryValue::GetNameAsCode('Gender', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Gender', $value);
                         break;
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
                         break;
-
                     default:
                         $OriginalName = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                         $NewName = is_array($value) ? implode(',', $value) : $value;
@@ -315,24 +291,20 @@ class OperationLogController extends CrudController
             }
         }
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-    private static function Site($model)
-    {
-
+    private static function Site($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
         foreach ($dirty as $field => $value) {
             if (!in_array($field, ['created_by', 'updated_by', 'created_at', 'updated_at'])) {
-
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
-
                 switch ($field) {
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
@@ -345,33 +317,27 @@ class OperationLogController extends CrudController
             } else {
                 continue;
             }
-
             $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
             $contents[] = $title;
         }
-
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-
-    private static function Products($model)
-    {
-
+    private static function Products($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
         foreach ($dirty as $field => $value) {
             if (!in_array($field, ['created_by', 'updated_by', 'created_at', 'updated_at'])) {
-
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
-                if($OriginalValue == $value){
+                if ($OriginalValue == $value) {
                     continue;
                 }
                 switch ($field) {
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
@@ -412,32 +378,29 @@ class OperationLogController extends CrudController
                 if ($OriginalName != $OriginalValue) {
                     $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 } else {
-                    $title = "[$ColumnComment] 从 “" . $OriginalValue . "” 更新为=> “" . $value . "”";
+                    $title = "[$ColumnComment] 从 “".$OriginalValue."” 更新为=> “".$value."”";
                 }
                 $contents[] = $title;
             }
         }
-
         $contents = implode('、', $contents);
+
         return $contents;
     }
-    private static function Order($model)
-    {
 
+    private static function Order($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
         foreach ($dirty as $field => $value) {
             if (!in_array($field, ['created_by', 'updated_by', 'created_at', 'updated_at'])) {
-
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
-                if($OriginalValue == $value){
+                if ($OriginalValue == $value) {
                     continue;
                 }
                 switch ($field) {
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
@@ -454,34 +417,29 @@ class OperationLogController extends CrudController
                 if ($OriginalName != $OriginalValue) {
                     $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 } else {
-                    $title = "[$ColumnComment] 从 “" . $OriginalValue . "” 更新为=> “" . $value . "”";
+                    $title = "[$ColumnComment] 从 “".$OriginalValue."” 更新为=> “".$value."”";
                 }
                 $contents[] = $title;
             }
         }
-
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
-
-    private static function News($model)
-    {
-
+    private static function News($model) {
         $dirty = $model->getDirty();
         $contents = [];
         $DbManager = DB::getDoctrineSchemaManager()->listTableDetails($model->getTable());
         foreach ($dirty as $field => $value) {
             if (!in_array($field, ['created_by', 'updated_by', 'created_at', 'updated_at'])) {
-
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
-                if($OriginalValue == $value){
+                if ($OriginalValue == $value) {
                     continue;
                 }
                 switch ($field) {
-
                     case 'status':
                         $OriginalName = DictionaryValue::GetNameAsCode('Switch_State', $OriginalValue);
                         $NewName = DictionaryValue::GetNameAsCode('Switch_State', $value);
@@ -498,26 +456,27 @@ class OperationLogController extends CrudController
                 if ($OriginalName != $OriginalValue) {
                     $title = "[$ColumnComment] 从 “$OriginalName($OriginalValue)” 更新为=> “$NewName($value)”";
                 } else {
-                    $title = "[$ColumnComment] 从 “" . $OriginalValue . "” 更新为=> “" . $value . "”";
+                    $title = "[$ColumnComment] 从 “".$OriginalValue."” 更新为=> “".$value."”";
                 }
                 $contents[] = $title;
             }
         }
-
         $contents = implode('、', $contents);
+
         return $contents;
     }
 
     /**
      * get dict options
+     *
      * @return Array
      */
-    public function options(Request $request)
-    {
+    public function options(Request $request) {
         $options = [];
         $codes = ['Route_Classification', 'OperationLogModule'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
-        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)->orderBy('sort', 'asc')->get()->toArray();
+        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
+                               ->orderBy('sort', 'asc')->get()->toArray();
         if (!empty($data)) {
             foreach ($data as $map) {
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
@@ -525,6 +484,6 @@ class OperationLogController extends CrudController
         }
         $options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
         $options['user'] = (new User)->GetListLabel(['id as value', 'name as label'], false, '', ['status' => '1']);
-        ReturnJson(TRUE, '', $options);
+        ReturnJson(true, '', $options);
     }
 }

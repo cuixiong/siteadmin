@@ -2,7 +2,6 @@
 
 namespace Modules\Site\Http\Models;
 
-use App\Services\RabbitmqService;
 use Illuminate\Support\Facades\Redis;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
@@ -332,19 +331,7 @@ class Products extends Base {
     public function PushXunSearchMQ($productId, $action, $siteName = '') {
         //先 暂时不使用队列, 立即处理
         return $this->excuteXunSearchReq($productId, $action, $siteName);
-//        if (in_array($action, ['add', 'update'])) {
-//            $data = $this->GetProductData($model);
-//        } else {
-//            $data = ['id' => $model];
-//        }
-//        $request = request();
-//        $siteName = $siteName ? $siteName : $request->header('Site');
-//        $RabbitMQ = new RabbitmqService();
-//        $RabbitMQ->setQueueName('xunsearch_'.$siteName);
-//        $RabbitMQ->WorkModePush('', '', ['data' => $data, 'action' => $action]);
-//        $RabbitMQ->close();
-//
-//        return true;
+
     }
 
     private function handlerProductData($id) {

@@ -5,7 +5,6 @@ namespace Modules\Admin\Http\Controllers;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
-use App\Services\RabbitmqService;
 use FFI;
 use Modules\Admin\Http\Models\TimedTask;
 use Modules\Site\Http\Models\User;
@@ -18,11 +17,11 @@ class TestController extends CrudController
         $data['name'] = $request->name;
         $data['email'] = $request->email;
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop', 'data'=>$data]);
-        $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('test');// 设置队列名称
-        $RabbitMQ->setExchangeName('test');// 设置交换机名称
-        $RabbitMQ->setQueueMode('fanout');// 设置队列模式
-        $RabbitMQ->push($data);// 推送数据
+//        $RabbitMQ = new RabbitmqService();
+//        $RabbitMQ->setQueueName('test');// 设置队列名称
+//        $RabbitMQ->setExchangeName('test');// 设置交换机名称
+//        $RabbitMQ->setQueueMode('fanout');// 设置队列模式
+//        $RabbitMQ->push($data);// 推送数据
         echo '推送成功';
     }
 
@@ -37,9 +36,9 @@ class TestController extends CrudController
         $data['name'] = 'queue_1';
         $data['email'] = 'queue_1';
         $data = json_encode(['class' => 'Modules\Admin\Http\Controllers\TestController', 'method' => 'TestPop01', 'data'=>$data]);
-        RabbitmqService::push('test_queue01','test','test','fanout' ,$data);
+//        RabbitmqService::push('test_queue01','test','test','fanout' ,$data);
     }
-    
+
     public function my(){
         file_put_contents('123.txt',date('Y-m-d H:i:s',time()),FILE_APPEND);
     }
@@ -47,7 +46,7 @@ class TestController extends CrudController
     public function task(Request $request){
         // $content = shell_exec('crontab -l');
         // var_dump($content);die;
-        
+
         if($request->id){
             $content = shell_exec('crontab -l');
             // if(!empty($content)){

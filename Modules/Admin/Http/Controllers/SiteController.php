@@ -7,7 +7,6 @@ use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use App\Services\RabbitmqService;
 use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
@@ -596,7 +595,7 @@ class SiteController extends CrudController {
             $data = json_encode(
                 ['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'message', 'data' => $info]
             );
-            RabbitmqService::push('we123', $englishName, 'we123', 'fanout', $data);
+
             ReturnJson(true, '操作成功');
         } catch (\Exception $e) {
             var_dump($e->getMessage());
@@ -643,7 +642,7 @@ class SiteController extends CrudController {
                 ['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'callbackResults',
                  'data'  => $result]
             );
-            RabbitmqService::push('result', 'result', 'result', 'fanout', $data);
+
         }
     }
 

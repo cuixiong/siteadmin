@@ -2,8 +2,10 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Const\QueueConst;
 use App\Exports\ProductsExport;
-use App\Services\RabbitmqService;
+use App\Jobs\ExportProduct;
+use App\Jobs\HandlerExportExcel;
 use Illuminate\Support\Arr;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
@@ -930,11 +932,7 @@ class ProductsController extends CrudController {
                         'domain'   => $domain,  // 传入域名，用于拼接链接
                     ];
                     $data = json_encode($data);
-                    $RabbitMQ = new RabbitmqService();
-                    $RabbitMQ->setQueueName('products-export'); // 设置队列名称
-                    $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
-                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                    $RabbitMQ->push($data); // 推送数据
+                    ExportProduct::dispatch($data)->onQueue(QueueConst::QUEEU_EXPORT_PRODUCT);
                 }
             } elseif ($exportType == 'excel') {
                 //导出记录初始化,每个文件单独一条记录
@@ -976,11 +974,7 @@ class ProductsController extends CrudController {
                         'log_id'   => $logModel->id,  //写入日志的id
                     ];
                     $data = json_encode($data);
-                    $RabbitMQ = new RabbitmqService();
-                    $RabbitMQ->setQueueName('products-export'); // 设置队列名称
-                    $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
-                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                    $RabbitMQ->push($data); // 推送数据
+                    ExportProduct::dispatch($data)->onQueue(QueueConst::QUEEU_EXPORT_PRODUCT);
                 }
             }
             ReturnJson(true, trans('lang.request_success'), $logModel->id);
@@ -1079,12 +1073,9 @@ class ProductsController extends CrudController {
                 // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
                 // 'pulisher_id' => $pulisher_id,  //出版商id
             ];
+
             $data = json_encode($data);
-            $RabbitMQ = new RabbitmqService();
-            $RabbitMQ->setQueueName('products-export'); // 设置队列名称
-            $RabbitMQ->setExchangeName('ProductsExport'); // 设置交换机名称
-            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-            $RabbitMQ->push($data); // 推送数据
+            HandlerExportExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_EXCEL);
         }
     }
 
@@ -1420,7 +1411,7 @@ class ProductsController extends CrudController {
         $cateIdList = Arr::pluck($templateCateList, 'id');
         $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
         $matchTempLateList = Template::whereIn('id', $tempIdList)
-                                     ->where("status" , 1)
+                                     ->where("status", 1)
                                      ->select(['id', 'name', 'type', 'btn_color'])->get()
                                      ->toArray();
         $template_content_list = [];

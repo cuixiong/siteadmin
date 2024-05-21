@@ -3,7 +3,6 @@
 namespace Modules\Site\Http\Controllers;
 
 use App\Imports\ProductsImport;
-use App\Services\RabbitmqService;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
@@ -25,5 +24,5 @@ use Modules\Site\Http\Models\ProductsExcelField;
 
 class ProductsExportLogController extends CrudController
 {
-    
+
 }

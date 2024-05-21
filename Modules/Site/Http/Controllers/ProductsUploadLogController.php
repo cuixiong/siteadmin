@@ -2,8 +2,10 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Const\QueueConst;
 use App\Imports\ProductsImport;
-use App\Services\RabbitmqService;
+use App\Jobs\HandlerExportExcel;
+use App\Jobs\UploadProduct;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
@@ -122,15 +124,6 @@ class ProductsUploadLogController extends CrudController {
             ReturnJson(true, trans('lang.param_empty'));
         }
         $paths = explode(',', $pathsStr);
-        // return $paths;
-        // $productsImport = new ProductsImport();
-        // $productsImport->site = $request->header('Site') ?? '';
-        // $productsImport->log_id = $logModel->id;
-        // foreach ($paths as $key => $value) {
-        //     $path = $basePath . $value;
-        //     // return $path;
-        //     Excel::import($productsImport, $path);
-        // }
         //获取表头与字段关系
         $fieldData = ProductsExcelField::where(['status' => 1])->select(['field'])->orderBy('sort', 'asc')->get()
                                        ->toArray();
@@ -165,24 +158,9 @@ class ProductsUploadLogController extends CrudController {
                 'user_id'      => $userID,  //用户id
             ];
             $data = json_encode($data);
-            $RabbitMQ = new RabbitmqService();
-            $RabbitMQ->setQueueName('products-file-queue'); // 设置队列名称
-            $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-            $RabbitMQ->setRoutingKey('productsKey1');
-            $RabbitMQ->push($data); // 推送数据
-            // 打开 Excel 文件
-            // $reader = ReaderEntityFactory::createXLSXReader();
-            // $reader->setShouldPreserveEmptyRows(true);
-            // $reader->open($path);
-            // foreach ($reader->getSheetIterator() as $sheet) {
-            //     // $totalRows += $sheet->getTotalRows();
-            // }
-            // // 关闭文件
-            // $reader->close();
+            UploadProduct::dispatch($data)->onQueue(QueueConst::QUEEU_UPLOAD_PRODUCT);
         }
         $logIds = implode(',', $logIds);
-        // return $totalRows;
         ReturnJson(true, trans('lang.request_success'), $logIds);
     }
 
@@ -252,12 +230,7 @@ class ProductsUploadLogController extends CrudController {
                         'user_id'      => $params['user_id'],
                     ];
                     $data = json_encode($data);
-                    $RabbitMQ = new RabbitmqService();
-                    $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
-                    $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                    $RabbitMQ->setRoutingKey('productsKey2');
-                    $RabbitMQ->push($data); // 推送数据
+                    HandlerExportExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
                 }
             }
             //code...
