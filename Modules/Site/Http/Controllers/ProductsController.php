@@ -1037,11 +1037,11 @@ class ProductsController extends CrudController {
             $writer->close();
             // $title = array_keys($data[0]);
             //code...
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt', $th->getMessage(), FILE_APPEND);
             // return ;
             $details = $th->getMessage();
-            \Log::error('处理excel失败--错误信息与数据:'.json_encode([$details]));
+            throw $th;
         }
         //记录任务状态
         $logModel = ProductsExportLog::where(['id' => $params['log_id']])->first();
