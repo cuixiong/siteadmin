@@ -182,9 +182,6 @@ class ProductsUploadLogController extends CrudController {
             $reader->open($path);   //读取文件
             $excelData = [];
             foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
-                // if ($sheetKey != 1) {
-                //     continue;
-                // }
                 foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
                     if ($rowKey == 1) {
                         //表头跳过
@@ -195,14 +192,14 @@ class ProductsUploadLogController extends CrudController {
                     foreach ($tempRow as $tempKey => $tempValue) {
                         if (in_array($tempKey, $fieldSort)) {
                             $field = $fieldData[$tempKey];
-                            if($field == 'name' && empty($tempValue )){
+                            if ($field == 'name' && empty($tempValue)) {
                                 //没有报告名称直接过滤
                                 break;
                             }
                             $row[$field] = $tempValue;
                         }
                     }
-                    if(!empty($row )){
+                    if (!empty($row)) {
                         $excelData[] = $row;
                     }
                 }
@@ -234,8 +231,8 @@ class ProductsUploadLogController extends CrudController {
                 }
             }
             //code...
-        } catch (\Throwable $th) {
-            // file_put_contents('ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
+        } catch (\Exception $th) {
+            throw $th;
         }
     }
 
@@ -286,15 +283,11 @@ class ProductsUploadLogController extends CrudController {
                 isset($row['tables']) && $item['tables'] = $row['tables'];
                 // 基础价
                 isset($row['price']) && $item['price'] = $row['price'];
-                try {
-                    // 出版时间
-                    isset($row['published_date'])
-                    && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
-                        $row['published_date']
-                    ); //转为 时间戳
-                } catch (\Throwable $th) {
-                    //throw $th;
-                }
+                // 出版时间
+                isset($row['published_date'])
+                && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
+                    $row['published_date']
+                ); //转为 时间戳
                 if (!isset($item['published_date']) || $item['published_date'] < 0) {
                     $item['published_date'] = strtotime($row['published_date']);
                 }
@@ -367,7 +360,6 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-
                 // 忽略基础价为空的数据
                 if (empty($item['price'])) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.price_empty')."\r\n";
@@ -393,7 +385,6 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-
                 // 关键词 含有敏感词的报告需要过滤
                 $matchSenWord = $this->checkFitter($senWords, $item['keywords']);
                 if (!empty($matchSenWord)) {
@@ -401,7 +392,6 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.url_empty')."\r\n";
