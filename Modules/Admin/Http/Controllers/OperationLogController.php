@@ -18,6 +18,10 @@ use Stancl\Tenancy\Facades\Tenancy;
 
 class OperationLogController extends CrudController {
     public static function AddLog($model, $type) {
+        if (php_sapi_name() === 'cli') {
+            // 请求来自 Artisan 命令行 , 会导致 $request->route() 返回 null, 因此不记录日志
+            return false;
+        }
         $ClassName = class_basename($model);
         $content = '';
         if ($type == 'update') {
