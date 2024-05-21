@@ -23,7 +23,7 @@ class HandlerProductExcel implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, BaseJob;
 
     public $data = '';
-
+    public $timeout = null;
     /**
      * Create a new job instance.
      *
