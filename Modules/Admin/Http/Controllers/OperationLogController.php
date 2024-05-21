@@ -50,6 +50,7 @@ class OperationLogController extends CrudController {
             'created_by' => request()->user->id,
             'created_at' => time(),
         ];
+        $data = json_encode($data);
         \App\Jobs\OperationLog::dispatch($data)->onQueue(QueueConst::QUEEU_OPERATION_LOG);
 
     }
