@@ -36,23 +36,23 @@ class OperationLogController extends CrudController {
         // }
         $name = $request->route()->getName();
         $route = request()->path();
-
         $data = [
-            'class'      => OperationLogController::class,
-            'method'     => 'SaveLog',
-            'type'       => $type,
-            'category'   => $category,
-            'route'      => $route,
-            'title'      => $name,
-            'content'    => $content,
-            'site'       => $site,
-            'module'     => strtolower($ClassName),
-            'created_by' => request()->user->id,
-            'created_at' => time(),
+            'class'  => OperationLogController::class,
+            'method' => 'SaveLog',
+            'data'   => [
+                'type'       => $type,
+                'category'   => $category,
+                'route'      => $route,
+                'title'      => $name,
+                'content'    => $content,
+                'site'       => $site,
+                'module'     => strtolower($ClassName),
+                'created_by' => request()->user->id,
+                'created_at' => time(),
+            ]
         ];
         $data = json_encode($data);
         \App\Jobs\OperationLog::dispatch($data)->onQueue(QueueConst::QUEEU_OPERATION_LOG);
-
     }
 
     /**
