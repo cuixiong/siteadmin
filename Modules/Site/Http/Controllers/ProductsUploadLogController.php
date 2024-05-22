@@ -244,7 +244,6 @@ class ProductsUploadLogController extends CrudController {
      * @param $params ['site'] 站点
      */
     public function handleProducts($params = null) {
-        // exit;
         if (empty($params['site'])) {
             throw new \Exception("site is empty", 1);
         }
@@ -285,14 +284,11 @@ class ProductsUploadLogController extends CrudController {
                 // 基础价
                 isset($row['price']) && $item['price'] = $row['price'];
                 // 出版时间
-                isset($row['published_date'])
-                && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
-                    $row['published_date']
-                ); //转为 时间戳
-                if (!isset($item['published_date']) || $item['published_date'] < 0) {
+                if(!empty($row['published_date'] )) {
                     $item['published_date'] = strtotime($row['published_date']);
+                }else{
+                    $item['published_date'] = 0;
                 }
-                // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
                 // 报告分类
                 isset($row['category_id'])
                 && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
@@ -470,7 +466,6 @@ class ProductsUploadLogController extends CrudController {
                     //维护xunSearch索引
                     (new Products())->PushXunSearchMQ($product->id, 'update', $params['site']);
                 }
-                //code...
             } catch (\Exception $th) {
                 //throw $th;
                 $details .= '【'.($row['name'] ?? '').'】'.$th->getMessage()."\r\n";
