@@ -61,7 +61,7 @@ class ProductsController extends CrudController {
             }
             $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
                        'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
-                       'discount_amount'];
+                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end'];
             $model = $model->select($fields);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
@@ -1075,7 +1075,6 @@ class ProductsController extends CrudController {
                 // 'fieldData' => $fieldData,  //字段与excel表头的对应关系
                 // 'pulisher_id' => $pulisher_id,  //出版商id
             ];
-
             $data = json_encode($data);
             HandlerExportExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_EXCEL);
         }

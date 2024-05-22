@@ -3,6 +3,7 @@
 namespace Modules\Site\Http\Models;
 
 use Modules\Site\Http\Models\Base;
+use Modules\Admin\Http\Models\User as AdminUser;
 
 class SensitiveWords extends Base {
     // 设置允许入库字段,数组形式
@@ -28,6 +29,13 @@ class SensitiveWords extends Base {
             foreach ($search as $key => $value) {
                 if (in_array($key, ['word'])) {
                     $model = $model->where($key, 'like', '%'.trim($value).'%');
+                }elseif(in_array($key, ['created_by'])){
+                    if(!empty($value )) {
+                        $user_id_list = AdminUser::query()->orWhere('name', 'like', '%'.trim($value).'%')
+                                                 ->orWhere('nickname', 'like', '%'.trim($value).'%')
+                                                 ->pluck('id')->toArray();
+                        $model = $model->whereIn('created_by', $user_id_list);
+                    }
                 } else if (in_array($key, $timeArray)) {
                     if (is_array($value)) {
                         $model = $model->whereBetween($key, $value);
