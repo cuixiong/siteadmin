@@ -2,11 +2,8 @@
 
 namespace Modules\Site\Http\Controllers;
 
-use App\Const\QueueConst;
 use App\Imports\ProductsImport;
-use App\Jobs\HandlerExportExcel;
-use App\Jobs\HandlerProductExcel;
-use App\Jobs\UploadProduct;
+use App\Services\RabbitmqService;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
@@ -125,6 +122,15 @@ class ProductsUploadLogController extends CrudController {
             ReturnJson(true, trans('lang.param_empty'));
         }
         $paths = explode(',', $pathsStr);
+        // return $paths;
+        // $productsImport = new ProductsImport();
+        // $productsImport->site = $request->header('Site') ?? '';
+        // $productsImport->log_id = $logModel->id;
+        // foreach ($paths as $key => $value) {
+        //     $path = $basePath . $value;
+        //     // return $path;
+        //     Excel::import($productsImport, $path);
+        // }
         //获取表头与字段关系
         $fieldData = ProductsExcelField::where(['status' => 1])->select(['field'])->orderBy('sort', 'asc')->get()
                                        ->toArray();
@@ -159,9 +165,24 @@ class ProductsUploadLogController extends CrudController {
                 'user_id'      => $userID,  //用户id
             ];
             $data = json_encode($data);
-            UploadProduct::dispatch($data)->onQueue(QueueConst::QUEEU_UPLOAD_PRODUCT);
+            $RabbitMQ = new RabbitmqService();
+            $RabbitMQ->setQueueName('products-file-queue'); // 设置队列名称
+            $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+            $RabbitMQ->setRoutingKey('productsKey1');
+            $RabbitMQ->push($data); // 推送数据
+            // 打开 Excel 文件
+            // $reader = ReaderEntityFactory::createXLSXReader();
+            // $reader->setShouldPreserveEmptyRows(true);
+            // $reader->open($path);
+            // foreach ($reader->getSheetIterator() as $sheet) {
+            //     // $totalRows += $sheet->getTotalRows();
+            // }
+            // // 关闭文件
+            // $reader->close();
         }
         $logIds = implode(',', $logIds);
+        // return $totalRows;
         ReturnJson(true, trans('lang.request_success'), $logIds);
     }
 
@@ -183,6 +204,9 @@ class ProductsUploadLogController extends CrudController {
             $reader->open($path);   //读取文件
             $excelData = [];
             foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
+                // if ($sheetKey != 1) {
+                //     continue;
+                // }
                 foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
                     if ($rowKey == 1) {
                         //表头跳过
@@ -193,14 +217,14 @@ class ProductsUploadLogController extends CrudController {
                     foreach ($tempRow as $tempKey => $tempValue) {
                         if (in_array($tempKey, $fieldSort)) {
                             $field = $fieldData[$tempKey];
-                            if ($field == 'name' && empty($tempValue)) {
+                            if($field == 'name' && empty($tempValue )){
                                 //没有报告名称直接过滤
                                 break;
                             }
                             $row[$field] = $tempValue;
                         }
                     }
-                    if (!empty($row)) {
+                    if(!empty($row )){
                         $excelData[] = $row;
                     }
                 }
@@ -228,12 +252,17 @@ class ProductsUploadLogController extends CrudController {
                         'user_id'      => $params['user_id'],
                     ];
                     $data = json_encode($data);
-                    HandlerProductExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
+                    $RabbitMQ = new RabbitmqService();
+                    $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
+                    $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+                    $RabbitMQ->setRoutingKey('productsKey2');
+                    $RabbitMQ->push($data); // 推送数据
                 }
             }
             //code...
-        } catch (\Exception $th) {
-            throw $th;
+        } catch (\Throwable $th) {
+            // file_put_contents('ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
         }
     }
 
@@ -244,6 +273,7 @@ class ProductsUploadLogController extends CrudController {
      * @param $params ['site'] 站点
      */
     public function handleProducts($params = null) {
+        // exit;
         if (empty($params['site'])) {
             throw new \Exception("site is empty", 1);
         }
@@ -283,12 +313,19 @@ class ProductsUploadLogController extends CrudController {
                 isset($row['tables']) && $item['tables'] = $row['tables'];
                 // 基础价
                 isset($row['price']) && $item['price'] = $row['price'];
-                // 出版时间
-                if(!empty($row['published_date'] )) {
-                    $item['published_date'] = strtotime($row['published_date']);
-                }else{
-                    $item['published_date'] = 0;
+                try {
+                    // 出版时间
+                    isset($row['published_date'])
+                    && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
+                        $row['published_date']
+                    ); //转为 时间戳
+                } catch (\Throwable $th) {
+                    //throw $th;
                 }
+                if (!isset($item['published_date']) || $item['published_date'] < 0) {
+                    $item['published_date'] = strtotime($row['published_date']);
+                }
+                // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
                 // 报告分类
                 isset($row['category_id'])
                 && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
@@ -357,6 +394,7 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
+
                 // 忽略基础价为空的数据
                 if (empty($item['price'])) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.price_empty')."\r\n";
@@ -382,6 +420,7 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
+
                 // 关键词 含有敏感词的报告需要过滤
                 $matchSenWord = $this->checkFitter($senWords, $item['keywords']);
                 if (!empty($matchSenWord)) {
@@ -389,6 +428,7 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
+
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.url_empty')."\r\n";
@@ -466,13 +506,13 @@ class ProductsUploadLogController extends CrudController {
                     //维护xunSearch索引
                     (new Products())->PushXunSearchMQ($product->id, 'update', $params['site']);
                 }
-            } catch (\Exception $th) {
+                //code...
+            } catch (\Throwable $th) {
                 //throw $th;
                 $details .= '【'.($row['name'] ?? '').'】'.$th->getMessage()."\r\n";
                 // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
                 // $details = json_encode($row) . "\r\n";
                 $errorCount++;
-                throw $th;
             }
         }
         //恢复监听
