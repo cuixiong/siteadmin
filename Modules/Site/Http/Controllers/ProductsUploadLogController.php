@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use App\Const\QueueConst;
 use App\Imports\ProductsImport;
 use App\Jobs\HandlerExportExcel;
+use App\Jobs\HandlerProductExcel;
 use App\Jobs\UploadProduct;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
@@ -227,7 +228,7 @@ class ProductsUploadLogController extends CrudController {
                         'user_id'      => $params['user_id'],
                     ];
                     $data = json_encode($data);
-                    HandlerExportExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
+                    HandlerProductExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
                 }
             }
             //code...
