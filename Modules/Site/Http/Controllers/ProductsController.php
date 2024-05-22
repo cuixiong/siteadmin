@@ -214,7 +214,8 @@ class ProductsController extends CrudController {
             $search->setQuery('')->addRange($type, $keyword[0], $keyword[1]);
         } else if ($type == 'name') {
             //中文搜索, 测试明确 需要精确搜索
-            $queryWords = "name:{$keyword}";
+            $searchKeyword = '"'.$keyword.'"';;
+            $queryWords = "name:$searchKeyword";
             $search->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
