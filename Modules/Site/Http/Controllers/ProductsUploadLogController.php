@@ -471,12 +471,13 @@ class ProductsUploadLogController extends CrudController {
                     (new Products())->PushXunSearchMQ($product->id, 'update', $params['site']);
                 }
                 //code...
-            } catch (\Throwable $th) {
+            } catch (\Exception $th) {
                 //throw $th;
                 $details .= '【'.($row['name'] ?? '').'】'.$th->getMessage()."\r\n";
                 // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
                 // $details = json_encode($row) . "\r\n";
                 $errorCount++;
+                throw $th;
             }
         }
         //恢复监听
