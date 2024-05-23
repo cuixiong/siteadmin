@@ -28,6 +28,9 @@ use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Services\SenWordsService;
 
 class ProductsUploadLogController extends CrudController {
+    public $productCategory = [];
+    public $regionList      = [];
+    public $senWords        = [];
     // /**
     //  * 查询列表页
     //  * @param $request 请求信息
@@ -102,7 +105,6 @@ class ProductsUploadLogController extends CrudController {
     public function uploadProducts(Request $request) {
         $basePath = public_path().'/site';
         $basePath .= '/'.$request->header('Site').'/';
-        // $basePath = public_path();
         //检验目录是否存在
         if (!is_dir($basePath)) {
             @mkdir($basePath, 0777, true);
@@ -122,30 +124,6 @@ class ProductsUploadLogController extends CrudController {
             ReturnJson(true, trans('lang.param_empty'));
         }
         $paths = explode(',', $pathsStr);
-        // return $paths;
-        // $productsImport = new ProductsImport();
-        // $productsImport->site = $request->header('Site') ?? '';
-        // $productsImport->log_id = $logModel->id;
-        // foreach ($paths as $key => $value) {
-        //     $path = $basePath . $value;
-        //     // return $path;
-        //     Excel::import($productsImport, $path);
-        // }
-        //获取表头与字段关系
-        $fieldData = ProductsExcelField::where(['status' => 1])->select(['field'])->orderBy('sort', 'asc')->get()
-                                       ->toArray();
-        foreach ($fieldData as $key => $value) {
-            if (!empty($value['field'])) {
-                $fieldData[$key]['sort'] = $key;
-            } else {
-                unset($fieldData[$key]);
-            }
-        }
-        $fieldData = array_column($fieldData, 'field', 'sort');
-        // $fieldSort = array_keys($fieldData);
-        // return $fieldSort;
-        // 获取总行数
-        // $totalRows = 0;
         $logIds = [];
         foreach ($paths as $key => $value) {
             $path = $basePath.$value;
@@ -160,7 +138,6 @@ class ProductsUploadLogController extends CrudController {
                 'site'         => $request->header('Site') ?? '',   //站点名称
                 'log_id'       => $logModel->id,  //写入日志的id
                 'data'         => $path,    //传递文件路径
-                'fieldData'    => $fieldData,  //字段与excel表头的对应关系
                 'publisher_id' => $publisher_id,  //出版商id
                 'user_id'      => $userID,  //用户id
             ];
@@ -171,18 +148,8 @@ class ProductsUploadLogController extends CrudController {
             $RabbitMQ->setQueueMode('direct'); // 设置队列模式
             $RabbitMQ->setRoutingKey('productsKey1');
             $RabbitMQ->push($data); // 推送数据
-            // 打开 Excel 文件
-            // $reader = ReaderEntityFactory::createXLSXReader();
-            // $reader->setShouldPreserveEmptyRows(true);
-            // $reader->open($path);
-            // foreach ($reader->getSheetIterator() as $sheet) {
-            //     // $totalRows += $sheet->getTotalRows();
-            // }
-            // // 关闭文件
-            // $reader->close();
         }
         $logIds = implode(',', $logIds);
-        // return $totalRows;
         ReturnJson(true, trans('lang.request_success'), $logIds);
     }
 
@@ -194,19 +161,26 @@ class ProductsUploadLogController extends CrudController {
     public function handleExcelFile($params = null) {
         ini_set('memory_limit', '4096M');
         try {
+            // 设置当前租户
+            tenancy()->initialize($params['site']);
+            $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
+            if (empty($logModel)) {
+                throw new \Exception('日志记录不存在');
+            }
             //读取文件
             $path = $params['data'];
-            $fieldData = $params['fieldData'];
+            //获取表头与字段关系
+            $fieldData = ProductsExcelField::where(['status' => 1])
+                                           ->orderBy('sort', 'asc')
+                                           ->pluck('field')
+                                           ->toArray();
             $fieldSort = array_keys($fieldData);
-            $reader = ReaderEntityFactory::createXLSXReader($path);
+            $reader = ReaderEntityFactory::createXLSXReader();
             $reader->setShouldPreserveEmptyRows(true);
             $reader->setShouldFormatDates(true);
             $reader->open($path);   //读取文件
             $excelData = [];
             foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
-                // if ($sheetKey != 1) {
-                //     continue;
-                // }
                 foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
                     if ($rowKey == 1) {
                         //表头跳过
@@ -217,22 +191,19 @@ class ProductsUploadLogController extends CrudController {
                     foreach ($tempRow as $tempKey => $tempValue) {
                         if (in_array($tempKey, $fieldSort)) {
                             $field = $fieldData[$tempKey];
-                            if($field == 'name' && empty($tempValue )){
+                            if ($field == 'name' && empty($tempValue)) {
                                 //没有报告名称直接过滤
                                 break;
                             }
                             $row[$field] = $tempValue;
                         }
                     }
-                    if(!empty($row )){
+                    if (!empty($row)) {
                         $excelData[] = $row;
                     }
                 }
             }
-            // 设置当前租户
-            tenancy()->initialize($params['site']);
             //记录任务状态、总数量
-            $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
             $logData = [
                 'count' => count($excelData),
                 'state' => ProductsUploadLog::UPLOAD_READY,
@@ -260,9 +231,9 @@ class ProductsUploadLogController extends CrudController {
                     $RabbitMQ->push($data); // 推送数据
                 }
             }
-            //code...
-        } catch (\Throwable $th) {
+        } catch (\Exception $th) {
             // file_put_contents('ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
+            throw $th;
         }
     }
 
@@ -273,16 +244,13 @@ class ProductsUploadLogController extends CrudController {
      * @param $params ['site'] 站点
      */
     public function handleProducts($params = null) {
-        // exit;
         if (empty($params['site'])) {
             throw new \Exception("site is empty", 1);
         }
         // 设置当前租户
         tenancy()->initialize($params['site']);
-        // tenancy()->initialize('QY_EN');
         $publisher_id = $params['publisher_id'];
         $user_id = $params['user_id'];
-        // $count = 0;
         $insertCount = 0;
         $updateCount = 0;
         $errorCount = 0;
@@ -291,10 +259,14 @@ class ProductsUploadLogController extends CrudController {
         $dispatcher = Products::getEventDispatcher();
         Products::unsetEventDispatcher();
         //获取敏感词列表
-        $senWords = SensitiveWords::query()->where("status", 1)
-                                  ->pluck("word")->toArray();
+        $this->senWords = SensitiveWords::query()->where("status", 1)
+                                        ->pluck("word")->toArray();
+        //获取报告分类列表
+        $this->productCategory = ProductsCategory::query()->where("status", 1)
+                                                 ->pluck("id", "name")->toArray();
+        //获取地区列表
+        $this->regionList = Region::query()->pluck("id", "name")->toArray();
         foreach ($params['data'] as $row) {
-            // $count++;
             try {
                 // 表头
                 $item = [];
@@ -304,40 +276,76 @@ class ProductsUploadLogController extends CrudController {
                 $item['created_by'] = $user_id;
                 $item['updated_by'] = $user_id;
                 // 报告名称
-                isset($row['name']) && $item['name'] = $row['name'];
+                $item['name'] = $row['name'] ?? '';
+                //校验报告名称
+                $checkMsg = $this->checkProductName($item['name']);
+                if ($checkMsg) {
+                    $details .= $checkMsg;
+                    $errorCount++;
+                    continue;
+                }
                 // 报告名称(英)
-                isset($row['english_name']) && $item['english_name'] = $row['english_name'];
+                $item['english_name'] = $row['english_name'] ?? '';
                 // 页数
-                isset($row['pages']) && $item['pages'] = $row['pages'];
+                $item['pages'] = $row['pages'] ?? 0;
                 // 图表数
-                isset($row['tables']) && $item['tables'] = $row['tables'];
+                $item['tables'] = $row['tables'] ?? 0;
                 // 基础价
-                isset($row['price']) && $item['price'] = $row['price'];
-                try {
-                    // 出版时间
-                    isset($row['published_date'])
-                    && $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
-                        $row['published_date']
-                    ); //转为 时间戳
-                } catch (\Throwable $th) {
-                    //throw $th;
+                $item['price'] = $row['price'] ?? 0;
+                // 忽略基础价为空的数据
+                if (empty($item['price'])) {
+                    $details .= '【'.($row['name']).'】'.trans('lang.price_empty')."\r\n";
+                    $errorCount++;
+                    continue;
                 }
-                if (!isset($item['published_date']) || $item['published_date'] < 0) {
-                    $item['published_date'] = strtotime($row['published_date']);
+                // 出版时间
+                $tempPublishedDate = $row['published_date'] ?? '';
+                $item['published_date'] = strtotime($tempPublishedDate);
+                // 忽略出版时间为空或转化失败的数据
+                if (empty($item['published_date']) || $item['published_date'] < 0) {
+                    $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
+                    $errorCount++;
+                    continue;
                 }
-                // file_put_contents('C:\\Users\\Administrator\\Desktop\\123.txt',json_encode($item['published_date']),FILE_APPEND);
                 // 报告分类
-                isset($row['category_id'])
-                && $item['category_id'] = ProductsCategory::where('name', trim($row['category_id']))->value('id') ?? 0;
+                $tempCategoryId = 0;
+                $tempCateName = $row['category_id'] ?? '';
+                if (!empty($this->productCategory[trim($tempCateName)])) {
+                    $tempCategoryId = $this->productCategory[trim($tempCateName)];
+                }
+                $item['category_id'] = $tempCategoryId;
+                // 忽略分类为空的数据
+                if (empty($item['category_id'])) {
+                    $details .= '【'.($row['name']).'】'.$tempCateName.'-'.trans('lang.category_empty')
+                                ."\r\n";
+                    $errorCount++;
+                    continue;
+                }
                 //报告所属区域
-                isset($row['country_id'])
-                && $item['country_id'] = Region::where('name', trim($row['country_id']))->value('id') ?? 0;
+                $tempCountryId = $row['country_id'] ?? 0;
+                if (!empty($this->regionList[trim($tempCountryId)])) {
+                    $tempCountryId = $this->regionList[trim($tempCountryId)];
+                }
+                $item['country_id'] = $tempCountryId;
                 //作者
-                isset($row['author']) && $item['author'] = $row['author'];
+                $item['author'] = $row['author'] ?? '';
                 //关键词
-                isset($row['keywords']) && $item['keywords'] = $row['keywords'];
+                $item['keywords'] = $row['keywords'] ?? '';
+                // 忽略关键词为空的数据
+                if (empty($item['keywords'])) {
+                    $details .= '【'.($row['name']).'】'.trans('lang.keywords_empty')."\r\n";
+                    $errorCount++;
+                    continue;
+                }
+                // 关键词 含有敏感词的报告需要过滤
+                $matchSenWord = $this->checkFitter($item['keywords']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该报告名称{$item['name']} , 关键词:{$item['keywords']} 含有{$matchSenWord} 敏感词,请检查\r\n";
+                    $errorCount++;
+                    continue;
+                }
                 //自定义链接
-                isset($row['url']) && $item['url'] = $row['url'];
+                $item['url'] = $row['url'] ?? '';
                 // 如果链接为空，则用关键词做链接
                 if (!empty($row['keywords']) && empty($row['url'])) {
                     $item['url'] = $row['keywords'];
@@ -349,13 +357,19 @@ class ProductsUploadLogController extends CrudController {
                     preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url']))))
                 );
                 $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
+                // 忽略url为空的数据
+                if (empty($item['url'])) {
+                    $details .= '【'.($row['name']).'】'.trans('lang.url_empty')."\r\n";
+                    $errorCount++;
+                    continue;
+                }
                 //新增其他扩展字段
-                $item['classification'] = isset($row['classification']) ?? '';
-                $item['application'] = isset($row['application']) ?? '';
-                $item['last_scale'] = isset($row['last_scale']) ?? '';
-                $item['current_scale'] = isset($row['current_scale']) ?? '';
-                $item['future_scale'] = isset($row['future_scale']) ?? '';
-                $item['cagr'] = isset($row['cagr']) ?? '';
+                $item['classification'] = $row['classification'] ?? '';
+                $item['application'] = $row['application'] ?? '';
+                $item['last_scale'] = $row['last_scale'] ?? '';
+                $item['current_scale'] = $row['current_scale'] ?? '';
+                $item['future_scale'] = $row['future_scale'] ?? '';
+                $item['cagr'] = $row['cagr'] ?? '';
                 //详情数据
                 $itemDescription = [];
                 isset($row['description'])
@@ -378,63 +392,6 @@ class ProductsUploadLogController extends CrudController {
                 && $itemDescription['definition'] = str_replace('_x000D_', '', $row['definition']);
                 isset($row['overview']) && $itemDescription['overview'] = str_replace('_x000D_', '', $row['overview']);
                 $item['year'] = date('Y', $item['published_date']);
-                /**
-                 * 不合格的数据过滤
-                 */
-                // 忽略报告名为空的数据
-                if (empty($item['name'])) {
-                    $details .= trans('lang.name_empty')."\r\n";
-                    $errorCount++;
-                    continue;
-                }
-                // 含有敏感词的报告需要过滤
-                $matchSenWord = $this->checkFitter($senWords, $item['name']);
-                if (!empty($matchSenWord)) {
-                    $details .= "该报告名称{$item['name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
-                    $errorCount++;
-                    continue;
-                }
-
-                // 忽略基础价为空的数据
-                if (empty($item['price'])) {
-                    $details .= '【'.($row['name'] ?? '').'】'.trans('lang.price_empty')."\r\n";
-                    $errorCount++;
-                    continue;
-                }
-                // 忽略出版时间为空或转化失败的数据
-                if (empty($item['published_date']) || $item['published_date'] < 0) {
-                    $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
-                    $errorCount++;
-                    continue;
-                }
-                // 忽略分类为空的数据
-                if (empty($item['category_id'])) {
-                    $details .= '【'.($row['name'] ?? '').'】'.$row['category_id'].'-'.trans('lang.category_empty')
-                                ."\r\n";
-                    $errorCount++;
-                    continue;
-                }
-                // 忽略关键词为空的数据
-                if (empty($item['keywords'])) {
-                    $details .= '【'.($row['name'] ?? '').'】'.trans('lang.keywords_empty')."\r\n";
-                    $errorCount++;
-                    continue;
-                }
-
-                // 关键词 含有敏感词的报告需要过滤
-                $matchSenWord = $this->checkFitter($senWords, $item['keywords']);
-                if (!empty($matchSenWord)) {
-                    $details .= "该报告名称{$item['name']} , 关键词:{$item['keywords']} 含有{$matchSenWord} 敏感词,请检查\r\n";
-                    $errorCount++;
-                    continue;
-                }
-
-                // 忽略url为空的数据
-                if (empty($item['url'])) {
-                    $details .= '【'.($row['name'] ?? '').'】'.trans('lang.url_empty')."\r\n";
-                    $errorCount++;
-                    continue;
-                }
                 // 查询单个报告数据/去重
                 $product = Products::where('name', trim($item['name']))->orWhere(
                     'name', isset($row['english_name']) ? trim(
@@ -448,7 +405,7 @@ class ProductsUploadLogController extends CrudController {
                             && ($item['author'] != '已售报告'
                                 && $item['author'] != '完成报告'))
                     ) {
-                        $details .= '【'.($row['name'] ?? '').'】'.($item['author']).'-'.trans('lang.author_level')
+                        $details .= '【'.($row['name']).'】'.($item['author']).'-'.trans('lang.author_level')
                                     .($product->author)."\r\n";
                         $errorCount++;
                         continue;
@@ -491,7 +448,6 @@ class ProductsUploadLogController extends CrudController {
                         }
                     }
                     $updateCount++;
-                    // (new Products)->PushXunSearchMQ(['id' => $product->id],'update',$params['site']);
                 } else {
                     //新增报告
                     $product = Products::create($item);
@@ -500,16 +456,15 @@ class ProductsUploadLogController extends CrudController {
                     $itemDescription['product_id'] = $product->id;
                     $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     $insertCount++;
-                    // (new Products)->PushXunSearchMQ(['id' => $product->id],'add',$params['site']);
                 }
                 if (!empty($product)) {
-                    //维护xunSearch索引
-                    (new Products())->PushXunSearchMQ($product->id, 'update', $params['site']);
+                    //维护xunSearch索引, 队列执行
+                    $description = $row['description'] ?? '';
+                    $this->pushXsSyncQueue($product, $description, $params['site']);
                 }
-                //code...
             } catch (\Throwable $th) {
                 //throw $th;
-                $details .= '【'.($row['name'] ?? '').'】'.$th->getMessage()."\r\n";
+                $details .= '【'.($row['name']).'】'.$th->getMessage()."\r\n";
                 // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
                 // $details = json_encode($row) . "\r\n";
                 $errorCount++;
@@ -670,9 +625,9 @@ class ProductsUploadLogController extends CrudController {
      * @param       $name
      *
      */
-    private function checkFitter(array $senWords, $name) {
+    private function checkFitter($name) {
         $checkRes = false;
-        foreach ($senWords as $fillterRules) {
+        foreach ($this->senWords as $fillterRules) {
             if (mb_strpos($name, $fillterRules) !== false) {
                 $checkRes = $fillterRules;
                 break;
@@ -680,5 +635,71 @@ class ProductsUploadLogController extends CrudController {
         }
 
         return $checkRes;
+    }
+
+    public function checkProductName($productName) {
+        // 忽略报告名为空的数据
+        if (empty($productName)) {
+            return trans('lang.name_empty')."\r\n";
+        }
+        // 含有敏感词的报告需要过滤
+        $matchSenWord = $this->checkFitter($productName);
+        if (!empty($matchSenWord)) {
+            return "该报告名称{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
+        }
+
+        return false;
+    }
+
+    /**
+     *
+     * @param $product
+     * @param $description
+     * @param $site
+     *
+     */
+    private function pushXsSyncQueue($product, $description, $site): void {
+        $xsProductData = $product->toArray();
+        $xsProductData['description'] = $description ?? '';
+        $data = [
+            'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+            'method' => 'xsSyncProductIndex',
+            'site'   => $site,
+            'data'   => $xsProductData,
+        ];
+        $data = json_encode($data);
+        $RabbitMQ = new RabbitmqService();
+        $RabbitMQ->setQueueName('xssyncindex-queue'); // 设置队列名称
+        $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+        $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+        $RabbitMQ->setRoutingKey('productsKey1');
+        $RabbitMQ->push($data); // 推送数据
+    }
+
+    public function xsSyncProductIndex($params) {
+        $data = $params['data'];
+        $handlerData = [
+            'id'              => $data['id'],
+            'name'            => $data['name'],
+            'english_name'    => $data['english_name'],
+            'country_id'      => $data['country_id'],
+            'category_id'     => $data['category_id'],
+            'price'           => $data['price'],
+            'discount'        => $data['discount'],
+            'discount_amount' => $data['discount_amount'],
+            'created_at'      => $data['created_at'],
+            'published_date'  => $data['published_date'],
+            'author'          => $data['author'],
+            'show_hot'        => $data['show_hot'],
+            'show_recommend'  => $data['show_recommend'],
+            'status'          => $data['status'],
+            'keywords'        => $data['keywords'],
+            'sort'            => $data['sort'],
+            'url'             => $data['url'],
+            'description'     => $data['description'],
+        ];
+        (new Products())->excuteXs($params['site'], 'update', $handlerData);
+
+        return true;
     }
 }

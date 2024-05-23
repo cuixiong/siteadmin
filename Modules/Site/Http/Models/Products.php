@@ -303,27 +303,15 @@ class Products extends Base {
      */
     public function excuteXunSearchReq($id, $action, $siteName = '') {
         //先测试讯搜数据业务数据
-        $data = $this->handlerProductData($id);
-        if (empty($data) && $action != 'delete') {
+        if ($action == 'delete') {
+            $data['id'] = $id;
+        } else {
+            $data = $this->handlerProductData($id);
+        }
+        if (empty($data)) {
             return false;
         }
-        $siteName = $siteName ? $siteName : request()->header('Site');
-        $confIniPath = base_path("Modules/Site/Config/xunsearch/{$siteName}.ini");
-        $xs = new XS($confIniPath);
-        $index = $xs->index;
-        if ($action == 'add') {
-            // 创建文档对象
-            $doc = new XSDocument;
-            $doc->setFields($data);
-            $index->add($doc)->flushIndex();
-        } elseif ($action == 'update') {
-            // 创建文档对象
-            $doc = new XSDocument;
-            $doc->setFields($data);
-            $index->update($doc)->flushIndex();
-        } elseif ($action == 'delete') {
-            $index->del($id)->flushIndex();;
-        }
+        $this->excuteXs($siteName, $action, $data);
 
         return true;
     }
@@ -331,13 +319,14 @@ class Products extends Base {
     public function PushXunSearchMQ($productId, $action, $siteName = '') {
         //先 暂时不使用队列, 立即处理
         return $this->excuteXunSearchReq($productId, $action, $siteName);
-
     }
 
     private function handlerProductData($id) {
         if ($id) {
             $data = Products::find($id);
-            if(empty($data )) return [];
+            if (empty($data)) {
+                return [];
+            }
             $handlerData = [
                 'id'              => $data['id'],
                 'name'            => $data['name'],
@@ -357,7 +346,6 @@ class Products extends Base {
                 'sort'            => $data['sort'],
                 'url'             => $data['url'],
             ];
-
             $year = date('Y', $data['published_date']);
             $description = (new ProductsDescription($year))->where('product_id', $data['id'])->value('description');
             $handlerData['description'] = $description;
@@ -500,5 +488,32 @@ class Products extends Base {
         $redisKey = $site."_".class_basename(ProductsDescription::class)."_".$id;
 
         return $redisKey;
+    }
+
+    /**
+     *
+     * @param 站点标识        $siteName
+     * @param 操作类型        $action
+     * @param array          $data
+     *
+     */
+    public function excuteXs($siteName, $action, $data) {
+        $siteName = $siteName ? $siteName : request()->header('Site');
+        $confIniPath = base_path("Modules/Site/Config/xunsearch/{$siteName}.ini");
+        $xs = new XS($confIniPath);
+        $index = $xs->index;
+        if ($action == 'add') {
+            // 创建文档对象
+            $doc = new XSDocument;
+            $doc->setFields($data);
+            $index->add($doc)->flushIndex();
+        } elseif ($action == 'update') {
+            // 创建文档对象
+            $doc = new XSDocument;
+            $doc->setFields($data);
+            $index->update($doc)->flushIndex();
+        } elseif ($action == 'delete') {
+            $index->del($data['id'])->flushIndex();;
+        }
     }
 }
