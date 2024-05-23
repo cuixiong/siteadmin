@@ -313,7 +313,7 @@ class ProductsUploadLogController extends CrudController {
                 if (!empty($this->productCategory[trim($tempCateName)])) {
                     $tempCategoryId = $this->productCategory[trim($tempCateName)];
                 }
-                $item['category_id'] = $tempCategoryId;
+                $item['category_id'] = intval($tempCategoryId);
                 // 忽略分类为空的数据
                 if (empty($item['category_id'])) {
                     $details .= '【'.($row['name']).'】'.$tempCateName.'-'.trans('lang.category_empty')
@@ -326,7 +326,7 @@ class ProductsUploadLogController extends CrudController {
                 if (!empty($this->regionList[trim($tempCountryId)])) {
                     $tempCountryId = $this->regionList[trim($tempCountryId)];
                 }
-                $item['country_id'] = $tempCountryId ?? 0;
+                $item['country_id'] = intval($tempCountryId);
                 //作者
                 $item['author'] = $row['author'] ?? '';
                 //关键词

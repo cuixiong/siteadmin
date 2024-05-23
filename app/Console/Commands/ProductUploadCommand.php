@@ -20,8 +20,8 @@ class ProductUploadCommand extends RabbitmqConnectCommand
         if(!$this->channel){
             // channel
             $this->channel = $this->connection->channel();
-            // 设置 exclusive 为 true  倒数第二个参数 为 true
-            $this->channel->queue_declare($this->QueueName,false,true,true,false);
+
+            $this->channel->queue_declare($this->QueueName,false,true,false,false);
             //
             $this->channel->exchange_declare($this->ExchangeName,$this->Model,false,true,false);
             //
