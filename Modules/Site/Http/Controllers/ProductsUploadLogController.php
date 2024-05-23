@@ -326,7 +326,7 @@ class ProductsUploadLogController extends CrudController {
                 if (!empty($this->regionList[trim($tempCountryId)])) {
                     $tempCountryId = $this->regionList[trim($tempCountryId)];
                 }
-                $item['country_id'] = $tempCountryId;
+                $item['country_id'] = $tempCountryId ?? 0;
                 //作者
                 $item['author'] = $row['author'] ?? '';
                 //关键词
