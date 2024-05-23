@@ -299,8 +299,16 @@ class ProductsUploadLogController extends CrudController {
                     continue;
                 }
                 // 出版时间
-                $tempPublishedDate = $row['published_date'] ?? '';
-                $item['published_date'] = strtotime($tempPublishedDate);
+                if (!empty($row['published_date'])) {
+                    if (is_numeric($row['published_date'])) {
+                        $item['published_date'] = $row['published_date'];
+                    } elseif (is_string($row['published_date'])) {
+                        $item['published_date'] = strtotime($row['published_date']);
+                    } else {
+                        $item['published_date'] = 0;
+                    }
+                }
+
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
@@ -324,10 +332,7 @@ class ProductsUploadLogController extends CrudController {
                 //报告所属区域
                 $tempCountryId = $row['country_id'] ?? 0;
                 if (!empty($tempCountryId) && !empty($this->regionList[trim($tempCountryId)])) {
-                    $tempCountryId = $this->regionList[trim($tempCountryId)];
-                }
-                if(!empty($tempCountryId )){
-                    $item['country_id'] = intval($tempCountryId);
+                    $item['country_id'] = intval($this->regionList[trim($tempCountryId)]);
                 }else{
                     $item['country_id'] = 0;
                 }
