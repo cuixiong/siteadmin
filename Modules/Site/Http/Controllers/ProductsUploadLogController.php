@@ -323,10 +323,15 @@ class ProductsUploadLogController extends CrudController {
                 }
                 //报告所属区域
                 $tempCountryId = $row['country_id'] ?? 0;
-                if (!empty($this->regionList[trim($tempCountryId)])) {
+                if (!empty($tempCountryId) && !empty($this->regionList[trim($tempCountryId)])) {
                     $tempCountryId = $this->regionList[trim($tempCountryId)];
                 }
-                $item['country_id'] = intval($tempCountryId);
+                if(!empty($tempCountryId )){
+                    $item['country_id'] = intval($tempCountryId);
+                }else{
+                    $item['country_id'] = 0;
+                }
+
                 //作者
                 $item['author'] = $row['author'] ?? '';
                 //关键词
