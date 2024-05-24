@@ -372,8 +372,7 @@ class ProductsController extends CrudController {
         try {
             //检测数据库 报告昵称已存在的敏感词, 需要筛选出来 , 然后关闭状态,  然后删除索引
             $sensitiveWordsList = SenWordsService::getSenWords();
-            $productIdList = Products::query()->where("status", 1)
-                                     ->where(function ($query) use ($sensitiveWordsList) {
+            $productIdList = Products::query()->where(function ($query) use ($sensitiveWordsList) {
                                          foreach ($sensitiveWordsList as $value) {
                                              $query->orWhere('name', 'like', "%{$value}%");
                                          }
