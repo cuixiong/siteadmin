@@ -2,7 +2,10 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Const\QueueConst;
 use App\Imports\ProductsImport;
+use App\Jobs\HandlerProductExcel;
+use App\Jobs\UploadProduct;
 use App\Services\RabbitmqService;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
@@ -142,12 +145,13 @@ class ProductsUploadLogController extends CrudController {
                 'user_id'      => $userID,  //用户id
             ];
             $data = json_encode($data);
-            $RabbitMQ = new RabbitmqService();
-            $RabbitMQ->setQueueName('products-file-queue'); // 设置队列名称
-            $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-            $RabbitMQ->setRoutingKey('productsKey1');
-            $RabbitMQ->push($data); // 推送数据
+//            $RabbitMQ = new RabbitmqService();
+//            $RabbitMQ->setQueueName('products-file-queue'); // 设置队列名称
+//            $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+//            $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+//            $RabbitMQ->setRoutingKey('productsKey1');
+//            $RabbitMQ->push($data); // 推送数据
+            dispatch(new UploadProduct($data))->onQueue(QueueConst::QUEEU_UPLOAD_PRODUCT);
         }
         $logIds = implode(',', $logIds);
         ReturnJson(true, trans('lang.request_success'), $logIds);
@@ -223,12 +227,13 @@ class ProductsUploadLogController extends CrudController {
                         'user_id'      => $params['user_id'],
                     ];
                     $data = json_encode($data);
-                    $RabbitMQ = new RabbitmqService();
-                    $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
-                    $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-                    $RabbitMQ->setRoutingKey('productsKey2');
-                    $RabbitMQ->push($data); // 推送数据
+//                    $RabbitMQ = new RabbitmqService();
+//                    $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
+//                    $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+//                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+//                    $RabbitMQ->setRoutingKey('productsKey2');
+//                    $RabbitMQ->push($data); // 推送数据
+                    HandlerProductExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
                 }
             }
         } catch (\Exception $th) {

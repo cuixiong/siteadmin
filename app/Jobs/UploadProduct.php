@@ -47,7 +47,7 @@ class UploadProduct implements ShouldQueue {
                 'data'  => $this->data,
                 'error' => $e->getMessage(),
             ];
-            \Log::error('处理TimeTask失败--错误信息与数据:'.json_encode($errData));
+            \Log::error('处理上传excel报告数据失败--错误信息与数据:'.json_encode($errData));
         }
 
         return true;

@@ -47,7 +47,7 @@ class HandlerProductExcel implements ShouldQueue {
                 'data'  => $this->data,
                 'error' => $e->getMessage(),
             ];
-            \Log::error('处理报告的excel--错误信息与数据:'.json_encode($errData));
+            \Log::error('处理上传报告数据--错误信息与数据:'.json_encode($errData));
         }
 
         return true;

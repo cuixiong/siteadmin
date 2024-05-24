@@ -24,11 +24,11 @@ class QueueConst {
 
 
     // php artisan queue:work --queue=upload_product
-    const QUEEU_UPLOAD_PRODUCT = 'upload_product';  // UploadProduct
+    const QUEEU_UPLOAD_PRODUCT = 'upload_product';  // UploadProduct 读取上传报告excel数据 队列
 
 
     // php artisan queue:work --queue=handler_product_excel
-    const QUEEU_HANDLER_PRODUCT_EXCEL = 'handler_product_excel';  // UploadProduct
+    const QUEEU_HANDLER_PRODUCT_EXCEL = 'handler_product_excel';  // HandlerProductExcel 处理上传报告excel数据
 
 
     // php artisan queue:work --queue=operation_log
