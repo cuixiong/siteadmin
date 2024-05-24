@@ -500,7 +500,7 @@ class ProductsUploadLogController extends CrudController {
             ];
 
             //使用redis, 保证多线程数据安全
-            $totCnt = $insertCnt + $updCnt + $errCnt;
+            $totCnt = $insertCount + $updateCount + $errorCount;
             $redisKey = 'product_upload_log_id_'.$params['log_id'];
             //如果数量吻合，则证明上传完成了
             if ($logModel->count == Redis::incrby($redisKey, $totCnt)) {
