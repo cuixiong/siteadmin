@@ -308,7 +308,6 @@ class ProductsUploadLogController extends CrudController {
                         $item['published_date'] = 0;
                     }
                 }
-
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
@@ -333,10 +332,9 @@ class ProductsUploadLogController extends CrudController {
                 $tempCountryId = $row['country_id'] ?? 0;
                 if (!empty($tempCountryId) && !empty($this->regionList[trim($tempCountryId)])) {
                     $item['country_id'] = intval($this->regionList[trim($tempCountryId)]);
-                }else{
+                } else {
                     $item['country_id'] = 0;
                 }
-
                 //作者
                 $item['author'] = $row['author'] ?? '';
                 //关键词
@@ -485,15 +483,17 @@ class ProductsUploadLogController extends CrudController {
         try {
             DB::beginTransaction();
             $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
+            $insertCnt = ($logModel->insert_count ?? 0) + $insertCount;
+            $updCnt = ($logModel->update_count ?? 0) + $updateCount;
+            $errCnt = ($logModel->error_count ?? 0) + $errorCount;
             $logData = [
-                // 'count' => ($logModel->count ?? 0) + $count,
-                'insert_count' => ($logModel->insert_count ?? 0) + $insertCount,
-                'update_count' => ($logModel->update_count ?? 0) + $updateCount,
-                'error_count'  => ($logModel->error_count ?? 0) + $errorCount,
+                'insert_count' => DB::raw("insert_count + {$insertCnt}"),
+                'update_count' => DB::raw("update_count + {$updCnt}"),
+                'error_count'  => DB::raw("error_count + {$errCnt}"),
                 'details'      => ($logModel->details ?? '').$details,
             ];
             //如果数量吻合，则证明上传完成了
-            if ($logModel->count == $logData['insert_count'] + $logData['update_count'] + $logData['error_count']) {
+            if ($logModel->count == $insertCnt + $updCnt + $errCnt) {
                 $logData['state'] = ProductsUploadLog::UPLOAD_COMPLETE;
             } else {
                 $logData['state'] = ProductsUploadLog::UPLOAD_RUNNING;
