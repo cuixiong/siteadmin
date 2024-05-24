@@ -229,6 +229,12 @@ class ProductsController extends CrudController {
             $search->setMultiSort($sorts);
             $search->setQuery('');
         }
+
+        //不是状态搜索, 状态隐藏不显示
+        if($type != 'status'){
+            $search->addRange('status' , 1 , 1);
+        }
+
         //查询结果分页
         $count = $search->count();
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
