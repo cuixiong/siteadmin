@@ -487,7 +487,7 @@ class ProductsUploadLogController extends CrudController {
         //恢复监听
         Products::setEventDispatcher($dispatcher);
         try {
-            DB::beginTransaction();
+//            DB::beginTransaction();
             $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
             $insertCnt = ($logModel->insert_count ?? 0) + $insertCount;
             $updCnt = ($logModel->update_count ?? 0) + $updateCount;
@@ -509,13 +509,13 @@ class ProductsUploadLogController extends CrudController {
                 $logData['state'] = ProductsUploadLog::UPLOAD_RUNNING;
             }
             $logFlag = $logModel->update($logData);
-            if ($logFlag) {
-                DB::commit();
-            } else {
-                DB::rollBack();
-            }
+//            if ($logFlag) {
+//                DB::commit();
+//            } else {
+//                DB::rollBack();
+//            }
         } catch (\Exception $e) {
-            DB::rollBack();
+            //DB::rollBack();
             throw $e;
         }
     }
