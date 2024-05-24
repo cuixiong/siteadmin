@@ -23,7 +23,7 @@ class HandlerProductExcel implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, BaseJob;
 
     public $data = '';
-    public $timeout = null;
+    public $timeout = 1200;
     /**
      * Create a new job instance.
      *
@@ -40,16 +40,16 @@ class HandlerProductExcel implements ShouldQueue {
      */
     public function handle() {
         echo "开始".PHP_EOL;
-        try {
+//        try {
             $this->callFuncBack($this->data);
-        } catch (\Exception $e) {
-            $errData = [
-                'data'  => $this->data,
-                'error' => $e->getMessage(),
-            ];
-            \Log::error('处理上传报告数据--错误信息与数据:'.json_encode($errData));
-        }
-
+//        } catch (\Exception $e) {
+//            $errData = [
+//                'data'  => $this->data,
+//                'error' => $e->getMessage(),
+//            ];
+//            \Log::error('处理上传报告数据--错误信息与数据:'.json_encode($errData));
+//        }
+        echo "结束".PHP_EOL;
         return true;
     }
 }

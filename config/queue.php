@@ -66,8 +66,11 @@ return [
             'driver' => 'redis',
             'connection' => 'default',
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => null,
+            //如果任务已经处理了 1200 秒而没有被释放或删除，它将被释放回队列中
+            'retry_after' => 1200,
+            //阻塞  在等待任务变得可用时应该阻塞 5 秒 (任务不多,可以配置一点, 增加阻塞时间, 从而节省轮询资源)
             'block_for' => null,
+            //不用等事务提交. 才开始分发任务
             'after_commit' => false,
         ],
 

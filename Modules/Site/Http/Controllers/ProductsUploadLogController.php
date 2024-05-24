@@ -7,6 +7,7 @@ use App\Imports\ProductsImport;
 use App\Jobs\HandlerProductExcel;
 use App\Jobs\UploadProduct;
 use App\Services\RabbitmqService;
+use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
@@ -492,13 +493,17 @@ class ProductsUploadLogController extends CrudController {
             $updCnt = ($logModel->update_count ?? 0) + $updateCount;
             $errCnt = ($logModel->error_count ?? 0) + $errorCount;
             $logData = [
-                'insert_count' => DB::raw("insert_count + {$insertCnt}"),
-                'update_count' => DB::raw("update_count + {$updCnt}"),
-                'error_count'  => DB::raw("error_count + {$errCnt}"),
+                'insert_count' => DB::raw("insert_count + {$insertCount}"),
+                'update_count' => DB::raw("update_count + {$updateCount}"),
+                'error_count'  => DB::raw("error_count + {$errorCount}"),
                 'details'      => ($logModel->details ?? '').$details,
             ];
+
+            //使用redis, 保证多线程数据安全
+            $totCnt = $insertCnt + $updCnt + $errCnt;
+            $redisKey = 'product_upload_log_id_'.$params['log_id'];
             //如果数量吻合，则证明上传完成了
-            if ($logModel->count == $insertCnt + $updCnt + $errCnt) {
+            if ($logModel->count == Redis::incrby($redisKey, $totCnt)) {
                 $logData['state'] = ProductsUploadLog::UPLOAD_COMPLETE;
             } else {
                 $logData['state'] = ProductsUploadLog::UPLOAD_RUNNING;
