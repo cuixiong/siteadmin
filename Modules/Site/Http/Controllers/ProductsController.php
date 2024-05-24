@@ -379,7 +379,8 @@ class ProductsController extends CrudController {
                                          }
                                      })->pluck('id')->toArray();
             $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
-            if ($res) {
+
+            if(!empty($productIdList )) {
                 $SiteName = $request->header('Site');
                 $RootPath = base_path();
                 $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
@@ -390,6 +391,7 @@ class ProductsController extends CrudController {
                 $index->closeBuffer(); // 关闭缓冲区，必须和 openBuffer 成对使用
                 $index->flushIndex();
             }
+
             ReturnJson(true, trans('lang.request_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
