@@ -10,6 +10,7 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\TimedTask;
+use App\Jobs\TimeTask as TimedTaskJob;
 use Modules\Admin\Http\Models\User;
 use phpseclib3\Net\SSH2;
 
@@ -401,7 +402,7 @@ class TimedTaskController extends CrudController {
                     'data'   => ['id' => $id, 'action' => $action]
                 ];
                 $data = json_encode($dataArr);
-                TimedTask::dispatch($data)->onQueue(QueueConst::QUEEU_TIME_TASK);
+                TimedTaskJob::dispatch($data)->onQueue(QueueConst::QUEEU_TIME_TASK);
             }
 
             return true;

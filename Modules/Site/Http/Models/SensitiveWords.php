@@ -29,12 +29,16 @@ class SensitiveWords extends Base {
             foreach ($search as $key => $value) {
                 if (in_array($key, ['word'])) {
                     $model = $model->where($key, 'like', '%'.trim($value).'%');
-                }elseif(in_array($key, ['created_by'])){
-                    if(!empty($value )) {
+                } elseif (in_array($key, ['created_by', 'updated_by'])) {
+                    if (!empty($value)) {
                         $user_id_list = AdminUser::query()->orWhere('name', 'like', '%'.trim($value).'%')
                                                  ->orWhere('nickname', 'like', '%'.trim($value).'%')
                                                  ->pluck('id')->toArray();
-                        $model = $model->whereIn('created_by', $user_id_list);
+                        if ($key == 'updated_by') {
+                            $model = $model->whereIn('updated_by', $user_id_list);
+                        } else {
+                            $model = $model->whereIn('created_by', $user_id_list);
+                        }
                     }
                 } else if (in_array($key, $timeArray)) {
                     if (is_array($value)) {

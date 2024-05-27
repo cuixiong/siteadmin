@@ -79,6 +79,7 @@ Route::middleware([
         Route::get('is-exist', [Modules\Site\Http\Controllers\ProductsController::class, 'isExist'])->name('报告管理:报告是否存在');
         Route::post('check-sensitive-word', [Modules\Site\Http\Controllers\ProductsController::class, 'checkSensitiveWord'])->name('报告管理:检测是否有敏感词');
         Route::get('handler-sensitive-word', [Modules\Site\Http\Controllers\ProductsController::class, 'handlerSenWordsProduct'])->name('报告管理:处理含有敏感词的报告');
+        Route::get('get-sensitive-word-cnt', [Modules\Site\Http\Controllers\ProductsController::class, 'getSenWordsProductCnt'])->name('报告管理:返回敏感词报告的个数');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\ProductsController::class, 'form'])->name('报告管理:报告单查');
         Route::post('update', [Modules\Site\Http\Controllers\ProductsController::class, 'update'])->name('报告管理:修改报告');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsController::class, 'destroy'])->name('报告管理:删除报告');

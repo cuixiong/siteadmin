@@ -229,12 +229,10 @@ class ProductsController extends CrudController {
             $search->setMultiSort($sorts);
             $search->setQuery('');
         }
-
         //不是状态搜索, 状态隐藏不显示
-        if($type != 'status'){
-            $search->addRange('status' , 1 , 1);
+        if ($type != 'status') {
+            $search->addRange('status', 1, 1);
         }
-
         //查询结果分页
         $count = $search->count();
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
@@ -379,13 +377,12 @@ class ProductsController extends CrudController {
             //检测数据库 报告昵称已存在的敏感词, 需要筛选出来 , 然后关闭状态,  然后删除索引
             $sensitiveWordsList = SenWordsService::getSenWords();
             $productIdList = Products::query()->where(function ($query) use ($sensitiveWordsList) {
-                                         foreach ($sensitiveWordsList as $value) {
-                                             $query->orWhere('name', 'like', "%{$value}%");
-                                         }
-                                     })->pluck('id')->toArray();
+                foreach ($sensitiveWordsList as $value) {
+                    $query->orWhere('name', 'like', "%{$value}%");
+                }
+            })->pluck('id')->toArray();
             $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
-
-            if(!empty($productIdList )) {
+            if (!empty($productIdList)) {
                 $SiteName = $request->header('Site');
                 $RootPath = base_path();
                 $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
@@ -396,8 +393,22 @@ class ProductsController extends CrudController {
                 $index->closeBuffer(); // 关闭缓冲区，必须和 openBuffer 成对使用
                 $index->flushIndex();
             }
-
             ReturnJson(true, trans('lang.request_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function getSenWordsProductCnt() {
+        try {
+            //状态为1的  匹配敏感词报告数量
+            $sensitiveWordsList = SenWordsService::getSenWords();
+            $cnt = Products::query()->where("status", 1)->where(function ($query) use ($sensitiveWordsList) {
+                foreach ($sensitiveWordsList as $value) {
+                    $query->orWhere('name', 'like', "%{$value}%");
+                }
+            })->count();
+            ReturnJson(true, trans('lang.request_success') , ['cnt' => $cnt]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -679,15 +690,7 @@ class ProductsController extends CrudController {
      */
     public function discount(Request $request) {
         try {
-            if (empty($request->id)) {
-                ReturnJson(false, 'id is empty');
-            }
-            if (empty($request->discount_type)) {
-                ReturnJson(false, 'discount type is empty');
-            }
-            if (empty($request->discount_value)) {
-                ReturnJson(false, 'discount value is empty');
-            }
+            $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
             $type = $request->discount_type;
             $value = $request->discount_value;
