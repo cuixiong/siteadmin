@@ -119,6 +119,7 @@ class ProductsController extends CrudController {
             if (!empty($input['debug'])) {
                 dump(['匹配模版结束', microtime(true)]);
             }
+            $record = mb_convert_encoding($record, "UTF-8");
             $data = [
                 'total'       => $total,
                 'list'        => $record,
@@ -214,8 +215,8 @@ class ProductsController extends CrudController {
             $search->setQuery('')->addRange($type, $keyword[0], $keyword[1]);
         } else if ($type == 'name') {
             //中文搜索, 测试明确 需要精确搜索
-            $searchKeyword = '"'.$keyword.'"';;
-            $queryWords = "name:$searchKeyword";
+            //$queryWords = 'name:"'.$keyword.'"';
+            $queryWords = "name:{$keyword}";
             $search->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
@@ -234,9 +235,10 @@ class ProductsController extends CrudController {
             $search->addRange('status', 1, 1);
         }
         //查询结果分页
+        $docs = $search->search();
         $count = $search->count();
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
-        $docs = $search->search();
+
         $products = [];
         if (!empty($docs)) {
             foreach ($docs as $key => $doc) {
