@@ -18,6 +18,7 @@ class ProductsCategory extends Base
         'icon',
         'sort',
         'status',
+        'is_recommend',
         'discount',
         'discount_amount',
         'discount_type',
@@ -45,12 +46,12 @@ class ProductsCategory extends Base
      */
     public function HandleWhere($model, $search)
     {
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
 
-        //pid 
+        //pid
         if (isset($search->pid) && !empty($search->pid)) {
             $model = $model->where('pid', $search->pid);
         }
@@ -93,7 +94,7 @@ class ProductsCategory extends Base
             $model = $model->where('product_tag', 'like', '%' . $search->product_tag . '%');
         }
 
-        //discount 
+        //discount
         if (isset($search->discount) && $search->discount != '') {
             $model = $model->where('discount', $search->discount);
         }

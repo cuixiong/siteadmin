@@ -198,4 +198,28 @@ class ProductsCategoryController extends CrudController
         $data = (new ProductsCategory())->GetListWithoutSelf(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1], $id);
         ReturnJson(TRUE, trans('lang.request_success'), $data);
     }
+
+
+    /**
+     * 修改推荐状态
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeRecommend(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->is_recommend = $request->status;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
 }

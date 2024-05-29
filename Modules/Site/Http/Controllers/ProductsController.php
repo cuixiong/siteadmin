@@ -61,7 +61,7 @@ class ProductsController extends CrudController {
             }
             $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
                        'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
-                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end'];
+                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end' , 'url'];
             $model = $model->select($fields);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
@@ -216,7 +216,8 @@ class ProductsController extends CrudController {
         } else if ($type == 'name') {
             //中文搜索, 测试明确 需要精确搜索
             //$queryWords = 'name:"'.$keyword.'"';
-            $queryWords = "name:{$keyword}";
+            $splitKeyword = implode(' ', preg_split('//u', $keyword, null, PREG_SPLIT_NO_EMPTY));
+            $queryWords = "name:{$splitKeyword}";
             $search->setQuery($queryWords);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
@@ -231,9 +232,9 @@ class ProductsController extends CrudController {
             $search->setQuery('');
         }
         //不是状态搜索, 状态隐藏不显示
-        if ($type != 'status') {
-            $search->addRange('status', 1, 1);
-        }
+//        if ($type != 'status') {
+//            $search->addRange('status', 1, 1);
+//        }
         //查询结果分页
         $docs = $search->search();
         $count = $search->count();
