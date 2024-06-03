@@ -7,9 +7,9 @@ use App\Exports\ProductsExport;
 use App\Jobs\ExportProduct;
 use App\Jobs\HandlerExportExcel;
 use Foolz\SphinxQL\Drivers\Mysqli\Connection;
-
 use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Admin\Http\Models\Server;
 use Modules\Site\Http\Controllers\CrudController;
@@ -39,6 +39,12 @@ use Modules\Site\Services\SenWordsService;
 use XS;
 
 class ProductsController extends CrudController {
+    public $tcList                  = [];
+    public $dictList                = [];
+    public $templateCateMappingList = [];
+    public $templateList            = [];
+    public $categpryName            = [];
+
     /**
      * 查询列表页
      *
@@ -96,34 +102,25 @@ class ProductsController extends CrudController {
      */
     protected function QuickSearch(Request $request) {
         try {
-            $ModelInstance = $this->ModelInstance();
-            $input = $request->all();
-            if (!empty($input['debug'])) {
-                dump(['开始讯搜查询', microtime(true)]);
-            }
             $data = $this->GetProductList($request);
-            if (!empty($input['debug'])) {
-                dump(['讯搜查询结束', microtime(true)]);
-            }
+
             $record = $data['list'];
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
-            //附加详情数据
-            $productsModel = new Products();
-            if (!empty($input['debug'])) {
-                dump(['匹配模版开始', microtime(true)]);
-            }
+            $this->beforeMatchTemplateData();
             foreach ($record as $key => $item) {
+                $record[$key]['published_date'] = date('Y-m-d', strtotime($item['published_date']));
+                $record[$key]['category_name'] = $this->categpryName[$item['category_id']];
                 //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
                 $description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
+                //删除描述
+                unset($record[$key]['description']);
             }
-            if (!empty($input['debug'])) {
-                dump(['匹配模版结束', microtime(true)]);
-            }
-            $record = mb_convert_encoding($record, "UTF-8");
+
+            //$record = mb_convert_encoding($record, "UTF-8");
             $data = [
                 'total'       => $total,
                 'list'        => $record,
@@ -309,7 +306,6 @@ class ProductsController extends CrudController {
         $conn->setParams($comParams);
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
-                                      ->where('status', '=', 1)
                                       ->orderBy('sort', 'asc')
                                       ->orderBy('published_date', 'desc');
         if (!empty($type) && (!isset($keyword) || $keyword == '')) {
@@ -317,11 +313,14 @@ class ProductsController extends CrudController {
         } elseif (filled($keyword)
                   && in_array(
                       $type,
-                      ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
+                      ['id', 'category_id', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
                        'show_recommend', 'status']
                   )
         ) {
             $query = $query->where($type, intval($keyword));
+        } elseif (filled($keyword) && in_array($type, ['author'])
+        ) {
+            $query = $query->where($type, $keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
             // 设置搜索排序
             $start_time = $keyword[0] ?? 0;
@@ -329,10 +328,14 @@ class ProductsController extends CrudController {
             $query = $query->where($type, 'BETWEEN', [intval($start_time), intval($end_time)]);
         } else if ($type == 'name') {
             //中文搜索, 测试明确 需要精确搜索
-            $query = $query->match($type, $keyword);
+            $val = '"'.$keyword.'"';
+            $query = $query->match($type, $val, true);
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
             $query = $query->match($type, $keyword);
+        }
+        if ($type != 'status') {
+            $query = $query->where('status', '=', 1);
         }
         //查询总数
         $countQuery = $query->setSelect('COUNT(*) as cnt');
@@ -457,15 +460,22 @@ class ProductsController extends CrudController {
             })->pluck('id')->toArray();
             $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
             if (!empty($productIdList)) {
-                $SiteName = $request->header('Site');
-                $RootPath = base_path();
-                $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
-                $index = $xs->index;
-                $index->openBuffer(); // 开启缓冲区，默认 4MB，如 $index->openBuffer(8) 则表示 8MB
-                // 在此进行批量的删除操作
-                $index->del($productIdList);
-                $index->closeBuffer(); // 关闭缓冲区，必须和 openBuffer 成对使用
-                $index->flushIndex();
+                //删除sphinx的索引
+                //实例化
+                $comParams = array('host' => '8.219.5.215', 'port' => 9306);
+                $conn = new Connection();
+                $conn->setParams($comParams);
+                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute(
+                );
+//                $SiteName = $request->header('Site');
+//                $RootPath = base_path();
+//                $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
+//                $index = $xs->index;
+//                $index->openBuffer(); // 开启缓冲区，默认 4MB，如 $index->openBuffer(8) 则表示 8MB
+//                // 在此进行批量的删除操作
+//                $index->del($productIdList);
+//                $index->closeBuffer(); // 关闭缓冲区，必须和 openBuffer 成对使用
+//                $index->flushIndex();
             }
             ReturnJson(true, trans('lang.request_success'));
         } catch (\Exception $e) {
@@ -1428,6 +1438,84 @@ class ProductsController extends CrudController {
     }
 
     /**
+     *  处理模版之前处理数据
+     */
+    public function beforeMatchTemplateData() {
+        $SiteName = request()->header('Site');
+        // TODO: cuizhixiong 2024/6/3 后期还要优化速度的话, 需使用缓存参数改为false, 且需要再Observers监听模型的CRUD(删缓存)
+        $isNoUseCache = true;
+        $tcListKey = 'tc_list_'.$SiteName;
+        //模版分类缓存
+        $tcList = Redis::get($tcListKey);
+        if (empty($tcList) || $isNoUseCache) {
+            $tcModel = new TemplateCategory();
+            $this->tcList = $tcModel->where("status", 1)
+                                    ->orderBy("sort", "desc")
+                                    ->select('id', 'name', 'match_words')
+                                    ->get()->toArray();
+            Redis::set($tcListKey, json_encode($this->tcList));
+        } else {
+            $this->tcList = json_decode($tcList, true);
+        }
+        //颜色数据字典缓存
+        $dictListKey = 'dict_list_'.$SiteName;
+        $dictList = Redis::get($dictListKey);
+        if (empty($dictList)  || $isNoUseCache) {
+            $dictModel = (new DictionaryValue());
+            $colorFieldList = ['id', 'name', 'value'];
+            $dictList = $dictModel->select($colorFieldList)
+                                  ->where("code", 'template_color')
+                                  ->where("status", 1)
+                                  ->get()->keyBy("id")->toArray();
+            $this->dictList = $dictList;
+            Redis::setex($dictListKey, 86400, json_encode($dictList));
+        } else {
+            $this->dictList = json_decode($dictList, true);
+        }
+        //模版分类映射缓存
+        $templateCateMappingListKey = 'temp_cate_map_list_'.$SiteName;
+        $templateCateMappingList = Redis::get($templateCateMappingListKey);
+        if (empty($templateCateMappingList)  || $isNoUseCache) {
+            $templateCateMappingList = (new TemplateCateMapping())->select(['id', 'cate_id', 'temp_id'])
+                                                                  ->get()->toArray();
+            Redis::set($templateCateMappingListKey, json_encode($templateCateMappingList));
+            $this->templateCateMappingList = $templateCateMappingList;
+        } else {
+            $templateCateMappingList = json_decode($templateCateMappingList, true);
+            $this->templateCateMappingList = $templateCateMappingList;
+        }
+        //模版列表缓存
+        $templateListKey = 'template_list_'.$SiteName;
+        $templateList = Redis::get($templateListKey);
+        if (empty($templateList)  || $isNoUseCache) {
+            $templateList = Template::query()
+                                    ->select(['id', 'name', 'type', 'btn_color'])
+                                    ->where("status", 1)
+                                    ->get()
+                                    ->toArray();
+            Redis::set($templateListKey, json_encode($templateList));
+            $this->templateList = $templateList;
+        } else {
+            $templateList = json_decode($templateList, true);
+            $this->templateList = $templateList;
+        }
+        //分类昵称缓存
+        $categoryNameKey = 'category_name_'.$SiteName;
+        $categoryName = Redis::get($categoryNameKey);
+        if (empty($categoryName)  || $isNoUseCache) {
+            $categoryName = ProductsCategory::query()
+                                            ->where("status", 1)
+                                            ->pluck("name", "id")
+                                            ->toArray();
+            Redis::set($categoryNameKey, json_encode($categoryName));
+            $this->categpryName = $categoryName;
+        } else {
+            $categoryName = json_decode($categoryName, true);
+            $this->categpryName = $categoryName;
+        }
+    }
+
+    /**
      * 根据报告描述，匹配模版数据
      *
      * @param $description  模版描述
@@ -1442,14 +1530,9 @@ class ProductsController extends CrudController {
             'template_title_list'   => [],
             'template_content_list' => [],
         ];
-        $tcModel = new TemplateCategory();
         $tcWordsList = [];
         $tcNoWordsList = [];
-        $tcList = $tcModel->where("status", 1)
-                          ->orderBy("sort", "desc")
-                          ->select('id', 'name', 'match_words')
-                          ->get()->toArray();
-        foreach ($tcList as $tcInfo) {
+        foreach ($this->tcList as $tcInfo) {
             if (!empty($tcInfo['match_words'])) {
                 $tcWordsList[] = $tcInfo;
             } else {
@@ -1494,22 +1577,31 @@ class ProductsController extends CrudController {
         }
         //根据模版分类id, 获取模版id
         $cateIdList = Arr::pluck($templateCateList, 'id');
-        $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
-        $matchTempLateList = Template::whereIn('id', $tempIdList)
-                                     ->where("status", 1)
-                                     ->select(['id', 'name', 'type', 'btn_color'])->get()
-                                     ->toArray();
+        $tempIdList = [];
+        foreach ($this->templateCateMappingList as $cateMappingInfo) {
+            if (in_array($cateMappingInfo['cate_id'], $cateIdList)) {
+                $tempIdList[] = $cateMappingInfo['temp_id'];
+            }
+        }
+        $matchTempLateList = [];
+        foreach ($this->templateList as $templateInfo) {
+            if (in_array($templateInfo['id'], $tempIdList)) {
+                $matchTempLateList[] = $templateInfo;
+            }
+        }
+//        $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
+//        $matchTempLateList = Template::whereIn('id', $tempIdList)
+//                                     ->where("status", 1)
+//                                     ->select(['id', 'name', 'type', 'btn_color'])->get()
+//                                     ->toArray();
         $template_content_list = [];
         $template_title_list = [];
-        $dictModel = (new DictionaryValue());
-        $dictList = $dictModel->where("code", 'template_color')->where("status", 1)->select(['id', 'name', 'value'])
-                              ->get()->keyBy("id")->toArray();
         //区分标题模板 , 内容模板
         foreach ($matchTempLateList as $forTempInfo) {
             //按钮颜色详情
             $btnColorId = $forTempInfo['btn_color'];
-            if (!empty($dictList[$btnColorId])) {
-                $forTempInfo['btn_info'] = $dictList[$btnColorId];
+            if (!empty($this->dictList[$btnColorId])) {
+                $forTempInfo['btn_info'] = $this->dictList[$btnColorId];
             } else {
                 $forTempInfo['btn_info'] = [];
             }

@@ -715,15 +715,15 @@ class ProductsUploadLogController extends CrudController {
     public function xsSyncProductIndex($params) {
         $data = $params['data'];
         $handlerData = [
-            'id'              => $data['id'],
-            'name'            => $data['name'],
-            'english_name'    => $data['english_name'],
-            'country_id'      => $data['country_id'],
-            'category_id'     => $data['category_id'],
-            'price'           => $data['price'],
+            'id'              => intval($data['id']),
+            'name'            => $data['name']."",
+            'english_name'    => $data['english_name']."",
+            'country_id'      => intval($data['country_id']),
+            'category_id'     => intval($data['category_id']),
+            'price'           => floatval($data['price']),
             'discount'        => $data['discount'] ?? 0,
             'discount_amount' => $data['discount_amount'] ?? 0,
-            'created_at'      => $data['created_at'] ?? 0,
+            'created_at'      => strtotime($data['created_at'] ?? 0),
             'published_date'  => $data['published_date'],
             'author'          => $data['author'],
             'show_hot'        => $data['show_hot'] ?? 0,
@@ -734,7 +734,12 @@ class ProductsUploadLogController extends CrudController {
             'url'             => $data['url'],
             'description'     => $data['description'],
         ];
-        (new Products())->excuteSphinxReq($handlerData, 'update', $params['site']);
+
+        try{
+            (new Products())->excuteSphinxReq($handlerData, 'update', $params['site']);
+        }catch (\Exception $e){
+            var_dump($e->getMessage());
+        }
         //(new Products())->excuteXs($params['site'], 'update', $handlerData);
 
         return true;
