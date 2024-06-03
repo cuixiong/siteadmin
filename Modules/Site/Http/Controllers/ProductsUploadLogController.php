@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use App\Const\QueueConst;
 use App\Imports\ProductsImport;
 use App\Jobs\HandlerProductExcel;
+use App\Jobs\SyncSphinxIndex;
 use App\Jobs\UploadProduct;
 use App\Services\RabbitmqService;
 use Illuminate\Support\Facades\Redis;
@@ -425,12 +426,9 @@ class ProductsUploadLogController extends CrudController {
                         continue;
                     }
                 }
-
                 //测试要求导入报告, 默认 热门 + 精品
                 $item['show_hot'] = 1;
                 $item['show_recommend'] = 1;
-
-
                 //新纪录年份
                 $newYear = Products::publishedDateFormatYear($item['published_date']);
                 /**
@@ -480,7 +478,7 @@ class ProductsUploadLogController extends CrudController {
                 if (!empty($product)) {
                     //维护xunSearch索引, 队列执行
                     $description = $row['description'] ?? '';
-                    $this->pushXsSyncQueue($product, $description, $params['site']);
+                    $this->pushSyncSphinxQueue($product, $description, $params['site']);
                 }
             } catch (\Throwable $th) {
                 //throw $th;
@@ -504,7 +502,6 @@ class ProductsUploadLogController extends CrudController {
                 'error_count'  => DB::raw("error_count + {$errorCount}"),
                 'details'      => ($logModel->details ?? '').$details,
             ];
-
             //使用redis, 保证多线程数据安全
             $totCnt = $insertCount + $updateCount + $errorCount;
             $redisKey = 'product_upload_log_id_'.$params['log_id'];
@@ -702,6 +699,19 @@ class ProductsUploadLogController extends CrudController {
         $RabbitMQ->push($data); // 推送数据
     }
 
+    public function pushSyncSphinxQueue($product, $description, $site) {
+        $xsProductData = $product->toArray();
+        $xsProductData['description'] = $description ?? '';
+        $data = [
+            'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+            'method' => 'xsSyncProductIndex',
+            'site'   => $site,
+            'data'   => $xsProductData,
+        ];
+        $data = json_encode($data);
+        SyncSphinxIndex::dispatch($data)->onQueue(QueueConst::SYNC_SPGINX_INDEX);
+    }
+
     public function xsSyncProductIndex($params) {
         $data = $params['data'];
         $handlerData = [
@@ -724,7 +734,8 @@ class ProductsUploadLogController extends CrudController {
             'url'             => $data['url'],
             'description'     => $data['description'],
         ];
-        (new Products())->excuteXs($params['site'], 'update', $handlerData);
+        (new Products())->excuteSphinxReq($handlerData, 'update', $params['site']);
+        //(new Products())->excuteXs($params['site'], 'update', $handlerData);
 
         return true;
     }

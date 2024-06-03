@@ -2,6 +2,8 @@
 
 namespace Modules\Site\Http\Models;
 
+use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Facades\Redis;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
@@ -59,15 +61,15 @@ class Products extends Base {
     //     parent::boot();
     //     static::created(function ($model) {
     //         // 创建完成后
-    //         $model->PushXunSearchMQ($model->id,'add');
+    //         $model->syncSearchIndex($model->id,'add');
     //     });
     //     static::updated(function ($model) {
     //         // 更新完成后
-    //         $model->PushXunSearchMQ($model->id,'update');
+    //         $model->syncSearchIndex($model->id,'update');
     //     });
     //     static::deleted(function ($model) {
     //         // 删除完成后
-    //         $model->PushXunSearchMQ($model->id,'delete');
+    //         $model->syncSearchIndex($model->id,'delete');
     //     });
     // }
     /**
@@ -316,9 +318,68 @@ class Products extends Base {
         return true;
     }
 
-    public function PushXunSearchMQ($productId, $action, $siteName = '') {
+    /**
+     * 处理sphinx搜索服务
+     *
+     * @param $id           报告id
+     * @param $action       操作类型
+     * @param $siteName     站点标识
+     *
+     */
+    public function excuteSphinxReq($reqData, $action, $siteName = '') {
+        try {
+            if(empty($reqData )) return false;
+            if(is_array($reqData) && !empty($reqData['id'] )){
+                $data = $reqData;
+                $id = $data['id'];
+            }else{
+                $id = $reqData;
+            }
+
+            //实例化
+            $comParams = array('host' => '8.219.5.215', 'port' => 9306);
+            $conn = new Connection();
+            $conn->setParams($comParams);
+            if ($action == 'delete') {
+                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", $id)->execute();
+
+                return $res->getAffectedRows();
+            }
+            if(empty($data )) {
+                $data = $this->handlerProductData($id);
+            }
+            if (empty($data)) {
+                return false;
+            }
+            if ($action == 'add') {
+                $res = (new SphinxQL($conn))->insert()->into('products_rt')->set($data)
+                                            ->execute();
+
+                return $res->getAffectedRows();
+            } else {
+                //修改
+                (new SphinxQL($conn))->delete()->from('products_rt')->where("id", $id)->execute();
+                $res = (new SphinxQL($conn))->insert()->into('products_rt')->set($data)
+                                            ->execute();
+
+                //$res = (new SphinxQL($conn))->update('products_rt')->where("id", $id)->set($data)->execute();
+
+                return $res->getAffectedRows();
+            }
+        } catch (\Exception $e) {
+            throw $e;
+
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public function syncSearchIndex($productId, $action, $siteName = '') {
         //先 暂时不使用队列, 立即处理
-        return $this->excuteXunSearchReq($productId, $action, $siteName);
+        //return $this->excuteXunSearchReq($productId, $action, $siteName);
+        return $this->excuteSphinxReq($productId, $action, $siteName);
     }
 
     private function handlerProductData($id) {
@@ -327,24 +388,27 @@ class Products extends Base {
             if (empty($data)) {
                 return [];
             }
+            $price = $data['price'] ?? 0;
+            $discount = $data['discount'] ?? 0;
+            $discount_amount = $data['discount_amount'] ?? 0;
             $handlerData = [
                 'id'              => $data['id'],
-                'name'            => $data['name'],
-                'english_name'    => $data['english_name'],
-                'country_id'      => $data['country_id'],
-                'category_id'     => $data['category_id'],
-                'price'           => $data['price'],
-                'discount'        => $data['discount'],
-                'discount_amount' => $data['discount_amount'],
-                'created_at'      => $data['created_at'],
-                'published_date'  => $data['published_date'],
-                'author'          => $data['author'],
-                'show_hot'        => $data['show_hot'],
-                'show_recommend'  => $data['show_recommend'],
-                'status'          => $data['status'],
-                'keywords'        => $data['keywords'],
-                'sort'            => $data['sort'],
-                'url'             => $data['url'],
+                'name'            => $data['name'] ?? '',
+                'english_name'    => $data['english_name'] ?? '',
+                'country_id'      => $data['country_id'] ?? 0,
+                'category_id'     => $data['category_id'] ?? 0,
+                'price'           => floatval($price),
+                'discount'        => floatval($discount),
+                'discount_amount' => floatval($discount_amount),
+                'created_at'      => strtotime($data['created_at']),
+                'published_date'  => $data['published_date'] ?? 0,
+                'author'          => $data['author'] ?? '',
+                'show_hot'        => $data['show_hot'] ?? 1,
+                'show_recommend'  => $data['show_recommend'] ?? 1,
+                'status'          => $data['status'] ?? 1,
+                'keywords'        => $data['keywords'] ?? '',
+                'sort'            => $data['sort'] ?? 100,
+                'url'             => $data['url'] ?? '',
             ];
             $year = date('Y', $data['published_date']);
             $description = (new ProductsDescription($year))->where('product_id', $data['id'])->value('description');
@@ -492,9 +556,9 @@ class Products extends Base {
 
     /**
      *
-     * @param 站点标识        $siteName
-     * @param 操作类型        $action
-     * @param array          $data
+     * @param 站点标识 $siteName
+     * @param 操作类型 $action
+     * @param array    $data
      *
      */
     public function excuteXs($siteName, $action, $data) {

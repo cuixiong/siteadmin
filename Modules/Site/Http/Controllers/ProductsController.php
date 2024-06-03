@@ -6,8 +6,12 @@ use App\Const\QueueConst;
 use App\Exports\ProductsExport;
 use App\Jobs\ExportProduct;
 use App\Jobs\HandlerExportExcel;
+use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Arr;
 use Maatwebsite\Excel\Facades\Excel;
+use Modules\Admin\Http\Models\Server;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -61,7 +65,7 @@ class ProductsController extends CrudController {
             }
             $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
                        'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
-                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end' , 'url'];
+                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end', 'url'];
             $model = $model->select($fields);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
@@ -137,7 +141,8 @@ class ProductsController extends CrudController {
             $hidden = SystemValue::where('key', 'xunsearch')->value('hidden');
             $hidden = 1;
             if ($hidden == 1) {
-                return $this->SearchForXunsearch($request);
+                //return $this->SearchForXunsearch($request);
+                return $this->SearchForSphinx($request);
             } else {
                 return $this->SearchForMysql($request);
             }
@@ -239,7 +244,6 @@ class ProductsController extends CrudController {
         $docs = $search->search();
         $count = $search->count();
         $search->setLimit($request->pageSize, ($request->pageNum - 1) * $request->pageSize);
-
         $products = [];
         if (!empty($docs)) {
             foreach ($docs as $key => $doc) {
@@ -279,6 +283,73 @@ class ProductsController extends CrudController {
                 'type'  => 'xunsearch'
             ];
         }
+    }
+
+    public function SearchForSphinx($request) {
+        // TODO: cuizhixiong 2024/5/31 后续多个站点读取配置,连接搜索服务
+//        $SiteName = $request->header('Site');
+//        $siteInfo = Site::where('name', $SiteName)->firstOrFail();
+//        $server_id = $siteInfo->server_id;
+//        $serverInfo = Server::find($server_id);
+        $comParams = array('host' => '8.219.5.215', 'port' => 9306);
+        if (!empty($request->type)) {
+            $type = $request->type;
+            $keyword = $request->keyword;
+        } elseif (!empty($request->input('search'))) {
+            $searchData = json_decode($request->input('search'), true);
+            if (!empty($searchData) && is_array($searchData)) {
+                $type = key($searchData);
+                $keyword = current($searchData);
+            }
+        }
+        if (empty($type)) {
+            throw new \Exception('参数异常:搜索类型不能为空');
+        }
+        $conn = new Connection();
+        $conn->setParams($comParams);
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt')
+                                      ->where('status', '=', 1)
+                                      ->orderBy('sort', 'asc')
+                                      ->orderBy('published_date', 'desc');
+        if (!empty($type) && (!isset($keyword) || $keyword == '')) {
+            // TODO: cuizhixiong 2024/5/31
+        } elseif (filled($keyword)
+                  && in_array(
+                      $type,
+                      ['id', 'category_id', 'author', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
+                       'show_recommend', 'status']
+                  )
+        ) {
+            $query = $query->where($type, intval($keyword));
+        } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
+            // 设置搜索排序
+            $start_time = $keyword[0] ?? 0;
+            $end_time = $keyword[1] ?? 0;
+            $query = $query->where($type, 'BETWEEN', [intval($start_time), intval($end_time)]);
+        } else if ($type == 'name') {
+            //中文搜索, 测试明确 需要精确搜索
+            $query = $query->match($type, $keyword);
+        } elseif ($type == 'english_name') {
+            //英文搜索, 需要精确搜索
+            $query = $query->match($type, $keyword);
+        }
+        //查询总数
+        $countQuery = $query->setSelect('COUNT(*) as cnt');
+        $fetchNum = $countQuery->execute()->fetchNum();
+        $count = $fetchNum[0] ?? 0;
+        //查询结果分页
+        $query->limit(($request->pageNum - 1) * $request->pageSize, $request->pageSize);
+        $query->setSelect('*');
+        $result = $query->execute();
+        $products = $result->fetchAllAssoc();
+        $data = [
+            'list'  => $products,
+            'total' => intval($count),
+            'type'  => 'sphinx'
+        ];
+
+        return $data;
     }
 
     /**
@@ -325,7 +396,7 @@ class ProductsController extends CrudController {
             // DB::connection($currentTenant->getConnectionName())->commit();
             DB::commit();
             // 创建完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'add');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'add');
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
@@ -411,7 +482,7 @@ class ProductsController extends CrudController {
                     $query->orWhere('name', 'like', "%{$value}%");
                 }
             })->count();
-            ReturnJson(true, trans('lang.request_success') , ['cnt' => $cnt]);
+            ReturnJson(true, trans('lang.request_success'), ['cnt' => $cnt]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -519,7 +590,7 @@ class ProductsController extends CrudController {
             }
             DB::commit();
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
@@ -554,7 +625,7 @@ class ProductsController extends CrudController {
                     }
                     $record->delete();
                     // 删除完成后同步到xunsearch
-                    $this->ModelInstance()->PushXunSearchMQ($id, 'delete');
+                    $this->ModelInstance()->syncSearchIndex($id, 'delete');
                 }
             }
             ReturnJson(true, trans('lang.delete_success'));
@@ -630,7 +701,7 @@ class ProductsController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -654,7 +725,7 @@ class ProductsController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -678,7 +749,7 @@ class ProductsController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -726,7 +797,7 @@ class ProductsController extends CrudController {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -820,7 +891,7 @@ class ProductsController extends CrudController {
                 if ($record) {
                     $record->$keyword = $value;
                     $record->save();
-                    $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+                    $this->ModelInstance()->syncSearchIndex($record->id, 'update');
                 }
             }
             ReturnJson(true, trans('lang.update_success'));
@@ -870,7 +941,7 @@ class ProductsController extends CrudController {
                 if ($record) {
                     $record->delete();
                     // 删除完成后同步到xunsearch
-                    $this->ModelInstance()->PushXunSearchMQ($record->id, 'delete');
+                    $this->ModelInstance()->syncSearchIndex($record->id, 'delete');
                 }
             }
             ReturnJson(true, trans('lang.delete_success'));
@@ -1473,7 +1544,7 @@ class ProductsController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -1497,7 +1568,7 @@ class ProductsController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             // 更新完成后同步到xunsearch
-            $this->ModelInstance()->PushXunSearchMQ($record->id, 'update');
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());

@@ -33,4 +33,8 @@ class QueueConst {
 
     // php artisan queue:work --queue=operation_log
     const QUEEU_OPERATION_LOG = 'operation_log';  // 操作日志
+
+    // php artisan queue:work --queue=sync_spginx_index
+    const SYNC_SPGINX_INDEX = 'sync_spginx_index';  // 同步sphinx索引
+
 }

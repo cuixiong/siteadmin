@@ -9,6 +9,7 @@
         "aliyuncs/oss-sdk-php": "^2.6",
         "box/spout": "^3.3",
         "doctrine/dbal": "^3.7",
+        "foolz/sphinxql-query-builder": "^3.0",
         "guzzlehttp/guzzle": "^7.2",
         "hightman/xunsearch": "^1.4",
         "intervention/image": "^2.7",
