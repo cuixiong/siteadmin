@@ -381,10 +381,31 @@ class ProductsUploadLogController extends CrudController {
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
-                $item['last_scale'] = $row['last_scale'] ?? '';
-                $item['current_scale'] = $row['current_scale'] ?? '';
-                $item['future_scale'] = $row['future_scale'] ?? '';
-                $item['cagr'] = $row['cagr'] ?? '';
+                //强校验几个字段
+                $last_scale = $row['last_scale'] ?? '';
+                if ($this->isDecimalString($last_scale) || is_numeric($last_scale)) {
+                    $item['last_scale'] = $last_scale;
+                } else {
+                    $item['last_scale'] = '';
+                }
+                $current_scale = $row['current_scale'] ?? '';
+                if ($this->isDecimalString($current_scale) || is_numeric($current_scale)) {
+                    $item['current_scale'] = $current_scale;
+                } else {
+                    $item['current_scale'] = '';
+                }
+                $future_scale = $row['future_scale'] ?? '';
+                if ($this->isDecimalString($future_scale) || is_numeric($future_scale)) {
+                    $item['future_scale'] = $future_scale;
+                } else {
+                    $item['future_scale'] = '';
+                }
+                $cagr = $row['cagr'] ?? '';
+                if ($this->isDecimalString($cagr) || is_numeric($cagr)) {
+                    $item['cagr'] = $cagr;
+                } else {
+                    $item['cagr'] = '';
+                }
                 //详情数据
                 $itemDescription = [];
                 isset($row['description'])
@@ -734,14 +755,20 @@ class ProductsUploadLogController extends CrudController {
             'url'             => $data['url'],
             'description'     => $data['description'],
         ];
-
-        try{
+        try {
             (new Products())->excuteSphinxReq($handlerData, 'update', $params['site']);
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             var_dump($e->getMessage());
         }
-        //(new Products())->excuteXs($params['site'], 'update', $handlerData);
 
+        //(new Products())->excuteXs($params['site'], 'update', $handlerData);
         return true;
+    }
+
+    public function isDecimalString($str) {
+        // 允许小数点和小数点后的数字
+        $pattern = '/^\d+(\.\d+)?%$/';
+
+        return preg_match($pattern, $str) === 1;
     }
 }

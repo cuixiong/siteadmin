@@ -328,24 +328,25 @@ class Products extends Base {
      */
     public function excuteSphinxReq($reqData, $action, $siteName = '') {
         try {
-            if(empty($reqData )) return false;
-            if(is_array($reqData) && !empty($reqData['id'] )){
+            if (empty($reqData)) {
+                return false;
+            }
+            if (is_array($reqData) && !empty($reqData['id'])) {
                 $data = $reqData;
                 $id = $data['id'];
-            }else{
+            } else {
                 $id = $reqData;
             }
-
             //实例化
             $comParams = array('host' => '8.219.5.215', 'port' => 9306);
             $conn = new Connection();
             $conn->setParams($comParams);
             if ($action == 'delete') {
-                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", $id)->execute();
+                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", intval($id))->execute();
 
                 return $res->getAffectedRows();
             }
-            if(empty($data )) {
+            if (empty($data)) {
                 $data = $this->handlerProductData($id);
             }
             if (empty($data)) {
@@ -363,7 +364,6 @@ class Products extends Base {
                                             ->execute();
 
                 //$res = (new SphinxQL($conn))->update('products_rt')->where("id", $id)->set($data)->execute();
-
                 return $res->getAffectedRows();
             }
         } catch (\Exception $e) {
@@ -374,7 +374,6 @@ class Products extends Base {
 
         return true;
     }
-
 
     public function syncSearchIndex($productId, $action, $siteName = '') {
         //先 暂时不使用队列, 立即处理

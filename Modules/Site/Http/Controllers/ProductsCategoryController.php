@@ -162,7 +162,7 @@ class ProductsCategoryController extends CrudController
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
-                // 'total' => $total,
+                'total' => count($record),
                 'list' => $record,
                 'headerTitle' => $headerTitle ?? [],
             ];

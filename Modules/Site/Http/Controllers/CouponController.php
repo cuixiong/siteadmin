@@ -102,7 +102,7 @@ class CouponController extends CrudController {
                     $addIds = array_values(array_diff($userIds, $existUserIds));
                     $deletedIds = array_values(array_diff($existUserIds, $userIds));
                 }
-                if (isset($addIds) && count($addIds) > 0) {
+                if (!empty($addIds )) {
                     foreach ($addIds as $addId) {
                         if (empty($addId)) {
                             continue;
@@ -115,11 +115,13 @@ class CouponController extends CrudController {
                                            ]);
                     }
                 }
-                if (isset($deletedIds) && count($deletedIds) > 0) {
-                    $couponUserRecord = CouponUser::query()->whereIn('user_id', $deletedIds)->where(
+                if (!empty($deletedIds )) {
+                    CouponUser::query()->whereIn('user_id', $deletedIds)->where(
                         ['coupon_id' => $record->id]
-                    );
-                    $couponUserRecord->delete();
+                    )->delete();
+                }else if(empty($user_ids )){
+                    //用户id为空, 删除所有
+                    CouponUser::query()->where(['coupon_id' => $record->id])->delete();
                 }
             }
             ReturnJson(true, trans('lang.update_success'));

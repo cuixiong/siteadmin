@@ -553,6 +553,7 @@ Route::middleware([
 
     Route::get('test', [Modules\Site\Http\Controllers\TestController::class, 'test'])->name('站点测试:测试接口');
     Route::get('test2', [Modules\Site\Http\Controllers\TestController::class, 'test2'])->name('站点测试:测试接口');
+    Route::get('test3', [Modules\Site\Http\Controllers\TestController::class, 'test3'])->name('站点测试:测试接口');
     Route::get('test-search', [Modules\Site\Http\Controllers\TestController::class, 'searchTest'])->name('站点测试:测试查询');
 });
 

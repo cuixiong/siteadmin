@@ -105,6 +105,11 @@ class ProductsController extends CrudController {
             $data = $this->GetProductList($request);
 
             $record = $data['list'];
+            $product_id_list = array_column($record , 'id');
+            $updAtList = Products::query()
+                                 ->whereIn('id', $product_id_list)
+                                 ->pluck('updated_at', 'id')
+                                 ->toArray();
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
@@ -116,6 +121,7 @@ class ProductsController extends CrudController {
                 $description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
+                $record[$key]['updated_at'] = $updAtList[$item['id']] ?? '';
                 //删除描述
                 unset($record[$key]['description']);
             }
