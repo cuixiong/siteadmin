@@ -8,22 +8,19 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Support\Facades\Validator;
 
-class ProductsExcelFieldController extends CrudController
-{
-
+class ProductsExcelFieldController extends CrudController {
     /**
      * 查询列表页
-     * @param $request 请求信息
-     * @param Array $where 查询条件数组 默认空数组
+     *
+     * @param       $request 请求信息
+     * @param Array $where   查询条件数组 默认空数组
      */
-    protected function list(Request $request)
-    {
+    protected function list(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
-            
             $model = $model->select($ModelInstance->ListSelect);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
@@ -32,24 +29,33 @@ class ProductsExcelFieldController extends CrudController
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
             }
-
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
             $record = $model->get();
-
             $data = [
-                'list' => $record
+                'total' => $total,
+                'list'  => $record
             ];
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 调整排序
+     *
      * @param Request $request
      */
-    protected function resetSort(Request $request)
-    {
+    protected function resetSort(Request $request) {
         $ids = $request->ids;
         if (!is_array($ids)) {
             $ids = explode(",", $ids);
@@ -58,19 +64,19 @@ class ProductsExcelFieldController extends CrudController
             $record = $this->ModelInstance()->find($id);
             if ($record) {
                 $record->update([
-                    'sort' => $key + 1,
-                ]);
+                                    'sort' => $key + 1,
+                                ]);
             }
         }
-        ReturnJson(TRUE, trans('lang.request_success'));
+        ReturnJson(true, trans('lang.request_success'));
     }
-    
+
     /**
      * 获取搜索下拉列表
+     *
      * @param $request 请求信息
      */
-    public function searchDroplist(Request $request)
-    {
+    public function searchDroplist(Request $request) {
         try {
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
@@ -78,11 +84,12 @@ class ProductsExcelFieldController extends CrudController
             } else {
                 $field = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
-
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            $data['status'] = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
+            );
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 }

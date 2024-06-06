@@ -185,6 +185,42 @@ class ProductsCategory extends Base
         return $list;
     }
 
+
+    public function getAdminList($field = '*', $isTree = false, $treeKey = 'parent_id', $search = [])
+    {
+        $model = self::query();
+        if (!empty($search)) {
+            $model = $this->HandleWhere($model, $search);
+        }
+        $model = $model->select($field)->orderBy('sort', 'ASC')->orderBy('id', 'DESC');
+
+        // 总数量
+        $total = $model->count();
+
+        $request = request();
+        // 查询偏移量
+        if (!empty($request->pageNum) && !empty($request->pageSize)) {
+            $model = $model->offset(($request->pageNum - 1) * $request->pageSize);
+        }
+        // 查询条数
+        if (!empty($request->pageSize)) {
+            $model = $model->limit($request->pageSize);
+        }
+        $list = $model->get()->toArray();
+
+        if (!empty($list)) {
+
+            if ($isTree) {
+                $minPid = array_column($list, $treeKey);
+                $minPid = min($minPid);
+                $list = array_column($list, null, 'id');
+                $list = $this->tree($list, $treeKey, $minPid);
+            }
+        }
+        return [$total , $list];
+    }
+
+
     /**
      * 列表数据
      * @param array/string $field 字段，全部则不传

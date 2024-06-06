@@ -17,7 +17,7 @@ class Region extends Base
     public function HandleWhere($model, $request)
     {
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -46,11 +46,24 @@ class Region extends Base
         }
 
         //更新时间
-        if (isset($search->updated_at) && !empty($search->updated_at)) {
+        if (!empty($search->updated_at)) {
             $updateTime = $search->updated_at;
             $model = $model->where('updated_at', '>=', $updateTime[0]);
             $model = $model->where('updated_at', '<=', $updateTime[1]);
         }
+
+        //操作者
+        if (!empty($search->created_by)) {
+            $userIds = User::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
+            $model = $model->whereIn('created_by',$userIds);
+        }
+
+        //修改
+        if (!empty($search->updated_by)) {
+            $userIds = User::where('name', 'like', '%' . $search->updated_by . '%')->pluck('id');
+            $model = $model->whereIn('updated_by',$userIds);
+        }
+
         return $model;
     }
 }

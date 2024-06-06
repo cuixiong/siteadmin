@@ -10,15 +10,13 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Support\Facades\Validator;
 use Modules\Admin\Http\Models\ListStyle;
 
-class ProductsCategoryController extends CrudController
-{
-
+class ProductsCategoryController extends CrudController {
     /**
      * 单个新增
+     *
      * @param $request 请求信息
      */
-    protected function store(Request $request)
-    {
+    protected function store(Request $request) {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -27,20 +25,20 @@ class ProductsCategoryController extends CrudController
             }
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
-                ReturnJson(FALSE, trans('lang.add_error'));
+                ReturnJson(false, trans('lang.add_error'));
             }
-            ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
+            ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * AJax单个更新
+     *
      * @param $request 请求信息
      */
-    protected function update(Request $request)
-    {
+    protected function update(Request $request) {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -49,20 +47,20 @@ class ProductsCategoryController extends CrudController
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             if (!$record->update($input)) {
-                ReturnJson(FALSE, trans('lang.update_error'));
+                ReturnJson(false, trans('lang.update_error'));
             }
-            ReturnJson(TRUE, trans('lang.update_success'));
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 获取搜索下拉列表
+     *
      * @param $request 请求信息
      */
-    public function searchDroplist(Request $request)
-    {
+    public function searchDroplist(Request $request) {
         try {
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
@@ -70,42 +68,41 @@ class ProductsCategoryController extends CrudController
             } else {
                 $field = ['name as label', 'value'];
             }
-            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
-
-            $data['show_home'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']);
-
-            $data['discount_type'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']);
-
-
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            $data['status'] = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
+            );
+            $data['show_home'] = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']
+            );
+            $data['discount_type'] = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']
+            );
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 修改分类折扣
+     *
      * @param $request 请求信息
-     * @param $id 主键ID
+     * @param $id      主键ID
      */
-    public function discount(Request $request)
-    {
-
+    public function discount(Request $request) {
         try {
             if (empty($request->id)) {
-                ReturnJson(FALSE, 'id is empty');
+                ReturnJson(false, 'id is empty');
             }
             if (empty($request->discount_type)) {
-                ReturnJson(FALSE, 'discount type is empty');
+                ReturnJson(false, 'discount type is empty');
             }
             if (empty($request->discount_value)) {
-                ReturnJson(FALSE, 'discount value is empty');
+                ReturnJson(false, 'discount value is empty');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
-
             $type = $request->discount_type;
             $value = $request->discount_value;
-
             $record->discount_type = $type;
             if ($type == 1) {
                 $record->discount = $value;
@@ -132,73 +129,65 @@ class ProductsCategoryController extends CrudController
             request()->offsetSet('discount', $record->discount);
             request()->offsetSet('discount_amount', $record->discount_amount);
             $this->ValidateInstance($request);
-
             if (!$record->save()) {
-                ReturnJson(FALSE, trans('lang.update_error'));
+                ReturnJson(false, trans('lang.update_error'));
             }
-            ReturnJson(TRUE, trans('lang.update_success'));
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
-
-
 
     /**
      * 查询列表页
-     * @param $request 请求信息
-     * @param int $page 页码
-     * @param int $pageSize 页数
-     * @param Array $where 查询条件数组 默认空数组
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
      */
-    protected function list(Request $request)
-    {
+    protected function list(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-
             $search = json_decode($request->input('search'));
-            $record = (new ProductsCategory())->GetList('*', true, 'pid', $search);
+            list($total, $list) = (new ProductsCategory())->getAdminList('*', true, 'pid', $search);
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
-                'total' => count($record),
-                'list' => $record,
+                'total'       => $total,
+                'list'        => $list,
                 'headerTitle' => $headerTitle ?? [],
             ];
-            ReturnJson(TRUE, trans('lang.request_success'), $data);
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
-
     /**
      * 获取某层级分类
+     *
      * @param $request 请求信息
      */
-    public function getCategory(Request $request)
-    {
-
+    public function getCategory(Request $request) {
         $id = !empty($request->id) ? $request->id : 0;
-
-        $data = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['pid' => $id, 'status' => 1]);
-        ReturnJson(TRUE, trans('lang.request_success'), $data);
+        $data = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid',
+                                                  ['pid' => $id, 'status' => 1]);
+        ReturnJson(true, trans('lang.request_success'), $data);
     }
 
     /**
      * 获取全部分类(但不包含自己以及它的分类)
+     *
      * @param $request 请求信息
      */
-    public function getCategoryWithoutSelf(Request $request)
-    {
-
+    public function getCategoryWithoutSelf(Request $request) {
         $id = !empty($request->id) ? $request->id : 0;
-
-        $data = (new ProductsCategory())->GetListWithoutSelf(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1], $id);
-        ReturnJson(TRUE, trans('lang.request_success'), $data);
+        $data = (new ProductsCategory())->GetListWithoutSelf(['id as value', 'name as label', 'id', 'pid'], true, 'pid',
+                                                             ['status' => 1], $id);
+        ReturnJson(true, trans('lang.request_success'), $data);
     }
-
 
     /**
      * 修改推荐状态
@@ -221,5 +210,4 @@ class ProductsCategoryController extends CrudController
             ReturnJson(false, $e->getMessage());
         }
     }
-
 }
