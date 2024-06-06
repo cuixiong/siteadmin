@@ -15,7 +15,20 @@ class LanguageMiddleware
     {
         try {
             // 当前语言
-            $langauge = $request->header('Langaue');
+            $langauge = $request->header('Langaue'); //不是浏览器的规范 (英文都写错了)
+
+            //如果前端没传, 兼容浏览器的规范
+            if (empty($langauge)) {
+                $acceptLanguage = $request->header('Accept-Language');
+                if (!empty($acceptLanguage)) {
+                    if (strpos($acceptLanguage, 'zh') !== false) {
+                        $langauge = 'zh';
+                    } else {
+                        $langauge = 'en';
+                    }
+                }
+            }
+
             // 语言全局变量
             $request->HeaderLanguage = $langauge ? $langauge : 'en';
             // 设置当前语言
@@ -26,7 +39,7 @@ class LanguageMiddleware
                 'code' => 'B001',
                 'message' => $e->getMessage() ,
             ]);
- 
+
         }
-    }  
+    }
 }
