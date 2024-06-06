@@ -27,13 +27,13 @@
         <br>
         <p></p>
         <p></p>
-        <a href="http://yadmin.qyrdata.com:888/phpmyadmin_756304a8b669512f/?auth_type=config&host=8.219.5.215&user=mrrs&password=4MCCZYKPYpY8MPjh&port=3306&db=mrrs">
+        <a href="http://yadmin.qyrdata.com:888/phpmyadmin_756304a8b669512f/?auth_type=config&host=39.108.67.106&user=mrrs&password=4MCCZYKPYpY8MPjh&port=3306&db=mrrs">
             <button type="submit">登陆数据库2</button>
         </a>
         <br>
         <p></p>
         <p></p>
-        <a href="http://yadmin.qyrdata.com:888/phpmyadmin_756304a8b669512f/?auth_type=config&host=8.219.5.215&user=yadmin&password=mSb5X5aYXnnRSj7M&port=3306&db=yadmin">
+        <a href="http://yadmin.qyrdata.com:888/phpmyadmin_756304a8b669512f/?auth_type=config&host=39.108.67.106&user=yadmin&password=mSb5X5aYXnnRSj7M&port=3306&db=yadmin">
             <button type="submit">登陆数据库3</button>
         </a>
     <!-- </form> -->

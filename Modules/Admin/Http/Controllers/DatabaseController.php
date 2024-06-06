@@ -22,7 +22,7 @@ class DatabaseController extends CrudController
                 $param = http_build_query($param);
                 $ip = $_SERVER['SERVER_ADDR'];
                 // $url = "http://$ip:888/".env('PHPMYADMIN_URL')."/?".$param;
-                $url = "http://8.219.5.215:888/".env('PHPMYADMIN_URL')."/?".$param;
+                $url = "http://39.108.67.106:888/".env('PHPMYADMIN_URL')."/?".$param;
                 return redirect($url);
             }
         }

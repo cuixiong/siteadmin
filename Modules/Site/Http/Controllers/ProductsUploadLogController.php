@@ -306,15 +306,28 @@ class ProductsUploadLogController extends CrudController {
                     continue;
                 }
                 // 出版时间
-                if (!empty($row['published_date'])) {
-                    if (is_numeric($row['published_date'])) {
-                        $item['published_date'] = $row['published_date'];
-                    } elseif (is_string($row['published_date'])) {
-                        $item['published_date'] = strtotime($row['published_date']);
-                    } else {
-                        $item['published_date'] = 0;
+//                if (!empty($row['published_date'])) {
+//                    if (is_numeric($row['published_date'])) {
+//                        $item['published_date'] = $row['published_date'];
+//                    } elseif (is_string($row['published_date'])) {
+//                        $item['published_date'] = strtotime($row['published_date']);
+//                    } else {
+//                        $item['published_date'] = 0;
+//                    }
+//                }
+                try {
+                    // 出版时间
+                    if(!empty($row['published_date'])){
+                        //转为 时间戳
+                        $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row['published_date']);
                     }
+                } catch (\Throwable $th) {
+                    //throw $th;
                 }
+                if (empty($item['published_date']) || $item['published_date'] < 0) {
+                    $item['published_date'] = strtotime($row['published_date']);
+                }
+
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
@@ -722,7 +735,7 @@ class ProductsUploadLogController extends CrudController {
 
     public function pushSyncSphinxQueue($product, $description, $site) {
         $xsProductData = $product->toArray();
-        $xsProductData['description'] = $description ?? '';
+        //$xsProductData['description'] = $description ?? '';
         $data = [
             'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
             'method' => 'xsSyncProductIndex',
@@ -753,7 +766,7 @@ class ProductsUploadLogController extends CrudController {
             'keywords'        => $data['keywords'],
             'sort'            => $data['sort'] ?? 100,
             'url'             => $data['url'],
-            'description'     => $data['description'],
+            //'description'     => $data['description'],
         ];
         try {
             (new Products())->excuteSphinxReq($handlerData, 'update', $params['site']);

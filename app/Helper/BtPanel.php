@@ -8,7 +8,7 @@ class BtPanel
     // 论坛 https://www.bt.cn/bbs/forum.php?mod=viewthread&tid=20376&highlight=%E6%8E%A5%E5%8F%A3
 
     // private $BT_KEY = "c5bcMa7D9De3NtDi440eEidltvgpIWdI";  //接口密钥
-    // private $BT_PANEL = "http://8.219.5.215:18754/";       //面板地址
+    // private $BT_PANEL = "http://39.108.67.106:18754/";       //面板地址
     private $BT_KEY = "";  //接口密钥
     private $BT_PANEL = "";       //面板地址
 
@@ -19,7 +19,7 @@ class BtPanel
         if ($bt_key) $this->BT_KEY = $bt_key;
     }
 
-    //示例取面板日志	
+    //示例取面板日志
     public function getLogs()
     {
         //拼接URL地址
@@ -86,7 +86,7 @@ class BtPanel
 
     /**
      * 系统状态相关接口
-     *  
+     *
      */
 
     //获取系统基础统计
@@ -146,7 +146,7 @@ class BtPanel
 
     /**
      * 网站管理
-     *  
+     *
      */
     // 获取网站列表
     public function getSiteList()
@@ -215,7 +215,7 @@ class BtPanel
      * @param string $version PHP版本,请从PHP版本列表中选择
      * @param int $post 网站端口
      * @param string $ps 网站备注
-     * 
+     *
      */
     public function addSite($webname, $path, $version = 80, $post = 80, $ps = '')
     {
@@ -337,7 +337,7 @@ class BtPanel
      * @param string $domain 域名不带协议(没有http、https)
      * @param string $key 密钥(KEY)
      * @param string $csr 证书(PEM格式)
-     * 
+     *
      */
     public function setSSL($domain, $key, $csr)
     {
@@ -427,7 +427,7 @@ class BtPanel
      * @param string $domain 域名不带协议(没有http、https)
      * @param string $key 密钥(KEY)
      * @param string $csr 证书(PEM格式)
-     * 
+     *
      */
     public function saveNginxConfig($domain, $data)
     {

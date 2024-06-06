@@ -338,7 +338,7 @@ class Products extends Base {
                 $id = $reqData;
             }
             //实例化
-            $comParams = array('host' => '8.219.5.215', 'port' => 9306);
+            $comParams = array('host' => '39.108.67.106', 'port' => 9306);
             $conn = new Connection();
             $conn->setParams($comParams);
             if ($action == 'delete') {
@@ -409,9 +409,9 @@ class Products extends Base {
                 'sort'            => $data['sort'] ?? 100,
                 'url'             => $data['url'] ?? '',
             ];
-            $year = date('Y', $data['published_date']);
-            $description = (new ProductsDescription($year))->where('product_id', $data['id'])->value('description');
-            $handlerData['description'] = $description;
+//            $year = date('Y', $data['published_date']);
+//            $description = (new ProductsDescription($year))->where('product_id', $data['id'])->value('description');
+//            $handlerData['description'] = $description;
         } else {
             $handlerData = [];
         }

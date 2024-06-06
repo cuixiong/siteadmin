@@ -103,29 +103,31 @@ class ProductsController extends CrudController {
     protected function QuickSearch(Request $request) {
         try {
             $data = $this->GetProductList($request);
-
             $record = $data['list'];
-            $product_id_list = array_column($record , 'id');
-            $updAtList = Products::query()
-                                 ->whereIn('id', $product_id_list)
-                                 ->pluck('updated_at', 'id')
-                                 ->toArray();
+            $product_id_list = array_column($record, 'id');
+            $updAtList = DB::table("product_routine")->whereIn('id', $product_id_list)
+                           ->pluck('updated_at', 'id')
+                           ->toArray();
+            $updAtList = (array)$updAtList;
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
             foreach ($record as $key => $item) {
-                $record[$key]['published_date'] = date('Y-m-d', strtotime($item['published_date']));
+                $productId = $item['id'];
+                $record[$key]['published_date'] = date('Y-m-d', $item['published_date']);
                 $record[$key]['category_name'] = $this->categpryName[$item['category_id']];
                 //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
-                $description = $item['description'] ?? '';
+                $year = date('Y', $item['published_date']);
+                $description = (new ProductsDescription($year))->where("product_id" , $productId)->value('description');
+                //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
-                $record[$key]['updated_at'] = $updAtList[$item['id']] ?? '';
+                $baseTimestamp = $updAtList[$productId] ?? 0;
+                $record[$key]['updated_at'] = date("Y-m-d H:i:s", $baseTimestamp);
                 //删除描述
                 unset($record[$key]['description']);
             }
-
             //$record = mb_convert_encoding($record, "UTF-8");
             $data = [
                 'total'       => $total,
@@ -294,7 +296,7 @@ class ProductsController extends CrudController {
 //        $siteInfo = Site::where('name', $SiteName)->firstOrFail();
 //        $server_id = $siteInfo->server_id;
 //        $serverInfo = Server::find($server_id);
-        $comParams = array('host' => '8.219.5.215', 'port' => 9306);
+        $comParams = array('host' => '39.108.67.106', 'port' => 9306);
         if (!empty($request->type)) {
             $type = $request->type;
             $keyword = $request->keyword;
@@ -468,7 +470,7 @@ class ProductsController extends CrudController {
             if (!empty($productIdList)) {
                 //删除sphinx的索引
                 //实例化
-                $comParams = array('host' => '8.219.5.215', 'port' => 9306);
+                $comParams = array('host' => '39.108.67.106', 'port' => 9306);
                 $conn = new Connection();
                 $conn->setParams($comParams);
                 $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute(
@@ -1466,7 +1468,7 @@ class ProductsController extends CrudController {
         //颜色数据字典缓存
         $dictListKey = 'dict_list_'.$SiteName;
         $dictList = Redis::get($dictListKey);
-        if (empty($dictList)  || $isNoUseCache) {
+        if (empty($dictList) || $isNoUseCache) {
             $dictModel = (new DictionaryValue());
             $colorFieldList = ['id', 'name', 'value'];
             $dictList = $dictModel->select($colorFieldList)
@@ -1481,7 +1483,7 @@ class ProductsController extends CrudController {
         //模版分类映射缓存
         $templateCateMappingListKey = 'temp_cate_map_list_'.$SiteName;
         $templateCateMappingList = Redis::get($templateCateMappingListKey);
-        if (empty($templateCateMappingList)  || $isNoUseCache) {
+        if (empty($templateCateMappingList) || $isNoUseCache) {
             $templateCateMappingList = (new TemplateCateMapping())->select(['id', 'cate_id', 'temp_id'])
                                                                   ->get()->toArray();
             Redis::set($templateCateMappingListKey, json_encode($templateCateMappingList));
@@ -1493,7 +1495,7 @@ class ProductsController extends CrudController {
         //模版列表缓存
         $templateListKey = 'template_list_'.$SiteName;
         $templateList = Redis::get($templateListKey);
-        if (empty($templateList)  || $isNoUseCache) {
+        if (empty($templateList) || $isNoUseCache) {
             $templateList = Template::query()
                                     ->select(['id', 'name', 'type', 'btn_color'])
                                     ->where("status", 1)
@@ -1508,7 +1510,7 @@ class ProductsController extends CrudController {
         //分类昵称缓存
         $categoryNameKey = 'category_name_'.$SiteName;
         $categoryName = Redis::get($categoryNameKey);
-        if (empty($categoryName)  || $isNoUseCache) {
+        if (empty($categoryName) || $isNoUseCache) {
             $categoryName = ProductsCategory::query()
                                             ->where("status", 1)
                                             ->pluck("name", "id")
