@@ -264,7 +264,7 @@ class TemplateController extends CrudController {
         $replaceWords = $productArrData['application'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{application}}', $replaceWords);
-        // 处理模板变量  {{application_str}}
+        // 处理模板变量  {{application_str}} 不换行
         $tempApplication = $this->handlerLineSymbol($productArrData['application']);
         $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
@@ -302,15 +302,21 @@ class TemplateController extends CrudController {
     }
 
     /**
-     *
+     *  处理换行符
      */
     private function handlerLineSymbol($lineStr) {
         return str_replace("\n", ",", $lineStr);
     }
 
+    private function handlerStrSymbol($sourceStr) {
+        return str_replace(",", "\n", $sourceStr);
+    }
+
     public function getReportUrl($product) {
         //获取当前站点域名
-        $domain = Site::where('name', request()->header('Site'))->value('domain') ?? '';
+        //$domain = Site::where('name', request()->header('Site'))->value('domain') ?? '';
+        //暂时使用线上的域名
+        $domain = "https://www.marketmonitorglobal.com.cn";
         if (!empty($product->url)) {
             return $domain."/reports/{$product->id}/$product->url";
         } else {
