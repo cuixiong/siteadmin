@@ -57,12 +57,12 @@ class TemplateController extends CrudController {
                 }
                 //模板分类的文本
                 $cateNameList = $recordInfo->tempCates()->where("status", 1)->pluck('name', 'cate_id')->toArray();
-                if(!empty($cateNameList)){
+                if (!empty($cateNameList)) {
                     [$keys, $values] = Arr::divide($cateNameList);
                     $cateInfo['cate_text'] = implode(",", $values);
                     $cateInfo['cate_ids'] = implode(",", $keys);
                     $recordInfo->cate_info = $cateInfo;
-                }else{
+                } else {
                     $recordInfo->cate_info = [];
                 }
             }
@@ -119,19 +119,17 @@ class TemplateController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             $cate_id_list = [];
-            if(!empty($input['cate_ids'] )){
+            if (!empty($input['cate_ids'])) {
                 $cate_ids = $input['cate_ids'];
                 $cate_id_list = explode(",", $cate_ids);
             }
-
             $modelInstance = $this->ModelInstance();
             $record = $modelInstance->create($input);
             //先移除后添加
             $record->tempCates()->detach();
-            if(!empty($cate_id_list )) {
+            if (!empty($cate_id_list)) {
                 $record->tempCates()->attach($cate_id_list);
             }
-
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
@@ -156,12 +154,12 @@ class TemplateController extends CrudController {
             }
             //维护中间表
             $cate_id_list = [];
-            if(!empty($input['cate_ids'] )) {
+            if (!empty($input['cate_ids'])) {
                 $cate_ids = $input['cate_ids'];
                 $cate_id_list = explode(",", $cate_ids);
             }
             $record->tempCates()->detach();
-            if(!empty($cate_id_list )) {
+            if (!empty($cate_id_list)) {
                 $record->tempCates()->attach($cate_id_list);
             }
             ReturnJson(true, trans('lang.update_success'));
@@ -218,7 +216,7 @@ class TemplateController extends CrudController {
     public function templateWirteData($template, $product) {
         //查询模板描述数据
         $productId = $product->id;
-        $year = date("Y" , $product->published_date);
+        $year = date("Y", $product->published_date);
         $pdModel = new ProductsDescription($year);
         $pdObj = $pdModel->where("product_id", $productId)->first();
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
@@ -232,12 +230,10 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("d"));
         // 处理模板变量   @@@@
         $tempContent = $this->writeTempWord($tempContent, '@@@@', $productArrData['keywords']);
-
         // 处理模板变量  {{id}}
         $tempContent = $this->writeTempWord($tempContent, '{{id}}', $productId);
         // 处理模板变量  {{title_en}}
         $tempContent = $this->writeTempWord($tempContent, '{{title_en}}', $productArrData['english_name']);
-
         // 处理模板变量   {{seo_description}}
         $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $pdArrData['description']);
         // 处理模板变量   {{toc}}
@@ -318,10 +314,15 @@ class TemplateController extends CrudController {
         //暂时使用线上的域名
         $domain = "https://www.marketmonitorglobal.com.cn";
         if (!empty($product->url)) {
-            return $domain."/reports/{$product->id}/$product->url";
+            $url = $domain."/reports/{$product->id}/$product->url";
         } else {
-            return $domain."/reports/{$product->id}";
+            $url = $domain."/reports/{$product->id}";
         }
+        $url = <<<EOF
+<a style="word-wrap:break-word;word-break:break-all;" href="{$url}" target="_blank" rel="noopener noreferrer nofollow">{$url}</a>
+EOF;
+
+        return $url;
     }
 
     public function handlerData($product, $pdObj) {
@@ -332,7 +333,6 @@ class TemplateController extends CrudController {
         } else {
             $productArrData['english_name'] = '';
         }
-
         //关键字
         if (isset($product->keywords)) {
             $productArrData['keywords'] = $product->keywords;
@@ -362,7 +362,7 @@ class TemplateController extends CrudController {
             if ($strIndex !== false) {
                 // 使用 substr() 函数获取第一个段落
                 $pdArrData['description'] = substr($replaceWords, 0, $strIndex);
-            }else {
+            } else {
                 $pdArrData['description'] = $pdObj->description;
             }
         } else {
