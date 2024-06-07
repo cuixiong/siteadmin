@@ -232,6 +232,12 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("d"));
         // 处理模板变量   @@@@
         $tempContent = $this->writeTempWord($tempContent, '@@@@', $productArrData['keywords']);
+
+        // 处理模板变量  {{id}}
+        $tempContent = $this->writeTempWord($tempContent, '{{id}}', $productId);
+        // 处理模板变量  {{title_en}}
+        $tempContent = $this->writeTempWord($tempContent, '{{title_en}}', $productArrData['english_name']);
+
         // 处理模板变量   {{seo_description}}
         $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $pdArrData['description']);
         // 处理模板变量   {{toc}}
@@ -314,6 +320,13 @@ class TemplateController extends CrudController {
 
     public function handlerData($product, $pdObj) {
         $productArrData = [];
+        //英文标题
+        if (isset($product->english_name)) {
+            $productArrData['english_name'] = $product->english_name;
+        } else {
+            $productArrData['english_name'] = '';
+        }
+
         //关键字
         if (isset($product->keywords)) {
             $productArrData['keywords'] = $product->keywords;
