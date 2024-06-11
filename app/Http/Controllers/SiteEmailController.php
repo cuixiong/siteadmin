@@ -377,20 +377,20 @@ class SiteEmailController extends Controller {
         try {
             $id = $request->id;
             $record = (new Order())->findOrFail($id);
-            if ($record->status == 1) {
-                $code = 'placeOrder';
-            } else {
+            //已支付与已完成
+            if (in_array($record->status, [2, 4])) {
                 $code = 'paySuccess';
+            } else {
+                $code = 'placeOrder';
             }
             $site = $request->header('site');
-            $siteInfo = Site::where('name', $site)->first();
-            if (empty($siteInfo)) {
+            $domain = Site::where('name', $site)->value("domain");
+            if (empty($domain)) {
                 ReturnJson(false, '站点配置异常');
             }
-            $domain = $siteInfo->domain;
-//            $domain = '127.0.0.1:8081';
-//            $id = 1672;
-//            $site = 'mmgcn';
+            if (strpos($domain, '://') === false) {
+                $domain = 'https://'.$domain;
+            }
             $url = $domain.'/api/third/send-email';
             $reqData = [
                 'id'   => $id,
@@ -399,10 +399,11 @@ class SiteEmailController extends Controller {
             $reqData['sign'] = $this->makeSign($reqData, $site);
             $response = Http::post($url, $reqData);
             $resp = $response->json();
-            if ($resp['code'] == 200) {
+            if (!empty($resp) && $resp['code'] == 200) {
                 ReturnJson(true, '发送成功');
             } else {
-                ReturnJson(false, '发送失败,未知错误'.$resp['msg']);
+                \Log::error('返回结果数据:'.json_encode($resp));
+                ReturnJson(false, '发送失败,未知错误');
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -1006,8 +1007,8 @@ class SiteEmailController extends Controller {
             $signStr .= $key.'='.$value.'&';
         }
         $signStr .= "key={$signkey}";
-        dump($signStr);
 
+        //dump($signStr);
         return md5($signStr);
     }
 }
