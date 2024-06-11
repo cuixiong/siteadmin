@@ -36,55 +36,58 @@ class ProductsUploadLogController extends CrudController {
     public $productCategory = [];
     public $regionList      = [];
     public $senWords        = [];
-    // /**
-    //  * 查询列表页
-    //  * @param $request 请求信息
-    //  * @param int $page 页码
-    //  * @param int $pageSize 页数
-    //  * @param Array $where 查询条件数组 默认空数组
-    //  */
-    // protected function list(Request $request)
-    // {
-    //     try {
-    //         $this->ValidateInstance($request);
-    //         $ModelInstance = $this->ModelInstance();
-    //         $model = $ModelInstance->query();
-    //         $model = $ModelInstance->HandleWhere($model, $request);
-    //         // 总数量
-    //         $total = $model->count();
-    //         // 查询偏移量
-    //         if (!empty($request->pageNum) && !empty($request->pageSize)) {
-    //             $model->offset(($request->pageNum - 1) * $request->pageSize);
-    //         }
-    //         // 查询条数
-    //         if (!empty($request->pageSize)) {
-    //             $model->limit($request->pageSize);
-    //         }
-    //         $model = $model->select($ModelInstance->ListSelect);
-    //         // 数据排序
-    //         $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-    //         if (!empty($request->order)) {
-    //             $model = $model->orderBy($request->order, $sort);
-    //         } else {
-    //             $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
-    //         }
-    //         $record = $model->get();
-    //         foreach ($record as $key => $item) {
-    //             if ($item['details']) {
-    //                 $item['details'] = str_replace("\r\n", "<br />", $item['details']);
-    //             } else {
-    //                 $item['details'] = '';
-    //             }
-    //         }
-    //         $data = [
-    //             'total' => $total,
-    //             'list' => $record
-    //         ];
-    //         ReturnJson(TRUE, trans('lang.request_success'), $data);
-    //     } catch (\Exception $e) {
-    //         ReturnJson(FALSE, $e->getMessage());
-    //     }
-    // }
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get();
+            foreach ($record as $forValue) {
+                if (empty($forValue->updated_at)) {
+                    $costTime = 0;
+                } else {
+                    $costTime = intval($forValue->updated_at) - intval($forValue->created_at);
+                }
+                $forValue->costTime = $this->convertMinutes($costTime);
+            }
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
     /**
      * 获取该站点的出版商,下拉选择框数据
      *
@@ -317,9 +320,11 @@ class ProductsUploadLogController extends CrudController {
 //                }
                 try {
                     // 出版时间
-                    if(!empty($row['published_date'])){
+                    if (!empty($row['published_date'])) {
                         //转为 时间戳
-                        $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp($row['published_date']);
+                        $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
+                            $row['published_date']
+                        );
                     }
                 } catch (\Throwable $th) {
                     //throw $th;
@@ -327,7 +332,6 @@ class ProductsUploadLogController extends CrudController {
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
                     $item['published_date'] = strtotime($row['published_date']);
                 }
-
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
                     $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
@@ -783,5 +787,17 @@ class ProductsUploadLogController extends CrudController {
         $pattern = '/^\d+(\.\d+)?%$/';
 
         return preg_match($pattern, $str) === 1;
+    }
+
+    public function convertMinutes($seconds) {
+        $minutes = intval($seconds / 60); // 获取分钟数
+        $remainingSeconds = $seconds % 60; // 获取剩余的秒数
+        // 如果剩余的秒数小于10，前面补0
+        $remainingSeconds = str_pad($remainingSeconds, 2, '0', STR_PAD_LEFT);
+
+        return [
+            'minutes' => $minutes,
+            'seconds' => $remainingSeconds
+        ];
     }
 }

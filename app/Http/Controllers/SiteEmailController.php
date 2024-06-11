@@ -1,6 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
+
+use App\Models\Languages;
+use App\Models\PriceEditionValues;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrendsEmail;
 use Illuminate\Support\Facades\Config;
@@ -22,51 +27,58 @@ use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\SystemValue;
 
-class SiteEmailController extends Controller
-{
+class SiteEmailController extends Controller {
     // 注册发邮method
     private $EmailCodes = ['register' => '注册账号'];
+
     /**
      * 动态配置邮箱参数
+     *
      * @param array $data 邮箱配置参数信息
      */
-    private function SetConfig($data,$name = 'trends'){
-        $keys = ['transport','host','port','encryption','username','password','timeout','local_domain'];
+    private function SetConfig($data, $name = 'trends') {
+        $keys = ['transport', 'host', 'port', 'encryption', 'username', 'password', 'timeout', 'local_domain'];
         foreach ($data as $key => $value) {
-            if(in_array($key,$keys)){
-                Config::set('mail.mailers.'.$name.'.'.$key,$value,true);
+            if (in_array($key, $keys)) {
+                Config::set('mail.mailers.'.$name.'.'.$key, $value, true);
             }
         }
+
         return true;
     }
 
     /**
      * 发送邮箱
-     * @param string $email 接收邮箱号
-     * @param string $templet 邮箱字符串的模板
-     * @param array $data 渲染模板需要的数据
-     * @param string $subject 邮箱标题
+     *
+     * @param string $email     接收邮箱号
+     * @param string $templet   邮箱字符串的模板
+     * @param array  $data      渲染模板需要的数据
+     * @param string $subject   邮箱标题
      * @param string $EmailUser 邮箱发件人
      */
-    private function SendEmail($email,$templet,$data,$subject,$EmailUser,$name = 'trends')
-    {
-        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet,$data,$subject,$EmailUser));
+    private function SendEmail($email, $templet, $data, $subject, $EmailUser, $name = 'trends') {
+        $res = Mail::mailer($name)->to($email)->send(new TrendsEmail($templet, $data, $subject, $EmailUser));
+
         return $res;
     }
 
     /**
      * 邮件测试发送中转方法
+     *
      * @param use Illuminate\Http\Request;
      */
-    public function test(Request $request)
-    {
+    public function test(Request $request) {
         // try {
-            // 验证表单数据
-            $this->validatorData($request->all());
-            $action = $request->action.'Test';
-            // 调用
-            $res = $this->$action($request);
-            $res ? ReturnJson(true,trans()->get('lang.eamail_success')) : ReturnJson(FALSE,trans()->get('lang.eamail_error')); 
+        // 验证表单数据
+        $this->validatorData($request->all());
+        $action = $request->action.'Test';
+        // 调用
+        $res = $this->$action($request);
+        $res
+            ? ReturnJson(true, trans()->get('lang.eamail_success'))
+            : ReturnJson(
+            false, trans()->get('lang.eamail_error')
+        );
         // } catch (\Exception $e) {
         //     ReturnJson(FALSE,$e->getMessage());
         // }
@@ -74,41 +86,41 @@ class SiteEmailController extends Controller
 
     /**
      * 邮箱测试发送表单数据验证
-     * @param array $data;
+     *
+     * @param array $data ;
      */
-    private function validatorData($data)
-    {
+    private function validatorData($data) {
         $rules = [
-            'name' => 'required',
-            'title' => 'required',
-            'body' => 'required',
+            'name'            => 'required',
+            'title'           => 'required',
+            'body'            => 'required',
             'email_sender_id' => 'required',
             'email_recipient' => 'required',
-            'action' => 'required',
+            'action'          => 'required',
         ];
         $message = [
-            'name.required' => '场景名称不能为空',
-            'title.required' => '邮箱标题不能为空',
-            'body.required' => '邮箱内容不能为空',
+            'name.required'            => '场景名称不能为空',
+            'title.required'           => '邮箱标题不能为空',
+            'body.required'            => '邮箱内容不能为空',
             'email_sender_id.required' => '发送邮件的邮箱ID不能为空',
             'email_recipient.required' => '邮箱收件人不能为空',
-            'action.required' => '测试邮箱的code方法不能为空',
+            'action.required'          => '测试邮箱的code方法不能为空',
         ];
-        $validator = Validator::make($data, $rules,$message);
+        $validator = Validator::make($data, $rules, $message);
         if ($validator->fails()) {
             $errors = $validator->errors()->messages();
             $errors = array_shift($errors['action']);
-            ReturnJson(FALSE,$errors);
+            ReturnJson(false, $errors);
         }
     }
 
     /**
      * return email method
      */
-    public function EmailCode(){
+    public function EmailCode() {
         $list = [];
-        if(empty($this->EmailCodes)){
-            ReturnJson(true,'',$list);
+        if (empty($this->EmailCodes)) {
+            ReturnJson(true, '', $list);
         }
         foreach ($this->EmailCodes as $key => $value) {
             $list[] = [
@@ -116,198 +128,221 @@ class SiteEmailController extends Controller
                 'label' => "$value($key)"
             ];
         }
-        ReturnJson(true,'',$list);
+        ReturnJson(true, '', $list);
     }
 
     /**
      * 注册场景的发邮请求
+     *
      * @param use Illuminate\Http\Request;
+     *
      * @return response Code
      */
-    public function register($id)
-    {
+    public function register($id) {
         try {
             $user = User::find($id);
             $user = $user ? $user->toArray() : [];
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','register')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
-            if(empty($scene)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            $scene = EmailScene::where('action', 'register')->select(
+                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
+            )->first();
+            if (empty($scene)) {
+                ReturnJson(false, trans()->get('lang.eamail_error'));
             }
-            if($scene->status == 0)
-            {
-                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            if ($scene->status == 0) {
+                ReturnJson(false, trans()->get('lang.eamail_error'));
             }
-            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                $scene->email_sender_id
+            );
             // 收件人的数组
-            $emails = explode(',',$scene->email_recipient);
+            $emails = explode(',', $scene->email_recipient);
             // 邮箱账号配置信息
             $config = [
-                'host' =>  $senderEmail->host,
-                'port' =>  $senderEmail->port,
-                'encryption' =>  $senderEmail->encryption,
-                'username' =>  $senderEmail->email,
-                'password' =>  $senderEmail->password
+                'host'       => $senderEmail->host,
+                'port'       => $senderEmail->port,
+                'encryption' => $senderEmail->encryption,
+                'username'   => $senderEmail->email,
+                'password'   => $senderEmail->password
             ];
             $this->SetConfig($config);
-            if($scene->alternate_email_id){
+            if ($scene->alternate_email_id) {
                 // 备用邮箱配置信息
-                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupSenderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                    $scene->alternate_email_id
+                );
                 $BackupConfig = [
-                    'host' =>  $BackupSenderEmail->host,
-                    'port' =>  $BackupSenderEmail->port,
-                    'encryption' =>  $BackupSenderEmail->encryption,
-                    'username' =>  $BackupSenderEmail->email,
-                    'password' =>  $BackupSenderEmail->password
+                    'host'       => $BackupSenderEmail->host,
+                    'port'       => $BackupSenderEmail->port,
+                    'encryption' => $BackupSenderEmail->encryption,
+                    'username'   => $BackupSenderEmail->email,
+                    'password'   => $BackupSenderEmail->password
                 ];
-                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+                $this->SetConfig($BackupConfig, 'backups');// 若发送失败，则使用备用邮箱发送
             }
-
             foreach ($emails as $email) {
                 try {
-                    $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+                    $this->SendEmail($email, $scene->body, $user, $scene->title, $senderEmail->email);
                 } catch (\Exception $e) {
-                    if($scene->alternate_email_id){
-                        $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                    if ($scene->alternate_email_id) {
+                        $this->SendEmail(
+                            $email, $scene->body, $user, $scene->title, $BackupSenderEmail->email, 'backups'
+                        );
                     }
                 }
             }
-            EmailLog::AddLog(1,$scene->email_sender_id,$emails,$scene->id,$user);
-            ReturnJson(true,trans()->get('lang.eamail_success'));
+            EmailLog::AddLog(1, $scene->email_sender_id, $emails, $scene->id, $user);
+            ReturnJson(true, trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
-            EmailLog::AddLog(0,$scene->email_sender_id,$emails,$scene->id,$user);
-            ReturnJson(FALSE,$e->getMessage());
+            EmailLog::AddLog(0, $scene->email_sender_id, $emails, $scene->id, $user);
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 注册场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function registerTest($request)
-    {
-        $user = User::where('email',$request->test)->first();
-        if(!$user){
+    private function registerTest($request) {
+        $user = User::where('email', $request->test)->first();
+        if (!$user) {
             $user = User::first();
         }
         $data = $user ? $user->toArray() : [];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
+        $siteData = Site::where('name', $siteName)->first();
         $data['domain'] = 'https://'.$siteData['domain'];
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $emailCode = 'signupToBeMember';
         $dataQuery = [
             'timestamp' => time(),
             'randomstr' => '123',
-            'authkey' => '123',
-            'sign' => $data['token'],
+            'authkey'   => '123',
+            'sign'      => $data['token'],
         ];
         $verifyUrl = $data['domain'].'/?verifyemail='.$emailCode.'&'.http_build_query($dataQuery);
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'verifyUrl' => $verifyUrl,
-            'userName' => $data['name'],
-            'area' => City::where('id',$data['area_id'])->value('name'),
+            'homePage'     => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'      => $data['domain'],
+            'backendUrl'   => $ImageDomain ? $ImageDomain : '',
+            'verifyUrl'    => $verifyUrl,
+            'userName'     => $data['name'],
+            'area'         => City::where('id', $data['area_id'])->value('name'),
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * reset password eamil send
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    public function password(Request $request){
+    public function password(Request $request) {
         try {
-            if(!isset($request->email) || empty($request->email)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_empaty'));
-            }   
+            if (!isset($request->email) || empty($request->email)) {
+                ReturnJson(false, trans()->get('lang.eamail_empaty'));
+            }
             $email = $request->email;
-            $user = User::where('email',$email)->first();
-            if(empty($user)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_undefined'));
+            $user = User::where('email', $email)->first();
+            if (empty($user)) {
+                ReturnJson(false, trans()->get('lang.eamail_undefined'));
             }
             $user = $user->toArray();
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','password')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
-            if(empty($scene)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            $scene = EmailScene::where('action', 'password')->select(
+                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
+            )->first();
+            if (empty($scene)) {
+                ReturnJson(false, trans()->get('lang.eamail_error'));
             }
-            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                $scene->email_sender_id
+            );
             // 邮箱账号配置信息
             $config = [
-                'host' =>  $senderEmail->host,
-                'port' =>  $senderEmail->port,
-                'encryption' =>  $senderEmail->encryption,
-                'username' =>  $senderEmail->email,
-                'password' =>  $senderEmail->password
+                'host'       => $senderEmail->host,
+                'port'       => $senderEmail->port,
+                'encryption' => $senderEmail->encryption,
+                'username'   => $senderEmail->email,
+                'password'   => $senderEmail->password
             ];
             $this->SetConfig($config);
-            if($scene->alternate_email_id){
+            if ($scene->alternate_email_id) {
                 // 备用邮箱配置信息
-                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupSenderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                    $scene->alternate_email_id
+                );
                 $BackupConfig = [
-                    'host' =>  $BackupSenderEmail->host,
-                    'port' =>  $BackupSenderEmail->port,
-                    'encryption' =>  $BackupSenderEmail->encryption,
-                    'username' =>  $BackupSenderEmail->email,
-                    'password' =>  $BackupSenderEmail->password
+                    'host'       => $BackupSenderEmail->host,
+                    'port'       => $BackupSenderEmail->port,
+                    'encryption' => $BackupSenderEmail->encryption,
+                    'username'   => $BackupSenderEmail->email,
+                    'password'   => $BackupSenderEmail->password
                 ];
-                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+                $this->SetConfig($BackupConfig, 'backups');// 若发送失败，则使用备用邮箱发送
             }
             try {
-                $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+                $this->SendEmail($email, $scene->body, $user, $scene->title, $senderEmail->email);
             } catch (\Exception $e) {
-                if($scene->alternate_email_id){
-                    $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                if ($scene->alternate_email_id) {
+                    $this->SendEmail($email, $scene->body, $user, $scene->title, $BackupSenderEmail->email, 'backups');
                 }
             }
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
-            ReturnJson(true,trans()->get('lang.eamail_success'));
+            EmailLog::AddLog(1, $scene->email_sender_id, $email, $scene->id, $user);
+            ReturnJson(true, trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
-            ReturnJson(FALSE,$e->getMessage());
+            EmailLog::AddLog(1, $scene->email_sender_id, $email, $scene->id, $user);
+            ReturnJson(false, $e->getMessage());
         }
     }
+
     /**
      * reset password eamil send Test
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    public function passwordTest(Request $request){
+    public function passwordTest(Request $request) {
         $id = $request->user->id;
         $user = User::find($id);
         $user = $user ? $user->toArray() : [];
@@ -315,155 +350,141 @@ class SiteEmailController extends Controller
         $user['token'] = base64_encode($token);
         $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $user, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
-
-    
     /**
      * 发送订单邮件
+     *
      * @param $id 主键ID
      */
-    protected function sendOrderEmail(Request $request)
-    {
-
-        $record = (new Order())->findOrFail($request->id);
-
-        $code = $record->is_pay == 1?'paid':'order';
-
-        $scene = EmailScene::where('action',$code)->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
-        if(empty($scene)){
-            ReturnJson(FALSE,trans()->get('lang.eamail_error'));
-        }
-        if($scene->status == 0)
-        {
-            ReturnJson(FALSE,trans()->get('lang.eamail_error'));
-        }
+    protected function sendOrderEmail(Request $request) {
         try {
-            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
-            // 收件人的数组
-            $emails = explode(',',$scene->email_recipient);
-            // 再加上订单上的邮箱
-            $emails[] = $record->email;
-            array_unique($emails);
-            // 邮箱账号配置信息
-            $config = [
-                'host' =>  $senderEmail->host,
-                'port' =>  $senderEmail->port,
-                'encryption' =>  $senderEmail->encryption,
-                'username' =>  $senderEmail->email,
-                'password' =>  $senderEmail->password
+            $id = $request->id;
+            $record = (new Order())->findOrFail($id);
+            if ($record->status == 1) {
+                $code = 'placeOrder';
+            } else {
+                $code = 'paySuccess';
+            }
+            $site = $request->header('site');
+            $siteInfo = Site::where('name', $site)->first();
+            if (empty($siteInfo)) {
+                ReturnJson(false, '站点配置异常');
+            }
+            $domain = $siteInfo->domain;
+//            $domain = '127.0.0.1:8081';
+//            $id = 1672;
+//            $site = 'mmgcn';
+            $url = $domain.'/api/third/send-email';
+            $reqData = [
+                'id'   => $id,
+                'code' => $code,
             ];
-            $this->SetConfig($config);
-            if($scene->alternate_email_id){
-                // 备用邮箱配置信息
-                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
-                $BackupConfig = [
-                    'host' =>  $BackupSenderEmail->host,
-                    'port' =>  $BackupSenderEmail->port,
-                    'encryption' =>  $BackupSenderEmail->encryption,
-                    'username' =>  $BackupSenderEmail->email,
-                    'password' =>  $BackupSenderEmail->password
-                ];
-                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+            $reqData['sign'] = $this->makeSign($reqData, $site);
+            $response = Http::post($url, $reqData);
+            $resp = $response->json();
+            if ($resp['code'] == 200) {
+                ReturnJson(true, '发送成功');
+            } else {
+                ReturnJson(false, '发送失败,未知错误'.$resp['msg']);
             }
-
-            foreach ($emails as $email) {
-                try {
-                    $this->SendEmail($email,$scene->body,[],$scene->title,$senderEmail->email);
-                } catch (\Exception $e) {
-                    if($scene->alternate_email_id){
-                        $this->SendEmail($email,$scene->body,[],$scene->title,$BackupSenderEmail->email,'backups');
-                    }
-                }
-            }
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,[]);
-            ReturnJson(true,trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,[]);
-            ReturnJson(FALSE,$e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
-    
+
     /**
      * reset password eamil send
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    public function resetPassword(Request $request){
+    public function resetPassword(Request $request) {
         try {
-            if(!isset($request->email) || empty($request->email)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_empaty'));
-            }   
+            if (!isset($request->email) || empty($request->email)) {
+                ReturnJson(false, trans()->get('lang.eamail_empaty'));
+            }
             $email = $request->email;
-            $user = User::where('email',$email)->first();
-            if(empty($user)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_undefined'));
+            $user = User::where('email', $email)->first();
+            if (empty($user)) {
+                ReturnJson(false, trans()->get('lang.eamail_undefined'));
             }
             $user = $user->toArray();
             $token = $user['email'].'&'.$user['id'];
             $user['token'] = base64_encode($token);
             $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
-            $scene = EmailScene::where('action','password')->select(['id','name','title','body','email_sender_id','email_recipient','status','alternate_email_id'])->first();
-            if(empty($scene)){
-                ReturnJson(FALSE,trans()->get('lang.eamail_error'));
+            $scene = EmailScene::where('action', 'password')->select(
+                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
+            )->first();
+            if (empty($scene)) {
+                ReturnJson(false, trans()->get('lang.eamail_error'));
             }
-            $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->email_sender_id);
+            $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                $scene->email_sender_id
+            );
             // 邮箱账号配置信息
             $config = [
-                'host' =>  $senderEmail->host,
-                'port' =>  $senderEmail->port,
-                'encryption' =>  $senderEmail->encryption,
-                'username' =>  $senderEmail->email,
-                'password' =>  $senderEmail->password
+                'host'       => $senderEmail->host,
+                'port'       => $senderEmail->port,
+                'encryption' => $senderEmail->encryption,
+                'username'   => $senderEmail->email,
+                'password'   => $senderEmail->password
             ];
             $this->SetConfig($config);
-            if($scene->alternate_email_id){
+            if ($scene->alternate_email_id) {
                 // 备用邮箱配置信息
-                $BackupSenderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene->alternate_email_id);
+                $BackupSenderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                    $scene->alternate_email_id
+                );
                 $BackupConfig = [
-                    'host' =>  $BackupSenderEmail->host,
-                    'port' =>  $BackupSenderEmail->port,
-                    'encryption' =>  $BackupSenderEmail->encryption,
-                    'username' =>  $BackupSenderEmail->email,
-                    'password' =>  $BackupSenderEmail->password
+                    'host'       => $BackupSenderEmail->host,
+                    'port'       => $BackupSenderEmail->port,
+                    'encryption' => $BackupSenderEmail->encryption,
+                    'username'   => $BackupSenderEmail->email,
+                    'password'   => $BackupSenderEmail->password
                 ];
-                $this->SetConfig($BackupConfig,'backups');// 若发送失败，则使用备用邮箱发送
+                $this->SetConfig($BackupConfig, 'backups');// 若发送失败，则使用备用邮箱发送
             }
             try {
-                $this->SendEmail($email,$scene->body,$user,$scene->title,$senderEmail->email);
+                $this->SendEmail($email, $scene->body, $user, $scene->title, $senderEmail->email);
             } catch (\Exception $e) {
-                if($scene->alternate_email_id){
-                    $this->SendEmail($email,$scene->body,$user,$scene->title,$BackupSenderEmail->email,'backups');
+                if ($scene->alternate_email_id) {
+                    $this->SendEmail($email, $scene->body, $user, $scene->title, $BackupSenderEmail->email, 'backups');
                 }
             }
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
-            ReturnJson(true,trans()->get('lang.eamail_success'));
+            EmailLog::AddLog(1, $scene->email_sender_id, $email, $scene->id, $user);
+            ReturnJson(true, trans()->get('lang.eamail_success'));
         } catch (\Exception $e) {
-            EmailLog::AddLog(1,$scene->email_sender_id,$email,$scene->id,$user);
-            ReturnJson(FALSE,$e->getMessage());
+            EmailLog::AddLog(1, $scene->email_sender_id, $email, $scene->id, $user);
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 重置密码的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function resetPasswordTest($request)
-    {
+    private function resetPasswordTest($request) {
         $id = $request->user->id;
         $user = User::find($id);
         $user = $user ? $user->toArray() : [];
@@ -471,199 +492,218 @@ class SiteEmailController extends Controller
         $user['token'] = base64_encode($token);
         $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $user, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 注册成功的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function registerSuccessTest($request)
-    {
-        $user = User::where('email',$request->test)->first();
-        if(!$user){
+    private function registerSuccessTest($request) {
+        $user = User::where('email', $request->test)->first();
+        if (!$user) {
             $user = User::first();
         }
         $data = $user ? $user->toArray() : [];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
+        $siteData = Site::where('name', $siteName)->first();
         $data['domain'] = 'https://'.$siteData['domain'];
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'verifyUrl' => '',
-            'userName' => $data['name'],
-            'area' => City::where('id',$data['area_id'])->value('name'),
+            'homePage'     => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'      => $data['domain'],
+            'backendUrl'   => $ImageDomain ? $ImageDomain : '',
+            'verifyUrl'    => '',
+            'userName'     => $data['name'],
+            'area'         => City::where('id', $data['area_id'])->value('name'),
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 联系我们的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function contactUsTest($request)
-    {
+    private function contactUsTest($request) {
         $ContactUs = ContactUs::first();
         $data = $ContactUs ? $ContactUs->toArray() : [];
-        $data['area_id'] = City::where('id',$data['area_id'])->value('name');
+        $data['area_id'] = City::where('id', $data['area_id'])->value('name');
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $siteData = Site::where('name', $siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'userName' => $data['name'] ? $data['name'] : '',
-            'email' => $data['email'],
-            'company' => $data['company'],
-            'area' => City::where('id',$data['area_id'])->value('name'),
-            'phone' => $data['phone'] ? $data['phone'] : '',
+            'homePage'     => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'      => $data['domain'],
+            'userName'     => $data['name'] ? $data['name'] : '',
+            'email'        => $data['email'],
+            'company'      => $data['company'],
+            'area'         => City::where('id', $data['area_id'])->value('name'),
+            'phone'        => $data['phone'] ? $data['phone'] : '',
             'plantTimeBuy' => $data['buy_time'],
-            'content' => $data['remarks'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'content'      => $data['remarks'],
+            'backendUrl'   => $ImageDomain ? $ImageDomain : '',
             'plantTimeBuy' => $data['buy_time'],
             'plantTimeBuy' => $data['buy_time'],
             'plantTimeBuy' => $data['buy_time'],
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 申请样本的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function productSampleTest($request)
-    {
+    private function productSampleTest($request) {
         $ContactUs = ContactUs::first();
         $data = $ContactUs ? $ContactUs->toArray() : [];
-        $data['area_id'] = City::where('id',$data['area_id'])->value('name');
+        $data['area_id'] = City::where('id', $data['area_id'])->value('name');
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $siteData = Site::where('name', $siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'userName' => $data['name'] ? $data['name'] : '',
-            'email' => $data['email'],
-            'company' => $data['company'],
-            'area' => City::where('id',$data['area_id'])->value('name'),
-            'phone' => $data['phone'] ? $data['phone'] : '',
+            'homePage'     => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'      => $data['domain'],
+            'userName'     => $data['name'] ? $data['name'] : '',
+            'email'        => $data['email'],
+            'company'      => $data['company'],
+            'area'         => City::where('id', $data['area_id'])->value('name'),
+            'phone'        => $data['phone'] ? $data['phone'] : '',
             'plantTimeBuy' => $data['buy_time'],
-            'content' => $data['remarks'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'content'      => $data['remarks'],
+            'backendUrl'   => $ImageDomain ? $ImageDomain : '',
             'plantTimeBuy' => $data['buy_time'],
             'plantTimeBuy' => $data['buy_time'],
             'plantTimeBuy' => $data['buy_time'],
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 申请样本的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function sampleRequestTest($request)
-    {
+    private function sampleRequestTest($request) {
         $id = $request->user->id;
         $user = User::find($id);
         $user = $user ? $user->toArray() : [];
@@ -671,268 +711,303 @@ class SiteEmailController extends Controller
         $user['token'] = base64_encode($token);
         $user['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$user,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $user, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 定制报告的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function customizedTest($request)
-    {
+    private function customizedTest($request) {
         $ContactUs = ContactUs::first();
         $data = $ContactUs ? $ContactUs->toArray() : [];
-        $data['area_id'] = City::where('id',$data['area_id'])->value('name');
+        $data['area_id'] = City::where('id', $data['area_id'])->value('name');
         $token = $data['email'].'&'.$data['id'];
         $data['token'] = base64_encode($token);
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
+        $siteData = Site::where('name', $siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'userName' => $data['name'] ? $data['name'] : '',
-            'email' => $data['email'],
-            'company' => $data['company'],
-            'area' => City::where('id',$data['area_id'])->value('name'),
-            'phone' => $data['phone'] ? $data['phone'] : '',
+            'homePage'     => $data['domain'],
+            'myAccountUrl' => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl' => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'      => $data['domain'],
+            'userName'     => $data['name'] ? $data['name'] : '',
+            'email'        => $data['email'],
+            'company'      => $data['company'],
+            'area'         => City::where('id', $data['area_id'])->value('name'),
+            'phone'        => $data['phone'] ? $data['phone'] : '',
             'plantTimeBuy' => $data['buy_time'],
-            'content' => $data['remarks'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
+            'content'      => $data['remarks'],
+            'backendUrl'   => $ImageDomain ? $ImageDomain : '',
             'plantTimeBuy' => $data['buy_time'],
             'plantTimeBuy' => $data['buy_time'],
             'plantTimeBuy' => $data['buy_time'],
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 下单付款成功的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function paymentTest($request)
-    {
-        $user = User::where('email',$request->test)->first();
-        if($user){
-            $Order = Order::where('user_id',$user->id)->where('is_pay',0)->first();
-            if(!$Order){
-                $Order = Order::where('is_pay',1)->first();
+    private function paymentTest($request) {
+        $user = User::where('email', $request->test)->first();
+        if ($user) {
+            $Order = Order::where('user_id', $user->id)->where('is_pay', 0)->first();
+            if (!$Order) {
+                $Order = Order::where('is_pay', 1)->first();
             }
         } else {
-            $Order = Order::where('is_pay',1)->first();
+            $Order = Order::where('is_pay', 1)->first();
         }
         $data = $Order ? $Order->toArray() : [];
-        if(!$data){
+        if (!$data) {
             ReturnJson(false, '未找到订单数据');
         }
         $user = User::find($data['user_id']);
         $user = $user ? $user->toArray() : [];
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
-        $PayName = Pay::where('id',$data['pay_type'])->value('name');
-        $OrderGoods = OrderGoods::where('order_id',$data['id'])->first();
-        $priceEdition = PriceEditionValue::where('id',$OrderGoods['price_edition'])->first();
-        $language = Language::where('id',$priceEdition['language_id'])->value('name');
-        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
-        if($Products){
+        $siteData = Site::where('name', $siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
+        $PayName = Pay::where('id', $data['pay_type'])->value('name');
+        $OrderGoods = OrderGoods::where('order_id', $data['id'])->first();
+        $priceEdition = PriceEditionValue::where('id', $OrderGoods['price_edition'])->first();
+        $language = Language::where('id', $priceEdition['language_id'])->value('name');
+        $Products = Products::select(
+            ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+        )->whereIn('id', explode(',', $OrderGoods['goods_id']))->get()->toArray();
+        if ($Products) {
             foreach ($Products as $key => $value) {
                 $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                if(empty($value['thumb'])){
-                    $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
-                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$categoryThumb;
+                if (empty($value['thumb'])) {
+                    $categoryThumb = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+                    $Products[$key]['thumb'] = rtrim($ImageDomain, '/').$categoryThumb;
                 } else {
-                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                    $Products[$key]['thumb'] = rtrim($ImageDomain, '/').$value['thumb'];
                 }
             }
         }
-        $cityName = City::where('id',$data['city_id'])->value('name');
-        $provinceName = City::where('id',$data['province_id'])->value('name');
-        $addres = $provinceName .' '.$cityName.' '.$data['address'];
+        $cityName = City::where('id', $data['city_id'])->value('name');
+        $provinceName = City::where('id', $data['province_id'])->value('name');
+        $addres = $provinceName.' '.$cityName.' '.$data['address'];
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'userName' => $data['username'] ? $data['username'] : '',
-            'userEmail' => $data['email'],
-            'userCompany' => $data['company'],
-            'userAddress' => $addres,
-            'userPhone' => $data['phone'] ? $data['phone'] : '',
-            'orderStatus' => '已付款',
-            'paymentMethod' => $PayName,
-            'orderAmount' => $data['order_amount'],
+            'homePage'           => $data['domain'],
+            'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'            => $data['domain'],
+            'backendUrl'         => $ImageDomain ? $ImageDomain : '',
+            'userName'           => $data['username'] ? $data['username'] : '',
+            'userEmail'          => $data['email'],
+            'userCompany'        => $data['company'],
+            'userAddress'        => $addres,
+            'userPhone'          => $data['phone'] ? $data['phone'] : '',
+            'orderStatus'        => '已付款',
+            'paymentMethod'      => $PayName,
+            'orderAmount'        => $data['order_amount'],
             'preferentialAmount' => $data['order_amount'] - $data['actually_paid'],
-            'orderActuallyPaid' => $data['actually_paid'],
-            'orderNumber' => $data['order_number'],
-            'paymentLink' => $siteData['domain'].'/api/order/pay?order_id='.$data['id'],
-            'orderDetails' => $siteData['domain'].'/account?orderdetails='.$data['id'],
-            'goods' => $Products,
-            'userId' => $user['id']
+            'orderActuallyPaid'  => $data['actually_paid'],
+            'orderNumber'        => $data['order_number'],
+            'paymentLink'        => $siteData['domain'].'/api/order/pay?order_id='.$data['id'],
+            'orderDetails'       => $siteData['domain'].'/account?orderdetails='.$data['id'],
+            'goods'              => $Products,
+            'userId'             => $user['id']
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
     }
 
     /**
      * 下单后未付款的场景的测试请求
+     *
      * @param use Illuminate\Http\Request $request;
+     *
      * @return response Code
      */
-    private function placeOrderTest($request)
-    {
-        $user = User::where('email',$request->test)->first();
-        if($user){
-            $Order = Order::where('user_id',$user->id)->where('is_pay',0)->first();
-            if(!$Order){
-                $Order = Order::where('is_pay',1)->first();
+    private function placeOrderTest($request) {
+        $user = User::where('email', $request->test)->first();
+        if ($user) {
+            $Order = Order::where('user_id', $user->id)->where('is_pay', 0)->first();
+            if (!$Order) {
+                $Order = Order::where('is_pay', 1)->first();
             }
         } else {
-            $Order = Order::where('is_pay',1)->first();
+            $Order = Order::where('is_pay', 1)->first();
         }
         $data = $Order ? $Order->toArray() : [];
-        if(!$data){
+        if (!$data) {
             ReturnJson(false, '未找到订单数据');
         }
         $user = User::find($data['user_id']);
         $user = $user ? $user->toArray() : [];
         $data['domain'] = 'http://'.$_SERVER['SERVER_NAME'];
         $siteName = $request->header('Site');
-        $siteData = Site::where('name',$siteName)->first();
-        $ImageDomain = AliyunOssConfig::where('site_id',$siteData['id'])->value('domain');
-        $PayName = Pay::where('id',$data['pay_type'])->value('name');
-        $OrderGoods = OrderGoods::where('order_id',$data['id'])->first();
-        $priceEdition = PriceEditionValue::where('id',$OrderGoods['price_edition'])->first();
-        $language = Language::where('id',$priceEdition['language_id'])->value('name');
-        $Products = Products::select(['url as link','thumb','name','id as product_id','published_date','category_id'])->whereIn('id',explode(',',$OrderGoods['goods_id']))->get()->toArray();
-        if($Products){
+        $siteData = Site::where('name', $siteName)->first();
+        $ImageDomain = AliyunOssConfig::where('site_id', $siteData['id'])->value('domain');
+        $PayName = Pay::where('id', $data['pay_type'])->value('name');
+        $OrderGoods = OrderGoods::where('order_id', $data['id'])->first();
+        $priceEdition = PriceEditionValue::where('id', $OrderGoods['price_edition'])->first();
+        $language = Language::where('id', $priceEdition['language_id'])->value('name');
+        $Products = Products::select(
+            ['url as link', 'thumb', 'name', 'id as product_id', 'published_date', 'category_id']
+        )->whereIn('id', explode(',', $OrderGoods['goods_id']))->get()->toArray();
+        if ($Products) {
             foreach ($Products as $key => $value) {
                 $Products[$key]['goods_number'] = $OrderGoods['goods_number'] ? intval($OrderGoods['goods_number']) : 0;
                 $Products[$key]['language'] = $language;
                 $Products[$key]['price_edition'] = $priceEdition['name'];
                 $Products[$key]['goods_present_price'] = $OrderGoods['goods_present_price'];
-                if(empty($value['thumb'])){
-                    $categoryThumb = ProductsCategory::where('id',$value['category_id'])->value('thumb');
-                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$categoryThumb;
+                if (empty($value['thumb'])) {
+                    $categoryThumb = ProductsCategory::where('id', $value['category_id'])->value('thumb');
+                    $Products[$key]['thumb'] = rtrim($ImageDomain, '/').$categoryThumb;
                 } else {
-                    $Products[$key]['thumb'] = rtrim($ImageDomain,'/').$value['thumb'];
+                    $Products[$key]['thumb'] = rtrim($ImageDomain, '/').$value['thumb'];
                 }
             }
         }
-        $cityName = City::where('id',$data['city_id'])->value('name');
-        $provinceName = City::where('id',$data['province_id'])->value('name');
-        $addres = $provinceName .' '.$cityName.' '.$data['address'];
+        $cityName = City::where('id', $data['city_id'])->value('name');
+        $provinceName = City::where('id', $data['province_id'])->value('name');
+        $addres = $provinceName.' '.$cityName.' '.$data['address'];
         $data2 = [
-            'homePage' => $data['domain'],
-            'myAccountUrl' => rtrim($data['domain'],'/').'/account/account-infor',
-            'contactUsUrl' => rtrim($data['domain'],'/').'/contact-us',
-            'homeUrl' => $data['domain'],
-            'backendUrl' => $ImageDomain ? $ImageDomain : '',
-            'userName' => $data['username'] ? $data['username'] : '',
-            'userEmail' => $data['email'],
-            'userCompany' => $data['company'],
-            'userAddress' => $addres,
-            'userPhone' => $data['phone'] ? $data['phone'] : '',
-            'orderStatus' => '未付款',
-            'paymentMethod' => $PayName,
-            'orderAmount' => $data['order_amount'],
+            'homePage'           => $data['domain'],
+            'myAccountUrl'       => rtrim($data['domain'], '/').'/account/account-infor',
+            'contactUsUrl'       => rtrim($data['domain'], '/').'/contact-us',
+            'homeUrl'            => $data['domain'],
+            'backendUrl'         => $ImageDomain ? $ImageDomain : '',
+            'userName'           => $data['username'] ? $data['username'] : '',
+            'userEmail'          => $data['email'],
+            'userCompany'        => $data['company'],
+            'userAddress'        => $addres,
+            'userPhone'          => $data['phone'] ? $data['phone'] : '',
+            'orderStatus'        => '未付款',
+            'paymentMethod'      => $PayName,
+            'orderAmount'        => $data['order_amount'],
             'preferentialAmount' => $data['order_amount'] - $data['actually_paid'],
-            'orderActuallyPaid' => $data['actually_paid'],
-            'orderNumber' => $data['order_number'],
-            'paymentLink' => $siteData['domain'].'/api/order/pay?order_id='.$data['id'],
-            'orderDetails' => $siteData['domain'].'/account?orderdetails='.$data['id'],
-            'goods' => $Products,
-            'userId' => $user['id']
+            'orderActuallyPaid'  => $data['actually_paid'],
+            'orderNumber'        => $data['order_number'],
+            'paymentLink'        => $siteData['domain'].'/api/order/pay?order_id='.$data['id'],
+            'orderDetails'       => $siteData['domain'].'/account?orderdetails='.$data['id'],
+            'goods'              => $Products,
+            'userId'             => $user['id']
         ];
-        $siteInfo = SystemValue::whereIn('key',['siteName','sitePhone','siteEmail'])->pluck('value','key')->toArray();
-        if($siteInfo){
+        $siteInfo = SystemValue::whereIn('key', ['siteName', 'sitePhone', 'siteEmail'])->pluck('value', 'key')->toArray(
+        );
+        if ($siteInfo) {
             foreach ($siteInfo as $key => $value) {
                 $data[$key] = $value;
             }
         }
-        $data = array_merge($data2,$data);
+        $data = array_merge($data2, $data);
         $scene = $request->all();
-        $senderEmail = Email::select(['name','email','host','port','encryption','password'])->find($scene['email_sender_id']);
+        $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+            $scene['email_sender_id']
+        );
         // 收件人的数组
-        $emails = explode(',',$scene['email_recipient']);
+        $emails = explode(',', $scene['email_recipient']);
         // 邮箱账号配置信息
         $config = [
-            'host' =>  $senderEmail->host,
-            'port' =>  $senderEmail->port,
-            'encryption' =>  $senderEmail->encryption,
-            'username' =>  $senderEmail->email,
-            'password' =>  $senderEmail->password
+            'host'       => $senderEmail->host,
+            'port'       => $senderEmail->port,
+            'encryption' => $senderEmail->encryption,
+            'username'   => $senderEmail->email,
+            'password'   => $senderEmail->password
         ];
         $this->SetConfig($config);
         $email = $request->test ? $request->test : $request->user->email;
-        $this->SendEmail($email,$scene['body'],$data,$scene['title'],$senderEmail->email);
+        $this->SendEmail($email, $scene['body'], $data, $scene['title'], $senderEmail->email);
+
         return true;
+    }
+
+    public function makeSign($data, $signkey) {
+        unset($data['sign']);
+        $signStr = '';
+        ksort($data);
+        foreach ($data as $key => $value) {
+            $signStr .= $key.'='.$value.'&';
+        }
+        $signStr .= "key={$signkey}";
+        dump($signStr);
+
+        return md5($signStr);
     }
 }
