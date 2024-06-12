@@ -41,16 +41,19 @@ class SiteUploads
      * @return string 文件URL
      */
     public static function uploads($file,$path,$name){
+        //拼接年月日路径
+        $path = $path.'/'.date('Y').'/'.date('m').'/'.date('d');
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
+        $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
         if(env('OSS_ACCESS_IS_OPEN') == true){
             $ossClient = self::OssClient();
-            $res = $ossClient->uploads($path.'/'. $name, $FilePath.$name);
+            $res = $ossClient->uploads($ossPath, $FilePath.$name);
             if($res !== true){
                 ReturnJson(false,$res);
             }
         }
-        return '/'.trim($path,'/').'/'.$name;
+        return $ossPath;
     }
 
     public static function GetRootPath($path = ''){
