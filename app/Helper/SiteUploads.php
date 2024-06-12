@@ -42,7 +42,9 @@ class SiteUploads
      */
     public static function uploads($file,$path,$name){
         //拼接年月日路径
-        $path = $path.'/'.date('Y').'/'.date('m').'/'.date('d');
+        $year = date('Y');
+        $shortYear = (int)$year % 100; // 提取年份的最后两位
+        $path = $path.'/'.$shortYear.'-'.date('m');
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
         $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
