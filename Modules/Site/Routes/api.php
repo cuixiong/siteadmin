@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\JwtMiddleware;
+use App\Http\Middleware\SiteRuleMiddleware;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 
@@ -21,6 +22,7 @@ Route::middleware([
     'api',
     InitializeTenancyByRequestData::class,
     JwtMiddleware::class,
+    SiteRuleMiddleware::class,
     'language' // 语言中间件
 ])->prefix('site')->group(function () {
     Route::get('site/select', [\Modules\Site\Http\Controllers\SiteController::class, 'select']);

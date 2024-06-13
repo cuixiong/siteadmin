@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\JwtMiddleware;
+use App\Http\Middleware\RuleMiddleware;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([
     'api',
     JwtMiddleware::class, // JWT验证中间件
+    RuleMiddleware::class,
     'language' // 语言中间件
 ])->prefix('admin')->group(function () {
     Route::post('update/info',[Modules\Admin\Http\Controllers\UserController::class, 'updateInfo'])->name('个人信息修改');
@@ -163,7 +165,7 @@ Route::middleware([
         Route::get('list', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'list'])->name('升级日志:日志列表');
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'searchDroplist'])->name('升级日志:搜索下拉列表数据');
     });
-    
+
     // Country 控制器
     Route::prefix('country')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\CountryController::class, 'list'])->name('国家管理:地区列表');
@@ -172,7 +174,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
         Route::post('change-sort', [Modules\Admin\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
     });
-    
+
     // City 控制器
     Route::prefix('city')->group(function () {
 
@@ -265,7 +267,7 @@ Route::middleware([
         Route::get('options', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'options'])->name('定时任务:字典数据');
         Route::get('destroy', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'destroy'])->name('定时任务:删除操作');
     });
-    
+
 });
 
 
@@ -382,13 +384,13 @@ Route::middleware([
         Route::post('commit-history', [Modules\Admin\Http\Controllers\SiteController::class, 'CommitHistory'])->name('站点管理:git提交记录历史');
         Route::post('rollback-code', [Modules\Admin\Http\Controllers\SiteController::class, 'rollbackCode'])->name('站点管理:git版本回退');
         Route::post('set-header-title', [Modules\Admin\Http\Controllers\SiteController::class, 'setHeaderTitle'])->name('站点管理:设置自定义表头');
-        
+
     });
-    
+
     // SiteUpdateLog 控制器
     Route::prefix('site-update-log')->group(function () {
         Route::post('destroy', [Modules\Admin\Http\Controllers\SiteUpdateLogController::class, 'destroy'])->name('升级日志:日志删除');
-        
+
     });
 
     // Region 控制器
@@ -397,7 +399,7 @@ Route::middleware([
         Route::post('update', [Modules\Admin\Http\Controllers\RegionController::class, 'update'])->name('地区管理:地区编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\RegionController::class, 'destroy'])->name('地区管理:地区删除');
     });
-    
+
     // Country 控制器
     Route::prefix('country')->group(function () {
 
@@ -490,13 +492,13 @@ Route::middleware([
     Route::get('admin/dictionary/to-redis',[Modules\Admin\Http\Controllers\DictionaryController::class, 'ToRedis'])->name('字典:全量同步到redis');
     Route::get('admin/country/to-redis',[Modules\Admin\Http\Controllers\CountryController::class, 'ToRedis'])->name('国家:全量同步到redis');
 
-    
+
     Route::get('admin/dictionary/save-to-site',[Modules\Admin\Http\Controllers\DictionaryController::class, 'test'])->name('测试:字典同步测试');
     Route::get('admin/country/save-to-site',[Modules\Admin\Http\Controllers\CountryController::class, 'test'])->name('测试:国家同步测试');
     Route::get('admin/price-edition/save-to-site',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'test'])->name('测试:价格同步测试');
     Route::get('admin/language/save-to-site',[Modules\Admin\Http\Controllers\LanguageController::class, 'test'])->name('测试:语言同步测试');
 
-    
+
 });
 
 // 暂时测试路由

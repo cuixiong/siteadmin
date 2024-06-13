@@ -103,7 +103,7 @@ class RuleController extends CrudController
             sort($group_data, SORT_REGULAR);
             $data = [];
             $name = '';
-            for ($i = 0; $i < count($group_data); $i++) { 
+            for ($i = 0; $i < count($group_data); $i++) {
                 if(empty($name)){
                     if(isset($group_data[$i]['name'])){
                         $name = $group_data[$i]['name'];
@@ -224,7 +224,7 @@ class RuleController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
-            if (!$record->update($input)) { 
+            if (!$record->update($input)) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
             $childerIds = Rule::TreeGetChildIds($request->id);

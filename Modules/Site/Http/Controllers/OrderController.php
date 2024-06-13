@@ -40,7 +40,10 @@ class OrderController extends CrudController
             }
             $fieldsList = ['id', 'order_number', 'user_id', 'is_pay', 'pay_time', 'pay_type', 'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at'];
             $model = $model->select($fieldsList);
-            // 数据排序
+            // 数据排序. 默认降序
+            if(empty($request->sort )){
+                $request->sort = 'desc';
+            }
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
