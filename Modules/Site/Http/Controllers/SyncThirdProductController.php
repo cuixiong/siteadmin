@@ -73,7 +73,6 @@ class SyncThirdProductController extends CrudController {
 
             return false;
         }
-
         tenancy()->initialize($site);
         //默认出版商
         $publisherIds = Site::where('name', $site)->value('publisher_id');
@@ -105,15 +104,12 @@ class SyncThirdProductController extends CrudController {
         } else {
             $userID = 0;
         }
-
         $errIdList = [];
         $succIdList = [];
-
         // 从数组中提取出需要排序的列
         $idsSort = array_column($respDataList, 'id');
         // 使用 array_multisort 对原数组进行升序排序
         array_multisort($idsSort, SORT_ASC, $respDataList);
-
         foreach ($respDataList as &$row) {
             $count++;
             try {
@@ -430,6 +426,8 @@ class SyncThirdProductController extends CrudController {
             'update_count'  => $updateCount,
             'ingore_count'  => $errorCount,
             'ingore_detail' => $details,
+            'created_at'    => time(),
+            'updated_at'    => time(),
         ];
         $logModel->insert($logData);
         $this->notifyThirdRes($succIdList, $errIdList);
