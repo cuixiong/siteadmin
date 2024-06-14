@@ -73,6 +73,8 @@ class SyncThirdProductController extends CrudController {
 
             return false;
         }
+
+        tenancy()->initialize($site);
         //默认出版商
         $publisherIds = Site::where('name', $site)->value('publisher_id');
         $publisherIdArray = explode(',', $publisherIds);

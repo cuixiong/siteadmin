@@ -18,6 +18,8 @@ class SyncDataCommand extends Command {
         if(!empty($option['site'] )){
             $site = $option['site'];
             $syncThirdProduct->site = $site;
+        }else{
+            echo "参数异常".PHP_EOL;die;
         }
 
         echo "开始同步数据".PHP_EOL;
