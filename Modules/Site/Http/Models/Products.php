@@ -55,6 +55,7 @@ class Products extends Base {
             'current_scale',    //当前规模
             'future_scale',    //未来规模
             'year',    //数据年
+            'third_sync_id',    //第三方同步数据的id
         ];
     // protected static function boot()
     // {

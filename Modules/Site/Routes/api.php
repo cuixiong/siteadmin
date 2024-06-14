@@ -557,6 +557,12 @@ Route::middleware([
     Route::get('test2', [Modules\Site\Http\Controllers\TestController::class, 'test2'])->name('站点测试:测试接口');
     Route::get('test3', [Modules\Site\Http\Controllers\TestController::class, 'test3'])->name('站点测试:测试接口');
     Route::get('test-search', [Modules\Site\Http\Controllers\TestController::class, 'searchTest'])->name('站点测试:测试查询');
+
+    // sync报告
+    Route::prefix('sync-third-product')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'list'])->name('同步报告:同步日志列表');
+        Route::get('sync', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'sync'])->name('同步报告:同步数据');
+    });
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

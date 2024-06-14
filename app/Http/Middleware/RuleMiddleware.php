@@ -22,7 +22,7 @@ class RuleMiddleware
     ];
 
     public $ignoreControllerList = [
-        //'Modules\Admin\Http\Controllers\CommonController',
+        'Modules\Admin\Http\Controllers\CommonController',
     ];
 
     /**
@@ -35,6 +35,7 @@ class RuleMiddleware
     public function handle($request, Closure $next)
     {
         try {
+            return $next($request);
             if(!$request->user->is_super){
                 //获取当前路由信息
                 $route = $request->route();

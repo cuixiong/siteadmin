@@ -378,7 +378,7 @@ class SiteEmailController extends Controller {
             $id = $request->id;
             $record = (new Order())->findOrFail($id);
             //已支付与已完成
-            if (in_array($record->status, [2, 4])) {
+            if (in_array($record->is_pay, [2, 4])) {
                 $code = 'paySuccess';
             } else {
                 $code = 'placeOrder';
