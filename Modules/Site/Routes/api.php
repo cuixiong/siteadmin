@@ -573,6 +573,23 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\SyncFieldController::class, 'update'])->name('同步字段:数据更新');
         Route::post('destroy', [Modules\Site\Http\Controllers\SyncFieldController::class, 'destroy'])->name('同步字段:数据删除');
         Route::post('form/{id}', [Modules\Site\Http\Controllers\SyncFieldController::class, 'form'])->name('同步字段:详情');
+
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SyncFieldController::class, 'searchDroplist'])->name('同步出版商:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SyncFieldController::class, 'changeStatus'])->name('同步出版商:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\SyncFieldController::class, 'changeSort'])->name('同步出版商:排序修改');
+    });
+
+    // sync出版商
+    Route::prefix('sync-third-publisher')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'list'])->name('同步出版商:列表');
+        Route::post('store', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'store'])->name('同步出版商:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'update'])->name('同步出版商:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'destroy'])->name('同步出版商:数据删除');
+        Route::post('form/{id}', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'form'])->name('同步出版商:详情');
+
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'searchDroplist'])->name('同步出版商:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'changeStatus'])->name('同步出版商:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'changeSort'])->name('同步出版商:排序修改');
     });
 
 });

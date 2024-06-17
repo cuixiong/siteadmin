@@ -36,3 +36,21 @@ function currentLimit($request, $second = 10, $site = '', $userId = 0) {
     Redis::setex($currentLimitKey, $second, 1);
 }
 
+/**
+ * 转换前端需要的Select格式数据
+ * @param $list
+ *
+ * @return array
+ */
+function convertToFormData($list){
+    $selectList = [];
+    foreach ($list as $key => $value){
+        $data = [];
+        $data['label'] = $value;
+        $data['value'] = $key;
+        $selectList[] = $data;
+    }
+    return $selectList;
+}
+
+
