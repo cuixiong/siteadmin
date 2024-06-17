@@ -17,6 +17,8 @@ use App\Jobs\SyncSphinxIndex;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
@@ -26,12 +28,69 @@ use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Http\Models\SyncField;
 use Modules\Site\Http\Models\SyncLog;
 use Modules\Site\Http\Models\SyncPublisher;
+use Modules\Site\Http\Models\SystemValue;
 
 class SyncThirdProductController extends CrudController {
     public $site            = '';
     public $productCategory = [];
     public $regionList      = [];
     public $senWords        = [];
+    public $autoSyncDataKey = 'autoSyncData';
+    public $syncProductUrlKey = 'syncProductUrl';
+    public $syncProductTokenKey = 'syncProductToken';
+    public $notifyDataResUrlKey = 'notifyDataResUrl';
+    public $notifyDataResTableKey = 'notifyResTable';
+    public $notifyDataSyncTokenKey = 'notifyDataSyncToken';
+    public static $openAutoSyncData  = 1;
+    public static $closeAutoSyncData = 0;
+
+    public $syncConfig = [];
+
+    public function searchDroplist(Request $request) {
+        try {
+            if ($request->HeaderLanguage == 'en') {
+                $field = ['english_name as label', 'value'];
+            } else {
+                $field = ['name as label', 'value'];
+            }
+            // 状态开关
+            $data['status'] = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
+            );
+            // 自动拉取数据开关
+            $value = SystemValue::query()->where("key", $this->autoSyncDataKey)->value('value');
+            $data['auto_sync_data'] = $value;
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function changeAutoSyncStatus(Request $request) {
+        try {
+            if (!isset($request->status)) {
+                ReturnJson(false, '状态异常');
+            }
+            $info = SystemValue::query()->where("key", $this->autoSyncDataKey)->first();
+            if (empty($info)) {
+                ReturnJson(false, '数据不存在');
+            }
+            if ($request->status != 1) {
+                $value = self::$closeAutoSyncData;
+            } else {
+                $value = self::$openAutoSyncData;
+            }
+            $info->value = $value;
+            $rs = $info->save();
+            if ($rs > 0) {
+                ReturnJson(true, trans('lang.request_success'), []);
+            } else {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
 
     /**
      * AJax单行删除
@@ -131,9 +190,14 @@ class SyncThirdProductController extends CrudController {
         }
     }
 
+    /**
+     * 定时任务执行方法
+     *
+     * @return mixed|true
+     */
     public function handlerSyncDataJob() {
         try {
-            $respData = $this->pullProductData();
+            $respData = $this->pullProductData(true);
 
             return $respData;
         } catch (\Exception $e) {
@@ -142,18 +206,8 @@ class SyncThirdProductController extends CrudController {
         }
     }
 
-    public function handlerRespData($respDataList) {
-        //兼容site
-        $site = request()->header('Site');
-        if (empty($site) && !empty($this->site)) {
-            $site = $this->site;
-        }
-        if (empty($site)) {
-            throw new \Exception("site is empty");
+    public function handlerRespData($respDataList, $site) {
 
-            return false;
-        }
-        tenancy()->initialize($site);
         //默认出版商
         $publisherIds = Site::where('name', $site)->value('publisher_id');
         $publisherIdArray = explode(',', $publisherIds);
@@ -515,8 +569,15 @@ class SyncThirdProductController extends CrudController {
 
     public function notifyThirdRes($sucIdList, $errIdList) {
         //调用接口反馈成功, 失败问题
-        $url = "https://hzzb.wanyunapp.com/openapi/v1/updateStatus";
-        $token = "6869eec12d49ec06e2cb987e1b20f3585cf196eef3fcebb2c2121f2dd9f4f025";
+        $url = $this->syncConfig[$this->notifyDataResUrlKey];
+        $token = $this->syncConfig[$this->notifyDataSyncTokenKey];
+        $table = $this->syncConfig[$this->notifyDataResTableKey];
+        if(empty($url ) || empty($token ) || empty($table )){
+            \Log::error('同步通知接口配置错误,请联系管理员');
+            throw new \Exception("notify res url config error");
+            return false;
+        }
+
         $IdsData = [];
         foreach ($sucIdList as $forSucId) {
             $IdsData[] = [
@@ -530,7 +591,7 @@ class SyncThirdProductController extends CrudController {
             ];
         }
         $jsonData = [
-            'table'      => 'mmg-cn',
+            'table'      => $table,
             'Ids'        => $IdsData,
             'failed_ids' => $failedIdsData,
         ];
@@ -616,10 +677,48 @@ class SyncThirdProductController extends CrudController {
      *
      * @return mixed
      */
-    private function pullProductData() {
+    private function pullProductData($isCrontab = false) {
         try {
-            $url = 'https://hzzb.wanyunapp.com/openapi/v1/mmg_cn';
-            $token = '6869eec12d49ec060bb4b333bcc7ff1bdea64cf8e5dc3520f81bdff2fe15f319';
+            //兼容site
+            $site = request()->header('Site');
+            if (empty($site) && !empty($this->site)) {
+                $site = $this->site;
+            }
+            if (empty($site)) {
+                throw new \Exception("site is empty");
+
+                return false;
+            }
+            tenancy()->initialize($site);
+
+            //如果来自定时任务那一端, 需要判断是否开启自动同步开关
+            if($isCrontab){
+                $autoSyncDataVal = SystemValue::query()
+                                              ->where("key", $this->autoSyncDataKey)
+                                              ->value('value');
+                //如果没有开启自动同步开关, 那么直接退出
+                if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
+                    throw new \Exception("no open auto sync data config");
+
+                    return false;
+                }
+            }
+
+            //获取配置数据
+            $keyList = [$this->syncProductUrlKey, $this->syncProductTokenKey,
+                        $this->notifyDataResUrlKey, $this->notifyDataSyncTokenKey, $this->notifyDataResTableKey
+            ];
+            $this->syncConfig = SystemValue::query()->whereIn("key" , $keyList)->pluck('value' , 'key')->toArray();
+
+
+            $url = $this->syncConfig[$this->syncProductUrlKey];
+            $token = $this->syncConfig[$this->syncProductTokenKey];
+            if(empty($url ) || empty($token )){
+                \Log::error('同步接口配置错误,请联系管理员');
+                throw new \Exception("sync products url config error");
+                return false;
+            }
+
             $jsonData = json_encode([]);
             $client = new Client();
             $response = $client->request('POST', $url, [
@@ -635,7 +734,7 @@ class SyncThirdProductController extends CrudController {
             $respData = json_decode($responseBody, true);
             if (!empty($respData) && $statusCode == 200) {
                 $respDataList = $respData['data']['data'];
-                $this->handlerRespData($respDataList);
+                $this->handlerRespData($respDataList, $site);
                 \Log::error('同步完成');
             } else {
                 \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));

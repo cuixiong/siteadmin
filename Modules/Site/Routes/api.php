@@ -564,6 +564,8 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'destroy'])->name('同步报告:删除操作');
         Route::post('form/{id}', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'form'])->name('同步报告:查看详情');
         Route::get('sync', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'sync'])->name('同步报告:同步数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'searchDroplist'])->name('同步报告:搜索下拉列表数据');
+        Route::post('change-auto-sync-status', [Modules\Site\Http\Controllers\SyncThirdProductController::class, 'changeAutoSyncStatus'])->name('同步报告:搜索下拉列表数据');
     });
 
     // sync字段
