@@ -17,14 +17,10 @@ use App\Jobs\SyncSphinxIndex;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redis;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsDescription;
-use Modules\Site\Http\Models\ProductsUploadLog;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Http\Models\SyncField;
@@ -37,12 +33,96 @@ class SyncThirdProductController extends CrudController {
     public $regionList      = [];
     public $senWords        = [];
 
-    public function list(Request $request) {
-        dd("list");
+    /**
+     * AJax单行删除
+     *
+     * @param $ids 主键ID
+     */
+    protected function destroy(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
+            }
+            foreach ($ids as $id) {
+                $modelInstance = new SyncLog();
+                $record = $modelInstance->find($id);
+                if ($record) {
+                    $record->delete();
+                }
+            }
+            ReturnJson(true, trans('lang.delete_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
+     * AJax单个查询
+     *
+     * @param $request 请求信息
+     */
+    protected function form(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = new SyncLog();
+            $record = $ModelInstance->findOrFail($request->id);
+            ReturnJson(true, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = new SyncLog();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            if (empty($request->sort)) {
+                $sort = 'desc';
+            }
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('id', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get();
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
     }
 
     public function sync(Request $request) {
         try {
+            //5s内只能点击一次
+            currentLimit($request, 5);
             $respData = $this->pullProductData();
             ReturnJson(true, 'ok', $respData);
         } catch (Exception $e) {

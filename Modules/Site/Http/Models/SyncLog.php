@@ -10,4 +10,7 @@ class SyncLog extends Base {
                      = ['count', 'ingore_count', 'insert_count', 'update_count', 'error_count',
                         'ingore_detail', 'update_detail', 'insert_detail', 'created_at', 'updated_at'];
     protected $table = 'sync_log';
+    public    $ListSelect
+                     = ['id', 'count', 'ingore_count', 'insert_count', 'update_count', 'error_count', 'created_at',
+                        'updated_at'];
 }
