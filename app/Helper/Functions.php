@@ -27,7 +27,11 @@ function ReturnJson($code, $message = '请求成功', $data = []) {
  */
 function currentLimit($request, $second = 10, $site = '', $userId = 0) {
     $route = $request->route();
-    $currentLimitKey = $route->getAction();
+    $actionInfo = $route->getAction();
+    $currentLimitKey = $actionInfo['controller'];
+    if(empty($site )){
+        $site = $request->header('Site');
+    }
     $currentLimitKey = $currentLimitKey."_{$site}_{$userId}";
     $isExist = Redis::get($currentLimitKey);
     if (!empty($isExist)) {
