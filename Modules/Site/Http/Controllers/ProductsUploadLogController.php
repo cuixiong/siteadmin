@@ -61,7 +61,9 @@ class ProductsUploadLogController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $model = $model->select($ModelInstance->ListSelect);
+            $listSelect = [ 'id', 'file', 'count', 'insert_count', 'update_count', 'error_count', 'created_at', 'created_by', 'updated_at', 'updated_by', 'state', 'sort'];
+            $model = $model->select($listSelect);
+            //$model = $model->select($ModelInstance->ListSelect);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {
@@ -69,14 +71,14 @@ class ProductsUploadLogController extends CrudController {
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-            $record = $model->get();
-            foreach ($record as $forValue) {
-                if (empty($forValue->updated_at)) {
+            $record = $model->get()->toArray();
+            foreach ($record as &$forValue) {
+                if (empty($forValue['updated_at'])) {
                     $costTime = 0;
                 } else {
-                    $costTime = intval($forValue->updated_at) - intval($forValue->created_at);
+                    $costTime = strtotime($forValue['updated_at']) - strtotime($forValue['created_at']);
                 }
-                $forValue->costTime = $this->convertMinutes($costTime);
+                $forValue['costTime'] = $this->convertMinutes($costTime);
             }
             $data = [
                 'total' => $total,
@@ -296,6 +298,14 @@ class ProductsUploadLogController extends CrudController {
                 }
                 // 报告名称(英)
                 $item['english_name'] = $row['english_name'] ?? '';
+                // 英文昵称含有敏感词的报告需要过滤
+                $matchSenWord = $this->checkFitter($item['english_name']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该英文报告名称:{$item['english_name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
+                    $errorCount++;
+                    continue;
+                }
+
                 // 页数
                 $item['pages'] = $row['pages'] ?? 0;
                 // 图表数
@@ -369,13 +379,7 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-                // 关键词 含有敏感词的报告需要过滤
-                $matchSenWord = $this->checkFitter($item['keywords']);
-                if (!empty($matchSenWord)) {
-                    $details .= "该报告名称{$item['name']} , 关键词:{$item['keywords']} 含有{$matchSenWord} 敏感词,请检查\r\n";
-                    $errorCount++;
-                    continue;
-                }
+
                 //自定义链接
                 $item['url'] = $row['url'] ?? '';
                 // 如果链接为空，则用关键词做链接
@@ -395,6 +399,14 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
+                //url链接也需要检测敏感词
+                $matchSenWord = $this->checkFitter($item['url']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                    $errorCount++;
+                    continue;
+                }
+
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
@@ -706,7 +718,7 @@ class ProductsUploadLogController extends CrudController {
         // 含有敏感词的报告需要过滤
         $matchSenWord = $this->checkFitter($productName);
         if (!empty($matchSenWord)) {
-            return "该报告名称{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
+            return "该报告名称:{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
         }
 
         return false;
@@ -790,11 +802,15 @@ class ProductsUploadLogController extends CrudController {
     }
 
     public function convertMinutes($seconds) {
-        $minutes = intval($seconds / 60); // 获取分钟数
-        $remainingSeconds = $seconds % 60; // 获取剩余的秒数
-        // 如果剩余的秒数小于10，前面补0
-        $remainingSeconds = str_pad($remainingSeconds, 2, '0', STR_PAD_LEFT);
-
+        if($seconds >= 60) {
+            $minutes = intval($seconds / 60); // 获取分钟数
+            $remainingSeconds = $seconds % 60; // 获取剩余的秒数
+            // 如果剩余的秒数小于10，前面补0
+            $remainingSeconds = str_pad($remainingSeconds, 2, '0', STR_PAD_LEFT);
+        }else{
+            $minutes = 0;
+            $remainingSeconds = $seconds;
+        }
         return [
             'minutes' => $minutes,
             'seconds' => $remainingSeconds

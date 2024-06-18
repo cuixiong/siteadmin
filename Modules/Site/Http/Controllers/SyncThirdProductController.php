@@ -283,6 +283,15 @@ class SyncThirdProductController extends CrudController {
                 }
                 // 报告名称(英)
                 $item['english_name'] = $row['english_name'] ?? '';
+                // 英文昵称含有敏感词的报告需要过滤
+                $matchSenWord = $this->checkFitter($item['english_name']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该英文报告名称{$item['english_name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
+                    $errorCount++;
+                    array_push($errIdList, $row['id']);
+                    continue;
+                }
+
                 // 页数
                 $item['pages'] = $row['pages'] ?? 0;
                 // 图表数
@@ -338,14 +347,7 @@ class SyncThirdProductController extends CrudController {
                     array_push($errIdList, $row['id']);
                     continue;
                 }
-                // 关键词 含有敏感词的报告需要过滤
-                $matchSenWord = $this->checkFitter($item['keywords']);
-                if (!empty($matchSenWord)) {
-                    $details .= "该报告名称{$item['name']} , 关键词:{$item['keywords']} 含有{$matchSenWord} 敏感词,请检查\r\n";
-                    $errorCount++;
-                    array_push($errIdList, $row['id']);
-                    continue;
-                }
+
                 //自定义链接
                 $item['url'] = $row['url'] ?? '';
                 // 如果链接为空，则用关键词做链接
@@ -366,6 +368,15 @@ class SyncThirdProductController extends CrudController {
                     array_push($errIdList, $row['id']);
                     continue;
                 }
+                //url链接也需要检测敏感词
+                $matchSenWord = $this->checkFitter($item['url']);
+                if (!empty($matchSenWord)) {
+                    $details .= "该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                    $errorCount++;
+                    continue;
+                }
+
+
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';

@@ -103,7 +103,7 @@ Route::middleware([
     Route::prefix('products-upload-log')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'list'])->name('上传记录:记录列表');
         Route::get('get-publisher', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'getPublisher'])->name('上传记录:出版商数据');
-
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'form'])->name('上传记录:查看单条记录');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'destroy'])->name('上传记录:删除记录');
         Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('上传记录:上传报告');
         Route::post('upload-process', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProcess'])->name('上传记录:上传进度');

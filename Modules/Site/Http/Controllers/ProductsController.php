@@ -461,11 +461,21 @@ class ProductsController extends CrudController {
         try {
             //检测数据库 报告昵称已存在的敏感词, 需要筛选出来 , 然后关闭状态,  然后删除索引
             $sensitiveWordsList = SenWordsService::getSenWords();
-            $productIdList = Products::query()->where(function ($query) use ($sensitiveWordsList) {
+
+            $productIdList = Products::query()->orWhere(function ($query) use ($sensitiveWordsList) {
+                foreach ($sensitiveWordsList as $value) {
+                    $query->orWhere('english_name', 'like', "%{$value}%");
+                }
+            })->orWhere(function ($query) use ($sensitiveWordsList) {
+                foreach ($sensitiveWordsList as $value) {
+                    $query->orWhere('url', 'like', "%{$value}%");
+                }
+            })->orWhere(function ($query) use ($sensitiveWordsList) {
                 foreach ($sensitiveWordsList as $value) {
                     $query->orWhere('name', 'like', "%{$value}%");
                 }
             })->pluck('id')->toArray();
+
             $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
             if (!empty($productIdList)) {
                 //删除sphinx的索引
@@ -473,8 +483,7 @@ class ProductsController extends CrudController {
                 $comParams = array('host' => '39.108.67.106', 'port' => 9306);
                 $conn = new Connection();
                 $conn->setParams($comParams);
-                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute(
-                );
+                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute();
 //                $SiteName = $request->header('Site');
 //                $RootPath = base_path();
 //                $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
