@@ -542,7 +542,7 @@ class SyncThirdProductController extends CrudController {
                         }
                     }
                     $updateCount++;
-                    $updateDetail .= "编号:{$item['third_sync_id']}:  【{$row['name']}】"."\r\n";
+                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product->id};【{$row['name']}】"."\r\n";
                 } else {
                     //新增报告
                     $product = Products::create($item);
@@ -551,7 +551,7 @@ class SyncThirdProductController extends CrudController {
                     $itemDescription['product_id'] = $product->id;
                     $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     $insertCount++;
-                    $insertDetail .= "编号:{$item['third_sync_id']}:  【{$row['name']}】"."\r\n";
+                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product->id};【{$row['name']}】"."\r\n";
                 }
                 //执行到这里算是操作成功的
                 array_push($succIdList, $row['id']);
