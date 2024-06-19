@@ -135,18 +135,6 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\DatabaseController::class, 'changeStatus'])->name('数据库管理:状态修改');
     });
 
-    // Site控制器
-    Route::prefix('site')->group(function () {
-        Route::get('list', [Modules\Admin\Http\Controllers\SiteController::class, 'list'])->name('站点管理:站点列表');
-        Route::get('user-option', [Modules\Admin\Http\Controllers\SiteController::class, 'UserOption'])->name('站点管理:用户站点下拉数据');
-        Route::get('option', [Modules\Admin\Http\Controllers\SiteController::class, 'option'])->name('站点管理:站点列表下拉数据');
-        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteController::class, 'searchDroplist'])->name('站点管理:搜索下拉列表数据');
-        Route::post('change-status',[Modules\Admin\Http\Controllers\SiteController::class, 'changeStatus'])->name('站点管理:状态修改');
-        // Route::post('message', [Modules\Admin\Http\Controllers\SiteController::class, 'message'])->name('站点管理:站点测试');
-        // Route::post('callback-results', [Modules\Admin\Http\Controllers\SiteController::class, 'callbackResults'])->name('站点管理:站点更新结果');
-        // Route::get('get-catch-git-status', [Modules\Admin\Http\Controllers\SiteController::class, 'getCatchGitStatus'])->name('站点管理:返回更新结果');
-    });
-
     // EmailLog控制器
     Route::prefix('email-log')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\EmailLogController::class, 'list'])->name('邮箱日志:日志列表');
@@ -384,6 +372,15 @@ Route::middleware([
         Route::post('commit-history', [Modules\Admin\Http\Controllers\SiteController::class, 'CommitHistory'])->name('站点管理:git提交记录历史');
         Route::post('rollback-code', [Modules\Admin\Http\Controllers\SiteController::class, 'rollbackCode'])->name('站点管理:git版本回退');
         Route::post('set-header-title', [Modules\Admin\Http\Controllers\SiteController::class, 'setHeaderTitle'])->name('站点管理:设置自定义表头');
+
+        Route::get('list', [Modules\Admin\Http\Controllers\SiteController::class, 'list'])->name('站点管理:站点列表');
+        Route::get('user-option', [Modules\Admin\Http\Controllers\SiteController::class, 'UserOption'])->name('站点管理:用户站点下拉数据');
+        Route::get('option', [Modules\Admin\Http\Controllers\SiteController::class, 'option'])->name('站点管理:站点列表下拉数据');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\SiteController::class, 'searchDroplist'])->name('站点管理:搜索下拉列表数据');
+        Route::post('change-status',[Modules\Admin\Http\Controllers\SiteController::class, 'changeStatus'])->name('站点管理:状态修改');
+        // Route::post('message', [Modules\Admin\Http\Controllers\SiteController::class, 'message'])->name('站点管理:站点测试');
+        // Route::post('callback-results', [Modules\Admin\Http\Controllers\SiteController::class, 'callbackResults'])->name('站点管理:站点更新结果');
+        // Route::get('get-catch-git-status', [Modules\Admin\Http\Controllers\SiteController::class, 'getCatchGitStatus'])->name('站点管理:返回更新结果');
 
     });
 
