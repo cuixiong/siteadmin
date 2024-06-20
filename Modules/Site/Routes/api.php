@@ -594,6 +594,12 @@ Route::middleware([
         Route::post('change-sort', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'changeSort'])->name('同步出版商:排序修改');
     });
 
+
+    //定时任务脚本(前端按钮接口调用)
+    Route::prefix('crontab')->group(function () {
+        Route::get('set-product-status', [Modules\Site\Http\Controllers\SiteCrontabController::class, 'handlerProductStatus'])->name('定时任务:设置产品状态');
+    });
+
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
