@@ -412,15 +412,14 @@ EOF;
             return '';
         }
         $applicton = '';
-        $rulesList = SystemValue::query()->where("parent_id", $systemId)->pluck("value");
+        $rulesList = SystemValue::query()->where("parent_id", $systemId)->pluck("value")->toArray();
         foreach ($rulesList as $forRule) {
-            $pattern = '/'.$forRule.'\r\n((?:(?:\s+[^\r\n]*\r\n))*)/';
+            $pattern = '/'.$forRule.'[\r\n]+((?:(?:\s+[^\r\n]*[\r\n]+))*)/';
             if (preg_match($pattern, $description, $matches)) {
                 // 打印提取的部分
                 $applicton = $matches[1];
             }
         }
-
         return $applicton;
     }
 }
