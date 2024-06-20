@@ -14,7 +14,6 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\Site\Http\Controllers\SiteCrontabController;
-use Modules\Site\Http\Controllers\SyncThirdProductController;
 
 class ProductSetDataCommand extends Command {
     /**
@@ -28,6 +27,7 @@ class ProductSetDataCommand extends Command {
         $option = $this->option();
         $siteCrontab = new SiteCrontabController();
         $siteCrontab->isCli = true;
+
         if (!empty($option['site'])) {
             $site = $option['site'];
             $siteCrontab->site = $site;

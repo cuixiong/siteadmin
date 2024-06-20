@@ -9,10 +9,15 @@ use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
+use Modules\Site\Http\Models\System;
+use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 
 class TemplateController extends CrudController {
+    public $classificationSubCode = 'classificationSubRules';
+    public $applicationSubCode    = 'applicationSubRules';
+
     /**
      * 查询列表页 (重写父类该方法)
      *
@@ -343,13 +348,15 @@ EOF;
         if (isset($product->classification)) {
             $productArrData['classification'] = $product->classification;
         } else {
-            $productArrData['classification'] = '';
+            $productArrData['classification'] = $this->handlerSubRules(
+                $pdObj->description, $this->classificationSubCode
+            );
         }
         //应用
         if (isset($product->application)) {
             $productArrData['application'] = $product->application;
         } else {
-            $productArrData['application'] = '';
+            $productArrData['application'] = $this->handlerSubRules($pdObj->description, $this->applicationSubCode);
         }
         //访问url
         $productArrData['url'] = $this->getReportUrl($product);
@@ -394,5 +401,26 @@ EOF;
         }
 
         return [$productArrData, $pdArrData];
+    }
+
+    public function handlerSubRules($description, $subRulesCode) {
+        if (empty($description) || empty($subRulesCode)) {
+            return '';
+        }
+        $systemId = System::query()->where("alias", $subRulesCode)->value("id");
+        if (empty($systemId)) {
+            return '';
+        }
+        $applicton = '';
+        $rulesList = SystemValue::query()->where("parent_id", $systemId)->pluck("value");
+        foreach ($rulesList as $forRule) {
+            $pattern = '/'.$forRule.'\r\n((?:(?:\s+[^\r\n]*\r\n))*)/';
+            if (preg_match($pattern, $description, $matches)) {
+                // 打印提取的部分
+                $applicton = $matches[1];
+            }
+        }
+
+        return $applicton;
     }
 }
