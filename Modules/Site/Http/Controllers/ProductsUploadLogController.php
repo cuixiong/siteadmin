@@ -477,8 +477,8 @@ class ProductsUploadLogController extends CrudController {
                     }
                 }
                 //测试要求导入报告, 默认 热门 + 精品
-                $item['show_hot'] = 1;
-                $item['show_recommend'] = 1;
+//                $item['show_hot'] = 1;
+//                $item['show_recommend'] = 1;
                 //新纪录年份
                 $newYear = Products::publishedDateFormatYear($item['published_date']);
                 /**
