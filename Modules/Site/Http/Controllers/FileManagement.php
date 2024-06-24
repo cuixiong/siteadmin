@@ -60,6 +60,7 @@ class FileManagement extends Controller {
                 } else {
                     $info = [];
                     $info['type'] = self::filetype($filename.'/'.$v);
+                    \Log::error('返回结果类型:'.$info['type']);
                     if ($info['type'] == 'dir') {
                         $info['size'] = "";
                     } else {
@@ -133,8 +134,10 @@ class FileManagement extends Controller {
                     case 'svg':
                     case 'ico':
                         return 'image';
-                    case'zip':
-                        return 'zip';
+//                    case'zip':
+//                        return 'zip';
+                    case $filetype:
+                        return $filetype;
                     default:
                         return 'file';
                 }

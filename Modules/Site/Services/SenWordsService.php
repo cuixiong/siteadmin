@@ -53,7 +53,8 @@ class SenWordsService {
         $senWordsList = self::getSenWords();
         $checkRes = false;
         foreach ($senWordsList as $fillterRules) {
-            if (mb_strpos($name, $fillterRules) !== false) {
+            //if (mb_strpos($name, $fillterRules) !== false) { //中文比对
+            if (strcasecmp($name, $fillterRules) == 0) { //英文比对
                 $checkRes = $fillterRules;
                 break;
             }

@@ -16,8 +16,8 @@ class FileManagement extends Controller{
     }
 
     public function FileList(Request $request)
-    {   
-        
+    {
+
         $path = $request->path ?? '';
         $filename = $this->RootPath.$path;
 
@@ -134,8 +134,10 @@ class FileManagement extends Controller{
                     case 'svg':
                     case 'ico':
                         return 'image';
-                    case'zip':
-                        return 'zip';
+//                    case'zip':
+//                        return 'zip';
+                    case $filetype:
+                        return $filetype;
                     default:
                         return 'file';
                 }
@@ -210,7 +212,7 @@ class FileManagement extends Controller{
         $path = $request->path ?? '';
         $name = $request->name ?? '';
         $nameArray = is_array($name) ? $name : explode(",",$name);
-        
+
         if (!is_array($nameArray) || count($nameArray) <= 0) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..') {
@@ -291,7 +293,7 @@ class FileManagement extends Controller{
                         $res = $this->moveDir($old_full_path, $new_full_path, $overwrite);
                     break;
                     default:
-                    
+
                     break;
                 }
                 // 把移动/复制文件夹中存在相同文件的合并放入到$IsExistsFiles容器中返回给前端
@@ -309,7 +311,7 @@ class FileManagement extends Controller{
                             $this->moveFile($old_full_path, $new_full_path, $overwrite);
                         break;
                         default:
-                        
+
                         break;
                     }
                 } else {
@@ -338,13 +340,13 @@ class FileManagement extends Controller{
                 case 1:
                     $this->copyFile($data['old_path'], $data['new_path'], true);
                 break;
-                    
+
                 case '2':
                     $this->moveFile($data['old_path'], $data['new_path'], true);
                 break;
-                
+
                 default:
-                    
+
                 break;
             }
         }
@@ -593,7 +595,7 @@ class FileManagement extends Controller{
         $path = $request->path ?? '';
         $name = $request->name ?? '';
         $full_path = $path ? $base_param . $path . '/' : $base_param;
-  
+
         if (empty($name)) {
             ReturnJson(false,'文件夹名未传入');
         } elseif ($path == '..' || $name == '..') {

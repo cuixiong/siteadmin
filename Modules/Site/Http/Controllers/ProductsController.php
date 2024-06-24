@@ -104,6 +104,9 @@ class ProductsController extends CrudController {
         try {
             $data = $this->GetProductList($request);
             $record = $data['list'];
+            if (empty($record)) {
+                ReturnJson(true, trans('lang.request_success'), $data);
+            }
             $product_id_list = array_column($record, 'id');
             $updAtList = DB::table("product_routine")->whereIn('id', $product_id_list)
                            ->pluck('updated_at', 'id')
@@ -119,7 +122,7 @@ class ProductsController extends CrudController {
                 //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
                 $year = date('Y', $item['published_date']);
-                $description = (new ProductsDescription($year))->where("product_id" , $productId)->value('description');
+                $description = (new ProductsDescription($year))->where("product_id", $productId)->value('description');
                 //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
@@ -144,7 +147,6 @@ class ProductsController extends CrudController {
     public function GetProductList($request) {
         try {
             $hidden = SystemValue::where('key', 'xunsearch')->value('hidden');
-            $hidden = 1;
             if ($hidden == 1) {
                 //return $this->SearchForXunsearch($request);
                 return $this->SearchForSphinx($request);
@@ -179,7 +181,7 @@ class ProductsController extends CrudController {
         } else {
             $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
         }
-        $record = $model->get();
+        $record = $model->get()->toArray();
 
         return ['list' => $record, 'total' => $total, 'type' => 'mysql'];
     }
@@ -372,6 +374,15 @@ class ProductsController extends CrudController {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            //校验敏感词
+            $checkRs = SenWordsService::checkNewFitter($input['english_name']);
+            if (!empty($checkRs)) {
+                throw new \Exception('英文报告名称包含敏感词:'.$checkRs);
+            }
+            $checkRs = SenWordsService::checkNewFitter($input['url']);
+            if (!empty($checkRs)) {
+                throw new \Exception('报告链接包含敏感词:'.$checkRs);
+            }
             $input['published_date'] = is_numeric($input['published_date'])
                 ? $input['published_date']
                 : strtotime(
@@ -461,21 +472,13 @@ class ProductsController extends CrudController {
         try {
             //检测数据库 报告昵称已存在的敏感词, 需要筛选出来 , 然后关闭状态,  然后删除索引
             $sensitiveWordsList = SenWordsService::getSenWords();
-
-            $productIdList = Products::query()->orWhere(function ($query) use ($sensitiveWordsList) {
-                foreach ($sensitiveWordsList as $value) {
-                    $query->orWhere('english_name', 'like', "%{$value}%");
-                }
-            })->orWhere(function ($query) use ($sensitiveWordsList) {
-                foreach ($sensitiveWordsList as $value) {
-                    $query->orWhere('url', 'like', "%{$value}%");
-                }
-            })->orWhere(function ($query) use ($sensitiveWordsList) {
-                foreach ($sensitiveWordsList as $value) {
-                    $query->orWhere('name', 'like', "%{$value}%");
-                }
-            })->pluck('id')->toArray();
-
+            $productIdList = Products::query()->where("status", 1)
+                                     ->where(function ($query) use ($sensitiveWordsList) {
+                                         foreach ($sensitiveWordsList as $value) {
+                                             $query->orWhere('english_name', 'like', "%{$value}%");
+                                             $query->orWhere('url', 'like', "%{$value}%");
+                                         }
+                                     })->pluck('id')->toArray();
             $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
             if (!empty($productIdList)) {
                 //删除sphinx的索引
@@ -483,7 +486,8 @@ class ProductsController extends CrudController {
                 $comParams = array('host' => '39.108.67.106', 'port' => 9306);
                 $conn = new Connection();
                 $conn->setParams($comParams);
-                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute();
+                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute(
+                );
 //                $SiteName = $request->header('Site');
 //                $RootPath = base_path();
 //                $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
@@ -494,7 +498,8 @@ class ProductsController extends CrudController {
 //                $index->closeBuffer(); // 关闭缓冲区，必须和 openBuffer 成对使用
 //                $index->flushIndex();
             }
-            ReturnJson(true, trans('lang.request_success'));
+            $data = ['total_cnt' => count($productIdList)];
+            ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -504,11 +509,13 @@ class ProductsController extends CrudController {
         try {
             //状态为1的  匹配敏感词报告数量
             $sensitiveWordsList = SenWordsService::getSenWords();
-            $cnt = Products::query()->where("status", 1)->where(function ($query) use ($sensitiveWordsList) {
-                foreach ($sensitiveWordsList as $value) {
-                    $query->orWhere('name', 'like', "%{$value}%");
-                }
-            })->count();
+            $cnt = Products::query()->where("status", 1)
+                           ->where(function ($query) use ($sensitiveWordsList) {
+                               foreach ($sensitiveWordsList as $value) {
+                                   $query->orWhere('english_name', 'like', "%{$value}%");
+                                   $query->orWhere('url', 'like', "%{$value}%");
+                               }
+                           })->count();
             ReturnJson(true, trans('lang.request_success'), ['cnt' => $cnt]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -562,6 +569,15 @@ class ProductsController extends CrudController {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            //校验敏感词
+            $checkRs = SenWordsService::checkNewFitter($input['english_name']);
+            if (!empty($checkRs)) {
+                throw new \Exception('英文报告名称包含敏感词:'.$checkRs);
+            }
+            $checkRs = SenWordsService::checkNewFitter($input['url']);
+            if (!empty($checkRs)) {
+                throw new \Exception('报告链接包含敏感词:'.$checkRs);
+            }
             $input['published_date'] = is_numeric($input['published_date'])
                 ? $input['published_date']
                 : strtotime(

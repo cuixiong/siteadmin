@@ -4,6 +4,7 @@ namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
+use Modules\Site\Http\Models\ProductsDescription;
 use XS;
 use XSDocument;
 use Modules\Site\Http\Models\Products;
@@ -14,6 +15,8 @@ class XunSearch extends CrudController
 {
     public function search(Request $request)
     {
+        $this->handlerDescRules();
+        dd("ok");
         $keyword = $request->keyword;
         $xs = new XS('/www/wwwroot/yadmin/admin/Modules/Site/Config/xunsearch/MMG_CN.ini');
         $search = $xs->search;
@@ -21,6 +24,41 @@ class XunSearch extends CrudController
         $count = $search->count($keyword);
         var_dump($docs, $count);
         die;
+    }
+
+    public function handlerDescRules() {
+        $product = Products::query()->where("id" , 471)->first()->toArray();
+        $year =  date("Y" , $product['published_date']);
+        $desc_info = (new ProductsDescription($year))->where("product_id" , $product['id'])->first();
+        $rulues_type = [
+            '2023年市场份额',
+            '2024年市场份额',
+        ];
+        $description = $desc_info['description'];
+        $description = $desc_info->description;
+//        dd($description);
+
+
+        foreach ($rulues_type as $rule_type){
+            //$pattern = '/2023年市场份额\r\n((?:(?:\s+[^\r\n]*\r\n))*)/';
+            $pattern = '/'.$rule_type.'[\r\n]+((?:(?:\s+[^\r\n]*[\r\n]+))*)/';
+            if (preg_match($pattern, $description, $matches)) {
+                // 打印提取的部分
+                $applicton = $matches[1];
+                if(!empty($applicton )){
+                    $applicton = str_replace(' ', '', $applicton);
+                }
+                dd($applicton);
+                $rs = Products::query()->where("id" , 471)->update(['application' => $applicton]);
+                dd($rs);
+            }else{
+                dd("eror");
+            }
+        }
+
+
+
+
     }
 
     public function add(Request $request) {

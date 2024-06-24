@@ -50,7 +50,7 @@ class ProductsRequest extends BaseRequest {
             'name'           => [
                 'required',
                 \Illuminate\Validation\Rule::unique('product_routine')->ignore($request->input('id')),
-                new SensitiveWord()
+                //new SensitiveWord()
             ],
             'category_id'    => 'required',
             'published_date' => 'required',

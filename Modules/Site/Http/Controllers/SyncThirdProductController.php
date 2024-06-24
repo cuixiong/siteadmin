@@ -182,8 +182,15 @@ class SyncThirdProductController extends CrudController {
         try {
             //5s内只能点击一次
             currentLimit($request, 5);
-            $respData = $this->pullProductData();
-            ReturnJson(true, 'ok', $respData);
+
+            try{
+                $respData = $this->pullProductData();
+                ReturnJson(true, 'ok', $respData);
+            }catch (\Exception $e){
+                ReturnJson(false, $e->getMessage());
+            }
+
+
         } catch (Exception $e) {
             // 处理异常
             ReturnJson(false, $e->getMessage());
@@ -208,6 +215,7 @@ class SyncThirdProductController extends CrudController {
 
     public function handlerRespData($respDataList, $site) {
         if(empty($respDataList )){
+            throw new \Exception('本次拉取数据为空');
             \Log::error('拉取北京数据本次为空');
             return false;
         }
@@ -290,13 +298,13 @@ class SyncThirdProductController extends CrudController {
                 // 报告名称(英)
                 $item['english_name'] = $row['english_name'] ?? '';
                 // 英文昵称含有敏感词的报告需要过滤
-                $matchSenWord = $this->checkFitter($item['english_name']);
-                if (!empty($matchSenWord)) {
-                    $details .= "【错误】编号:{$item['third_sync_id']} : 该英文报告名称{$item['english_name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
-                    $errorCount++;
-                    array_push($errIdList, $row['id']);
-                    continue;
-                }
+//                $matchSenWord = $this->checkFitter($item['english_name']);
+//                if (!empty($matchSenWord)) {
+//                    $details .= "【错误】编号:{$item['third_sync_id']} : 该英文报告名称{$item['english_name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
+//                    $errorCount++;
+//                    array_push($errIdList, $row['id']);
+//                    continue;
+//                }
 
                 // 页数
                 $item['pages'] = $row['pages'] ?? 0;
@@ -633,6 +641,7 @@ class SyncThirdProductController extends CrudController {
             if (!empty($respData) && !empty($respData['errcode']) && $respData['errcode'] == 1) {
                 return true;
             } else {
+                throw new \Exception('请求通知接口失败,请联系管理员');
                 \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));
             }
         } catch (Exception $e) {
@@ -647,10 +656,10 @@ class SyncThirdProductController extends CrudController {
             return trans('lang.name_empty')."\r\n";
         }
         // 含有敏感词的报告需要过滤
-        $matchSenWord = $this->checkFitter($productName);
-        if (!empty($matchSenWord)) {
-            return "该报告名称{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
-        }
+//        $matchSenWord = $this->checkFitter($productName);
+//        if (!empty($matchSenWord)) {
+//            return "该报告名称{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
+//        }
 
         return false;
     }
@@ -664,7 +673,8 @@ class SyncThirdProductController extends CrudController {
     private function checkFitter($name) {
         $checkRes = false;
         foreach ($this->senWords as $fillterRules) {
-            if (mb_strpos($name, $fillterRules) !== false) {
+            //if (mb_strpos($name, $fillterRules) !== false) { //中文比对
+            if (strcasecmp($name, $fillterRules) == 0) { //英文比对
                 $checkRes = $fillterRules;
                 break;
             }
@@ -758,6 +768,7 @@ class SyncThirdProductController extends CrudController {
                 $this->handlerRespData($respDataList, $site);
                 \Log::error('同步完成');
             } else {
+                throw new \Exception("请求接口失败,请联系管理员");
                 \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));
             }
 

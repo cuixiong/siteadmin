@@ -299,12 +299,12 @@ class ProductsUploadLogController extends CrudController {
                 // 报告名称(英)
                 $item['english_name'] = $row['english_name'] ?? '';
                 // 英文昵称含有敏感词的报告需要过滤
-                $matchSenWord = $this->checkFitter($item['english_name']);
-                if (!empty($matchSenWord)) {
-                    $details .= "该英文报告名称:{$item['english_name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
-                    $errorCount++;
-                    continue;
-                }
+//                $matchSenWord = $this->checkFitter($item['english_name']);
+//                if (!empty($matchSenWord)) {
+//                    $details .= "该英文报告名称:{$item['english_name']}含有 {$matchSenWord} 敏感词,请检查\r\n";
+//                    $errorCount++;
+//                    continue;
+//                }
 
                 // 页数
                 $item['pages'] = $row['pages'] ?? 0;
@@ -701,7 +701,8 @@ class ProductsUploadLogController extends CrudController {
     private function checkFitter($name) {
         $checkRes = false;
         foreach ($this->senWords as $fillterRules) {
-            if (mb_strpos($name, $fillterRules) !== false) {
+            //if (mb_strpos($name, $fillterRules) !== false) { //中文比对
+            if (strcasecmp($name, $fillterRules) == 0) { //英文比对
                 $checkRes = $fillterRules;
                 break;
             }
@@ -716,10 +717,10 @@ class ProductsUploadLogController extends CrudController {
             return trans('lang.name_empty')."\r\n";
         }
         // 含有敏感词的报告需要过滤
-        $matchSenWord = $this->checkFitter($productName);
-        if (!empty($matchSenWord)) {
-            return "该报告名称:{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
-        }
+//        $matchSenWord = $this->checkFitter($productName);
+//        if (!empty($matchSenWord)) {
+//            return "该报告名称:{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
+//        }
 
         return false;
     }
