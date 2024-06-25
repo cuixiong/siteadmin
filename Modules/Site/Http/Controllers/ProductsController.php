@@ -146,7 +146,7 @@ class ProductsController extends CrudController {
 
     public function GetProductList($request) {
         try {
-            $hidden = SystemValue::where('key', 'xunsearch')->value('hidden');
+            $hidden = SystemValue::where('key', 'sphinx')->value('hidden');
             if ($hidden == 1) {
                 //return $this->SearchForXunsearch($request);
                 return $this->SearchForSphinx($request);
