@@ -74,7 +74,7 @@ class Base extends Model
      */
     public function getCreatedByAttribute()
     {
-        $res = User::where('id',$this->attributes['created_by'])->value('name');
+        $res = User::where('id',$this->attributes['created_by'])->value('nickname');
         return $res;
     }
     /**
@@ -82,7 +82,7 @@ class Base extends Model
      */
     public function getUpdatedByAttribute()
     {
-        $res = User::where('id',$this->attributes['updated_by'])->value('name');
+        $res = User::where('id',$this->attributes['updated_by'])->value('nickname');
         return $res;
     }
 
@@ -148,7 +148,7 @@ class Base extends Model
         }
         return $model;
     }
-    
+
     /**
      * 处理查询排序
      * @param $model moxel

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
@@ -49,16 +50,27 @@ class LoginController extends Controller {
                     ReturnJson(false, trans('lang.site_undefined'));
                 }
             }
-            $token = JWTAuth::fromUser($model);//生成token
-            if (!$token) {
-                ReturnJson(false, '生成TOKEN失败');
+
+            $tokenKey = 'login_token_'.$model->id;
+            $cacheToken = Redis::get($tokenKey);
+            if (!empty($cacheToken)) {
+                $token = $cacheToken;
+                $expires = Redis::ttl($tokenKey);
+            }else{
+                $token = JWTAuth::fromUser($model);//生成token
+                if (!$token) {
+                    ReturnJson(false, '生成TOKEN失败');
+                }
+                $model->login_at = time();
+                $model->token = $token;
+                $model->save();
+                $expires = auth('api')->factory()->getTTL() + 66240;
+                Redis::setex($tokenKey, $expires, $token);
             }
-            $model->login_at = time();
-            $model->token = $token;
-            $model->save();
+
             ReturnJson(true, trans('lang.request_success'), [
                 'accessToken'  => $token,
-                'expires'      => auth('api')->factory()->getTTL() + 66240,
+                'expires'      => $expires,
                 'refreshToken' => null,
                 'tokenType'    => 'Bearer'
             ]);
