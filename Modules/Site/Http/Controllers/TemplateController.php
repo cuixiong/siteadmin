@@ -412,7 +412,9 @@ EOF;
             return '';
         }
         $applicton = '';
-        $rulesList = SystemValue::query()->where("parent_id", $systemId)->pluck("value")->toArray();
+        $rulesList = SystemValue::query()->where("parent_id", $systemId)
+                                         ->where("hidden" , 1)
+                                         ->pluck("value")->toArray();
         foreach ($rulesList as $forRule) {
             $pattern = '/'.$forRule.'[\r\n]+((?:(?:\s+[^\r\n]*[\r\n]+))*)/';
             if (preg_match($pattern, $description, $matches)) {
