@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Redis;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\Publisher;
+use Modules\Site\Services\SphinxService;
 use XS;
 use XSDocument;
 
@@ -338,10 +339,8 @@ class Products extends Base {
             } else {
                 $id = $reqData;
             }
-            //实例化
-            $comParams = array('host' => '39.108.67.106', 'port' => 9306);
-            $conn = new Connection();
-            $conn->setParams($comParams);
+            //获取sphinx链接
+            $conn = (new SphinxService($siteName))->getConnection();
             if ($action == 'delete') {
                 $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", intval($id))->execute();
 

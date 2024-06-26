@@ -57,4 +57,13 @@ function convertToFormData($list){
     return $selectList;
 }
 
+function getSiteName(){
+    if (php_sapi_name() === 'cli') {
+        return false;
+    } else {
+        return request()->header("Site");
+    }
+}
+
+
 

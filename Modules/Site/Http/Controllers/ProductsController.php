@@ -36,6 +36,7 @@ use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 use Modules\Site\Http\Models\TemplateCateMapping;
 use Modules\Site\Services\SenWordsService;
+use Modules\Site\Services\SphinxService;
 use XS;
 
 class ProductsController extends CrudController {
@@ -292,13 +293,12 @@ class ProductsController extends CrudController {
         }
     }
 
+    /**
+     * @throws DatabaseException
+     * @throws SphinxQLException
+     * @throws ConnectionException
+     */
     public function SearchForSphinx($request) {
-        // TODO: cuizhixiong 2024/5/31 后续多个站点读取配置,连接搜索服务
-//        $SiteName = $request->header('Site');
-//        $siteInfo = Site::where('name', $SiteName)->firstOrFail();
-//        $server_id = $siteInfo->server_id;
-//        $serverInfo = Server::find($server_id);
-        $comParams = array('host' => '39.108.67.106', 'port' => 9306);
         if (!empty($request->type)) {
             $type = $request->type;
             $keyword = $request->keyword;
@@ -312,8 +312,8 @@ class ProductsController extends CrudController {
         if (empty($type)) {
             throw new \Exception('参数异常:搜索类型不能为空');
         }
-        $conn = new Connection();
-        $conn->setParams($comParams);
+
+        $conn = (new SphinxService())->getConnection();
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
                                       ->orderBy('sort', 'asc')
@@ -482,12 +482,8 @@ class ProductsController extends CrudController {
             $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 0]);
             if (!empty($productIdList)) {
                 //删除sphinx的索引
-                //实例化
-                $comParams = array('host' => '39.108.67.106', 'port' => 9306);
-                $conn = new Connection();
-                $conn->setParams($comParams);
-                $res = (new SphinxQL($conn))->delete()->from('products_rt')->where("id", 'in', $productIdList)->execute(
-                );
+                (new SphinxService())->delSphinxIndexByProductIdList($productIdList);
+                //删除讯搜索引(代码已注释)
 //                $SiteName = $request->header('Site');
 //                $RootPath = base_path();
 //                $xs = new XS($RootPath.'/Modules/Site/Config/xunsearch/'.$SiteName.'.ini');
