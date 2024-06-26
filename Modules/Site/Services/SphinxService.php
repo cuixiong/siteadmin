@@ -27,9 +27,14 @@ class SphinxService {
             $siteName = getSiteName();
             if(empty($siteName )) {
                 throw new \Exception("site is empty");
+                return false;
+            }else{
+                $this->site = $siteName;
             }
         }
-        tenancy()->initialize($site);
+        if(!empty($this->site )){
+            tenancy()->initialize($this->site);
+        }
     }
 
     /**
