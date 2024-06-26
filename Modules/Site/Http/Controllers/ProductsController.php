@@ -352,7 +352,10 @@ class ProductsController extends CrudController {
         $fetchNum = $countQuery->execute()->fetchNum();
         $count = $fetchNum[0] ?? 0;
         //查询结果分页
-        $query->limit(($request->pageNum - 1) * $request->pageSize, $request->pageSize);
+        $pageSize = $request->pageSize;
+        $offset = ($request->pageNum - 1) * $pageSize;
+        $query->limit($offset, $pageSize);
+        $query->option('max_matches' , $offset + $pageSize);
         $query->setSelect('*');
         $result = $query->execute();
         $products = $result->fetchAllAssoc();

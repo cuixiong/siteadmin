@@ -306,7 +306,7 @@ class TemplateController extends CrudController {
      *  处理换行符
      */
     private function handlerLineSymbol($lineStr) {
-        return str_replace("\n", ",", $lineStr);
+        return str_replace("\n", "、 ", $lineStr);
     }
 
     private function handlerStrSymbol($sourceStr) {
