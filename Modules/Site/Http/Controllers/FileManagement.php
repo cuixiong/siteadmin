@@ -60,7 +60,6 @@ class FileManagement extends Controller {
                 } else {
                     $info = [];
                     $info['type'] = self::filetype($filename.'/'.$v);
-                    \Log::error('返回结果类型:'.$info['type']);
                     if ($info['type'] == 'dir') {
                         $info['size'] = "";
                     } else {
