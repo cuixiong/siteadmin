@@ -13,6 +13,9 @@ class SyncDataCommand extends Command {
     protected $signature = 'task:syncdata {--site=}';
 
     public function handle() {
+        //设置日志
+        config(['logging.default' => 'cli']);
+
         $option = $this->option();
         $syncThirdProduct = new SyncThirdProductController();
         if(!empty($option['site'] )){
