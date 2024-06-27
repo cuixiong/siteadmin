@@ -215,8 +215,8 @@ class SyncThirdProductController extends CrudController {
 
     public function handlerRespData($respDataList, $site) {
         if(empty($respDataList )){
-            throw new \Exception('本次拉取数据为空');
             \Log::error('拉取北京数据本次为空');
+            throw new \Exception('本次拉取数据为空');
             return false;
         }
 

@@ -30,7 +30,7 @@ class SyncDataCommand extends Command {
             $syncThirdProduct->handlerSyncDataJob();
         }catch (\Exception $e){
             echo "同步数据异常{$e->getMessage()}".PHP_EOL;
-            \Log::error('同步数据异常--错误信息与数据:'.json_encode([$e]));
+            \Log::error('同步数据异常--错误信息与数据:'.json_encode([$e->getMessage()]));
         }
 
         echo "开始同步完成".PHP_EOL;
