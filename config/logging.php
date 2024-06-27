@@ -122,6 +122,7 @@ return [
             'driver' => 'custom',
             'via' => App\Logging\CustomCliLogger::class,
             'level' => 'debug',
+            'permission' => 0666,
         ],
 
     ],
