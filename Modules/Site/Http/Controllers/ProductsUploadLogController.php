@@ -457,6 +457,14 @@ class ProductsUploadLogController extends CrudController {
                 && $itemDescription['definition'] = str_replace('_x000D_', '', $row['definition']);
                 isset($row['overview']) && $itemDescription['overview'] = str_replace('_x000D_', '', $row['overview']);
                 $item['year'] = date('Y', $item['published_date']);
+
+                $redisKey = 'upload_products_'.$item['name'];
+                if(!Redis::setnx($redisKey , 1)){
+                    //设置失败,休眠2s
+                    sleep(2);
+                }
+
+
                 // 查询单个报告数据/去重
                 $product = Products::where('name', trim($item['name']))->orWhere(
                     'name', isset($row['english_name']) ? trim(
@@ -536,6 +544,9 @@ class ProductsUploadLogController extends CrudController {
                 // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
                 // $details = json_encode($row) . "\r\n";
                 $errorCount++;
+            }
+            if(!empty($redisKey )){
+                Redis::del($redisKey);
             }
         }
         //恢复监听
