@@ -449,7 +449,7 @@ class SiteController extends CrudController {
                     }
                     $record[$key]['hash'] = '';
                     $record[$key]['hash_sample'] = '';
-                    if ($currentHashData['result']) {
+                    if ($currentHashData && $currentHashData['result']) {
                         $temp_array = explode("\n", $currentHashData['output']);
                         $record[$key]['hash'] = $temp_array[0];
                         $record[$key]['hash_sample'] = $temp_array[1];
