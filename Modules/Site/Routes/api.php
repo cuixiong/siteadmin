@@ -600,6 +600,11 @@ Route::middleware([
         Route::get('set-product-status', [Modules\Site\Http\Controllers\SiteCrontabController::class, 'handlerProductStatus'])->name('定时任务:设置产品状态');
     });
 
+
+    Route::prefix('public')->group(function () {
+        Route::get('get-read-msg-cnt', [Modules\Site\Http\Controllers\PublicController::class, 'getNoReadMsgCnt'])->name('公共:获取未读消息数量');
+    });
+
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

@@ -243,6 +243,10 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $pdArrData['description']);
         // 处理模板变量   {{toc}}
         $tempContent = $this->writeTempWord($tempContent, '{{toc}}', $pdArrData['table_of_content']);
+
+        // 处理模板变量   {{tof}}
+        $tempContent = $this->writeTempWord($tempContent, '{{tof}}', $pdArrData['tables_and_figures']);
+
         // 处理模板变量   {{company}}   (换行)
         $replaceWords = $pdArrData['companies_mentioned'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
@@ -270,6 +274,9 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
+
+        $tempContent = $this->handlerMuchLine($tempContent);
+        $tempContent = str_replace(' ', '&nbsp;', $tempContent);
 
         return $tempContent;
     }
@@ -303,14 +310,20 @@ class TemplateController extends CrudController {
     }
 
     /**
-     *  处理换行符
+     *  处理换行符(处理为1行)
      */
     private function handlerLineSymbol($lineStr) {
         return str_replace("\n", "、 ", $lineStr);
     }
 
-    private function handlerStrSymbol($sourceStr) {
-        return str_replace(",", "\n", $sourceStr);
+    /**
+     * 处理多行
+     * @param $sourceStr
+     *
+     * @return array|string|string[]
+     */
+    private function handlerMuchLine($sourceStr) {
+        return str_replace("\n", "<br/>", $sourceStr);
     }
 
     public function getReportUrl($product) {
@@ -399,6 +412,14 @@ EOF;
         } else {
             $pdArrData['overview'] = '';
         }
+
+        //报告图表
+        if (isset($pdObj->tables_and_figures)) {
+            $pdArrData['tables_and_figures'] = $pdObj->tables_and_figures;
+        } else {
+            $pdArrData['tables_and_figures'] = '';
+        }
+
 
         return [$productArrData, $pdArrData];
     }
