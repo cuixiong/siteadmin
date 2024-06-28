@@ -80,16 +80,22 @@ class PriceEditionController extends CrudController
      */
     public function update(Request $request)
     {
+        // Site
+        // $model = Site::where('status',1)->whereRaw("FIND_IN_SET(?, publisher_id) > 0", [$search->publisher_id]);
 
         // 开启事务
         DB::beginTransaction();
         try {
             $input = $request->all();
-
             $this->ValidateInstance($request);
 
             $model = new PriceEdition();
             $model = $model->findOrFail($input['id']);
+
+            // $newPublisherId = explode(',',$input['publisher_id']);
+            // $oldPublisherId = explode(',',$model->publisher_id);
+            // $oublisherIdArray = array_unique(array_merge($newPublisherId,$oldPublisherId));
+
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
