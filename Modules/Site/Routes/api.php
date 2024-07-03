@@ -546,6 +546,8 @@ Route::middleware([
         Route::post('store', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'store'])->name('权威引用分类:数据新增');
         Route::post('update', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'update'])->name('权威引用分类:数据编辑');
         Route::post('destroy', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'destroy'])->name('权威引用分类:删除操作');
+        Route::post('change-status', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'changeStatus'])->name('权威引用分类:修改状态');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\QuoteCategoryController::class, 'searchDroplist'])->name('权威引用分类:搜索下拉列表数据');
     });
     Route::get('xun-add', [Modules\Site\Http\Controllers\XunSearch::class, 'add'])->name('测试接口:迅速新增');
     Route::get('xun-search', [Modules\Site\Http\Controllers\XunSearch::class, 'search'])->name('测试接口:迅速搜索');
