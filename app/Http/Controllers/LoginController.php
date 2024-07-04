@@ -146,6 +146,12 @@ class LoginController extends Controller {
      * @return \Illuminate\Http\JsonResponse
      */
     public function logout() {
+        $user = JWTAuth::parseToken()->authenticate();
+        if(!empty($user )){
+            $tokenKey = 'login_token_'.$user->id;
+            Redis::del($tokenKey);
+        }
+
         auth('api')->logout();
         ReturnJson(true, trans('lang.request_success'));
     }

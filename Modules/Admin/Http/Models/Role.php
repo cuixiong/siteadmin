@@ -54,9 +54,11 @@ class Role extends Base
         $role_code = [];// 当前账号的归属角色code
         foreach ($roles as $role) {
             if(!empty($role->rule_id) && $siteId == 0){
+                //总控权限列表
                 $rule_ids = array_merge($rule_ids,$role->rule_id);
             }
             if(!empty($role->site_id)){
+                //如果当前角色开启了站点权限,  且与传过来的站点id一致, 则获取站点权限列表
                 if($siteId > 0 && in_array($siteId,$role->site_id)){
                     if(!empty($role->site_rule_id)){
                         $rule_ids = array_merge($rule_ids,$role->site_rule_id);

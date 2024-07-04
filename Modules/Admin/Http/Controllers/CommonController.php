@@ -22,30 +22,43 @@ class CommonController extends Controller
             'nickname' => $request->user->nickname,
             'avatar' => "https://oss.youlai.tech/youlai-boot/2023/05/16/811270ef31f548af9cffc026dfc3777b.gif",
         ];
-        $is_super = (new Role)->whereIn('id',explode(',',$request->user->role_id))->where('is_super',1)->count();
+        $roleIdList = explode(',', $request->user->role_id);
+        $is_super = (new Role)->whereIn('id', $roleIdList)->where('is_super', 1)->count();
         $siteName = $request->header('Site');
         $siteId = Site::where('name',$siteName)->value('id');
         $siteId = $siteId ? $siteId : 0;
-        $res = (new Role)->GetRules(explode(',',$request->user->role_id),'all',$siteId);
+        $res = (new Role)->GetRules($roleIdList, 'all', $siteId);
         $data['roles'] = $res['code'];
         $rule_ids = $res['rule'];
         $RuleModel = new Rule();
         $where = $siteId > 0 ? ['category' => 2] : ['category' => 1];
         $NameFiled = $request->HeaderLanguage == 'en' ? 'english_name as name' : 'name';
-        if($is_super > 0){            
+        if($is_super > 0){
             $perms = $RuleModel->where('type','BUTTON')->where($where)->select([$NameFiled,'perm'])->get()->toArray();
         } else {
             $perms = $RuleModel->where('type','BUTTON')->whereIn('id',$rule_ids)->where($where)->where('status',1)->select([$NameFiled,'perm'])->get('perm')->toArray();
         }
         if($siteId > 0){
             // Why do you do this? Ask your leader the reason
-            $perms2 = $RuleModel->where('type','BUTTON')->where('parent_id','172')->where('status',1)->select([$NameFiled,'perm'])->get()->toArray();
-            $perms = array_merge($perms,$perms2);
+//            $perms2 = $RuleModel->where('type','BUTTON')->where('parent_id','172')->where('status',1)->select([$NameFiled,'perm'])->get()->toArray();
+//            $perms = array_merge($perms,$perms2);
+        }else{
+            $fileRuleIds = Role::query()->whereIn("id" , $roleIdList)
+                ->where('status',1)->pluck('site_rule_id')->toArray();
+            $fileRuleList = [];
+            foreach ($fileRuleIds as $forFileRuleIdList){
+                $fileRuleList = array_merge($fileRuleList , $forFileRuleIdList);
+            }
+            if(!empty($fileRuleList )) {
+                $perms2 = $RuleModel->where('type', 'BUTTON')->where('parent_id', '178')->whereIn('id', $fileRuleList)
+                                    ->where('status', 1)->select([$NameFiled, 'perm'])->get()->toArray();
+                $perms = array_merge($perms, $perms2);
+            }
         }
         $data['perms'] = array_column($perms,'perm');
-        
+
         $data['button'] = $perms;
-        
+
         if(empty($data['perms']) && empty($data['roles']) && empty($data['button'])){
             ReturnJson(false,trans('lang.user_rule_problem'));
         }

@@ -2,16 +2,17 @@
 
 namespace Modules\Site\Http\Models;
 
+use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\Base;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\City;
 
 class Order extends Base {
-
     //单查数据需要追加的字段
-    protected $formAppends = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text', 'post_type_text', 'channel', 'country', 'province', 'city', 'product_name'];
-
+    protected $formAppends
+        = ['is_pay_text', 'pay_time_format', 'invoice_time_format', 'pay_type_text', 'invoice_state_text',
+           'post_type_text', 'channel', 'country', 'province', 'city', 'product_name'];
     //查询列表只需要这几个字段
     protected $appends = ['is_pay_text', 'pay_time_format', 'pay_type_text', 'product_name'];
     // 设置允许入库字段,数组形式
@@ -331,5 +332,81 @@ class Order extends Base {
         }
 
         return $text ?? '';
+    }
+
+    /**
+     * 报告名称获取器
+     */
+    public function getOrderProductInfo($orderId) {
+        if (empty($orderId)) {
+            return [];
+        }
+        $orderGoodsList = OrderGoods::where('order_id', $orderId)->get()->toArray();
+        $productsIdList = array_column($orderGoodsList, 'goods_id');
+        $productList = Products::from('product_routine as p')->select(
+            ['p.url', 'p.thumb', 'p.name', 'p.id', 'p.published_date', 'p.category_id', 'p.publisher_id', 'pc.thumb as category_thumb']
+        )
+                ->leftJoin('product_category as pc', 'pc.id', 'p.category_id')
+                ->whereIn('p.id', $productsIdList)
+                ->get()->keyBy('id')->toArray();
+
+        $languageList = Language::query()->where(['status' => 1])->pluck('name', 'id')->toArray();
+        $goods_data_list = [];
+        $domain = getSiteDomain();
+        foreach ($orderGoodsList as $key => $OrderGoods) {
+            //语言版本
+            $priceEditionId = $OrderGoods['price_edition'];
+            $priceEdition = PriceEditionValue::find($priceEditionId);
+            if (!empty($priceEdition)) {
+                $language = $languageList[$priceEdition->language_id];
+            } else {
+                $language = '';
+            }
+            //报告信息
+            $products = $productList[$OrderGoods['goods_id']];
+            if (empty($products)) {
+                continue;
+            }
+            $goodsData = $products;
+            $goodsData['goods_number'] = $OrderGoods['goods_number'] ?: 0;
+            $goodsData['language'] = $language;
+            $goodsData['price_edition'] = $priceEdition['name'] ?: '';
+            $goodsData['goods_present_price'] = $OrderGoods['goods_present_price'];
+
+            //缩略图
+            if(!empty($products['thumb'] )){
+                $thumb = $products['thumb'];
+            }else{
+                $thumb = $products['category_thumb'] ?? '';
+            }
+            $goodsData['thumb'] = $thumb;
+            $goodsData['link'] = $this->getProductUrl($products, $domain);
+            $goodsDataList[] = $goodsData;
+        }
+        return $goodsDataList;
+    }
+
+
+    public function getAddressInfoAttribute() {
+        $province = City::where('id', $this->attributes['province_id'])->value('name');
+        $city = City::where('id', $this->attributes['city_id'])->value('name');
+        $rdata = [
+            'username' => $this->attributes['username'] ?? '',
+            'company'  => $this->attributes['company'] ?? '',
+            'phone'    => $this->attributes['phone'] ?? '',
+            'email'    => $this->attributes['email'] ?? '',
+            'address'  => $this->attributes['address'] ?? '',
+            'province' => $province,
+            'city_id'  => $city,
+        ];
+
+        return $rdata;
+    }
+
+    public function getProductUrl($products, $domain = '') {
+        if(empty($domain )) {
+            $domain = getSiteDomain();
+        }
+        return $domain."/reports/{$products['id']}/{$products['url']}";
     }
 }

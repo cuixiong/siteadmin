@@ -38,7 +38,7 @@ class OrderController extends CrudController
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fieldsList = ['id', 'order_number', 'user_id', 'is_pay', 'pay_time', 'pay_type', 'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at'];
+            $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_type', 'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at'];
             $model = $model->select($fieldsList);
             // 数据排序. 默认降序
             if(empty($request->sort )){
@@ -51,7 +51,11 @@ class OrderController extends CrudController
                 $model = $model->orderBy('id', $sort);
             }
 
-            $record = $model->get();
+            $record = $model->get()->toArray();
+            $orderModel = new Order();
+            foreach ($record as $key => &$value){
+                $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
+            }
 
             $data = [
                 'total' => $total,
@@ -137,6 +141,7 @@ class OrderController extends CrudController
                     $record->$forField = $record->$forField;
                 }
             }
+            $record['order_goods_list'] = (new Order())->getOrderProductInfo($request->id);
 
             ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {

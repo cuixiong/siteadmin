@@ -8,9 +8,12 @@ use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\PriceEditionValue;
+use Modules\Site\Http\Models\PriceEditionValue as SitePriceEditionValue;
+use Modules\Site\Http\Models\Language;
 use Modules\Site\Http\Models\Pay;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\OrderGoods;
+use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ShopCart;
 use Modules\Site\Http\Models\User;
 
@@ -50,7 +53,36 @@ class ShopCartController extends CrudController
                 $model = $model->orderBy('id', $sort);
             }
 
-            $record = $model->get();
+            $record = $model->get()->toArray();
+            $productIdList = array_column($record, 'goods_id');
+            $productList = Products::from('product_routine as p')->select(
+                ['p.url', 'p.thumb', 'p.name', 'p.id', 'p.published_date', 'p.category_id', 'p.publisher_id', 'pc.thumb as category_thumb']
+            )
+                                   ->leftJoin('product_category as pc', 'pc.id', 'p.category_id')
+                                   ->whereIn('p.id', $productIdList)
+                                   ->get()->keyBy('id')->toArray();
+
+            $languageList = Language::query()->where(['status' => 1])->pluck('name', 'id')->toArray();
+            $doman = getSiteDomain();
+            foreach ($record as $key => &$value){
+                //语言版本
+                $priceEditionId = $value['price_edition'];
+                $priceEdition = SitePriceEditionValue::find($priceEditionId);
+                if (!empty($priceEdition)) {
+                    $language = $languageList[$priceEdition->language_id] ?? '';
+                    $price_edition = $priceEdition['name'] ?: '';
+                } else {
+                    $language = '';
+                    $price_edition = '';
+                }
+                $goods_id = $value['goods_id'];
+                $productData = $productList[$goods_id];
+                $productData['link'] = $this->getProductUrl($productData, $doman);
+                $productData['language'] = $language;
+                $productData['price_edition'] = $price_edition;
+                $value['product_data'] = $productData;
+
+            }
 
             $data = [
                 'total' => $total,
@@ -61,6 +93,15 @@ class ShopCartController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    public function getProductUrl($products, $domain = '') {
+        if(empty($domain )) {
+            $domain = getSiteDomain();
+        }
+        return $domain."/reports/{$products['id']}/{$products['url']}";
+    }
+
 
     /**
      * 获取搜索下拉列表

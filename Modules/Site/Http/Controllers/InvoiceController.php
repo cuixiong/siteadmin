@@ -45,7 +45,11 @@ class InvoiceController extends CrudController
                 $model = $model->orderBy('id', 'DESC')->orderBy('created_at', 'DESC');
             }
 
-            $record = $model->get();
+            $record = $model->get()->toArray();
+            $orderModel = new Order();
+            foreach ($record as $key => &$value){
+                $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['order_id']);
+            }
 
             $data = [
                 'total' => $total,

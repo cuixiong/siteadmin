@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Redis;
+use Modules\Admin\Http\Models\Site;
 
 /**
  * 返回JSON格式响应
@@ -64,6 +65,20 @@ function getSiteName(){
         return request()->header("Site");
     }
 }
+
+function getSiteDomain(){
+    if (php_sapi_name() === 'cli') {
+        return false;
+    } else {
+        $siteName = getSiteName();
+        $domain = Site::query()->where('name', $siteName)->value("domain");
+        if (strpos($domain, '://') === false) {
+            $domain = 'https://'.$domain;
+        }
+        return $domain;
+    }
+}
+
 
 
 
