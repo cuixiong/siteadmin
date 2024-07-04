@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Requests\PriceEditionValueRequest;
 use Modules\Admin\Http\Models\ListStyle;
+use Modules\Admin\Http\Models\Site;
 
 class PriceEditionController extends CrudController
 {
@@ -42,7 +43,7 @@ class PriceEditionController extends CrudController
             }
             $editionId = $res['id'];
             $editionData = $input['edition_data'] ?? null;
-            $editionToRedisData = [];// 有了事务，就必须做容器保存需要入库的redis的数据
+            $editionToRedisData = []; // 有了事务，就必须做容器保存需要入库的redis的数据
             if ($editionId && $editionData) {
                 $editionData = json_decode($editionData, true);
                 //新增价格版本子项
@@ -80,8 +81,6 @@ class PriceEditionController extends CrudController
      */
     public function update(Request $request)
     {
-        // Site
-        // $model = Site::where('status',1)->whereRaw("FIND_IN_SET(?, publisher_id) > 0", [$search->publisher_id]);
 
         // 开启事务
         DB::beginTransaction();
@@ -92,10 +91,17 @@ class PriceEditionController extends CrudController
             $model = new PriceEdition();
             $model = $model->findOrFail($input['id']);
 
-            // $newPublisherId = explode(',',$input['publisher_id']);
-            // $oldPublisherId = explode(',',$model->publisher_id);
-            // $oublisherIdArray = array_unique(array_merge($newPublisherId,$oldPublisherId));
-
+            // 修改出版商后涉及的站点
+            $newPublisherId = explode(',', $input['publisher_id']);
+            $oldPublisherId = explode(',', $model->publisher_id);
+            $publisherIdArray = array_unique(array_merge($newPublisherId, $oldPublisherId));
+            $siteModel = Site::select(['id'])->where('status', 1);
+            $siteModel->where(function ($siteModel) use ($publisherIdArray) {
+                foreach ($publisherIdArray as $publisherId) {
+                    $siteModel->orWhereRaw("FIND_IN_SET(?, publisher_id)", [$publisherId]);
+                }
+            });
+            $siteIds = $siteModel->pluck('route')->toArray();
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
@@ -112,20 +118,20 @@ class PriceEditionController extends CrudController
                 $editionDataIds = [];
                 foreach ($editionData as $item) {
                     if (isset($item['id']) && !empty($item['id'])) {
-                        array_push($editionDataIds,$item['id']);
+                        array_push($editionDataIds, $item['id']);
                     }
                 }
                 // 数据库存在的id
                 $existIds = PriceEditionValue::query()->select('id')->where(['edition_id' => $editionId])->pluck('id')->toArray();
                 // 删除多余版本
                 $deletedIds = array_values(array_diff($existIds, $editionDataIds));
-                if(count($deletedIds)>0){
+                if (count($deletedIds) > 0) {
                     $deleteRecord = PriceEditionValue::query()->whereIn('id', $deletedIds);
                     $deleteRecord->delete();
                 }
 
 
-                $editionToRedisData = [];// 有了事务，就必须做容器保存需要入库的redis的数据
+                $editionToRedisData = []; // 有了事务，就必须做容器保存需要入库的redis的数据
                 foreach ($editionData as $item) {
 
                     $item['edition_id'] = $editionId;
@@ -133,7 +139,7 @@ class PriceEditionController extends CrudController
                         (new PriceEditionValueRequest())->update(new Request($item));
 
                         $itemModel = PriceEditionValue::find($item['id']);
-                        if($itemModel){
+                        if ($itemModel) {
                             $resItem = $itemModel->update($item);
                             $editionToRedisData[] = $itemModel;
                         }
@@ -151,13 +157,12 @@ class PriceEditionController extends CrudController
                         DB::rollBack();
                         ReturnJson(FALSE, trans('lang.update_error'));
                     }
-
                 }
             }
             DB::commit();
 
             // 同步到分站点
-            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
+            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, false, $siteIds);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
@@ -241,7 +246,7 @@ class PriceEditionController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort' , 'bind_id')
+                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort', 'bind_id')
                         ->where('edition_id', $item['id'])
                         ->orderBy('sort', 'ASC')
                         ->get();
@@ -327,7 +332,7 @@ class PriceEditionController extends CrudController
             $i = 0;
             foreach ($list as $key => $value) {
                 $res = PriceEditionValue::UpdateToRedis($value);
-                if($res == true){
+                if ($res == true) {
                     $i = $i + 1;
                 }
             }
@@ -339,12 +344,11 @@ class PriceEditionController extends CrudController
             foreach ($priceEditions as $key => $value) {
                 PriceEdition::UpdateToRedis($value);
             }
-            echo '已成功同步：'.$i .' 总数量:'.$count;
+            echo '已成功同步：' . $i . ' 总数量:' . $count;
             exit;
         } catch (\Exception $e) {
             echo $e->getMessage();
             exit;
         }
     }
-
 }
