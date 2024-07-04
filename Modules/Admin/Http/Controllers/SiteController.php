@@ -444,12 +444,13 @@ class SiteController extends CrudController {
                     //获取服务器配置
                     $server = Server::find($item->server_id);
                     //获取当前站点仓库的版本hash值
+                    $currentHashData = '';
                     if (isset($server->ip)) {
                         $currentHashData = Site::executeRemoteCommand($item, $server, null, 'current_hash');
                     }
                     $record[$key]['hash'] = '';
                     $record[$key]['hash_sample'] = '';
-                    if ($currentHashData && $currentHashData['result']) {
+                    if (isset($currentHashData) && isset($currentHashData['result'])) {
                         $temp_array = explode("\n", $currentHashData['output']);
                         $record[$key]['hash'] = $temp_array[0];
                         $record[$key]['hash_sample'] = $temp_array[1];
