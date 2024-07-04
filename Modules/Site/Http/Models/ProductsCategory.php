@@ -205,7 +205,7 @@ class ProductsCategory extends Base {
         }
         $childList = ProductsCategory::query()->select($field)
                                      ->where("pid", $categoryInfo['id'])
-                                     ->where("status", 1)
+                                     //->where("status", 1)
                                      ->get()->toArray();
         foreach ($childList as $value) {
             $forChildList = [];

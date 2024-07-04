@@ -105,6 +105,8 @@ class SiteUploads {
     }
 
     public static function delete($path) {
+        $ossPath = str_replace(public_path(), '', $path);
+        $ossPath = str_replace("//", '/', $ossPath);
         //如果是目录则继续
         if (is_dir($path)) {
             //扫描一个文件夹内的所有文件夹和文件并返回数组
@@ -123,7 +125,7 @@ class SiteUploads {
                         unlink($path.'/'.$val);
                         if (env('OSS_ACCESS_IS_OPEN') == true) {
                             $ossClient = self::OssClient();
-                            $ossClient->delete($path);
+                            $ossClient->delete($ossPath);
                         }
                     }
                 }
@@ -133,14 +135,14 @@ class SiteUploads {
             if (env('OSS_ACCESS_IS_OPEN') == true) {
                 $path = str_replace(self::GetRootPath(), '', $path);
                 $ossClient = self::OssClient();
-                $ossClient->DeleteDir($path);
+                $ossClient->DeleteDir($ossPath);
             }
         } else {
             @unlink($path);
             if (env('OSS_ACCESS_IS_OPEN') == true) {
                 $path = str_replace(self::GetRootPath(), '', $path);
                 $ossClient = self::OssClient();
-                $ossClient->delete($path);
+                $ossClient->delete($ossPath);
             }
         }
     }

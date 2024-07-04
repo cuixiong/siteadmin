@@ -511,9 +511,16 @@ class FileManagement extends Controller {
                 $files = array_merge($files, glob($full_path.$map.'/*'));
             }
         }
-        $rand = rand(10000, 99999);
-        $fileData = pathinfo($full_path);
-        $zipFileName = $fileData['dirname'].'/'.$fileData['filename'].'/'.$fileData['filename'].'_'.$rand.'.zip';
+
+        //如果是文件夹,path为空
+        $dateStr = date('YmdHis');
+        if(empty($path)){
+            $compressName = $name[0]."_".$dateStr.'.zip';
+        }else{
+            $compressName = $dateStr.'.zip';
+        }
+
+        $zipFileName = $full_path.$compressName;
         // var_dump($files, $zipFileName);die;
         $res = self::zipDir($files, $zipFileName);
         if (file_exists($zipFileName)) {
@@ -705,7 +712,7 @@ class FileManagement extends Controller {
             ReturnJson(false, '请选择需要解压的文件名称');
         }
         $res = SiteUploads::unzip($path, $name, $unzipPath);
-        if ($res == true) {
+        if ($res === true) {
             ReturnJson(true, '文件解压成功');
         } else {
             ReturnJson(false, $res);

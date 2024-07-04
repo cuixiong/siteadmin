@@ -41,13 +41,14 @@ class MenuController extends CrudController{
         try {
             $this->ValidateInstance($request);
             $model = Menu::query();
-            $model->where("parent_id" , 0);
-            $model->where("status" , 1);
+            //$model->where("status" , 1);
             if(!empty($request->keywords)){
                 $model = $model->where('name','like','%'.$request->keywords.'%');
             }
             if(!empty($request->search)){
                 $model = (new Menu())->HandleSearch($model,$request->search);
+            }else{
+                $model->where("parent_id" , 0);
             }
 
             // 总数量
@@ -91,7 +92,7 @@ class MenuController extends CrudController{
             return false;
         }
         $childList = Menu::query()->where("parent_id", $menuInfo['id'])
-                                     ->where("status", 1)
+                                     //->where("status", 1)
                                      ->get()->toArray();
         foreach ($childList as $value) {
             $forChildList = [];
