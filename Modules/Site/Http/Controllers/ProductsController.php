@@ -317,7 +317,8 @@ class ProductsController extends CrudController {
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
                                       ->orderBy('sort', 'asc')
-                                      ->orderBy('published_date', 'desc');
+                                      ->orderBy('published_date', 'desc')
+                                      ->orderBy('id', 'desc');
         if (!empty($type) && (!isset($keyword) || $keyword == '')) {
             // TODO: cuizhixiong 2024/5/31
         } elseif (filled($keyword)

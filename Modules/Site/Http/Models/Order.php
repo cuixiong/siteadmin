@@ -351,8 +351,8 @@ class Order extends Base {
                 ->get()->keyBy('id')->toArray();
 
         $languageList = Language::query()->where(['status' => 1])->pluck('name', 'id')->toArray();
-        $goods_data_list = [];
         $domain = getSiteDomain();
+        $goodsDataList = [];
         foreach ($orderGoodsList as $key => $OrderGoods) {
             //语言版本
             $priceEditionId = $OrderGoods['price_edition'];
