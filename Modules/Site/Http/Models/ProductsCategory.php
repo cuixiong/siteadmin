@@ -149,8 +149,10 @@ class ProductsCategory extends Base {
      */
     public function GetList($field = '*', $isTree = false, $treeKey = 'parent_id', $search = []) {
         $model = self::query();
-        if (!empty($search)) {
+        if (!empty($search) && is_object($search)) {
             $model = $this->HandleWhere($model, $search);
+        }elseif(!empty($search ) && is_array($search)){
+            $model = $model->where($search);
         }
         $list = $model->select($field)->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
         if (!empty($list)) {
@@ -169,9 +171,10 @@ class ProductsCategory extends Base {
         $model = self::query();
         if (!empty($search)) {
             $model = $this->HandleWhere($model, $search);
+        }else{
+            $model = $model->where("pid", 0);
         }
-        $model = $model->where("pid", 0)
-                       ->select($field)
+        $model = $model->select($field)
                        ->orderBy('sort', 'ASC')
                        ->orderBy('id', 'DESC');
         // 总数量
