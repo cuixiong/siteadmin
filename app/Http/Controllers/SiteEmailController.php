@@ -68,20 +68,44 @@ class SiteEmailController extends Controller {
      * @param use Illuminate\Http\Request;
      */
     public function test(Request $request) {
-        // try {
-        // 验证表单数据
-        $this->validatorData($request->all());
-        $action = $request->action.'Test';
-        // 调用
-        $res = $this->$action($request);
-        $res
-            ? ReturnJson(true, trans()->get('lang.eamail_success'))
-            : ReturnJson(
-            false, trans()->get('lang.eamail_error')
-        );
-        // } catch (\Exception $e) {
-        //     ReturnJson(FALSE,$e->getMessage());
-        // }
+        try {
+            //验证表单数据
+            $this->validatorData($request->all());
+            $action = $request->action;
+            if (in_array($action, ['register', 'registerSuccess'])) {
+                $actionMethod = $request->action.'Test';
+                $res = $this->$actionMethod($request);
+            } else {
+                $testEmail = $request->test;
+                $res = $this->sendTestEmail($action, $testEmail);
+            }
+            $res
+                ? ReturnJson(true, trans()->get('lang.eamail_success'))
+                : ReturnJson(
+                false, trans()->get('lang.eamail_error')
+            );
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function sendTestEmail($action, $email) {
+        $domain = getSiteDomain();
+        $url = $domain.'/api/third/test-send-email';
+        $siteKey = getSiteName();
+        $reqData = [
+            'action'    => $action,
+            'testEmail' => $email,
+        ];
+        $reqData['sign'] = $this->makeSign($reqData, $siteKey);
+        $response = Http::post($url, $reqData);
+        $resp = $response->json();
+        if (!empty($resp) && $resp['code'] == 200) {
+            ReturnJson(true, '发送成功');
+        } else {
+            \Log::error('返回结果数据:'.json_encode($resp));
+            ReturnJson(false, '发送失败,未知错误');
+        }
     }
 
     /**
@@ -95,7 +119,7 @@ class SiteEmailController extends Controller {
             'title'           => 'required',
             'body'            => 'required',
             'email_sender_id' => 'required',
-            'email_recipient' => 'required',
+            //'email_recipient' => 'required',
             'action'          => 'required',
         ];
         $message = [
@@ -103,8 +127,9 @@ class SiteEmailController extends Controller {
             'title.required'           => '邮箱标题不能为空',
             'body.required'            => '邮箱内容不能为空',
             'email_sender_id.required' => '发送邮件的邮箱ID不能为空',
-            'email_recipient.required' => '邮箱收件人不能为空',
+            //'email_recipient.required' => '邮箱收件人不能为空',
             'action.required'          => '测试邮箱的code方法不能为空',
+            'test.required'            => '测试邮箱不能为空',
         ];
         $validator = Validator::make($data, $rules, $message);
         if ($validator->fails()) {
@@ -112,6 +137,13 @@ class SiteEmailController extends Controller {
             $errors = array_shift($errors['action']);
             ReturnJson(false, $errors);
         }
+
+        //校验test字段必须是邮箱
+        $testEmail = $data['test'] ?? '';
+        if (!filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
+            ReturnJson(false, '测试邮箱格式不正确');
+        }
+
     }
 
     /**
