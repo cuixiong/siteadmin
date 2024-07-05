@@ -390,7 +390,7 @@ EOF;
         }
         //目录
         if (isset($pdObj->table_of_content)) {
-            $pdArrData['table_of_content'] = $pdObj->table_of_content;
+            $pdArrData['table_of_content'] = $this->autoIndent($pdObj->table_of_content);
         } else {
             $pdArrData['table_of_content'] = '';
         }
@@ -445,4 +445,27 @@ EOF;
         }
         return $applicton;
     }
+
+
+    public function autoIndent($text) {
+        // 分割换行
+        $lines = explode("\n", $text);
+        $result = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            // 匹配 ( "1.1 ", "1.2.1 ")
+            if (preg_match('/^(\d+(\.\d+)*)(.*)$/', $line, $matches)) {
+                $indentLevel = substr_count($matches[1], '.');
+                $indentedLine = str_repeat(" ", $indentLevel) . $line;
+                $result[] = $indentedLine;
+            } else {
+                $result[] = $line; // No change if the line does not match
+            }
+        }
+
+        return implode("\n", $result);
+    }
+
 }
