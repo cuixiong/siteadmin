@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Dictionary;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Role;
+use Modules\Admin\Http\Models\Site;
 
 class RoleController extends CrudController
 {
@@ -140,4 +141,58 @@ class RoleController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get()->toArray();
+
+            $siteModel = new Site();
+            foreach ($record as &$info){
+                $info['siteList'] = [];
+                if(!empty($info['site_id'] )){
+                    $info['siteList'] = $siteModel->whereIn("id" , $info['site_id'])->select(["id" , 'name'])->get()->toArray();
+                }
+            }
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
 }
