@@ -79,6 +79,25 @@ function getSiteDomain(){
     }
 }
 
+function getReportUrl($product) {
+    $domain = getSiteDomain();
+    if(empty($domain )){
+        return '';
+    }
+    $productId = $product['id'];
+    if (!empty($product['url'])) {
+        $url = $domain."/reports/{$productId}/{$product['url']}";
+    } else {
+        $url = $domain."/reports/{$productId}";
+    }
+
+    return $url;
+}
+
+
+
+
+
 
 
 

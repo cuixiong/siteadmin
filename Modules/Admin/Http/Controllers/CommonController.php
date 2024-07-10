@@ -28,6 +28,7 @@ class CommonController extends Controller {
         $siteId = $siteId ? $siteId : 0;
         $where = $siteId > 0 ? ['category' => 2] : ['category' => 1];
         $RuleModel = new Rule();
+        $is_super = 0;
         if ($is_super > 0) {
             $perms = $RuleModel->where('type', 'BUTTON')->where($where)->select([$NameFiled, 'perm']
             )->get('perm')->toArray();
@@ -39,7 +40,7 @@ class CommonController extends Controller {
 //            $perms = array_merge($perms,$perms2);
             } else {
                 $perms2 = $RuleModel->where('type', 'BUTTON')->where('parent_id', '178')
-                                    ->select([$NameFiled, 'perm'])->get()->toArray();
+                                    ->where('status', 1)->select([$NameFiled, 'perm'])->get()->toArray();
                 $perms = array_merge($perms, $perms2);
             }
         } else {
@@ -57,14 +58,17 @@ class CommonController extends Controller {
                                    ->where('status', 1)->pluck('site_rule_id')->toArray();
                 $fileRuleList = [];
                 foreach ($fileRuleIds as $forFileRuleIdList) {
-                    $fileRuleList = array_merge($fileRuleList, $forFileRuleIdList);
+                    if(is_array($forFileRuleIdList)) {
+                        $fileRuleList = array_merge($fileRuleList, $forFileRuleIdList);
+                    }
                 }
                 if (!empty($fileRuleList)) {
                     $perms2 = $RuleModel->where('type', 'BUTTON')->where('parent_id', '178')->whereIn(
                         'id', $fileRuleList
-                    )
-                                        ->where('status', 1)->select([$NameFiled, 'perm'])->get()->toArray();
-                    $perms = array_merge($perms, $perms2);
+                    )->where('status', 1)->select([$NameFiled, 'perm'])->get()->toArray();
+                    if(!empty($perms2 )) {
+                        $perms = array_merge($perms, $perms2);
+                    }
                 }
             }
         }

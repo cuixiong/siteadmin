@@ -6,7 +6,7 @@ use OSS\OssClient;
 use OSS\Core\OssException;
 class AliyuncsOss
 {
-    private $accessKeyId = ''; 
+    private $accessKeyId = '';
     private $accessKeySecret = '';
     private $endpoint = "https://oss-cn-hongkong.aliyuncs.com";
     private $ossClient;
@@ -30,7 +30,7 @@ class AliyuncsOss
             // Set the timeout for establishing a connection
             $this->ossClient->setConnectTimeout(300);
             // Set the number of failed request retries.
-            $this->ossClient->setMaxTries(5);    
+            $this->ossClient->setMaxTries(5);
             // Set the timeout for transmitting data at the Socket layer
             $this->ossClient->setTimeout(30);
             // Set whether to enable SSL certificate verification
@@ -56,9 +56,9 @@ class AliyuncsOss
             $this->setBucket($bucket);
             $file = ltrim($file,'/');
             $ext = pathinfo($file, PATHINFO_EXTENSION);
-            if(in_array($ext, $this->GetUploadsExt())){
-                $this->ossClient->uploadFile($this->bucket, $file, $content);
-            }
+            //if(in_array($ext, $this->GetUploadsExt())){
+            $this->ossClient->uploadFile($this->bucket, $file, $content);
+            //}
             return true;
         } catch (OssException $e) {
             return $e->getMessage();

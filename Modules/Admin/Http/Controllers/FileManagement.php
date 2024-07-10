@@ -121,6 +121,9 @@ class FileManagement extends Controller{
         } else if(is_file($path)) {
             // 使用pathinfo()函数获取文件路径信息
             $fileinfo = pathinfo($path);
+            if(empty($fileinfo ) || empty($fileinfo['extension'] )){
+                return 'file';
+            }
             // 获取文件类型
             $filetype = $fileinfo['extension'];
             if(isset($filetype)){

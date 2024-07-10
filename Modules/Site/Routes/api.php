@@ -462,6 +462,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\OfficeController::class, 'destroy'])->name('办公室列表:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\OfficeController::class, 'list'])->name('办公室列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeStatus'])->name('办公室列表:状态修改');
+        Route::post('change-view-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeViewStatus'])->name('办公室列表:字段状态修改');
     });
     // Qualification控制器
     Route::prefix('qualification')->group(function () {
@@ -594,6 +595,16 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'searchDroplist'])->name('同步出版商:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'changeStatus'])->name('同步出版商:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\SyncPublisherController::class, 'changeSort'])->name('同步出版商:排序修改');
+    });
+
+
+    // 报告浏览记录
+    Route::prefix('view-products-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ViewProductsLogController::class, 'list'])->name('报告浏览记录:数据列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ViewProductsLogController::class, 'destroy'])->name('报告浏览记录:数据删除');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ViewProductsLogController::class, 'changeStatus'])->name('报告浏览记录:状态修改');
+        Route::post('form/{id}', [Modules\Site\Http\Controllers\ViewProductsLogController::class, 'form'])->name('报告浏览记录:查询详情');
+        Route::post('export', [Modules\Site\Http\Controllers\ViewProductsLogController::class, 'export'])->name('报告管理:批量导出');
     });
 
 

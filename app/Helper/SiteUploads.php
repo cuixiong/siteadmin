@@ -59,7 +59,12 @@ class SiteUploads {
         }
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
-        $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
+        if(!empty($path )){
+            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
+        }else{
+            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$name;
+        }
+
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossClient = self::OssClient();
             $res = $ossClient->uploads($ossPath, $FilePath.$name);

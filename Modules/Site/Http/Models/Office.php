@@ -6,7 +6,7 @@ class Office extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = [
-        'city', 
+        'city',
         'name',
         'language_alias',
         'region',
@@ -16,11 +16,14 @@ class Office extends Base
         'phone',
         'address',
         'working_language',
+        'working_language_status',
         'working_time',
+        'working_time_status',
         'time_zone',
+        'time_zone_status',
         'status',
         'sort',
-        'updated_by', 
+        'updated_by',
         'created_by'
     ];
 
