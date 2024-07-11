@@ -36,7 +36,7 @@ class ViewProductsLog extends Base {
 
     /**
      * 处理查询列表条件数组
-     * @param $model moxel
+     * @param $model \Modules\Site\Http\Models\Base
      * @param $search 搜索条件
      */
     public function HandleSearch($model,$search){
@@ -61,7 +61,7 @@ class ViewProductsLog extends Base {
                     $model = $model->whereIn($key,$value);
                 } else {
                     if($key == 'username'){
-                        if($value == '游客    '){
+                        if($value == '游客'){
                             $model = $model->where("user_id" , 0);
                         }else{
                             $userIdList = User::query()->where("username" , 'like','%'.trim($value).'%')->pluck("id")->toArray();

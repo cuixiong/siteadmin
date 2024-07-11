@@ -17,6 +17,7 @@ use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\ProductsExcelField;
 use Modules\Site\Http\Models\ProductsExportLog;
 use Modules\Site\Http\Models\ViewProductsExportLog;
+use Modules\Site\Http\Models\ViewProductsLog;
 
 class ViewProductsLogController extends CrudController {
     public function options(Request $request) {
@@ -112,49 +113,56 @@ class ViewProductsLogController extends CrudController {
      * @param $request 请求信息
      */
     public function export(Request $request) {
-        list($model, $count) = $this->getExportData($request);
-        //加入队列
-        $dirName = "view_products_export_".time();
-        $basePath = public_path();
-        $dirMiddlePath = '/site/'.$request->header('Site').'/exportDir/';
-        //检验目录是否存在
-        if (!is_dir($basePath.$dirMiddlePath)) {
-            @mkdir($basePath.$dirMiddlePath, 0777, true);
-        }
-        $dirPath = $basePath.$dirMiddlePath;
-        //创建目录
-        if (!is_dir($dirPath)) {
-            @mkdir($dirPath, 0777, true);
-        }
-        //导出记录初始化,每个文件单独一条记录
-        $filePath = $dirMiddlePath.$dirName.'.xlsx';
-        $logModel = ViewProductsExportLog::create([
-                                                      'file'  => $filePath,
-                                                      'count' => $count,
-                                                  ]);
-        $isQueue = false;
-        if($isQueue) {
-            $data = [
-                'class'  => 'Modules\Site\Http\Controllers\ViewProductsLogController',
-                'method' => 'handleExportExcel',
-                'site'   => $request->header('Site') ?? '',   //站点名称
-                'model'  => $model,    //model 实例
-                'log_id' => $logModel->id,  //写入日志的id
+        try {
+            list($model, $count) = $this->getExportData($request);
+            //返回条数
+            if ($request->type == 1) {
+                ReturnJson(true, trans('lang.request_success'), ['count' => $count]);
+            }
+            //定义导出目录
+            $basePath = public_path();
+            $site = getSiteName();
+            if (empty($site)) {
+                ReturnJson(false, trans('lang.site_not_exist'));
+            }
+            $dirMiddlePath = '/site/'.$site.'/exportDir/';
+            $dirPath = $basePath.$dirMiddlePath;
+            if (!is_dir($dirPath)) {
+                @mkdir($dirPath, 0777, true);
+            }
+            //定义导出文件名
+            $dirName = "view_products_export_".time();
+            $filePath = $dirMiddlePath.$dirName.'.xlsx';
+            //生成导出日志
+            $addLog = [
+                'file'  => $filePath,
+                'count' => $count,
             ];
-            $data = json_encode($data);
-            ExportJob::dispatch($data)->onQueue(QueueConst::QUEEU_EXPORT_VIEW_GOODS);
-        }else{
-            $data = [
-                'class'  => 'Modules\Site\Http\Controllers\ViewProductsLogController',
-                'method' => 'handleExportExcel',
-                'site'   => $request->header('Site') ?? '',   //站点名称
-                'model'  => $model,    //model 实例
-                'log_id' => $logModel->id,  //写入日志的id
-            ];
-            $this->handleExportExcel($data);;
+            $logModel = ViewProductsExportLog::create($addLog);
+            $isQueue = true;
+            if ($isQueue) {
+                $data = [
+                    'class'  => 'Modules\Site\Http\Controllers\ViewProductsLogController',
+                    'method' => 'handleExportExcel',
+                    'site'   => $site,   //站点名称
+                    'reqinput'  => $request->input(),    //model 实例
+                    'log_id' => $logModel->id,  //写入日志的id
+                ];
+                $data = json_encode($data);
+                ExportJob::dispatch($data)->onQueue(QueueConst::QUEEU_EXPORT_VIEW_GOODS);
+            } else {
+                $data = [
+                    'class'  => 'Modules\Site\Http\Controllers\ViewProductsLogController',
+                    'method' => 'handleExportExcel',
+                    'site'   => $site,   //站点名称
+                    'reqinput'  => $request->input(),    //model 实例
+                    'log_id' => $logModel->id,  //写入日志的id
+                ];
+                $this->handleExportExcel($data);;
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
         }
-
-
         ReturnJson(true, trans('lang.request_success'), $logModel->id);
     }
 
@@ -196,21 +204,35 @@ class ViewProductsLogController extends CrudController {
         }
         // 设置当前租户
         tenancy()->initialize($params['site']);
-
         $exportLogInfo = ViewProductsExportLog::find($params['log_id']);
-        $model = $params['model'];
-
+        $reqinput = $params['reqinput'];
 
         try {
             //读取数据
+            $model = new ViewProductsLog();
+            if(!empty($reqinput['ids'] )){
+                $idList = explode("," , $reqinput['ids']);
+                $model = $model->whereIn('id', $idList);
+            }elseif(!empty($reqinput['search'] )){
+                $model = $model->HandleSearch($model,$reqinput['search']);
+            }
             $record = $model->get()->toArray();
+            $productIdList = array_column($record, 'product_id');
+            $productList = Products::query()->whereIn("id", $productIdList)->pluck('url', 'id')->toArray();
+            foreach ($record as $key => &$map) {
+                $productId = $map['product_id'] ?? 0;
+                $map['report_url'] = '';
+                if (!empty($productList[$productId])) {
+                    $map['report_url'] = $productList[$productId];
+                }
+            }
+
             $writer = WriterEntityFactory::createXLSXWriter();
             $filename = public_path().$exportLogInfo['file'];
-            if(!file_exists($filename)){
+            if (!file_exists($filename)) {
                 file_put_contents($filename, '');
             }
             $writer->openToFile($filename);
-
             $style = (new StyleBuilder())->setShouldWrapText(false)->build();
             //写入标题
             $title = [
@@ -220,6 +242,7 @@ class ViewProductsLogController extends CrudController {
                 '报告id',
                 '报告昵称',
                 '报告关键词',
+                '报告链接',
                 'ip地址',
                 'ip所在地',
                 '当天浏览次数',
@@ -227,7 +250,6 @@ class ViewProductsLogController extends CrudController {
             ];
             $row = WriterEntityFactory::createRowFromArray($title, $style);
             $writer->addRow($row);
-
             foreach ($record as $key => $item) {
                 $row = [];
                 $row[] = $item['id'];
@@ -236,6 +258,7 @@ class ViewProductsLogController extends CrudController {
                 $row[] = $item['product_id'];
                 $row[] = $item['product_name'];
                 $row[] = $item['keyword'];
+                $row[] = $item['report_url'];
                 $row[] = $item['ip'];
                 $row[] = $item['ip_addr'];
                 $row[] = $item['view_cnt'];
@@ -245,10 +268,20 @@ class ViewProductsLogController extends CrudController {
             }
             // $writer->addRows($record);
             $writer->close();
+
         } catch (\Exception $th) {
             $details = $th->getMessage();
             throw $th;
         }
+
+        //记录任务状态
+        $logModel = ViewProductsExportLog::where(['id' => $params['log_id']])->first();
+        $logData = [
+            'state' => ViewProductsExportLog::EXPORT_COMPLETE,
+        ];
+        $logData['success_count'] = count($record);
+        $logModel->update($logData);
+        return true;
 
     }
 }

@@ -607,6 +607,14 @@ Route::middleware([
         Route::post('export', [Modules\Site\Http\Controllers\ViewProductsLogController::class, 'export'])->name('报告管理:批量导出');
     });
 
+    // ProductsExportLog 控制器
+    Route::prefix('view-products-export-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\ViewProductsExportLogController::class, 'list'])->name('导出记录:导出列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ViewProductsExportLogController::class, 'destroy'])->name('导出记录:删除记录');
+        Route::post('export-process', [Modules\Site\Http\Controllers\ViewProductsExportLogController::class, 'exportProcess'])->name('导出记录:导出进度');
+        Route::post('export-file-download', [Modules\Site\Http\Controllers\ViewProductsExportLogController::class, 'exportFileDownload'])->name('导出记录:下载导出文件');
+    });
+
 
     //定时任务脚本(前端按钮接口调用)
     Route::prefix('crontab')->group(function () {

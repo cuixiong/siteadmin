@@ -1,10 +1,15 @@
 <?php
 
 namespace Modules\Site\Http\Models;
-
-
 class ViewProductsExportLog extends Base {
     protected $table = 'view_product_export_log';
+    const UPLOAD_INIT     = 0;  //上传未开始
+    const UPLOAD_READY    = 1; // 文件加载好了
+    const UPLOAD_RUNNING  = 2;  //正在运行
+    const UPLOAD_COMPLETE = 3;  //上传结束
+
+
+
     const EXPORT_INIT     = 0;  // 导出未开始
     const EXPORT_RUNNING  = 1;  //正在运行
     const EXPORT_MERGING  = 2;  //合并中

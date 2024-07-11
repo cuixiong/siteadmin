@@ -88,5 +88,7 @@ return [
     'export_complete_msg'            => 'Complete',
     'file_not_exist'                 => 'File is not exist',
     'copy_success'                   => 'Copy Success',
-    'exist_sensitive_words'          => 'The Name Exist Sensitive Words'
+    'exist_sensitive_words'          => 'The Name Exist Sensitive Words',
+    'export_no_complete'             => 'EXPORT NO COMPLETE',
+    'site_not_exist'                 => 'SITE NOT EXIST',
 ];

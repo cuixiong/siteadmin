@@ -92,5 +92,7 @@ return [
     'export_complete_msg'            => '完成',
     'file_not_exist'                 => '文件不存在',
     'copy_success'                   => '复制成功',
-    'exist_sensitive_words'          => '存在敏感词'
+    'exist_sensitive_words'          => '存在敏感词',
+    'export_no_complete'             => '当前导出文件未完成',
+    'site_not_exist'                 => '站点不存在',
 ];
