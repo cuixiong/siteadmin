@@ -26,7 +26,7 @@ class OfficeController extends CrudController
     public function changeViewStatus(Request $request) {
         try {
             if (empty($request->id)) {
-                ReturnJson(false, 'id is empty');
+                ReturnJson(false, trans('lang.param_empty').':id');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             $field = $request->field ?? '';

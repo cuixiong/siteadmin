@@ -92,16 +92,16 @@ class PriceEditionController extends CrudController
             $model = $model->findOrFail($input['id']);
 
             // 修改出版商后涉及的站点
-            $newPublisherId = explode(',', $input['publisher_id']);
-            $oldPublisherId = explode(',', $model->publisher_id);
-            $publisherIdArray = array_unique(array_merge($newPublisherId, $oldPublisherId));
-            $siteModel = Site::select(['id'])->where('status', 1);
-            $siteModel->where(function ($siteModel) use ($publisherIdArray) {
-                foreach ($publisherIdArray as $publisherId) {
-                    $siteModel->orWhereRaw("FIND_IN_SET(?, publisher_id)", [$publisherId]);
-                }
-            });
-            $siteIds = $siteModel->pluck('route')->toArray();
+//            $newPublisherId = explode(',', $input['publisher_id']);
+//            $oldPublisherId = explode(',', $model->publisher_id);
+//            $publisherIdArray = array_unique(array_merge($newPublisherId, $oldPublisherId));
+//            $siteModel = Site::select(['id'])->where('status', 1);
+//            $siteModel->where(function ($siteModel) use ($publisherIdArray) {
+//                foreach ($publisherIdArray as $publisherId) {
+//                    $siteModel->orWhereRaw("FIND_IN_SET(?, publisher_id)", [$publisherId]);
+//                }
+//            });
+//            $siteIds = $siteModel->pluck('id')->toArray();
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
@@ -162,7 +162,7 @@ class PriceEditionController extends CrudController
             DB::commit();
 
             // 同步到分站点
-            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, false, $siteIds);
+            PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
             ReturnJson(TRUE, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务

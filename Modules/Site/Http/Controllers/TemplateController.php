@@ -227,6 +227,10 @@ class TemplateController extends CrudController {
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
         $tempContent = $template->content;
+
+        //过滤模版标签的换行
+        $tempContent = preg_replace('/(<\/[a-zA-Z][a-zA-Z0-9]*>)\r?\n/', '$1', $tempContent);
+
         // 处理模板变量   {{year}}
         $tempContent = $this->writeTempWord($tempContent, '{{year}}', date("Y"));
         // 处理模板变量   {{month}}
@@ -458,7 +462,7 @@ EOF;
             // 匹配 ( "1.1 ", "1.2.1 ")
             if (preg_match('/^(\d+(\.\d+)*)(.*)$/', $line, $matches)) {
                 $indentLevel = substr_count($matches[1], '.');
-                $indentedLine = str_repeat(" ", $indentLevel) . $line;
+                $indentedLine = str_repeat("  ", $indentLevel) . $line;
                 $result[] = $indentedLine;
             } else {
                 $result[] = $line; // No change if the line does not match

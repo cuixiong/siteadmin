@@ -17,7 +17,7 @@ class ViewProductsLog extends Base {
     public function getUsernameAttribute() {
         $userName = '游客';
         if (!empty($this->attributes['user_id'])) {
-            $userName = User::find($this->user_id)->value("username");
+            $userName = User::query()->where("id" , $this->attributes['user_id'])->value("username");
         }
 
         return $userName;

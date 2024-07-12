@@ -12,11 +12,11 @@ class LinkRequest extends BaseRequest
     {
         $rules = [
             'name' => 'required',
-            'logo' => 'required',
+            //'logo' => 'required',
         ];
         $message = [
             'name.required' => '名称不能为空',
-            'logo.required' => '登陆名不能为空',
+//            'logo.required' => 'logo图片不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
@@ -29,12 +29,12 @@ class LinkRequest extends BaseRequest
         $rules = [
             'id' => 'required',
             'name' => 'required',
-            'logo' => 'required',
+//            'logo' => 'required',
         ];
         $message = [
             'id' => 'required',
             'name.required' => '名称不能为空',
-            'logo.required' => '登陆名不能为空',
+//            'logo.required' => 'logo图片不能为空',
         ];
         return $this->validateRequest($request, $rules,$message);
     }
