@@ -26,7 +26,9 @@ class QueueConst {
     const QUEEU_OPERATION_LOG = 'operation_log';  // 操作日志
     // php artisan queue:work --queue=sync_spginx_index
     const SYNC_SPGINX_INDEX = 'sync_spginx_index';  // 同步sphinx索引
-
     // php artisan queue:work --queue=export_view_goods
     const QUEEU_EXPORT_VIEW_GOODS = 'export_view_goods';  // 导出浏览记录队列
+
+    // php artisan queue:work --queue=queue_admin_email
+    const QUEUE_ADMIN_EMAIL = 'queue_admin_email';  // 管理后台邮件队列
 }
