@@ -615,6 +615,14 @@ Route::middleware([
         Route::post('export-file-download', [Modules\Site\Http\Controllers\ViewProductsExportLogController::class, 'exportFileDownload'])->name('导出记录:下载导出文件');
     });
 
+    // 封禁IP记录
+    Route::prefix('ip-ban-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\IpBanLogController::class, 'list'])->name('封禁IP日志:数据列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\IpBanLogController::class, 'destroy'])->name('封禁IP日志:数据删除');
+        Route::post('change-status', [Modules\Site\Http\Controllers\IpBanLogController::class, 'changeStatus'])->name('封禁IP日志:状态修改');
+        Route::post('form/{id}', [Modules\Site\Http\Controllers\IpBanLogController::class, 'form'])->name('封禁IP日志:查询详情');
+    });
+
 
     //定时任务脚本(前端按钮接口调用)
     Route::prefix('crontab')->group(function () {

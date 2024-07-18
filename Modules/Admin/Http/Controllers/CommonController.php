@@ -28,11 +28,10 @@ class CommonController extends Controller {
         $siteId = $siteId ? $siteId : 0;
         $where = $siteId > 0 ? ['category' => 2] : ['category' => 1];
         $RuleModel = new Rule();
-        $is_super = 0;
+        //$is_super = 0;
         if ($is_super > 0) {
-            $perms = $RuleModel->where('type', 'BUTTON')->where($where)->select([$NameFiled, 'perm']
-            )->get('perm')->toArray();
-            $rolesCode = (new Role)::query()->whereIn('id', $roleIdList)->where('status', 1)->pluck('code')->toArray();
+            $perms = $RuleModel->where('type', 'BUTTON')->where($where)->where("status" , 1)->select([$NameFiled, 'perm'])->get('perm')->toArray();
+            $rolesCode = (new Role)::query()->whereIn('id', $roleIdList)->pluck('code')->toArray();
             $data['roles'] = $rolesCode;
             if ($siteId > 0) {
                 // Why do you do this? Ask your leader the reason
@@ -40,7 +39,8 @@ class CommonController extends Controller {
 //            $perms = array_merge($perms,$perms2);
             } else {
                 $perms2 = $RuleModel->where('type', 'BUTTON')->where('parent_id', '178')
-                                    ->where('status', 1)->select([$NameFiled, 'perm'])->get()->toArray();
+                                    ->where("status" , 1)
+                                    ->select([$NameFiled, 'perm'])->get()->toArray();
                 $perms = array_merge($perms, $perms2);
             }
         } else {

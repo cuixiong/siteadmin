@@ -39,4 +39,26 @@ class TeamMemberController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    /**
+     * AJax单个更新
+     *
+     * @param $request 请求信息
+     */
+    protected function update(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            //$input['is_analyst'] = $input['is_analyst'] ?? 0;
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
 }
