@@ -9,6 +9,10 @@ class SiteUploads {
     public static  $DIR = 'site';// 一级目录
     private static $SiteDir;// 站点目录
 
+    public function __construct() {
+        self::$SiteDir = getSiteName();
+    }
+
     public static function OssClient() {
         $site = request()->header('site');
         $siteId = Site::where('name', $site)->value('id');
@@ -162,13 +166,15 @@ class SiteUploads {
         }
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             if (is_dir($newPath)) {
-                $oldPath = str_replace(self::GetRootPath(), '', $oldPath);
-                $newPath = str_replace(self::GetRootPath(), '', $newPath);
+                $ossPath = '/'.self::$DIR.'/'.self::$SiteDir;
+                $oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
+                $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
                 $ossClient = self::OssClient();
                 $ossClient->RenameDir($oldPath, $newPath);
             } else {
-                $oldPath = str_replace(self::GetRootPath(), '', $oldPath);
-                $newPath = str_replace(self::GetRootPath(), '', $newPath);
+                $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
+                $oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
+                $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
                 $ossClient = self::OssClient();
                 $ossClient->rename($oldPath, $newPath);
             }
@@ -200,7 +206,9 @@ class SiteUploads {
         }
         copy($oldPath, $newPath);
         if (env('OSS_ACCESS_IS_OPEN') == true) {
-            $newPath = str_replace(self::GetRootPath(), '', $newPath);
+            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
+            $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
+            //$oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
             $ossClient = self::OssClient();
             $ossClient->uploads($newPath, $oldPath);
         }
@@ -233,10 +241,11 @@ class SiteUploads {
         }
         rename($newPath, $oldPath);
         if (env('OSS_ACCESS_IS_OPEN') == true) {
-            $newPath = str_replace(self::GetRootPath(), '', $newPath);
-            $oldPath = str_replace(self::GetRootPath(), '', $oldPath);
+            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
+            $oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
+            $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
             $ossClient = self::OssClient();
-            $ossClient->move($newPath, $oldPath);
+            $ossClient->move($oldPath,$newPath);
         }
 
         return true;

@@ -52,7 +52,7 @@ class PriceEdition extends Base
     public function HandleWhere($model, $request)
     {
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -130,7 +130,7 @@ class PriceEdition extends Base
      * @param $id 要修改数据的标识
      * @param $isAllSite 是否同步所有站点
      * @param $siteIds 站点id
-     * 
+     *
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
@@ -239,14 +239,14 @@ class PriceEdition extends Base
                     $tempValueData = array_merge($tempValueData, $publisherPriceEditionData[$publisher]);
                 }
                 foreach ($tempValueData as $record) {
-
+                    unset($record['bind_id']);
                     // id特殊处理
-                    if (isset($record['bind_id']) && !empty($record['bind_id'])) {
-                        $record['id'] = $record['bind_id'];
-                        unset($record['bind_id']);
-                    } else {
-                        continue;
-                    }
+//                    if (isset($record['bind_id']) && !empty($record['bind_id'])) {
+//                        $record['id'] = $record['bind_id'];
+//                        unset($record['bind_id']);
+//                    } else {
+//                        continue;
+//                    }
                     $columns = [];
                     $values = [];
                     foreach ($record as $column => $value) {

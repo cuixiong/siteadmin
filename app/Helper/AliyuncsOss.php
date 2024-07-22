@@ -136,8 +136,8 @@ class AliyuncsOss
 
     /**
      * move file
-     * @param $oldFile Old file name
-     * @param $newFile new file name
+     * @param $oldFile string file name
+     * @param $newFile string file name
      * @param $bucket Storage space name
      * @return bool
      */
@@ -145,7 +145,10 @@ class AliyuncsOss
     {
         try {
             $this->setBucket($bucket);
-            $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, $newFile);
+            //暂时注释
+            $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
+            //$file = ltrim($newFile,'/');
+            //$this->ossClient->uploadFile($this->bucket, $file, $oldFile);
             if($oldFile != $newFile){
                 $this->ossClient->deleteObject($this->bucket, ltrim($oldFile,'/'));
             }

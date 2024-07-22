@@ -126,8 +126,8 @@ class PriceEditionController extends CrudController
                 // 删除多余版本
                 $deletedIds = array_values(array_diff($existIds, $editionDataIds));
                 if (count($deletedIds) > 0) {
-                    $deleteRecord = PriceEditionValue::query()->whereIn('id', $deletedIds);
-                    $deleteRecord->delete();
+                    $deleteRecord = PriceEditionValue::query()->whereIn('id', $deletedIds)->update(['is_deleted' => 0]);
+                    //$deleteRecord->delete();
                 }
 
 
@@ -178,7 +178,6 @@ class PriceEditionController extends CrudController
      */
     public function destroy(Request $request)
     {
-        DB::beginTransaction();
         try {
             if (empty($request->ids)) {
                 ReturnJson(FALSE, '请输入需要删除的ID');
@@ -188,24 +187,18 @@ class PriceEditionController extends CrudController
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            $record->whereIn('id', $ids);
-            if (!$record->delete()) {
-                // 回滚事务
-                DB::rollBack();
+            $rs = $record->whereIn('id', $ids)->update(['is_deleted' => 0]);
+            if (!$rs) {
                 ReturnJson(FALSE, trans('lang.delete_error'));
             }
             //删除子项
-            PriceEditionValue::whereIn('edition_id', $ids)->delete();
-
-            DB::commit();
+            PriceEditionValue::whereIn('edition_id', $ids)->update(['is_deleted' => 0]);
 
             // 同步到分站点
             PriceEdition::SaveToSite(PriceEdition::SAVE_TYPE_FULL, NULL, true);
 
             ReturnJson(TRUE, trans('lang.delete_success'));
         } catch (\Exception $e) {
-            // 回滚事务
-            DB::rollBack();
             ReturnJson(FALSE, $e->getMessage());
         }
     }
@@ -225,6 +218,10 @@ class PriceEditionController extends CrudController
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
+
+            //增加假删除过滤条件
+            $model = $model->where("is_deleted" , 1);
+
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -248,6 +245,7 @@ class PriceEditionController extends CrudController
                     //子项数据
                     $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort', 'bind_id')
                         ->where('edition_id', $item['id'])
+                        ->where("is_deleted" , 1) //增加假删除逻辑
                         ->orderBy('sort', 'ASC')
                         ->get();
                 }
