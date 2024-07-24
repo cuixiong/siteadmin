@@ -137,13 +137,11 @@ class SiteEmailController extends Controller {
             $errors = array_shift($errors['action']);
             ReturnJson(false, $errors);
         }
-
         //校验test字段必须是邮箱
         $testEmail = $data['test'] ?? '';
         if (!filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
             ReturnJson(false, '测试邮箱格式不正确');
         }
-
     }
 
     /**
@@ -407,14 +405,21 @@ class SiteEmailController extends Controller {
      */
     protected function sendOrderEmail(Request $request) {
         try {
-            $id = $request->id;
-            $record = (new Order())->findOrFail($id);
-            //已支付与已完成
-            if (in_array($record->is_pay, [2, 4])) {
-                $code = 'paySuccess';
-            } else {
-                $code = 'placeOrder';
+            $ids = [];
+            if (!empty($request->ids)) {
+                if (is_array($request->ids)) {
+                    $ids = $request->ids;
+                } else {
+                    $ids = [$request->ids];
+                }
+            } elseif(!empty($request->id )) {
+                $ids = [$request->id];
             }
+
+            if(empty($ids )){
+                ReturnJson(false, '订单ID不能为空');
+            }
+
             $site = $request->header('site');
             $domain = Site::where('name', $site)->value("domain");
             if (empty($domain)) {
@@ -424,18 +429,27 @@ class SiteEmailController extends Controller {
                 $domain = 'https://'.$domain;
             }
             $url = $domain.'/api/third/send-email';
-            $reqData = [
-                'id'   => $id,
-                'code' => $code,
-            ];
-            $reqData['sign'] = $this->makeSign($reqData, $site);
-            $response = Http::post($url, $reqData);
-            $resp = $response->json();
-            if (!empty($resp) && $resp['code'] == 200) {
-                ReturnJson(true, '发送成功');
-            } else {
-                \Log::error('返回结果数据:'.json_encode($resp));
-                ReturnJson(false, '发送失败,未知错误');
+            foreach ($ids as $id) {
+                $record = (new Order())->findOrFail($id);
+                //已支付与已完成
+                if (in_array($record->is_pay, [2, 4])) {
+                    $code = 'paySuccess';
+                } else {
+                    $code = 'placeOrder';
+                }
+                $reqData = [
+                    'id'   => $id,
+                    'code' => $code,
+                ];
+                $reqData['sign'] = $this->makeSign($reqData, $site);
+                $response = Http::post($url, $reqData);
+                $resp = $response->json();
+                if (!empty($resp) && $resp['code'] == 200) {
+                    ReturnJson(true, '发送成功');
+                } else {
+                    \Log::error('返回结果数据:'.json_encode($resp));
+                    ReturnJson(false, '发送失败,未知错误');
+                }
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
