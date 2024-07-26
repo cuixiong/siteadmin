@@ -18,6 +18,7 @@ class ProductsCategory extends Base {
             'sort',
             'status',
             'is_recommend',
+            'is_hot',
             'discount',
             'discount_amount',
             'discount_type',
@@ -107,6 +108,14 @@ class ProductsCategory extends Base {
         //show_home 状态
         if (isset($search->show_home) && $search->show_home != '') {
             $model = $model->where('show_home', $search->show_home);
+        }
+
+        if (isset($search->is_recommend) && $search->is_recommend != '') {
+            $model = $model->where('is_recommend', $search->is_recommend);
+        }
+        
+        if (isset($search->is_hot) && $search->is_hot != '') {
+            $model = $model->where('is_hot', $search->is_hot);
         }
         //时间为数组形式
         //创建时间
