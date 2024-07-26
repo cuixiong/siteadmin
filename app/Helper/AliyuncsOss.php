@@ -47,8 +47,8 @@ class AliyuncsOss
 
     /**
     * Upload files
-    *@param $file Upload file name
-    *@param $content Upload file content
+    *@param $file string file name
+    *@param $content string file content
     */
     public function uploads($file, $content,$bucket = '')
     {
@@ -146,9 +146,9 @@ class AliyuncsOss
         try {
             $this->setBucket($bucket);
             //暂时注释
-            $this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
-            //$file = ltrim($newFile,'/');
-            //$this->ossClient->uploadFile($this->bucket, $file, $oldFile);
+            //$this->ossClient->copyObject($this->bucket, ltrim($oldFile,'/'), $this->bucket, ltrim($newFile,'/'));
+            $file = ltrim($newFile,'/');
+            $this->ossClient->uploadFile($this->bucket, $file, $oldFile);
             if($oldFile != $newFile){
                 $this->ossClient->deleteObject($this->bucket, ltrim($oldFile,'/'));
             }
@@ -268,4 +268,27 @@ class AliyuncsOss
             return $e->getMessage();
         }
     }
+
+    /**
+     * https://help.aliyun.com/zh/oss/developer-reference/multipart-upload
+     * 分片上传
+     */
+    public function multipartUpload($ossPath,$sourceFilePath,$bucket = '') {
+        //默认情况下，如果新添加文件与现有文件（Object）同名且对该文件有访问权限，则新添加的文件将覆盖原有的文件。
+        //本文介绍如何通过设置请求头x-oss-forbid-overwrite在简单上传及分片上传等场景中禁止覆盖同名文件。
+        try {
+            $this->setBucket($bucket);
+            $options = array(
+                OssClient::OSS_CHECK_MD5 => true,
+                OssClient::OSS_PART_SIZE => 1,
+            );
+            $ossPath = ltrim($ossPath,'/');
+            return $this->ossClient->multiuploadFile($this->bucket, $ossPath, $sourceFilePath, $options);
+        } catch (OssException $e) {
+            return $e->getMessage();
+        }
+    }
+
+
+
 }

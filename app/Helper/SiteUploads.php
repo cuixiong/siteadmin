@@ -63,12 +63,11 @@ class SiteUploads {
         }
         $FilePath = self::GetRootPath($path);
         $file->move($FilePath, $name);
-        if(!empty($path )){
+        if (!empty($path)) {
             $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
-        }else{
+        } else {
             $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$name;
         }
-
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossClient = self::OssClient();
             $res = $ossClient->uploads($ossPath, $FilePath.$name);
@@ -242,10 +241,11 @@ class SiteUploads {
         rename($newPath, $oldPath);
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
-            $oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
+            //$oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
             $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
             $ossClient = self::OssClient();
-            $ossClient->move($oldPath,$newPath);
+            $res = $ossClient->move($oldPath, $newPath);
+            //\Log::error('返回结果数据$oldPath, $newPath:'.json_encode([$oldPath, $newPath,$res]));
         }
 
         return true;
@@ -289,30 +289,47 @@ class SiteUploads {
         $path = trim($path, '/');
         $RootPath = self::GetRootPath();
         $FilePath = $path ? $RootPath.$path.'/'.$name : $RootPath.$name;
-        $LocalUnzipPath = $RootPath.$unzipPath.'/';
         if (strpos($name, '.zip') == false) {
             return '文件不是ZIP文件';
         }
         if (!file_exists($FilePath)) {
             return 'ZIP文件不存在';
         }
-        $zip = new \ZipArchive();;
+
+        //以压缩文件的名称作为解压后的文件夹名称
+        $pos = strrpos($name, '.');
+        if ($pos !== false) {
+            $unzipDirName = substr($name, 0, $pos);
+        } else {
+            $unzipDirName = $name;
+        }
+
+        //$LocalUnzipPath = $RootPath.$unzipPath.'/';  //废弃
+        $unzipDirPath = $path.'/'.$unzipDirName.'/';
+        $LocalUnzipPath = $RootPath.$unzipDirPath;
+
+        $zip = new \ZipArchive();
         $res = $zip->open($FilePath);
         if ($res === true) {
+            // 解压ZIP文件到指定目录
             $zip->extractTo($LocalUnzipPath);
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
+                //\Log::error('返回结果数据$filename:'.$filename);
                 if (is_dir($RootPath.$filename)) {
                     if (env('OSS_ACCESS_IS_OPEN') == true) {
                         $ossClient = self::OssClient();
                         $toPath = $unzipPath ? $unzipPath.'/'.trim($filename, '/').'/' : trim($filename, '/').'/';
+                        //\Log::error('返回结果数据:'.$toPath);
                         $ossClient->CreateDir($toPath);
                     }
                 } else {
                     if (env('OSS_ACCESS_IS_OPEN') == true) {
                         $ossClient = self::OssClient();
-                        $toPath = $unzipPath ? $unzipPath.'/'.trim($filename, '/') : trim($filename, '/');
-                        $ossClient->uploads($toPath, $LocalUnzipPath.$filename);
+                        $sourceFilePath = $LocalUnzipPath.$filename;
+                        $ossPath = str_replace(public_path(), '', $sourceFilePath);
+                        //\Log::error('返回结果数据:'.json_encode([$ossPath, $sourceFilePath]));
+                        $ossClient->uploads($ossPath, $sourceFilePath);
                     }
                 }
             }
@@ -322,5 +339,17 @@ class SiteUploads {
         } else {
             return '文件解压失败';
         }
+    }
+
+    /**
+     *  文件分片上传
+     */
+    public static function multipartUpload($sourceFilePath) {
+        if (env('OSS_ACCESS_IS_OPEN') == true) {
+            $ossClient = self::OssClient();
+            $ossPath = str_replace(public_path(), '', $sourceFilePath);
+            return $ossClient->multipartUpload($ossPath, $sourceFilePath);
+        }
+        return false;
     }
 }

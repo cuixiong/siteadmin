@@ -575,12 +575,17 @@ class FileManagement extends Controller {
                     }
                 }
             }
+            // 关闭存档
             $z->close();
             // 关闭存档
         } catch (\Throwable $th) {
             return false;
         }
         if (!is_dir($outZipPath)) {
+            //压缩文件上传到oss
+            //\Log::error('返回结果数据:'.$outZipPath);
+            SiteUploads::multipartUpload($outZipPath);
+
             return true;
         }
 

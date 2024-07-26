@@ -429,6 +429,8 @@ class SiteEmailController extends Controller {
                 $domain = 'https://'.$domain;
             }
             $url = $domain.'/api/third/send-email';
+            $sucCnt = 0;
+            $errMsg = [];
             foreach ($ids as $id) {
                 $record = (new Order())->findOrFail($id);
                 //已支付与已完成
@@ -445,12 +447,18 @@ class SiteEmailController extends Controller {
                 $response = Http::post($url, $reqData);
                 $resp = $response->json();
                 if (!empty($resp) && $resp['code'] == 200) {
-                    ReturnJson(true, '发送成功');
+                    $sucCnt++;
                 } else {
-                    \Log::error('返回结果数据:'.json_encode($resp));
-                    ReturnJson(false, '发送失败,未知错误');
+                    $errMsg[] = $resp;
                 }
             }
+            if(empty($errMsg )){
+                ReturnJson(true, "发送成功:{$sucCnt}次");
+            }else{
+                \Log::error('返回结果数据:'.json_encode($errMsg));
+                ReturnJson(false, '发送失败,未知错误');
+            }
+
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
