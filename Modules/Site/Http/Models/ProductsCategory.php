@@ -15,6 +15,7 @@ class ProductsCategory extends Base {
             'thumb',
             'home_thumb',
             'icon',
+            'icon_hover',
             'sort',
             'status',
             'is_recommend',

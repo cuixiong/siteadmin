@@ -124,6 +124,7 @@ Route::middleware([
         Route::get('option', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'option'])->name('报告分类:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'searchDroplist'])->name('报告分类:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'changeStatus'])->name('报告分类:状态修改');
+        Route::post('change-hot', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'changeHot'])->name('报告分类:修改热门状态');
         Route::post('change-recommend', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'changeRecommend'])->name('报告分类:修改推荐状态');
         Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'changeSort'])->name('报告分类:排序修改');
         Route::post('set-header-title', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'setHeaderTitle'])->name('报告分类:设置自定义表头');
