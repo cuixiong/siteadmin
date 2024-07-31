@@ -69,7 +69,7 @@ class SystemController extends CrudController {
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
-            $this->syncSiteCache($request, $record);
+            $this->syncSiteCache($record);
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -91,7 +91,7 @@ class SystemController extends CrudController {
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            $this->syncSiteCache($request, $record);
+            $this->syncSiteCache($record);
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
