@@ -224,13 +224,17 @@ class SiteUploads {
      *
      * @return boolean
      */
-    public static function moveFile($newPath, $oldPath, $overWrite = false) {
-        if (!file_exists($newPath)) {
+    public static function moveFile($oldPath, $newPath, $overWrite = false) {
+        $newPath = str_replace("//", "/", $newPath);
+        $oldPath = str_replace("//", "/", $oldPath);
+
+
+        if (!file_exists($oldPath)) {
             return false;
         }
-        if (file_exists($oldPath) && $overWrite = false) {
+        if (file_exists($newPath) && $overWrite = false) {
             return false;
-        } elseif (file_exists($oldPath) && $overWrite = true) {
+        } elseif (file_exists($newPath) && $overWrite = true) {
             SiteUploads::delete($oldPath);
         }
         $aimDir = dirname($oldPath);
@@ -238,14 +242,15 @@ class SiteUploads {
             mkdir($aimDir, 0755, true);
             chmod($aimDir, 0755);
         }
-        rename($newPath, $oldPath);
+        rename($oldPath, $newPath);
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
             //$oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
-            $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
+            $newOssPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
+            $oldOssPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
             $ossClient = self::OssClient();
-            $res = $ossClient->move($oldPath, $newPath);
-            //\Log::error('返回结果数据$oldPath, $newPath:'.json_encode([$oldPath, $newPath,$res]));
+            $res = $ossClient->move($newPath, $newOssPath, $oldOssPath);
+            //\Log::error('返回结果数据$oldPath, $newPath:'.json_encode([$newPath, $newOssPath, $oldOssPath,$res]));
         }
 
         return true;
@@ -295,7 +300,6 @@ class SiteUploads {
         if (!file_exists($FilePath)) {
             return 'ZIP文件不存在';
         }
-
         //以压缩文件的名称作为解压后的文件夹名称
         $pos = strrpos($name, '.');
         if ($pos !== false) {
@@ -303,11 +307,9 @@ class SiteUploads {
         } else {
             $unzipDirName = $name;
         }
-
         //$LocalUnzipPath = $RootPath.$unzipPath.'/';  //废弃
         $unzipDirPath = $path.'/'.$unzipDirName.'/';
         $LocalUnzipPath = $RootPath.$unzipDirPath;
-
         $zip = new \ZipArchive();
         $res = $zip->open($FilePath);
         if ($res === true) {
@@ -316,7 +318,7 @@ class SiteUploads {
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
                 //\Log::error('返回结果数据$filename:'.$filename);
-                if (is_dir($RootPath.$filename)) {
+                if (is_dir($LocalUnzipPath.$filename)) {
                     if (env('OSS_ACCESS_IS_OPEN') == true) {
                         $ossClient = self::OssClient();
                         $toPath = $unzipPath ? $unzipPath.'/'.trim($filename, '/').'/' : trim($filename, '/').'/';
@@ -348,8 +350,10 @@ class SiteUploads {
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossClient = self::OssClient();
             $ossPath = str_replace(public_path(), '', $sourceFilePath);
+
             return $ossClient->multipartUpload($ossPath, $sourceFilePath);
         }
+
         return false;
     }
 }

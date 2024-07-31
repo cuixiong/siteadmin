@@ -251,13 +251,16 @@ class FileManagement extends Controller {
         $overwrite = false;//1:覆盖;2:不覆盖
         if (empty($names)) {
             ReturnJson(false, '旧文件/文件夹名未传入');
-        } elseif ($old_path == '..') {
+        }
+        if ($old_path == '..') {
             //不能进去基本路径的上层
             ReturnJson(false, '超过文件管理范围');
-        } elseif ($new_path == '..') {
+        }
+        if ($new_path == '..') {
             //不能进去基本路径的上层
             ReturnJson(false, '超过文件管理范围');
-        } elseif ($old_path == $new_path) {
+        }
+        if ($old_path == $new_path) {
             ReturnJson(false, '复制或移动的目标相同，请正确操作');
         }
         foreach ($names as $name) {
@@ -283,6 +286,7 @@ class FileManagement extends Controller {
                         $res = $this->moveDir($old_full_path, $new_full_path, $overwrite);
                         break;
                     default:
+                        $res = false;
                         break;
                 }
                 // 把移动/复制文件夹中存在相同文件的合并放入到$IsExistsFiles容器中返回给前端
@@ -316,6 +320,8 @@ class FileManagement extends Controller {
 
     // 强制覆盖文件（移动/复制操作，用户确认覆盖操作之后请求的方法）
     public function ForceFileOverwrite(Request $request) {
+        ReturnJson(true, trans('lang.request_success'));
+
         $old_path = $request->old_path ?? '';
         $copy_or_move = $request->copy_or_move ?? ''; //1:复制;2:移动
         $names = $request->names;
