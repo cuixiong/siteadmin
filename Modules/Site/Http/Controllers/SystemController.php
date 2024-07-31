@@ -215,7 +215,7 @@ class SystemController extends CrudController {
      *
      */
     private function syncSiteCache($record) {
-        $keyList = ['ip_white_rules', 'req_limit', 'window_time'];
+        $keyList = ['white_ip_security_check', 'ip_white_rules', 'req_limit', 'window_time'];
         $key = $record->key;
         $value = $record->value;
         if (!empty($key) && in_array($key, $keyList)) {
@@ -235,11 +235,11 @@ class SystemController extends CrudController {
                 return true;
             } else {
                 \Log::error('syncSiteCache---返回结果数据:'.json_encode($resp));
+
                 return false;
             }
         }
     }
-
 
     public function makeSign($data, $signkey) {
         unset($data['sign']);
@@ -253,6 +253,4 @@ class SystemController extends CrudController {
         //dump($signStr);
         return md5($signStr);
     }
-
-
 }
