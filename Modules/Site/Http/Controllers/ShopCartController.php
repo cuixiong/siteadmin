@@ -69,7 +69,7 @@ class ShopCartController extends CrudController
                 $priceEditionId = $value['price_edition'];
                 $priceEdition = SitePriceEditionValue::find($priceEditionId);
                 if (!empty($priceEdition)) {
-                    $language = $languageList[$priceEdition->language_id] ?? '';
+                    $language = isset($languageList[$priceEdition->language_id]) && !empty($languageList[$priceEdition->language_id]) ? $languageList[$priceEdition->language_id] :'';
                     $price_edition = $priceEdition['name'] ?: '';
                 } else {
                     $language = '';

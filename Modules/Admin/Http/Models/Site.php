@@ -191,7 +191,7 @@ class Site extends Base
                 'output' => trans('lang.server_login_fail'),
             ];
         }
-
+        $ssh->setTimeout(60);
         // // 项目所在外层路径
         // $siteBasePath = '/www/wwwroot/platform_test/' . $site->name . '/';
         // 接口代码项目路径
@@ -778,19 +778,19 @@ class Site extends Base
         $step = [
             ['name' => 'clone_api_code', 'type' => 'commands', 'title' => '(接口)克隆代码', 'field' => []],
             ['name' => 'api_dependency', 'type' => 'commands', 'title' => '(接口)下载依赖', 'field' => []],
-            ['name' => 'write_db_config', 'type' => 'commands', 'title' => '(接口)配置数据库', 'field' => []],
-            ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '(接口)新建站点', 'field' => []],
+            // ['name' => 'write_db_config', 'type' => 'commands', 'title' => '(接口)配置数据库', 'field' => []],
+            // ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '(接口)新建站点', 'field' => []],
             ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
-            [
-                'name' => 'set_ssl',
-                'type' => 'btPanelApi',
-                'title' => '(接口)设置证书',
-                'field' => [
-                    ['name' => 'private_key', 'type' => 'textarea'],
-                    ['name' => 'csr', 'type' => 'textarea']
-                ]
-            ],
-            // ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
+            // [
+            //     'name' => 'set_ssl',
+            //     'type' => 'btPanelApi',
+            //     'title' => '(接口)设置证书',
+            //     'field' => [
+            //         ['name' => 'private_key', 'type' => 'textarea'],
+            //         ['name' => 'csr', 'type' => 'textarea']
+            //     ]
+            // ],
+            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
             // ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(网站)新建站点', 'field' => []],
             // ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
         ];
