@@ -76,11 +76,14 @@ class ShopCartController extends CrudController
                     $price_edition = '';
                 }
                 $goods_id = $value['goods_id'];
-                $productData = $productList[$goods_id];
-                $productData['link'] = $this->getProductUrl($productData, $doman);
-                $productData['language'] = $language;
-                $productData['price_edition'] = $price_edition;
-                $value['product_data'] = $productData;
+                $value['product_data'] = [];
+                if(isset($productList[$goods_id])){
+                    $productData = $productList[$goods_id];
+                    $productData['link'] = $this->getProductUrl($productData, $doman);
+                    $productData['language'] = $language;
+                    $productData['price_edition'] = $price_edition;
+                    $value['product_data'] = $productData;
+                }
 
             }
 
