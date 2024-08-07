@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
+use Modules\Site\Http\Models\OssFile;
 
 class FileManagement extends Controller {
     private $RootPath;
@@ -88,9 +89,12 @@ class FileManagement extends Controller {
             $fileNameArray = [];
         }
 
+        //查询是否有oss的大文件上传
+        $filePath = '/site/'.getSiteName();
+        (new OssFile())->where('path', $filePath)->orderBy('id', 'desc')->select();
+
         //create_time 降序
         array_multisort(array_column($fileNameArray, 'create_time'), SORT_DESC, $fileNameArray);
-
         $result['data'] = $fileNameArray;
         ReturnJson(true, trans('lang.request_success'), $result);
     }
@@ -124,7 +128,7 @@ class FileManagement extends Controller {
         } else if (is_file($path)) {
             // 使用pathinfo()函数获取文件路径信息
             $fileinfo = pathinfo($path);
-            if(empty($fileinfo ) || empty($fileinfo['extension'] )){
+            if (empty($fileinfo) || empty($fileinfo['extension'])) {
                 return 'file';
             }
             // 获取文件类型
@@ -321,7 +325,6 @@ class FileManagement extends Controller {
     // 强制覆盖文件（移动/复制操作，用户确认覆盖操作之后请求的方法）
     public function ForceFileOverwrite(Request $request) {
         ReturnJson(true, trans('lang.request_success'));
-
         $old_path = $request->old_path ?? '';
         $copy_or_move = $request->copy_or_move ?? ''; //1:复制;2:移动
         $names = $request->names;
@@ -520,15 +523,13 @@ class FileManagement extends Controller {
                 $files = array_merge($files, glob($full_path.$map.'/*'));
             }
         }
-
         //如果是文件夹,path为空
         $dateStr = date('YmdHis');
-        if(empty($path)){
+        if (empty($path)) {
             $compressName = $name[0]."_".$dateStr.'.zip';
-        }else{
+        } else {
             $compressName = $dateStr.'.zip';
         }
-
         $zipFileName = $full_path.$compressName;
         // var_dump($files, $zipFileName);die;
         $res = self::zipDir($files, $zipFileName);
@@ -795,5 +796,38 @@ class FileManagement extends Controller {
         }
 
         return $result;
+    }
+
+    /**
+     *  oss大文件上传,添加相关数据
+     */
+    public function ossFileAdd(Request $request) {
+        try {
+            $path = $request->input('path', '');
+            $oss_path = $request->input('oss_path', '');
+            $file_name = $request->input('file_name', '');
+            $file_size = $request->input('file_size', '');
+            $file_suffix = $request->input('file_suffix', '');
+            if (empty($path) || empty($oss_path) || empty($file_name) || empty($file_size) || empty($file_suffix)) {
+                ReturnJson(false, '参数错误');
+            }
+            $data = [
+                'path'          => $path,
+                'file_fullpath' => $path."/".$file_name,
+                'oss_path'      => $oss_path,
+                'file_name'     => $file_name,
+                'file_size'     => $file_size,
+                'file_suffix'   => $file_suffix,
+                'created_at'    => date('Y-m-d H:i:s')
+            ];
+            $rs = (new OssFile())->create($data);
+            if ($rs) {
+                ReturnJson(true, '添加成功');
+            } else {
+                ReturnJson(false, '添加失败');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
     }
 }

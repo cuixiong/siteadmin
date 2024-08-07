@@ -45,6 +45,8 @@ Route::middleware([
         Route::post('unzip', [Modules\Site\Http\Controllers\FileManagement::class, 'unzip'])->name('站点端:文件管理:文件解压');
         Route::post('force-file-overwrite', [Modules\Site\Http\Controllers\FileManagement::class, 'ForceFileOverwrite'])->name('文件管理:强制覆盖文件');
         Route::get('dir-list-one', [Modules\Site\Http\Controllers\FileManagement::class, 'DirListOne'])->name('文件管理:文件夹列表(单层)');
+
+        Route::post('oss-file-add', [Modules\Site\Http\Controllers\FileManagement::class, 'ossFileAdd'])->name('站点端:文件管理:oss文件上传');
     });
 
 
