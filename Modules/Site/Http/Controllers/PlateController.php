@@ -32,4 +32,32 @@ class PlateController extends CrudController
         $res = PlateValue::where('parent_id',$request->id)->where('status',1)->get()->toArray();
         ReturnJson(TRUE,'', $res);
     }
+
+    /**
+     * 修改状态
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeStatus(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->status = $request->status;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+
+            $plateValueModel = new plateValue();
+            $plateValueModel->where("parent_id" , $request->id)->update(["status" => $request->status]);
+
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
 }

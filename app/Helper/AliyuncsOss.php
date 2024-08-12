@@ -85,14 +85,13 @@ class AliyuncsOss {
     /**
      * Download files
      *
-     * @param $file   Download file name
-     * @param $bucket Storage space name
+     * @param $file
+     * @param $bucket
      */
     public function download($file, $bucket = '') {
         try {
             $this->setBucket($bucket);
-            $content = $this->ossClient->getObject($this->bucket, $file);
-
+            $content = $this->ossClient->getObject($this->bucket, ltrim($file, '/'));
             return $content;
         } catch (OssException $e) {
             return $e->getMessage();

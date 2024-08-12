@@ -88,11 +88,26 @@ class FileManagement extends Controller {
         } else {
             $fileNameArray = [];
         }
-
         //查询是否有oss的大文件上传
-        $filePath = '/site/'.getSiteName();
-        (new OssFile())->where('path', $filePath)->orderBy('id', 'desc')->select();
-
+//        $ossbasePath = str_replace(public_path(), '', SiteUploads::GetRootPath());
+//        $ossbasePath.= ltrim($path , '/');
+//        $ossbasePath = rtrim($ossbasePath, '/');
+//        $ossFileList = (new OssFile())->where('path', $ossbasePath)->orderBy('id', 'desc')->get()->toArray();
+//
+//        foreach ($ossFileList as $forossFile){
+//            $forData = [];
+//            $forData['active_time'] = $forossFile['created_at'];
+//            $forData['create_time'] = $forossFile['created_at'];
+//            $forData['update_time'] = $forossFile['updated_at'];
+//            $forData['is_file']['name'] = $forossFile['file_name'];
+//            $forData['orignal_path'] = $forossFile['oss_path'];
+//            $forData['path'] = $forossFile['oss_path'];
+//            $forData['type'] = $forossFile['file_suffix'];
+//            $forData['extension'] = $forossFile['file_suffix'];
+//            $forData['size'] = $forossFile['file_size'];
+//            $forData['is_oss'] = true;
+//            $fileNameArray[] = $forData;
+//        }
         //create_time 降序
         array_multisort(array_column($fileNameArray, 'create_time'), SORT_DESC, $fileNameArray);
         $result['data'] = $fileNameArray;
@@ -661,7 +676,13 @@ class FileManagement extends Controller {
             ReturnJson(false, '站点名称为空');
         }
         $RootPath = SiteUploads::getRootPath();
-        $filePath = rtrim($RootPath, '/').'/'.trim($path, '/').'/'.$name;
+        $filePath = rtrim($RootPath, '/');
+        if (!empty($path)) {
+            $filePath = $filePath.'/'.trim($path, '/');
+        }
+
+        $filePath = $filePath.'/'.$name;
+
         if (!file_exists($filePath)) {
             ReturnJson(false, '下载文件不存在');
         }
@@ -802,6 +823,7 @@ class FileManagement extends Controller {
      *  oss大文件上传,添加相关数据
      */
     public function ossFileAdd(Request $request) {
+        ini_set('memory_limit', '1024M');
         try {
             $path = $request->input('path', '');
             $oss_path = $request->input('oss_path', '');
@@ -811,9 +833,10 @@ class FileManagement extends Controller {
             if (empty($path) || empty($oss_path) || empty($file_name) || empty($file_size) || empty($file_suffix)) {
                 ReturnJson(false, '参数错误');
             }
+            $file_fullpath = $path.$file_name;
             $data = [
                 'path'          => $path,
-                'file_fullpath' => $path."/".$file_name,
+                'file_fullpath' => $file_fullpath,
                 'oss_path'      => $oss_path,
                 'file_name'     => $file_name,
                 'file_size'     => $file_size,
@@ -821,6 +844,17 @@ class FileManagement extends Controller {
                 'created_at'    => date('Y-m-d H:i:s')
             ];
             $rs = (new OssFile())->create($data);
+            try {
+                // 获取 OSS 文件内容
+                $ossClient = SiteUploads::OssClient();
+                $content = $ossClient->download($file_name);
+                // 保存到本地
+                $localPath = rtrim(public_path(), "/").$file_fullpath;
+                file_put_contents($localPath, $content);
+                chmod($localPath, 0775);
+            } catch (\Exception $e) {
+                ReturnJson(false, '添加失败'.$e->getMessage());
+            }
             if ($rs) {
                 ReturnJson(true, '添加成功');
             } else {

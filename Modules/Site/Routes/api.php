@@ -635,6 +635,7 @@ Route::middleware([
 
     Route::prefix('public')->group(function () {
         Route::get('get-read-msg-cnt', [Modules\Site\Http\Controllers\PublicController::class, 'getNoReadMsgCnt'])->name('公共:获取未读消息数量');
+        Route::get('get-init-data', [Modules\Site\Http\Controllers\PublicController::class, 'getInitData'])->name('公共:获取初始化数据');
     });
 
 });
