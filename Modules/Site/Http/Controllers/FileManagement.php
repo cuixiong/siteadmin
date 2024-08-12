@@ -833,7 +833,7 @@ class FileManagement extends Controller {
             if (empty($path) || empty($oss_path) || empty($file_name) || empty($file_size) || empty($file_suffix)) {
                 ReturnJson(false, '参数错误');
             }
-            $file_fullpath = $path.$file_name;
+            $file_fullpath = rtrim($path , "/")."/".$file_name;
             $data = [
                 'path'          => $path,
                 'file_fullpath' => $file_fullpath,
