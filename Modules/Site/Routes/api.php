@@ -412,6 +412,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PlateValueController::class, 'destroy'])->name('页面板块子级:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PlateValueController::class, 'list'])->name('页面板块子级:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
+        Route::post('change-hidden', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\PlateValueController::class, 'form'])->name('页面板块子级:数据单查');
 
     });
