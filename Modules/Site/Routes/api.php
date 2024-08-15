@@ -45,6 +45,8 @@ Route::middleware([
         Route::post('unzip', [Modules\Site\Http\Controllers\FileManagement::class, 'unzip'])->name('站点端:文件管理:文件解压');
         Route::post('force-file-overwrite', [Modules\Site\Http\Controllers\FileManagement::class, 'ForceFileOverwrite'])->name('文件管理:强制覆盖文件');
         Route::get('dir-list-one', [Modules\Site\Http\Controllers\FileManagement::class, 'DirListOne'])->name('文件管理:文件夹列表(单层)');
+
+        Route::post('oss-file-add', [Modules\Site\Http\Controllers\FileManagement::class, 'ossFileAdd'])->name('站点端:文件管理:oss文件上传');
     });
 
 
@@ -410,6 +412,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PlateValueController::class, 'destroy'])->name('页面板块子级:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PlateValueController::class, 'list'])->name('页面板块子级:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
+        Route::post('change-hidden', [Modules\Site\Http\Controllers\PlateValueController::class, 'changeStatus'])->name('页面板块子级:状态修改');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\PlateValueController::class, 'form'])->name('页面板块子级:数据单查');
 
     });
@@ -633,6 +636,7 @@ Route::middleware([
 
     Route::prefix('public')->group(function () {
         Route::get('get-read-msg-cnt', [Modules\Site\Http\Controllers\PublicController::class, 'getNoReadMsgCnt'])->name('公共:获取未读消息数量');
+        Route::get('get-init-data', [Modules\Site\Http\Controllers\PublicController::class, 'getInitData'])->name('公共:获取初始化数据');
     });
 
 });

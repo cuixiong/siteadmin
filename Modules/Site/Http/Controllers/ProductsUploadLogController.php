@@ -136,7 +136,12 @@ class ProductsUploadLogController extends CrudController {
         $paths = explode(',', $pathsStr);
         $logIds = [];
         foreach ($paths as $key => $value) {
-            $path = $basePath.$value;
+            if (strpos($value, '.aliyuncs.com') !== false) {
+                //阿里云oss, 直接获取文件路径
+                $path = $value;
+            }else{
+                $path = $basePath.$value;
+            }
             //上传记录初始化,每个文件单独一条记录
             $logModel = ProductsUploadLog::create([
                                                       'file' => $value

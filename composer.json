@@ -8,6 +8,7 @@
         "php": "^8.0.2",
         "aliyuncs/oss-sdk-php": "^2.6",
         "box/spout": "^3.3",
+        "cboden/ratchet": "^0.4.4",
         "doctrine/dbal": "^3.7",
         "foolz/sphinxql-query-builder": "^3.0",
         "guzzlehttp/guzzle": "^7.2",

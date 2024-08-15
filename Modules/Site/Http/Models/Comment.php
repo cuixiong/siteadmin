@@ -8,7 +8,7 @@ class Comment extends Base
 {
     // 设置允许入库字段,数组形式
     protected $fillable = ['title', 'image', 'company', 'post', 'content', 'status', 'comment_at', 'sort', 'updated_by', 'created_by'];
-    
+
     protected $appends = ['comment_at_format'];
     // Image修改器
     public function setImageAttribute($value)
@@ -23,7 +23,7 @@ class Comment extends Base
         $value = $value ? explode(",", $value) : [];
         return $value;
     }
-    
+
     /**
      * 评价时间获取器
      */

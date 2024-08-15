@@ -204,6 +204,12 @@ class SystemController extends CrudController {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
+            if($record->hidden == 1){
+                $type = 'update';
+            }else{
+                $type = 'delete';
+            }
+            $this->syncSiteCache($record, $type);
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -214,19 +220,19 @@ class SystemController extends CrudController {
      * @param         $record
      *
      */
-    private function syncSiteCache($record) {
-        $keyList = ['white_ip_security_check', 'ip_white_rules', 'req_limit', 'window_time'];
-        $key = $record->key;
-        $value = $record->value;
+    private function syncSiteCache($record, $type = 'update') {
+        $keyList = ['is_open_check_security', 'ip_white_rules', 'req_limit', 'window_time' , 'is_open_limit_req'];
+        $key = $record['key'];
+        $value = $record['value'];
         if (!empty($key) && in_array($key, $keyList)) {
             //写入缓存
-            //Redis::set($key, $record->value);
             $siteKey = getSiteName();
             $domain = getSiteDomain();
             $url = $domain.'/api/third/sync-redis-val';
             $reqData = [
-                'key' => $key,
-                'val' => $value,
+                'type' => $type,
+                'key'  => $key,
+                'val'  => $value,
             ];
             $reqData['sign'] = $this->makeSign($reqData, $siteKey);
             $response = Http::post($url, $reqData);
@@ -252,5 +258,46 @@ class SystemController extends CrudController {
 
         //dump($signStr);
         return md5($signStr);
+    }
+
+    /**
+     * 修改状态
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeStatus(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $status = $request->status;
+            $record->status = $status;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            //下面的子级全部变为隐藏状态
+            $systemValueModel = new SystemValue();
+            $childList = $systemValueModel->where('parent_id', $record->id)
+                                            ->select(['id', 'key', 'value'])
+                                            ->get()
+                                            ->toArray();
+            if($status == 1){
+                $type = 'update';
+            }else{
+                $type = 'delete';
+            }
+            foreach ($childList as $childinfo) {
+                $updData = ['hidden' => $status, 'status' => $status];
+                $rs = $systemValueModel->where('id', $childinfo['id'])->update($updData);
+                if($rs){
+                    $this->syncSiteCache($childinfo , $type);
+                }
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
     }
 }
