@@ -337,7 +337,8 @@ class Order extends Base {
     /**
      * 报告名称获取器
      */
-    public function getOrderProductInfo($orderId) {
+    public function getOrderProductInfo($orderId)
+    {
         if (empty($orderId)) {
             return [];
         }
@@ -346,9 +347,9 @@ class Order extends Base {
         $productList = Products::from('product_routine as p')->select(
             ['p.url', 'p.thumb', 'p.name', 'p.id', 'p.published_date', 'p.category_id', 'p.publisher_id', 'pc.thumb as category_thumb']
         )
-                ->leftJoin('product_category as pc', 'pc.id', 'p.category_id')
-                ->whereIn('p.id', $productsIdList)
-                ->get()->keyBy('id')->toArray();
+            ->leftJoin('product_category as pc', 'pc.id', 'p.category_id')
+            ->whereIn('p.id', $productsIdList)
+            ->get()->keyBy('id')->toArray();
 
         $languageList = Language::query()->where(['status' => 1])->pluck('name', 'id')->toArray();
         $domain = getSiteDomain();
@@ -363,7 +364,7 @@ class Order extends Base {
                 $language = '';
             }
             //报告信息
-            $products = $productList[$OrderGoods['goods_id']];
+            $products = isset($productList[$OrderGoods['goods_id']]) ? $productList[$OrderGoods['goods_id']] : null;
             if (empty($products)) {
                 continue;
             }
@@ -374,9 +375,9 @@ class Order extends Base {
             $goodsData['goods_present_price'] = $OrderGoods['goods_present_price'];
 
             //缩略图
-            if(!empty($products['thumb'] )){
+            if (!empty($products['thumb'])) {
                 $thumb = $products['thumb'];
-            }else{
+            } else {
                 $thumb = $products['category_thumb'] ?? '';
             }
             $goodsData['thumb'] = $thumb;

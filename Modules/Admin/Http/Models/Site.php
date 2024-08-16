@@ -176,10 +176,10 @@ class Site extends Base
      * @param object $site 站点信息
      * @param object $server 服务器信息
      * @param object $database 数据库信息
-     * @param string $type 操作类型
+     * @param string $stepCode 操作场景
      * @param array $option 额外参数
      */
-    protected static function executeRemoteCommand($site, $server = null, $database = null, $type, $option = [])
+    protected static function executeRemoteCommand($site, $stepCode, $server = null, $database = null,  $option = [])
     {
 
         //连接远程服务器
@@ -191,7 +191,7 @@ class Site extends Base
                 'output' => trans('lang.server_login_fail'),
             ];
         }
-        $ssh->setTimeout(60);
+        $ssh->setTimeout(600);
         // // 项目所在外层路径
         // $siteBasePath = '/www/wwwroot/platform_test/' . $site->name . '/';
         // 接口代码项目路径
@@ -205,7 +205,7 @@ class Site extends Base
 
         //根据类型获取命令
         $commands = [];
-        switch ($type) {
+        switch ($stepCode) {
             case 'add_site':
                 //一整套流程：
                 // 拉取接口项目代码
@@ -213,7 +213,7 @@ class Site extends Base
                 // 下载接口项目依赖
                 $commandsGroup[] = self::getApiDependencyCommands($apiDirName);
                 // 配置文件配置数据库
-                $commandsGroup[] = self::getWriteDbConfigCommands($apiDirName, $database);
+                // $commandsGroup[] = self::getWriteDbConfigCommands($apiDirName, $database);
                 // 拉取前端代码
                 $commandsGroup[] = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
                 // 下载前端依赖
@@ -299,14 +299,14 @@ class Site extends Base
         $output['message'] = $output['output'] ?? '';
         $logMessage = '';
         //执行的结果需要处理一下
-        if (in_array($type, ['add_site', 'clone_api_code', 'api_dependency', 'write_db_config', 'clone_frontend_code', 'frontend_dependency'])) {
+        if (in_array($stepCode, ['add_site', 'clone_api_code', 'api_dependency', 'write_db_config', 'clone_frontend_code', 'frontend_dependency'])) {
             $writeUpdateLog = true;
-            if (($type == 'clone_api_code' || $type == 'clone_frontend_code') && strpos($output['output'], 'already exists and is not an empty directory') !== false) {
+            if (($stepCode == 'clone_api_code' || $stepCode == 'clone_frontend_code') && strpos($output['output'], 'already exists and is not an empty directory') !== false) {
 
                 $output['result'] = false;
                 $output['message'] = '目录已存在或指定的目录是非空的文件夹';
             }
-        } elseif ($type == 'pull_code') {
+        } elseif ($stepCode == 'pull_code') {
             $writeUpdateLog = true;
 
             //需要拉取记录
@@ -323,7 +323,7 @@ class Site extends Base
                     $output['result'] = false;
                 }
             }
-        } elseif ($type == 'commit_history') {
+        } elseif ($stepCode == 'commit_history') {
 
             if ($output['result']) {
                 // return $output['output'];
@@ -347,7 +347,7 @@ class Site extends Base
                 }
                 $output['output'] = $logData;
             }
-        } elseif ($type == 'available_pull') {
+        } elseif ($stepCode == 'available_pull') {
 
             if ($output['result']) {
                 //判断是否有可用更新
@@ -359,7 +359,7 @@ class Site extends Base
                     $output['result'] = false;
                 }
             }
-        } elseif ($type == 'rollback_code') {
+        } elseif ($stepCode == 'rollback_code') {
             $writeUpdateLog = true;
         }
 
@@ -381,7 +381,7 @@ class Site extends Base
                 [
                     'site_id' => $site->id,
                     'site_name' => $site->name,
-                    'message' => empty($logMessage) ? $type : $logMessage,
+                    'message' => empty($logMessage) ? $stepCode : $logMessage,
                     'output' => $output['output'],
                     'exec_status' => $output['result'] ? 1 : 0,
                     'command' => $output['command'] ?? '',
@@ -439,13 +439,20 @@ class Site extends Base
         //     'result' => true,
         //     'output' => $output,
         // ];
+        $output = '';
         if (is_array($commands)) {
 
             foreach ($commands as $command) {
                 # code...
                 if (!empty($command)) {
 
-                    $output = $ssh->exec($command);
+                    // $output = $ssh->exec($command);
+                    $output = '';
+                    $ssh->exec($command, function ($outputLine) use (&$output) {
+                        $outputLine = self::removeAnsiControlChars($outputLine);
+                        $output .= $outputLine;
+                        // return $output; // 这里可以处理实时输出，比如存储到日志或前端显示
+                    });
                     if ($ssh->getExitStatus() !== 0) {
                         // 执行失败
                         return [
@@ -466,6 +473,10 @@ class Site extends Base
         ];
     }
 
+    public static function removeAnsiControlChars($text)
+    {
+        return preg_replace('/\e[[][A-Za-z0-9.;?]*[a-zA-Z]/', '', $text);
+    }
 
     /**
      * 获取新建站点/部署项目命令（拆分成多步了，用不到此函数）
@@ -583,9 +594,10 @@ class Site extends Base
 
         $commands = [
             /**
-             * 下载依赖
+             * 更换镜像、下载依赖
              */
-            'cd ' . $dirName . ' && npm i ',
+            'cd ' . $dirName . ' && npm cache clean --force && npm config set registry https://registry.npmmirror.com && npm i ',
+            // 'cd ' . $dirName . ' && npm i ',
         ];
         return $commands;
     }
