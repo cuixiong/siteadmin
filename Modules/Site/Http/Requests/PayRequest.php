@@ -13,11 +13,11 @@ class PayRequest extends BaseRequest
         $rules = [
             'name' => 'required',
             'image' => 'required',
-            'info_login' => 'required',
-            'info_key' => 'required',
-            'return_url' => 'required',
-            'notify_url' => 'required',
-            'sign' => 'required',
+//            'info_login' => 'required',
+//            'info_key' => 'required',
+//            'return_url' => 'required',
+//            'notify_url' => 'required',
+//            'sign' => 'required',
             'status' => 'required',
         ];
         $message = [
@@ -42,11 +42,11 @@ class PayRequest extends BaseRequest
             'id' => 'required',
             'name' => 'required',
             'image' => 'required',
-            'info_login' => 'required',
-            'info_key' => 'required',
-            'return_url' => 'required',
-            'notify_url' => 'required',
-            'sign' => 'required',
+//            'info_login' => 'required',
+//            'info_key' => 'required',
+//            'return_url' => 'required',
+//            'notify_url' => 'required',
+//            'sign' => 'required',
             'status' => 'required',
         ];
         $message = [
