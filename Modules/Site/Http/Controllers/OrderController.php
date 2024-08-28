@@ -65,6 +65,7 @@ class OrderController extends CrudController
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(FALSE, $e->getTraceAsString());
         }
     }
 
