@@ -743,12 +743,28 @@ class SiteController extends CrudController {
                 'site'  => $site,
             ];
         }else {
-            $data = [
-                'url'   => "http://giren.qyrdata.com/#/{$site}/dashboard",
-                'token' => $encryString,
-                'site'  => $site,
-            ];
+            if($site == 'qyen') {
+                $data = [
+                    'url'   => "http://giren.qyrdata.com/#/{$site}/dashboard",
+                    'token' => $encryString,
+                    'site'  => $site,
+                ];
+            }else{
+                $data = [
+                    'url'   => "https://site.yhresearch.cn/#/{$site}/dashboard",
+                    'token' => $encryString,
+                    'site'  => $site,
+                ];
+            }
         }
+
+        $domain = $_SERVER['SERVER_NAME'];
+        if (strpos($data['url'], $domain) !== false) {
+            $data['is_local'] = true;
+        }else{
+            $data['is_local'] = false;
+        }
+
         ReturnJson(true, trans('lang.request_success'), $data);
     }
 
