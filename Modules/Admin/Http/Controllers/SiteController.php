@@ -781,7 +781,7 @@ class SiteController extends CrudController {
     }
 
     public function getSiteToken($user) {
-        $tokenKey = 'login_token_site_'.$user->id;
+        $tokenKey = 'login_token_'.$user->id;
         $cacheToken = Redis::get($tokenKey);
         if (!empty($cacheToken)) {
             $token = $cacheToken;
