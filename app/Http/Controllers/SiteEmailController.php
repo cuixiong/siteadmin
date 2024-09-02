@@ -30,7 +30,7 @@ use Modules\Site\Http\Models\SystemValue;
 class SiteEmailController extends Controller {
     // 注册发邮method
     private $EmailCodes = ['register' => '注册账号'];
-
+    public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
     /**
      * 动态配置邮箱参数
      *
@@ -443,7 +443,8 @@ class SiteEmailController extends Controller {
                     'id'   => $id,
                     'code' => $code,
                 ];
-                $reqData['sign'] = $this->makeSign($reqData, $site);
+                $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
+                //\Log::error('返回结果数据:'.json_encode([$url, $reqData]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
                 $response = Http::post($url, $reqData);
                 $resp = $response->json();
                 if (!empty($resp) && $resp['code'] == 200) {
