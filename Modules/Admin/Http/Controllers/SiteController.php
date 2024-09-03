@@ -771,7 +771,22 @@ class SiteController extends CrudController {
     public function decryptSiteToken(Request $request) {
         $site = $request->input('site');
         $token = $request->input('token');
-        $decryptData = decrypt($token);
+
+        try{
+            $decryptData = decrypt($token);
+        }catch (\Exception $e){
+            \Log::error('返回结果数据:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            $domian = env('CENTER_DOMAIN' , 'https://site.yhresearch.cn');
+            echo json_encode(
+                [
+                    'code' => 403,
+                    'msg'  => '解析失败!',
+                    'data' => ['domain' => $domian]
+                ]
+            );
+            exit;
+        }
+
         $data = explode(',', $decryptData);
         if (count($data) != 3) {
             ReturnJson(false, trans('lang.request_fail'));
