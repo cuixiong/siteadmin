@@ -777,14 +777,12 @@ class SiteController extends CrudController {
         }catch (\Exception $e){
             \Log::error('返回结果数据:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
             $domian = env('CENTER_DOMAIN' , 'https://site.yhresearch.cn');
-            echo json_encode(
-                [
-                    'code' => 403,
-                    'msg'  => '解析失败!',
-                    'data' => ['domain' => $domian]
-                ]
-            );
-            exit;
+            $respData = [
+                'code' => true,
+                'msg'  => '解析失败!',
+                'data' => ['domain' => $domian]
+            ];
+            ReturnJson(true, '解析失败', $respData);
         }
 
         $data = explode(',', $decryptData);
