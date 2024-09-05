@@ -21,13 +21,15 @@ use Modules\Admin\Http\Models\SiteUpdateLog;
 use phpseclib3\Net\SSH2;
 use Stancl\Tenancy\Facades\Tenancy;
 
-class SiteController extends CrudController {
+class SiteController extends CrudController
+{
     /**
      * 创建一个站点
      *
      * @param Request $request
      */
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $input = $request->all();
         // 创建者ID
         $input['created_by'] = $request->user->id;
@@ -52,7 +54,10 @@ class SiteController extends CrudController {
             }
             //
             $database = Database::where('id', $input['database_id'])->select(
-                'ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password'
+                'ip as db_host',
+                'name as db_database',
+                'username as db_username',
+                'password as db_password'
             )->first()->toArray();
             DB::commit();
             // 创建租户
@@ -87,7 +92,8 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function initDatabase(Request $request) {
+    public function initDatabase(Request $request)
+    {
         $dir = 'admin';
         // 查询当前的租户信息
         $siteId = $request->input('site_id');
@@ -97,8 +103,8 @@ class SiteController extends CrudController {
         // 设置当前租户上下文
         Tenancy::initialize($tenant);
         // 读取 SQL 文件内容
-        $basePath = public_path().'/'.$dir;
-        $sqlFilePath = $basePath.'/uploads/sql/init_database.sql';
+        $basePath = public_path() . '/' . $dir;
+        $sqlFilePath = $basePath . '/uploads/sql/init_database.sql';
         $sqlContent = file_get_contents($sqlFilePath);
         // 在租户数据库上运行 SQL
         DB::unprepared($sqlContent);
@@ -112,12 +118,13 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function createSiteToRemoteServer(Request $request) {
+    public function createSiteToRemoteServer(Request $request)
+    {
         set_time_limit(100);
         $siteId = $request->input('site_id');
         $step = $request->input('step');
         $param = $request->input('param');
-        if(!empty($param ) && !is_array($param)) {
+        if (!empty($param) && !is_array($param)) {
             $param = $param ? json_decode($param, true) : [];
         }
         // 创建者ID
@@ -149,13 +156,13 @@ class SiteController extends CrudController {
         // 判断参数是否为空
         foreach ($checkParamEmpty as $key => $value) {
             if (empty($value)) {
-                ReturnJson(false, !empty(trans('lang.'.$key)) ? trans('lang.'.$key) : trans('lang.param_empty'));
+                ReturnJson(false, !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty'));
             }
         }
         try {
             $initWebsiteStep = Site::getInitWebsiteStep(true);
             if ($initWebsiteStep['commands'] && in_array($step, $initWebsiteStep['commands'])) {
-                $output = Site::executeRemoteCommand($site, $server, $database, $step, ['created_by' => $created_by]);
+                $output = Site::executeRemoteCommand($site, $step, $server, $database,  ['created_by' => $created_by]);
             } elseif ($initWebsiteStep['btPanelApi'] && in_array($step, $initWebsiteStep['btPanelApi'])) {
                 $option['created_by'] = $created_by;
                 if (isset($param['private_key'])) {
@@ -181,7 +188,8 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function update(Request $request) {
+    public function update(Request $request)
+    {
         $input = $request->all();
         // 创建者ID
         $input['created_by'] = $request->user->id;
@@ -198,11 +206,14 @@ class SiteController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             $database = Database::where('id', $input['database_id'])->select(
-                'ip as db_host', 'name as db_database', 'username as db_username', 'password as db_password'
+                'ip as db_host',
+                'name as db_database',
+                'username as db_username',
+                'password as db_password'
             )->first();
             if (!$database) {
                 DB::rollBack();
-                ReturnJson(true, trans('lang.update_error').' '.trans('lang.database_model_empty'));
+                ReturnJson(true, trans('lang.update_error') . ' ' . trans('lang.database_model_empty'));
             } else {
                 $database = $database->toArray();
             }
@@ -239,7 +250,8 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function updateSiteToRemoteServer(Request $request) {
+    public function updateSiteToRemoteServer(Request $request)
+    {
         $siteId = $request->input('site_id');
         // 创建者ID
         $created_by = $request->user->id;
@@ -248,7 +260,7 @@ class SiteController extends CrudController {
         //获取服务器配置
         $server = Server::find($site->server_id);
         try {
-            $output = Site::executeRemoteCommand($site, $server, null, 'pull_code', ['created_by' => $created_by]);
+            $output = Site::executeRemoteCommand($site, 'pull_code', $server, null,  ['created_by' => $created_by]);
             if (!$output['result']) {
                 ReturnJson(false, $output['output']);
             }
@@ -264,7 +276,8 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function CommitHistory(Request $request) {
+    public function CommitHistory(Request $request)
+    {
         $siteId = $request->input('site_id');
         $pageNum = $request->input('pageNum');
         $pageSize = $request->input('pageSize');
@@ -279,7 +292,11 @@ class SiteController extends CrudController {
         try {
             //获取数量
             $commitCountOutput = Site::executeRemoteCommand(
-                $site, $server, null, 'commit_history_count', ['created_by' => $created_by]
+                $site,
+                'commit_history_count',
+                $server,
+                null,
+                ['created_by' => $created_by]
             );
             $commitCount = 0;
             if ($commitCountOutput['result']) {
@@ -287,8 +304,15 @@ class SiteController extends CrudController {
             }
             //获取具体内容
             $commitOutput = Site::executeRemoteCommand(
-                $site, $server, null, 'commit_history', ['created_by' => $created_by, 'pageNum' => $pageNum,
-                                                         'pageSize'   => $pageSize,]
+                $site,
+                'commit_history',
+                $server,
+                null,
+                [
+                    'created_by' => $created_by,
+                    'pageNum' => $pageNum,
+                    'pageSize'   => $pageSize,
+                ]
             );
             $commitOutput['count'] = $commitCount;
             if (!$commitOutput['result']) {
@@ -306,7 +330,8 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function availableUpgrade(Request $request) {
+    public function availableUpgrade(Request $request)
+    {
         $siteId = $request->input('site_id');
         // 创建者ID
         $created_by = $request->user->id;
@@ -316,7 +341,7 @@ class SiteController extends CrudController {
         $server = Server::find($site->server_id);
         try {
             //获取数量
-            $output = Site::executeRemoteCommand($site, $server, null, 'available_pull', ['created_by' => $created_by]);
+            $output = Site::executeRemoteCommand($site, 'available_pull', $server, null,  ['created_by' => $created_by]);
             // if (!$output['result']) {
             //     ReturnJson(FALSE, $output['output']);
             // }
@@ -332,7 +357,8 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function rollbackCode(Request $request) {
+    public function rollbackCode(Request $request)
+    {
         $siteId = $request->input('site_id');
         $hash = $request->input('hash');
         // 创建者ID
@@ -347,7 +373,11 @@ class SiteController extends CrudController {
         try {
             //获取数量
             $output = Site::executeRemoteCommand(
-                $site, $server, null, 'rollback_code', ['hash' => $hash, 'created_by' => $created_by]
+                $site,
+                'rollback_code',
+                $server,
+                null,
+                ['hash' => $hash, 'created_by' => $created_by]
             );
             if (!$output['result']) {
                 ReturnJson(false, $output['output']);
@@ -362,7 +392,8 @@ class SiteController extends CrudController {
     /**
      * 删除一个站点
      */
-    public function destroy(Request $request) {
+    public function destroy(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
@@ -400,7 +431,8 @@ class SiteController extends CrudController {
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    public function list(Request $request) {
+    public function list(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
@@ -446,7 +478,7 @@ class SiteController extends CrudController {
                     //获取当前站点仓库的版本hash值
                     $currentHashData = '';
                     if (isset($server->ip)) {
-                        $currentHashData = Site::executeRemoteCommand($item, $server, null, 'current_hash');
+                        $currentHashData = Site::executeRemoteCommand($item, 'current_hash', $server);
                     }
                     $record[$key]['hash'] = '';
                     $record[$key]['hash_sample'] = '';
@@ -496,23 +528,44 @@ class SiteController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function searchDroplist(Request $request) {
+    public function searchDroplist(Request $request)
+    {
         try {
             $data = [];
             // 语言
-            $data['languages'] = (new Language())->GetListLabel(['id as value', 'name as label'], false, '',
-                                                                ['status' => 1]);
+            $data['languages'] = (new Language())->GetListLabel(
+                ['id as value', 'name as label'],
+                false,
+                '',
+                ['status' => 1]
+            );
             // 出版商
-            $data['publishers'] = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '',
-                                                                  ['status' => 1]);
+            $data['publishers'] = (new Publisher())->GetListLabel(
+                ['id as value', 'name as label'],
+                false,
+                '',
+                ['status' => 1]
+            );
             // 国家
-            $data['countries'] = (new Region())->GetListLabel(['id as value', 'name as label'], false, '',
-                                                              ['status' => 1]);
+            $data['countries'] = (new Region())->GetListLabel(
+                ['id as value', 'name as label'],
+                false,
+                '',
+                ['status' => 1]
+            );
             //数据库
-            $data['databases'] = (new Database())->GetListLabel(['id as value', 'name as label'], false, '',
-                                                                ['status' => 1]);
+            $data['databases'] = (new Database())->GetListLabel(
+                ['id as value', 'name as label'],
+                false,
+                '',
+                ['status' => 1]
+            );
             //服务器
-            $data['servers'] = (new Server())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]
+            $data['servers'] = (new Server())->GetListLabel(
+                ['id as value', 'name as label'],
+                false,
+                '',
+                ['status' => 1]
             );
             // 状态开关
             if ($request->HeaderLanguage == 'en') {
@@ -521,7 +574,11 @@ class SiteController extends CrudController {
                 $field = ['name as label', 'value'];
             }
             $data['status'] = (new DictionaryValue())->GetListLabel(
-                $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
+                $field,
+                false,
+                '',
+                ['code' => 'Switch_State', 'status' => 1],
+                ['sort' => 'ASC']
             );
             //是否创建数据库
             // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code'=>'Create Database','status' => 1], ['sort' => 'ASC']);
@@ -532,7 +589,8 @@ class SiteController extends CrudController {
     }
 
     // git 命令
-    public function git() {
+    public function git()
+    {
         //1.项目目录不对
         //2.已经更细 string(19) "Already up to date."
         //3.有冲突
@@ -584,7 +642,8 @@ class SiteController extends CrudController {
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function moveUpSite(Request $request) {
+    public function moveUpSite(Request $request)
+    {
         try {
             $className = get_class($this);
             $id = $request->input('id');
@@ -611,7 +670,8 @@ class SiteController extends CrudController {
      *
      * @param \Exception $exception
      */
-    public function failed(\Exception $exception) {
+    public function failed(\Exception $exception)
+    {
         print_r($exception->getMessage());
     }
 
@@ -623,7 +683,8 @@ class SiteController extends CrudController {
      * @return void
      * @throws \Exception
      */
-    public static function message($params = null) {
+    public static function message($params = null)
+    {
         if (empty($params)) {
             echo ' 我没有参数1 ';
         } else {
@@ -631,7 +692,7 @@ class SiteController extends CrudController {
             $RootPath = base_path();
             var_dump($params);
             $RootPath = 'D:\phpstudy\phpstudy_pro\WWW\site\siteadmin.qyrdata.com';
-            $exec = "cd ".$RootPath;
+            $exec = "cd " . $RootPath;
             $exec .= " & git pull";
             exec($exec, $res, $status);
             var_dump($res, $status);
@@ -640,10 +701,12 @@ class SiteController extends CrudController {
             $result['status'] = $status;
             $result['data'] = $params['data'];
             $data = json_encode(
-                ['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'callbackResults',
-                 'data'  => $result]
+                [
+                    'class' => 'Modules\Admin\Http\Controllers\SiteController',
+                    'method' => 'callbackResults',
+                    'data'  => $result
+                ]
             );
-
         }
     }
 
@@ -654,7 +717,8 @@ class SiteController extends CrudController {
      *
      * @return void
      */
-    public static function callbackResults($params = null) {
+    public static function callbackResults($params = null)
+    {
         //将数据入库数据表
         $res = SiteUpdateLog::insert(
             [
@@ -680,14 +744,16 @@ class SiteController extends CrudController {
         }
     }
 
-    public function setDetail() {
+    public function setDetail()
+    {
         echo '12312312';
     }
 
     /**
      * 前端持续请求获取缓存更新回调
      */
-    public function getCatchGitStatus(Request $request) {
+    public function getCatchGitStatus(Request $request)
+    {
         $english = $request->input('english');
         $data = Cache::get($english);
         if (empty($data)) {
@@ -701,9 +767,10 @@ class SiteController extends CrudController {
      *
      * @param int $user_id user id
      */
-    public function UserOption(Request $request) {
+    public function UserOption(Request $request)
+    {
         $res = Role::whereIn('id', explode(',', $request->user->role_id))->where('status', 1)->pluck('site_id')
-                   ->toArray();
+            ->toArray();
         $site_ids = [];
         foreach ($res as $key => $value) {
             if (is_array($value)) {
@@ -722,7 +789,8 @@ class SiteController extends CrudController {
         ReturnJson(true, trans('lang.request_success'), $res);
     }
 
-    public function btTest(Request $request) {
+    public function btTest(Request $request)
+    {
         $data = (new BtPanel())->httpToHttps();
         ReturnJson(true, trans('lang.request_success'), $data);
     }
