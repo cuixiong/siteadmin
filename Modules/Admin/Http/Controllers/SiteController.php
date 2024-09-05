@@ -307,7 +307,7 @@ class SiteController extends CrudController
             //获取具体内容
             $commitOutput = Site::executeRemoteCommand(
                 $site,
-                'commit_history',
+                'commit_history', 
                 $server,
                 null,
                 [
