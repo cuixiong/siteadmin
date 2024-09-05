@@ -381,7 +381,7 @@ Route::middleware([
         // Route::post('message', [Modules\Admin\Http\Controllers\SiteController::class, 'message'])->name('站点管理:站点测试');
         // Route::post('callback-results', [Modules\Admin\Http\Controllers\SiteController::class, 'callbackResults'])->name('站点管理:站点更新结果');
         // Route::get('get-catch-git-status', [Modules\Admin\Http\Controllers\SiteController::class, 'getCatchGitStatus'])->name('站点管理:返回更新结果');
-
+        Route::get('jump-site-url',[Modules\Admin\Http\Controllers\SiteController::class, 'jumpSiteUrl'])->name('站点管理:获取站点跳转地址');
     });
 
     // SiteUpdateLog 控制器
@@ -495,7 +495,7 @@ Route::middleware([
     Route::get('admin/price-edition/save-to-site',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'test'])->name('测试:价格同步测试');
     Route::get('admin/language/save-to-site',[Modules\Admin\Http\Controllers\LanguageController::class, 'test'])->name('测试:语言同步测试');
 
-
+    Route::post('admin/site/decrypt-site-token',[Modules\Admin\Http\Controllers\SiteController::class, 'decryptSiteToken'])->name('站点管理:解密站点token');
 });
 
 // 暂时测试路由

@@ -4,9 +4,11 @@ namespace Modules\Admin\Http\Controllers;
 
 use App\Helper\BtPanel;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Position;
 use Modules\Admin\Http\Models\Role;
@@ -18,8 +20,8 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\SiteUpdateLog;
-use phpseclib3\Net\SSH2;
 use Stancl\Tenancy\Facades\Tenancy;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SiteController extends CrudController
 {
@@ -655,7 +657,6 @@ class SiteController extends CrudController
             $data = json_encode(
                 ['class' => 'Modules\Admin\Http\Controllers\SiteController', 'method' => 'message', 'data' => $info]
             );
-
             ReturnJson(true, '操作成功');
         } catch (\Exception $e) {
             var_dump($e->getMessage());
@@ -793,5 +794,113 @@ class SiteController extends CrudController
     {
         $data = (new BtPanel())->httpToHttps();
         ReturnJson(true, trans('lang.request_success'), $data);
+    }
+
+    public function jumpSiteUrl(Request $request) {
+        $site = $request->input('site');
+        $user = auth()->user();
+        $eccryData = [
+            $user->id,
+            $site,
+            time()
+        ];
+        $encryString = encrypt(implode(',', $eccryData));
+        if($site == 'center'){
+            $data = [
+                'url'   => "https://site.yhresearch.cn/#/control/dashboard",
+                'token' => $encryString,
+                'site'  => $site,
+            ];
+        }else {
+            if($site == 'qyen') {
+                $data = [
+                    'url'   => "http://giren.qyrdata.com/#/{$site}/dashboard",
+                    'token' => $encryString,
+                    'site'  => $site,
+                ];
+            }else{
+                $data = [
+                    'url'   => "https://site.yhresearch.cn/#/{$site}/dashboard",
+                    'token' => $encryString,
+                    'site'  => $site,
+                ];
+            }
+        }
+
+        $domain = $_SERVER['SERVER_NAME'];
+        if (strpos($data['url'], $domain) !== false) {
+            $data['is_local'] = true;
+        }else{
+            $data['is_local'] = false;
+        }
+
+        ReturnJson(true, trans('lang.request_success'), $data);
+    }
+
+    public function decryptSiteToken(Request $request) {
+        $site = $request->input('site');
+        $token = $request->input('token');
+
+        try{
+            $decryptData = decrypt($token);
+        }catch (\Exception $e){
+            \Log::error('返回结果数据:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            $domian = env('CENTER_DOMAIN' , 'https://site.yhresearch.cn');
+            $respData = [
+                'code' => true,
+                'msg'  => '解析失败!',
+                'data' => ['domain' => $domian]
+            ];
+            ReturnJson(true, '解析失败', $respData);
+        }
+
+        $data = explode(',', $decryptData);
+        if (count($data) != 3) {
+            ReturnJson(false, trans('lang.request_fail'));
+        } else {
+            $user_id = $data[0];
+            $site_id = $data[1];
+            $time = $data[2];
+            if ($site_id != $site) {
+                ReturnJson(false, trans('lang.request_fail'));
+            } else {
+                if (time() - $time > 50) {
+                    ReturnJson(false, trans('lang.request_fail'));
+                }
+                $user = User::find($user_id);
+                if (empty($user)) {
+                    ReturnJson(false, trans('lang.request_fail'));
+                }
+                $respData = $this->getSiteToken($user);
+                ReturnJson(true, trans('lang.request_success'), $respData);
+            }
+        }
+        ReturnJson(false, trans('lang.request_fail'));
+    }
+
+    public function getSiteToken($user) {
+        $tokenKey = 'login_token_'.$user->id;
+        $cacheToken = Redis::get($tokenKey);
+        if (!empty($cacheToken)) {
+            $token = $cacheToken;
+            $expires = Redis::ttl($tokenKey);
+        } else {
+            $token = JWTAuth::fromUser($user);//生成token
+            if (!$token) {
+                ReturnJson(false, '生成TOKEN失败');
+            }
+            $user->login_at = time();
+            $user->token = $token;
+            $user->save();
+            $expires = auth('api')->factory()->getTTL() + 66240;
+            Redis::setex($tokenKey, $expires, $token);
+        }
+
+        return [
+            'accessToken'  => $token,
+            'expires'      => $expires,
+            'refreshToken' => null,
+            'tokenType'    => 'Bearer'
+        ];
     }
 }
