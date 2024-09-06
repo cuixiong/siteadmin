@@ -92,12 +92,11 @@ class SiteEmailController extends Controller {
     public function sendTestEmail($action, $email) {
         $domain = getSiteDomain();
         $url = $domain.'/api/third/test-send-email';
-        $siteKey = getSiteName();
         $reqData = [
             'action'    => $action,
             'testEmail' => $email,
         ];
-        $reqData['sign'] = $this->makeSign($reqData, $siteKey);
+        $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
         $response = Http::post($url, $reqData);
         $resp = $response->json();
         if (!empty($resp) && $resp['code'] == 200) {
