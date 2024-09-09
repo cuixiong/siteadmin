@@ -639,6 +639,13 @@ Route::middleware([
         Route::get('get-init-data', [Modules\Site\Http\Controllers\PublicController::class, 'getInitData'])->name('公共:获取初始化数据');
     });
 
+    // OperationLogController 控制器
+    Route::prefix('operation-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\OperationLogController::class, 'list'])->name('操作日志:数据列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\OperationLogController::class, 'destroy'])->name('操作日志:删除操作');
+        Route::get('options', [Modules\Site\Http\Controllers\OperationLogController::class, 'options'])->name('操作日志:字典数据');
+    });
+
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

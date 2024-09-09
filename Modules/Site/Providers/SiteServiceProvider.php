@@ -2,8 +2,16 @@
 
 namespace Modules\Site\Providers;
 
+use App\Observers\SiteOperationLog;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Modules\Site\Http\Models\Information;
+use Modules\Site\Http\Models\Menu;
+use Modules\Site\Http\Models\News;
+use Modules\Site\Http\Models\OperationLog;
+use Modules\Site\Http\Models\Order;
+use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsExportLog;
 
 class SiteServiceProvider extends ServiceProvider
 {
@@ -28,6 +36,16 @@ class SiteServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        //分站点
+        //Products::observe([ProductsObserver::class , OperationLog::class]);
+        Products::observe(SiteOperationLog::class);
+        News::observe(SiteOperationLog::class);
+        Order::observe(SiteOperationLog::class);
+        Menu::observe(SiteOperationLog::class);
+        Information::observe(SiteOperationLog::class);
+        ProductsExportLog::observe(SiteOperationLog::class);
+
     }
 
     /**
