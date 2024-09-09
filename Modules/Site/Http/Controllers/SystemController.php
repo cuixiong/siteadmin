@@ -224,14 +224,16 @@ class SystemController extends CrudController {
         $keyList = ['is_open_check_security', 'ip_white_rules', 'req_limit', 'window_time' , 'is_open_limit_req'];
         $key = $record['key'];
         $value = $record['value'];
+
         if (!empty($key) && in_array($key, $keyList)) {
             //写入缓存
             $siteKey = getSiteName();
             $domain = getSiteDomain();
+            $redisKey = $siteKey.':'.$key;
             $url = $domain.'/api/third/sync-redis-val';
             $reqData = [
                 'type' => $type,
-                'key'  => $key,
+                'key'  => $redisKey,
                 'val'  => $value,
             ];
             $reqData['sign'] = $this->makeSign($reqData, $siteKey);

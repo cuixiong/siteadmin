@@ -5,6 +5,9 @@ namespace Modules\Site\Http\Controllers;
 use App\Const\QueueConst;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\OperationLog;
 use Modules\Site\Http\Models\ProductsCategory;
 use Stancl\Tenancy\Facades\Tenancy;
@@ -106,4 +109,26 @@ class OperationLogController extends CrudController {
 
         return $contents;
     }
+
+    /**
+     * get dict options
+     *
+     * @return Array
+     */
+    public function options(Request $request) {
+        $options = [];
+        $codes = ['Route_Classification', 'OperationLogModule'];
+        $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
+        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
+                               ->orderBy('sort', 'asc')->get()->toArray();
+        if (!empty($data)) {
+            foreach ($data as $map) {
+                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+            }
+        }
+        $options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
+        $options['user'] = (new User)->GetListLabel(['id as value', 'name as label'], false, '', ['status' => '1']);
+        ReturnJson(true, '', $options);
+    }
+
 }
