@@ -646,6 +646,15 @@ Route::middleware([
         Route::get('options', [Modules\Site\Http\Controllers\OperationLogController::class, 'options'])->name('操作日志:字典数据');
     });
 
+
+    // PriceEdition 控制器
+    Route::prefix('price-edition')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\PriceEditionController::class, 'list'])->name('价格版本管理:价格版本列表');
+        Route::get('option', [Modules\Site\Http\Controllers\PriceEditionController::class, 'option'])->name('价格版本管理:价格版本列表下拉列表数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
+        Route::get('sync-admin-price', [Modules\Site\Http\Controllers\PriceEditionController::class, 'syncAdminPrice'])->name('价格版本管理:搜索下拉列表数据');
+    });
+
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');

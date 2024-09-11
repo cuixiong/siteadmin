@@ -4,6 +4,7 @@ namespace Modules\Site\Http\Models;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Modules\Admin\Http\Models\Publisher;
 
 class PriceEdition extends Base
 {

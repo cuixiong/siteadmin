@@ -134,6 +134,9 @@ class PriceEdition extends Base
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
+        //同步分站点不在总控直接同步
+        return true;
+
         $site = null;
         if ($isAllSite) {
             $site = Site::where(['status' => 1])->get()->toArray();
