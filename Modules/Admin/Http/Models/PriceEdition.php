@@ -134,7 +134,9 @@ class PriceEdition extends Base
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
-        //同步分站点不在总控直接同步
+        //同步分站点不在总控直接同步 , 采用异步延时通知的方式
+        // TODO: cuizhixiong 2024/9/12 待完善
+
         return true;
 
         $site = null;

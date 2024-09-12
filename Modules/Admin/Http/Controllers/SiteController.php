@@ -307,7 +307,7 @@ class SiteController extends CrudController
             //获取具体内容
             $commitOutput = Site::executeRemoteCommand(
                 $site,
-                'commit_history', 
+                'commit_history',
                 $server,
                 null,
                 [
@@ -805,9 +805,10 @@ class SiteController extends CrudController
             time()
         ];
         $encryString = encrypt(implode(',', $eccryData));
+        $domain = env('APP_DOMAIN' , 'https://site.yhresearch.cn');
         if($site == 'center'){
             $data = [
-                'url'   => "https://site.yhresearch.cn/#/control/dashboard",
+                'url'   => "{$domain}/#/control/dashboard",
                 'token' => $encryString,
                 'site'  => $site,
             ];
@@ -820,7 +821,7 @@ class SiteController extends CrudController
                 ];
             }else{
                 $data = [
-                    'url'   => "https://site.yhresearch.cn/#/{$site}/dashboard",
+                    'url'   => "{$domain}/#/{$site}/dashboard",
                     'token' => $encryString,
                     'site'  => $site,
                 ];

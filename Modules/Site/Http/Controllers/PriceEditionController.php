@@ -111,20 +111,31 @@ class PriceEditionController extends CrudController {
 
     public function syncAdminPrice() {
         //同步 price_editions
-        $priceeditionList = AdminPriceEdition::all()->map(function($item) {
-            return $item->getAttributes();  // 直接获取原始属性，跳过访问器
+        $priceeditionList = AdminPriceEdition::all()->map(function ($item) {
+            return $item->getAttributes();
         })->toArray();
         foreach ($priceeditionList as $forPriceEdition) {
             $for_id = $forPriceEdition['id'];
-            PriceEdition::updateOrCreate(['id' => $for_id], $forPriceEdition);
+            $priceEdition = PriceEdition::query()->where("id", $for_id)->first();
+            if ($priceEdition) {
+                // 存在则更新
+                $priceEdition->save($forPriceEdition);
+            } else {
+                PriceEdition::insert($forPriceEdition);
+            }
         }
-
-        $priceValueList = AdminPriceEditionValue::all()->map(function($item) {
-            return $item->getAttributes();  // 直接获取原始属性，跳过访问器
+        $priceValueList = AdminPriceEditionValue::all()->map(function ($item) {
+            return $item->getAttributes();
         })->toArray();
         foreach ($priceValueList as $forPriceValue) {
             $for_id = $forPriceValue['id'];
-            PriceEditionValue::updateOrCreate(['id' => $for_id], $forPriceValue);
+            $priceEditionValue = PriceEditionValue::query()->where("id", $for_id)->first();
+            if ($priceEditionValue) {
+                // 存在则更新
+                $priceEditionValue->save($forPriceValue);
+            } else {
+                PriceEditionValue::insert($forPriceValue);
+            }
         }
         ReturnJson(true, trans('lang.request_success'));
     }

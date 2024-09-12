@@ -243,7 +243,7 @@ class PriceEditionController extends CrudController
 
                 foreach ($record as $key => $item) {
                     //子项数据
-                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort', 'bind_id')
+                    $record[$key]['items'] = PriceEditionValue::select('id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort')
                         ->where('edition_id', $item['id'])
                         ->where("is_deleted" , 1) //增加假删除逻辑
                         ->orderBy('sort', 'ASC')
