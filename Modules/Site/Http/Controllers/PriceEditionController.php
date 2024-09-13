@@ -31,7 +31,7 @@ class PriceEditionController extends CrudController {
             //增加假删除过滤条件
             $model = $model->where("is_deleted", 1);
             // 总数量
-            $total = $model->count();
+            //$total = $model->count();
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -45,9 +45,20 @@ class PriceEditionController extends CrudController {
             // 升序/降序
             $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
             $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get()->toArray();
+
+            $siteName = getSiteName();
+            $publisher_ids = Site::query()->where('name', $siteName)->value('publisher_id');
+            $publisher_id_list = explode(',', $publisher_ids);
             //查询后的数据处理
             if ($record && count($record) > 0) {
                 foreach ($record as $key => $item) {
+                    $for_publisher_ids = $item['publisher_id'];
+                    $for_publisher_id_list = explode(',', $for_publisher_ids);
+                    $intersectList = array_intersect($publisher_id_list , $for_publisher_id_list);
+                    if(empty($intersectList )){
+                        unset($record[$key]);
+                        continue;
+                    }
                     //子项数据
                     $record[$key]['items'] = PriceEditionValue::select(
                         'id', 'name', 'language_id', 'rules', 'notice', 'is_logistics', 'status', 'sort'
@@ -61,8 +72,8 @@ class PriceEditionController extends CrudController {
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
             $data = [
-                'total'       => $total,
-                'list'        => $record,
+                'total'       => count($record),
+                'list'        => array_values($record),
                 'headerTitle' => $headerTitle ?? [],
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
@@ -116,10 +127,10 @@ class PriceEditionController extends CrudController {
         })->toArray();
         foreach ($priceeditionList as $forPriceEdition) {
             $for_id = $forPriceEdition['id'];
-            $priceEdition = PriceEdition::query()->where("id", $for_id)->first();
-            if ($priceEdition) {
+            $isExist = PriceEdition::query()->where("id", $for_id)->count();
+            if ($isExist) {
                 // 存在则更新
-                $priceEdition->save($forPriceEdition);
+                PriceEdition::query()->where("id", $for_id)->update($forPriceEdition);
             } else {
                 PriceEdition::insert($forPriceEdition);
             }
@@ -129,10 +140,10 @@ class PriceEditionController extends CrudController {
         })->toArray();
         foreach ($priceValueList as $forPriceValue) {
             $for_id = $forPriceValue['id'];
-            $priceEditionValue = PriceEditionValue::query()->where("id", $for_id)->first();
-            if ($priceEditionValue) {
+            $isExist = PriceEditionValue::query()->where("id", $for_id)->count();
+            if ($isExist) {
                 // 存在则更新
-                $priceEditionValue->save($forPriceValue);
+                PriceEditionValue::query()->where("id", $for_id)->update($forPriceValue);
             } else {
                 PriceEditionValue::insert($forPriceValue);
             }

@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Middleware;
 use Closure;
+use Illuminate\Support\Facades\Redis;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
@@ -26,11 +27,17 @@ class JwtMiddleware
             }
             $token = $request->header('Authorization');
             $token = trim(str_replace('Bearer','',$token));
-            if($user->token != $token){
-                return response()->json([
-                    'code' => -200,
-                    'message' => 'token is error'
-                ], 404);
+
+            $tokenKey = 'login_token_'.$user->id;
+            $cacheToken = Redis::get($tokenKey);
+            //判断缓存token是否一致
+            if($cacheToken != $token) {
+                if ($user->token != $token) {
+                    return response()->json([
+                                                'code' => -200,
+                                                                  'message' => 'token is error'
+                                            ], 404);
+                }
             }
             // 将用户信息存储在请求中，以便后续使用
             $is_super = Role::whereIn('id',explode(',',$user->role_id))->where('is_super',1)->count();
@@ -42,18 +49,18 @@ class JwtMiddleware
                 'code' => -200,
                 'message' => 'token 过期' , //token已过期
             ]);
- 
+
         } catch (TokenInvalidException $e) {
             return response()->json([
                 'code' => -200,
                 'message' => 'token 无效',  //token无效
             ]);
- 
+
         } catch (JWTException $e) {
             return response()->json([
                 'code' => -200,
                 'message' => '缺少token' , //token为空
             ]);
         }
-    }    
+    }
 }

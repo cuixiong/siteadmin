@@ -3,13 +3,20 @@
 namespace Modules\Site\Http\Controllers;
 
 use App\Const\QueueConst;
+use App\Observers\SiteOperationLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\User;
+use Modules\Site\Http\Models\Information;
+use Modules\Site\Http\Models\Menu;
+use Modules\Site\Http\Models\News;
 use Modules\Site\Http\Models\OperationLog;
+use Modules\Site\Http\Models\Order;
+use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Site\Http\Models\ProductsExportLog;
 use Stancl\Tenancy\Facades\Tenancy;
 
 class OperationLogController extends CrudController {
@@ -119,14 +126,38 @@ class OperationLogController extends CrudController {
         $options = [];
         $codes = ['Route_Classification', 'OperationLogModule'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
-        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
-                               ->orderBy('sort', 'asc')->get()->toArray();
-        if (!empty($data)) {
-            foreach ($data as $map) {
-                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
-            }
-        }
-        $options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
+//        $codes = ['Route_Classification', 'OperationLogModule'];
+//        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
+//                               ->orderBy('sort', 'asc')->get()->toArray();
+//        if (!empty($data)) {
+//            foreach ($data as $map) {
+//                $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
+//            }
+//        }
+        //strtolower(class_basename(Products::class));
+
+        // TODO: cuizhixiong 2024/9/13 后续优化
+        $addData = [];
+        $addData['value'] = strtolower(class_basename(Products::class));
+        $addData['label'] = '报告模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(News::class));
+        $addData['label'] = '新闻模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(Order::class));
+        $addData['label'] = '订单模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(Menu::class));
+        $addData['label'] = '菜单模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(Information::class));
+        $addData['label'] = '资讯模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(ProductsExportLog::class));
+        $addData['label'] = '导出记录模块';
+        $options['OperationLogModule'][] = $addData;
+
+        //$options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
         $options['user'] = (new User)->GetListLabel(['id as value', 'name as label'], false, '', ['status' => '1']);
         ReturnJson(true, '', $options);
     }

@@ -117,8 +117,10 @@ class ProductsController extends CrudController {
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
+            $domain = getSiteDomain();
             foreach ($record as $key => $item) {
                 $productId = $item['id'];
+                $record[$key]['report_url'] = $domain."/reports/{$item['id']}/".$item['url'];
                 $record[$key]['published_date'] = date('Y-m-d', $item['published_date']);
                 $record[$key]['category_name'] = $this->categpryName[$item['category_id']];
                 //$descriptionData = $productsModel->findDescCache($item['id']);
