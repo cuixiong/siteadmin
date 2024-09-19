@@ -1470,6 +1470,8 @@ class ProductsController extends CrudController {
         //分类
         $res['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid',
                                                              ['status' => 1]);
+
+        $res['domain'] = getSiteDomain();
         ReturnJson(true, '', $res);
     }
 
