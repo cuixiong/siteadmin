@@ -305,6 +305,7 @@ Route::middleware([
     Route::prefix('email-log')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\EmailLogController::class, 'list'])->name('邮箱日志:日志列表');
         Route::get('option', [Modules\Site\Http\Controllers\EmailLogController::class, 'option'])->name('邮箱日志:字典数据');
+        Route::post('destroy', [Modules\Site\Http\Controllers\EmailLogController::class, 'destroy'])->name('邮箱日志:日志删除');
     });
 
     // Email控制器

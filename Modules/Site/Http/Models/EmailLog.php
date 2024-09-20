@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Site\Http\Models;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Base;
 class EmailLog extends Base
 {
