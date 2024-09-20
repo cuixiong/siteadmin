@@ -27,7 +27,7 @@ class ContactUs extends Base
         'updated_by',
         'created_by',
     ];
-    protected $appends = ['product_name', 'message_name', 'category_name', 'channel_name', 'buy_time_name'];
+    protected $appends = ['product_name', 'message_name', 'category_name', 'category_style', 'channel_name', 'buy_time_name'];
 
     // 产品名称获取器
     public function getProductNameAttribute()
@@ -60,6 +60,17 @@ class ContactUs extends Base
             $value = "";
         }
         return $value;
+    }
+
+    // 分类样式获取器
+    public function getCategoryStyleAttribute()
+    {
+        if (isset($this->attributes['category_id'])) {
+            $value = MessageCategory::where('id', $this->attributes['category_id'])->value('style');
+        } else {
+            $value = "";
+        }
+        return !empty($value) ? $value : '';
     }
 
     // 来源名称获取器
