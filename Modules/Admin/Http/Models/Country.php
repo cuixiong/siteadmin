@@ -2,6 +2,9 @@
 
 namespace Modules\Admin\Http\Models;
 
+use App\Const\NotityTypeConst;
+use App\Const\QueueConst;
+use App\Jobs\NotifySite;
 use Modules\Admin\Http\Models\Base;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +27,7 @@ class Country extends Base
     public function HandleWhere($model, $request)
     {
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -151,10 +154,23 @@ class Country extends Base
      * @param $id 要修改数据的标识
      * @param $isAllSite 是否同步所有站点
      * @param $siteIds 站点id
-     * 
+     *
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
+        //同步分站点不在总控直接同步 , 采用异步延时通知的方式
+        // TODO: cuizhixiong 2024/9/12 待完善
+        $siteList = Site::where(['status' => 1])->pluck('id')->toArray();
+        foreach ($siteList as $forSiteId) {
+            $data = [
+                'sync_type' => NotityTypeConst::SYNC_SITE_COUNTRY,
+                'siteId'    => $forSiteId,
+            ];
+            $data = json_encode($data);
+            NotifySite::dispatch($data)->onQueue(QueueConst::QUEUE_NOTIFY_SITE);
+        }
+        return true;
+
         $site = null;
         if ($isAllSite) {
             $site = Site::where(['status' => 1])->get()->toArray();

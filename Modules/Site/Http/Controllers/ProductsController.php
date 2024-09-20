@@ -600,12 +600,12 @@ class ProductsController extends CrudController {
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
             }
-            if (empty($input['hits'])) {
-                $input['hits'] = rand(500, 1000);
-            }
-            if (empty($input['downloads'])) {
-                $input['downloads'] = rand(100, 300);
-            }
+//            if (empty($input['hits'])) {
+//                $input['hits'] = rand(500, 1000);
+//            }
+//            if (empty($input['downloads'])) {
+//                $input['downloads'] = rand(100, 300);
+//            }
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
             }

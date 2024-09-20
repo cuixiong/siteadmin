@@ -31,4 +31,8 @@ class QueueConst {
 
     // php artisan queue:work --queue=queue_admin_email
     const QUEUE_ADMIN_EMAIL = 'queue_admin_email';  // 管理后台邮件队列
+
+
+    // php artisan queue:work --queue=notify_site
+    const QUEUE_NOTIFY_SITE = 'notify_site';  // 异步通知站点队列
 }

@@ -125,8 +125,10 @@ class PriceEditionController extends CrudController {
         $priceeditionList = AdminPriceEdition::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
+        $existIdList = [];
         foreach ($priceeditionList as $forPriceEdition) {
             $for_id = $forPriceEdition['id'];
+            $existIdList[] = $for_id;
             $isExist = PriceEdition::query()->where("id", $for_id)->count();
             if ($isExist) {
                 // 存在则更新
@@ -135,11 +137,16 @@ class PriceEditionController extends CrudController {
                 PriceEdition::insert($forPriceEdition);
             }
         }
+        PriceEdition::query()->whereNotIn("id", $existIdList)->delete();
+
+
         $priceValueList = AdminPriceEditionValue::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
+        $existIdList = [];
         foreach ($priceValueList as $forPriceValue) {
             $for_id = $forPriceValue['id'];
+            $existIdList[] = $for_id;
             $isExist = PriceEditionValue::query()->where("id", $for_id)->count();
             if ($isExist) {
                 // 存在则更新
@@ -148,6 +155,8 @@ class PriceEditionController extends CrudController {
                 PriceEditionValue::insert($forPriceValue);
             }
         }
+        PriceEditionValue::query()->whereNotIn("id", $existIdList)->delete();
+
         ReturnJson(true, trans('lang.request_success'));
     }
 }

@@ -2,6 +2,9 @@
 
 namespace Modules\Admin\Http\Models;
 
+use App\Const\NotityTypeConst;
+use App\Const\QueueConst;
+use App\Jobs\NotifySite;
 use Modules\Admin\Http\Models\Base;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -29,7 +32,7 @@ class Language extends Base
     public function HandleWhere($model, $request)
     {
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -66,7 +69,7 @@ class Language extends Base
         return $model;
     }
 
-    
+
     const SAVE_TYPE_FULL = 1;   // 全量同步
     const SAVE_TYPE_SINGLE = 2; // 单条同步
     /**
@@ -75,10 +78,24 @@ class Language extends Base
      * @param $id 要修改数据的标识
      * @param $isAllSite 是否同步所有站点
      * @param $siteIds 站点id
-     * 
+     *
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
+
+        //同步分站点不在总控直接同步 , 采用异步延时通知的方式
+        // TODO: cuizhixiong 2024/9/12 待完善
+        $siteList = Site::where(['status' => 1])->pluck('id')->toArray();
+        foreach ($siteList as $forSiteId) {
+            $data = [
+                'sync_type' => NotityTypeConst::SYNC_SITE_LANGUAGE,
+                'siteId'    => $forSiteId,
+            ];
+            $data = json_encode($data);
+            NotifySite::dispatch($data)->onQueue(QueueConst::QUEUE_NOTIFY_SITE);
+        }
+        return true;
+
         $site = null;
         if ($isAllSite) {
             $site = Site::where(['status' => 1])->get()->toArray();
@@ -97,7 +114,7 @@ class Language extends Base
 
         if ($type == self::SAVE_TYPE_FULL) {
             // 查询需要迁移的数据,并整理成sql语句
-            // $languageData = Language::get()->each->setAppends([])->toArray();    
+            // $languageData = Language::get()->each->setAppends([])->toArray();
             // 因为有选择器转换了时间等字段,为了方便所以换一种查询方式
             $languageData = DB::table($languageTableName)->get()->toArray();
             foreach ($languageData as $record) {

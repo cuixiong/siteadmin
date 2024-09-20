@@ -332,15 +332,7 @@ class TemplateController extends CrudController {
 
     public function getReportUrl($product)
     {
-        //获取当前站点域名
-        $domain = Site::where('name', request()->header('Site'))->value('domain');
-        if(!empty($domain)){
-            $domain = strpos($domain,'http') !== 0 ? 'https://' . $domain : '';
-        }else{
-            $domain = '';
-        }
-        //暂时使用线上的域名
-        // $domain = "https://www.marketmonitorglobal.com.cn";
+        $domain = getSiteDomain();
         if (!empty($product->url)) {
             $url = $domain . "/reports/{$product->id}/$product->url";
         } else {

@@ -223,7 +223,15 @@ class SystemController extends CrudController {
     private function syncSiteCache($record, $type = 'update') {
         $keyList = ['is_open_check_security', 'ip_white_rules', 'req_limit', 'window_time' , 'is_open_limit_req'];
         $key = $record['key'];
+
+
         $value = $record['value'];
+        if($key == 'is_open_limit_req'){
+            if(isset($record['hidden'])){
+                $value = $record['hidden'];
+            }
+        }
+
 
         if (!empty($key) && in_array($key, $keyList)) {
             //写入缓存
@@ -236,7 +244,9 @@ class SystemController extends CrudController {
                 'key'  => $redisKey,
                 'val'  => $value,
             ];
-            $reqData['sign'] = $this->makeSign($reqData, $siteKey);
+            $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
+            $reqData['sign'] = $this->makeSign($reqData, $signKey);
+
             $response = Http::post($url, $reqData);
             $resp = $response->json();
             if (!empty($resp) && $resp['code'] == 200) {
@@ -285,16 +295,18 @@ class SystemController extends CrudController {
                                             ->select(['id', 'key', 'value'])
                                             ->get()
                                             ->toArray();
-            if($status == 1){
-                $type = 'update';
-            }else{
-                $type = 'delete';
-            }
+//            if($status == 1){
+//                $type = 'update';
+//            }else{
+//                $type = 'delete';
+//            }
             foreach ($childList as $childinfo) {
                 $updData = ['hidden' => $status, 'status' => $status];
                 $rs = $systemValueModel->where('id', $childinfo['id'])->update($updData);
                 if($rs){
-                    $this->syncSiteCache($childinfo , $type);
+                    $childinfo['hidden'] = $status;
+                    $childinfo['status'] = $status;
+                    $this->syncSiteCache($childinfo);
                 }
             }
             ReturnJson(true, trans('lang.update_success'));

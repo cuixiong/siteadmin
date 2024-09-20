@@ -23,6 +23,7 @@ class FileManagement extends Controller {
 
     public function FileList(Request $request) {
         $path = $request->path ?? '';
+        $path = ltrim($path, '/');
         $filename = $this->RootPath.$path;
         if (!is_dir($filename)) {
             mkdir($filename, 0755, true);

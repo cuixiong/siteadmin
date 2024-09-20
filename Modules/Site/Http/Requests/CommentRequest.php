@@ -11,12 +11,12 @@ class CommentRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'title' => 'required',
+//            'title' => 'required',
             'comment_at' => 'required',
             'status' => 'required',
         ];
         $message = [
-            'title.required' => '标题不能为空',
+//            'title.required' => '标题不能为空',
             'comment_at.required' => '评论时间不能为空',
             'status.required' => '状态不能为空',
         ];
@@ -30,13 +30,13 @@ class CommentRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
-            'title' => 'required',
+//            'title' => 'required',
             'comment_at' => 'required',
             'status' => 'required',
         ];
         $message = [
             'id' => 'required',
-            'title.required' => '标题不能为空',
+//            'title.required' => '标题不能为空',
             'comment_at.required' => '评论时间不能为空',
             'status.required' => '状态不能为空',
         ];
