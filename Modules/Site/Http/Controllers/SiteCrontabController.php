@@ -57,22 +57,25 @@ class SiteCrontabController extends Controller {
         $products = new Products();
         //3. 同步sphinx
         $this->syncProductSphinx($rs, $productIds, $products, $site);
-        //4. 获取最新的报告, 设置为精品
-        $id_list = [];
-        $keywords_list = [];
-        $this->getHotProductList($id_list, $keywords_list);
-        $productIds = $id_list;
-//        $productIds = Products::query()->where("status", 1)
-//                              ->orderBy("sort", "asc")
-//                              ->orderBy("published_date", "desc")
-//                              ->orderBy("id", "desc")
-//                              ->limit(6)->pluck("id")->toArray();
-        $updData = [
-            'show_hot' => 1,
-        ];
-        $rs = Products::query()->whereIn("id", $productIds)->update($updData);
-        //5. 同步sphinx
-        $this->syncProductSphinx($rs, $productIds, $products, $site);
+
+        //4. 获取所有精品分类
+        $pcIdList = ProductsCategory::query()->where("status", 1)
+                                    ->where("is_hot", 1)
+                                    ->pluck("id")->toArray();
+        if (!empty($pcIdList)) {
+            $updData = [
+                'show_hot' => 1
+            ];
+            foreach ($pcIdList as $pcId) {
+                //5. 每个分类下, 获取最新的6条报告, 并修改为推荐状态, 并同步sphinx
+                $id_list = [];
+                $keywords_list = [];
+                $this->getHotProductList($id_list, $keywords_list, $pcId);
+                $productIds = $id_list;
+                $rs = Products::query()->whereIn("id", $productIds)->update($updData);
+                $this->syncProductSphinx($rs, $productIds, $products, $site);
+            }
+        }
     }
 
     public function handlerRecommendData($site) {
@@ -128,11 +131,12 @@ class SiteCrontabController extends Controller {
         }
     }
 
-    public function getHotProductList(&$id_list, &$keywords_list, $layer = 0, $limit = 6) {
+    public function getHotProductList(&$id_list, &$keywords_list, $cate_id, $layer = 0, $limit = 6) {
         if ($limit <= $layer) {
             return true;
         }
         $pinfo = Products::query()->where("status", 1)
+                        ->where("category_id", $cate_id)
                          ->where("author", "完成报告")
                          ->orderBy("sort", "asc")
                          ->orderBy("published_date", "desc")
@@ -153,7 +157,7 @@ class SiteCrontabController extends Controller {
             $id_list[] = $pinfo->id;
             $keywords_list[] = $pinfo->keywords;
         }
-        return $this->getHotProductList($id_list, $keywords_list, ++$layer, $limit);
+        return $this->getHotProductList($id_list, $keywords_list, $cate_id, ++$layer, $limit);
     }
 
 
