@@ -19,8 +19,8 @@ class FileManagement extends Controller{
     {
 
         //排序方式
-        $sortBy = $request->sort_file ?? 'name'; // 默认按文件名排序 name|time
-        $orderType = $request->order_type ?? 'asc'; // 默认升序 asc|desc
+        $sortBy = $request->sort_file ?? 'time'; // 默认按时间排序 name|time
+        $orderType = $request->order_type ?? 'desc'; // 默认降序 asc|desc
 
         $path = $request->path ?? '';
         $filename = $this->RootPath.$path;

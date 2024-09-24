@@ -21,10 +21,15 @@ class FileManagement extends Controller {
         // }
     }
 
-    public function FileList(Request $request) {
+    public function FileList(Request $request)
+    {
+        //排序方式
+        $sortBy = $request->sort_file ?? 'time'; // 默认按时间排序 name|time
+        $orderType = $request->order_type ?? 'desc'; // 默认降序 asc|desc
+
         $path = $request->path ?? '';
         $path = ltrim($path, '/');
-        $filename = $this->RootPath.$path;
+        $filename = $this->RootPath . $path;
         if (!is_dir($filename)) {
             mkdir($filename, 0755, true);
             chmod($filename, 0755);
@@ -45,7 +50,7 @@ class FileManagement extends Controller {
                 continue;
             } else {
                 $result['prev_path'] = $bread_crumb_temp;
-                $bread_crumb_temp .= (!empty($bread_crumb_temp) ? '/' : '').$v;
+                $bread_crumb_temp .= (!empty($bread_crumb_temp) ? '/' : '') . $v;
                 $bread_crumbs[] = ['name' => $v, 'path' => $bread_crumb_temp];
             }
         }
@@ -54,61 +59,88 @@ class FileManagement extends Controller {
         // 扫描目录下的所有文件
         $tempArray = scandir($filename);
         $fileNameArray = [];
+        $fileNameDirArray = []; // 存放文件夹数据
+        $fileNameFileArray = []; // 存放其它文件数据
         if (is_array($tempArray)) {
             foreach ($tempArray as $k => $v) {
-                // 跳过两个特殊目录,跳过export导出目录
-                if ($v == "." || $v == ".." || $v == "export") {
+                // 跳过两个特殊目录
+                if ($v == "." || $v == "..") {
                     continue;
                 } else {
                     $info = [];
-                    $info['type'] = self::filetype($filename.'/'.$v);
+                    $info['type'] = self::filetype($filename . '/' . $v);
                     if ($info['type'] == 'dir') {
                         $info['size'] = "";
                     } else {
-                        $info['size'] = self::converFileSize(filesize($filename.'/'.$v));
+                        $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
                     }
                     $info['is_file'] = ['name' => $v];
-                    $info['path'] = $path ? str_replace(public_path(), '', $this->RootPath.trim($path, '/').'/'.$v)
-                        : str_replace(public_path(), '', $this->RootPath.$v);
-                    $info['orignal_path'] = $path.$v;
+                    $info['path'] = $path ? str_replace(public_path(), '', $this->RootPath . trim($path, '/') . '/' . $v)
+                        : str_replace(public_path(), '', $this->RootPath . $v);
+                    $info['orignal_path'] = $path . $v;
                     if ($info['type'] == 'image') {
-                        $ImageSize = getimagesize($filename.'/'.$v);
-                        $info['width'] = $ImageSize[0].' px';
-                        $info['height'] = $ImageSize[1].' px';
+                        $ImageSize = getimagesize($filename . '/' . $v);
+                        $info['width'] = $ImageSize[0] . ' px';
+                        $info['height'] = $ImageSize[1] . ' px';
                     }
-                    $info['extension'] = pathinfo($filename.'/'.$v, PATHINFO_EXTENSION);
+                    $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
-                    $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename.'/'.$v)) ?? ''; //上次访问时间
+                    $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
                     clearstatcache();
-                    $info['create_time'] = date('Y-m-d H:i:s', filectime($filename.'/'.$v)) ?? ''; //创建时间
+                    $info['create_time'] = date('Y-m-d H:i:s', filectime($filename . '/' . $v)) ?? ''; //创建时间
                     clearstatcache();
-                    $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename.'/'.$v)) ?? ''; //修改时间
-                    $fileNameArray[] = $info;
+                    $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
+
+                    if ($info['type'] == 'dir') {
+                        $fileNameDirArray[$v] = $info;
+                    } else {
+                        $fileNameFileArray[$v] = $info;
+                    }
                 }
+
+                // 排序规则函数
+                $sortFunction = function ($a, $b) use ($sortBy, $orderType) {
+                    if ($sortBy == 'time') {
+                        // 按修改时间排序
+                        $aTime = strtotime($a['update_time']);
+                        $bTime = strtotime($b['update_time']);
+                        return $orderType == 'asc' ? $aTime - $bTime : $bTime - $aTime;
+                    } else {
+                        // 按文件名排序
+                        return $orderType == 'asc' ? strcmp($a['is_file']['name'], $b['is_file']['name']) : strcmp($b['is_file']['name'], $a['is_file']['name']);
+                    }
+                };
+
+                // 对文件夹和文件分别排序
+                uasort($fileNameDirArray, $sortFunction);
+                uasort($fileNameFileArray, $sortFunction);
+
+                // 合并文件夹和文件结果
+                $fileNameArray = array_merge(array_values($fileNameDirArray), array_values($fileNameFileArray));
             }
         } else {
             $fileNameArray = [];
         }
         //查询是否有oss的大文件上传
-//        $ossbasePath = str_replace(public_path(), '', SiteUploads::GetRootPath());
-//        $ossbasePath.= ltrim($path , '/');
-//        $ossbasePath = rtrim($ossbasePath, '/');
-//        $ossFileList = (new OssFile())->where('path', $ossbasePath)->orderBy('id', 'desc')->get()->toArray();
-//
-//        foreach ($ossFileList as $forossFile){
-//            $forData = [];
-//            $forData['active_time'] = $forossFile['created_at'];
-//            $forData['create_time'] = $forossFile['created_at'];
-//            $forData['update_time'] = $forossFile['updated_at'];
-//            $forData['is_file']['name'] = $forossFile['file_name'];
-//            $forData['orignal_path'] = $forossFile['oss_path'];
-//            $forData['path'] = $forossFile['oss_path'];
-//            $forData['type'] = $forossFile['file_suffix'];
-//            $forData['extension'] = $forossFile['file_suffix'];
-//            $forData['size'] = $forossFile['file_size'];
-//            $forData['is_oss'] = true;
-//            $fileNameArray[] = $forData;
-//        }
+        //        $ossbasePath = str_replace(public_path(), '', SiteUploads::GetRootPath());
+        //        $ossbasePath.= ltrim($path , '/');
+        //        $ossbasePath = rtrim($ossbasePath, '/');
+        //        $ossFileList = (new OssFile())->where('path', $ossbasePath)->orderBy('id', 'desc')->get()->toArray();
+        //
+        //        foreach ($ossFileList as $forossFile){
+        //            $forData = [];
+        //            $forData['active_time'] = $forossFile['created_at'];
+        //            $forData['create_time'] = $forossFile['created_at'];
+        //            $forData['update_time'] = $forossFile['updated_at'];
+        //            $forData['is_file']['name'] = $forossFile['file_name'];
+        //            $forData['orignal_path'] = $forossFile['oss_path'];
+        //            $forData['path'] = $forossFile['oss_path'];
+        //            $forData['type'] = $forossFile['file_suffix'];
+        //            $forData['extension'] = $forossFile['file_suffix'];
+        //            $forData['size'] = $forossFile['file_size'];
+        //            $forData['is_oss'] = true;
+        //            $fileNameArray[] = $forData;
+        //        }
         //create_time 降序
         array_multisort(array_column($fileNameArray, 'create_time'), SORT_DESC, $fileNameArray);
         $result['data'] = $fileNameArray;
