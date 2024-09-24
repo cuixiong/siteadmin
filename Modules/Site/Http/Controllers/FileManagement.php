@@ -142,7 +142,7 @@ class FileManagement extends Controller {
         //            $fileNameArray[] = $forData;
         //        }
         //create_time 降序
-        array_multisort(array_column($fileNameArray, 'create_time'), SORT_DESC, $fileNameArray);
+        // array_multisort(array_column($fileNameArray, 'create_time'), SORT_DESC, $fileNameArray);
         $result['data'] = $fileNameArray;
         ReturnJson(true, trans('lang.request_success'), $result);
     }
