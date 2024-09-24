@@ -54,7 +54,7 @@ class SenWordsService {
         $checkRes = false;
         foreach ($senWordsList as $fillterRules) {
             //if (mb_strpos($name, $fillterRules) !== false) { //中文比对
-            if (strcasecmp($name, $fillterRules) == 0) { //英文比对
+            if (strpos($name, $fillterRules) !== false) { //是否包含
                 $checkRes = $fillterRules;
                 break;
             }
@@ -62,5 +62,4 @@ class SenWordsService {
 
         return $checkRes;
     }
-
 }
