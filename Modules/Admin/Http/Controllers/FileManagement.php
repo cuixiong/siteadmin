@@ -18,9 +18,12 @@ class FileManagement extends Controller{
     public function FileList(Request $request)
     {
 
+        //排序方式
+        $sortBy = $request->sort_file ?? 'name'; // 默认按文件名排序 name|time
+        $orderType = $request->order_type ?? 'asc'; // 默认升序 asc|desc
+
         $path = $request->path ?? '';
         $filename = $this->RootPath.$path;
-
         if (!is_dir($filename)) {
             mkdir($filename, 0755, true);
             chmod($filename, 0755);
@@ -51,10 +54,12 @@ class FileManagement extends Controller{
         // 扫描目录下的所有文件
         $tempArray = scandir($filename);
         $fileNameArray = [];
+        $fileNameDirArray = []; // 存放文件夹数据
+        $fileNameFileArray = [];// 存放其它文件数据
         if (is_array($tempArray)) {
             foreach ($tempArray as $k => $v) {
-                // 跳过两个特殊目录,跳过export导出目录
-                if ($v == "." || $v == ".." || $v == "export") {
+                // 跳过两个特殊目录
+                if ($v == "." || $v == "..") {
                     continue;
                 } else {
                     $info = [];
@@ -79,9 +84,35 @@ class FileManagement extends Controller{
                     clearstatcache();
                     $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
                     $info['check'] = "";
-                    $fileNameArray[] = $info;
+
+                    
+                    if($info['type'] == 'dir'){
+                        $fileNameDirArray[$v] = $info;
+                    }else{
+                        $fileNameFileArray[$v] = $info;
+                    }
+
                 }
             }
+            // 排序规则函数
+            $sortFunction = function ($a, $b) use ($sortBy, $orderType) {
+                if ($sortBy == 'time') {
+                    // 按修改时间排序
+                    $aTime = strtotime($a['update_time']);
+                    $bTime = strtotime($b['update_time']);
+                    return $orderType == 'asc' ? $aTime - $bTime : $bTime - $aTime;
+                } else {
+                    // 按文件名排序
+                    return $orderType == 'asc' ? strcmp($a['is_file']['name'], $b['is_file']['name']) : strcmp($b['is_file']['name'], $a['is_file']['name']);
+                }
+            };
+
+            // 对文件夹和文件分别排序
+            uasort($fileNameDirArray, $sortFunction);
+            uasort($fileNameFileArray, $sortFunction);
+
+            // 合并文件夹和文件结果
+            $fileNameArray = array_merge(array_values($fileNameDirArray), array_values($fileNameFileArray));
         } else {
             $fileNameArray =  [];
         }
