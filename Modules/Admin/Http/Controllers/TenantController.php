@@ -86,16 +86,29 @@ class TenantController extends Controller
             ];
             $data = json_encode($data);
             // 查询当前的租户信息
-            $tenant = DB::table('domains')->where('tenant_id', $oldName)->first();
-            if ($tenant) {
-                // 入库tenants表
-                DB::table('tenants')->where('id', $tenant->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
-                // 入库domains
-                DB::table('domains')->where('tenant_id', $tenant->tenant_id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
-            } else {
+            $domains = DB::table('domains')->where('tenant_id', $oldName)->first();
+            if ($domains) {
 
                 // 入库tenants表
-                DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                $tenants = DB::table('tenants')->where('id', $domains->tenant_id)->first();
+                if($tenants){
+                    DB::table('tenants')->where('id', $domains->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                }else{
+                    DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                }
+
+                // 入库domains
+                DB::table('domains')->where('tenant_id', $domains->tenant_id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+
+            } else {
+                // 入库tenants表
+                $tenants = DB::table('tenants')->where('id', $name)->first();
+                if($tenants){
+                    DB::table('tenants')->where('id', $name)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                }else{
+                    DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
+                }
+                
                 // 入库domains
                 DB::table('domains')->insert(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
             }
