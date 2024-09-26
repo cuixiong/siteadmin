@@ -11,7 +11,7 @@ class UserRequest extends BaseRequest
     public function store($request)
     {
         $rules = [
-            'name' => 'required',
+            //'name' => 'required',
             'username' => 'required|unique:users',
             'email' => 'required',
             'phone' => 'required',
@@ -20,7 +20,7 @@ class UserRequest extends BaseRequest
             'company' => 'required',
         ];
         $message = [
-            'name.required' => '名称不能为空',
+            //'name.required' => '名称不能为空',
             'username.required' => '登陆名不能为空',
             'username.unique' => '登陆名不能重复',
             'email.required' => '邮箱不能为空',
@@ -39,7 +39,7 @@ class UserRequest extends BaseRequest
     {
         $rules = [
             'id' => 'required',
-            'name' => 'required',
+            //'name' => 'required',
             'username' => 'required',
             'email' => 'required',
             'phone' => 'required',
@@ -49,7 +49,7 @@ class UserRequest extends BaseRequest
         ];
         $message = [
             'id' => 'required',
-            'name.required' => '名称不能为空',
+            //'name.required' => '名称不能为空',
             'username.required' => '登陆名不能为空',
             'username.unique' => '登陆名不能重复',
             'email.required' => '邮箱不能为空',

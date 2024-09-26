@@ -9,7 +9,7 @@ class User extends Base {
     // 设置允许入库字段,数组形式
     protected $fillable
         = ['name', 'username', 'email', 'phone', 'area_id', 'status', 'company', 'check_email', 'login_time',
-           'updated_by', 'created_by'];
+           'updated_by', 'created_by' , 'password'];
     // 添加虚拟字段
     protected $appends = ['area_name', 'login_time'];
 

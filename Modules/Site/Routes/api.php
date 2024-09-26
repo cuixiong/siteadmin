@@ -365,11 +365,12 @@ Route::middleware([
     // User控制器
     Route::prefix('user')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\UserController::class, 'store'])->name('用户列表:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\UserController::class, 'update'])->name('用户列表:数据更新');
+        Route::any('update', [Modules\Site\Http\Controllers\UserController::class, 'update'])->name('用户列表:数据更新');
         Route::post('destroy', [Modules\Site\Http\Controllers\UserController::class, 'destroy'])->name('用户列表:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\UserController::class, 'list'])->name('用户列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\UserController::class, 'changeStatus'])->name('用户列表:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\UserController::class, 'options'])->name('用户列表:字典数据');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\UserController::class, 'form'])->name('用户列表:用户详情');
     });
     // Pay控制器
     Route::prefix('pay')->group(function () {
