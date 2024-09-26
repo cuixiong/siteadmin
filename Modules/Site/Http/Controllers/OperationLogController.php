@@ -35,6 +35,12 @@ class OperationLogController extends CrudController {
         } else if ($type == 'delete') {
             $content = '删除了ID='.$model->id.'的数据行。';
         }
+
+        //如果没有内容,直接不添加
+        if(empty($content)){
+            return false;
+        }
+
         $request = request();
         $site = $request->header('Site');
         $category = $site ? 2 : 1;
@@ -108,6 +114,9 @@ class OperationLogController extends CrudController {
                 $OriginalValue = $model->getOriginal($field);
                 $OriginalValue = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                 $NewValue = is_array($value) ? implode(',', $value) : $value;
+                if(empty($OriginalValue ) && empty($NewValue)){
+                    continue;
+                }
                 $title = $ColumnComment.'从'.$OriginalValue.'更新为：'.$NewValue;
                 $contents[] = $title;
             }

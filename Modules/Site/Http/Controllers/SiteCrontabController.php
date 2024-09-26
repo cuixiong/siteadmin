@@ -20,6 +20,9 @@ class SiteCrontabController extends Controller {
     public $site  = '';
     public $isCli = false;
 
+    public $exitsIdList = [];
+
+
     public function handlerProductStatus() {
         try {
             //兼容site
@@ -33,6 +36,7 @@ class SiteCrontabController extends Controller {
                 return false;
             }
             tenancy()->initialize($site);
+            $this->exitsIdList = [];
             $this->handlerShowHotData($site);
             $this->handlerRecommendData($site);
         } catch (\Exception $e) {
@@ -72,6 +76,7 @@ class SiteCrontabController extends Controller {
                 $keywords_list = [];
                 $this->getHotProductList($id_list, $keywords_list, $pcId);
                 $productIds = $id_list;
+                $this->exitsIdList = array_merge($this->exitsIdList, $productIds);
                 $rs = Products::query()->whereIn("id", $productIds)->update($updData);
                 $this->syncProductSphinx($rs, $productIds, $products, $site);
             }
@@ -109,6 +114,7 @@ class SiteCrontabController extends Controller {
 //                                      ->orderBy("id", "desc")
 //                                      ->limit(6)->pluck("id")->toArray();
                 $productIds = $id_list;
+                $this->exitsIdList = array_merge($this->exitsIdList, $productIds);
                 $rs = Products::query()->whereIn("id", $productIds)->update($updData);
                 $this->syncProductSphinx($rs, $productIds, $products, $site);
             }
@@ -145,6 +151,12 @@ class SiteCrontabController extends Controller {
             //关键词不能重复
             $pinfo = $pinfo->whereNotIn('keywords', $keywords_list);
         }
+
+        if(!empty($this->exitsIdList )){
+            //不能重复报告
+            $pinfo = $pinfo->whereNotIn('id', $this->exitsIdList);
+        }
+
         if(!empty($id_list )){
             //不能连续ID，中间间隔20
             $last_id = end($id_list);
@@ -175,6 +187,12 @@ class SiteCrontabController extends Controller {
             //关键词不能重复
             $pinfo = $pinfo->whereNotIn('keywords', $keywords_list);
         }
+
+        if(!empty($this->exitsIdList )){
+            //不能重复报告
+            $pinfo = $pinfo->whereNotIn('id', $this->exitsIdList);
+        }
+
         if(!empty($id_list )){
             //不能连续ID，中间间隔20
             $last_id = end($id_list);

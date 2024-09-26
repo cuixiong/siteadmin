@@ -606,6 +606,22 @@ class ProductsController extends CrudController {
 //            if (empty($input['downloads'])) {
 //                $input['downloads'] = rand(100, 300);
 //            }
+
+            //兼容操作日志
+            $valuesFields = ['thumb' , 'cagr' , 'last_scale' , 'current_scale' , 'future_scale'];
+            foreach ($input as $forKey  => $forValue){
+                if (in_array($forKey , $valuesFields)){
+                    if(empty($forValue )){
+                        $input[$forKey] = '';
+                    }
+                }elseif($forKey == 'country_id'){
+                    if(empty($forValue )){
+                        $input[$forKey] = 0;
+                    }
+                }
+
+            }
+
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
             }
