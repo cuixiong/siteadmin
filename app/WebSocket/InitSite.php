@@ -59,7 +59,11 @@ class InitSite implements MessageComponentInterface
         foreach ($checkParamEmpty as $key => $value) {
             if (empty($value)) {
                 // 发送结果回客户端
-                $from->send(!empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty'));
+                $result = json_encode([
+                    'code' => false,
+                    'msg' => !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty')
+                ]);
+                $from->send($result);
                 return;
             }
         }
@@ -83,7 +87,15 @@ class InitSite implements MessageComponentInterface
 
         try {
             $initWebsiteStep = Site::getInitWebsiteStep(true);
-            if ($initWebsiteStep['commands'] && in_array($stepCode, $initWebsiteStep['commands'])) {
+            if($initWebsiteStep['commands'] && $stepCode == 'all'){
+                // // 执行全部
+                // foreach ($initWebsiteStep as $key => $stepItem) {
+                //     $stepCode = $stepItem['commands'];
+                //     $output = Site::executeRemoteCommand($site, $stepCode, $server, $database,  ['created_by' => $created_by]);
+                //     $this->ouputMessage($from,$output);
+                // }
+                // return ;
+            } elseif ($initWebsiteStep['commands'] && in_array($stepCode, $initWebsiteStep['commands'])) {
                 $output = Site::executeRemoteCommand($site, $stepCode, $server, $database,  ['created_by' => $created_by]);
             } elseif ($initWebsiteStep['btPanelApi'] && in_array($stepCode, $initWebsiteStep['btPanelApi'])) {
                 $option['created_by'] = $created_by;
@@ -102,13 +114,30 @@ class InitSite implements MessageComponentInterface
             return;
         }
         if (!$output['result']) {
-            $from->send(!empty($output['message']) ? $output['message'] : $output['output']);
+            $result = json_encode([
+                'code' => false,
+                'msg' => !empty($output['message']) ? $output['message'] : $output['output']
+            ]);
+            $from->send($result);
             return;
         }
         $from->send(json_encode($output));
         return;
-
     }
+
+    // public function ouputMessage($from,$output){
+
+    //     if (!$output['result']) {
+    //         $result = json_encode([
+    //             'code' => false,
+    //             'msg' => !empty($output['message']) ? $output['message'] : $output['output']
+    //         ]);
+    //         $from->send($result);
+    //     }else{
+    //         $from->send(json_encode($output));
+    //     }
+    // }
+
 
     public function onClose(ConnectionInterface $conn)
     {

@@ -133,6 +133,7 @@ Route::middleware([
     // Database控制器
     Route::prefix('database')->group(function () {
         Route::post('change-status', [Modules\Admin\Http\Controllers\DatabaseController::class, 'changeStatus'])->name('数据库管理:状态修改');
+        Route::post('init-database', [Modules\Admin\Http\Controllers\DatabaseController::class, 'initDatabase'])->name('数据库管理:初始化内容');
     });
 
     // EmailLog控制器
@@ -366,7 +367,7 @@ Route::middleware([
         Route::post('update', [Modules\Admin\Http\Controllers\SiteController::class, 'update'])->name('站点管理:站点编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\SiteController::class, 'destroy'])->name('站点管理:站点删除');
         Route::post('create-site-to-remote-server', [Modules\Admin\Http\Controllers\SiteController::class, 'createSiteToRemoteServer'])->name('站点管理:初始化站点');
-        Route::post('init-database', [Modules\Admin\Http\Controllers\SiteController::class, 'initDatabase'])->name('站点管理:初始化数据库');
+        // Route::post('init-database', [Modules\Admin\Http\Controllers\SiteController::class, 'initDatabase'])->name('站点管理:初始化数据库');
         Route::post('available-upgrade', [Modules\Admin\Http\Controllers\SiteController::class, 'availableUpgrade'])->name('站点管理:git可用更新');
         Route::post('update-site-to-remote-server', [Modules\Admin\Http\Controllers\SiteController::class, 'updateSiteToRemoteServer'])->name('站点管理:站点升级');
         Route::post('commit-history', [Modules\Admin\Http\Controllers\SiteController::class, 'CommitHistory'])->name('站点管理:git提交记录历史');

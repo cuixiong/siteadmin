@@ -59,7 +59,6 @@ class SiteController extends CrudController {
                 'username as db_username',
                 'password as db_password'
             )->first()->toArray();
-            DB::commit();
             // 创建租户
             $Tenant = new TenantController();
             $res = $Tenant->initTenant(
@@ -72,11 +71,13 @@ class SiteController extends CrudController {
                 $database['db_password'],
                 $database['db_port'] ?? 3306
             );
-            // if ($res !== true) {
-            //     // 回滚事务
-            //     DB::rollBack();
-            //     ReturnJson(FALSE, $res);
-            // }
+            if ($res !== true) {
+                // 回滚事务
+                DB::rollBack();
+                ReturnJson(FALSE, $res);
+            }else{
+                DB::commit();
+            }
             // //事务有点问题
             // DB::commit();
             ReturnJson(true, trans('lang.add_success'));
@@ -92,25 +93,25 @@ class SiteController extends CrudController {
      *
      * @param Request $request
      */
-    public function initDatabase(Request $request) {
-        $dir = 'admin';
-        // 查询当前的租户信息
-        $siteId = $request->input('site_id');
-        $site = Site::findOrFail($siteId);
-        $tenantId = DB::table('domains')->where('domain', $site->domain)->pluck('tenant_id');
-        $tenant = Tenancy::find($tenantId);
-        // 设置当前租户上下文
-        Tenancy::initialize($tenant);
-        // 读取 SQL 文件内容
-        $basePath = public_path().'/'.$dir;
-        $sqlFilePath = $basePath.'/uploads/sql/init_database.sql';
-        $sqlContent = file_get_contents($sqlFilePath);
-        // 在租户数据库上运行 SQL
-        DB::unprepared($sqlContent);
-        // 结束当前租户上下文
-        Tenancy::end();
-        ReturnJson(true, trans('lang.add_success'));
-    }
+    // public function initDatabase(Request $request) {
+    //     $dir = 'admin';
+    //     // 查询当前的租户信息
+    //     $siteId = $request->input('site_id');
+    //     $site = Site::findOrFail($siteId);
+    //     $tenantId = DB::table('domains')->where('domain', $site->domain)->pluck('tenant_id');
+    //     $tenant = Tenancy::find($tenantId);
+    //     // 设置当前租户上下文
+    //     Tenancy::initialize($tenant);
+    //     // 读取 SQL 文件内容
+    //     $basePath = public_path().'/'.$dir;
+    //     $sqlFilePath = $basePath.'/uploads/sql/init_database.sql';
+    //     $sqlContent = file_get_contents($sqlFilePath);
+    //     // 在租户数据库上运行 SQL
+    //     DB::unprepared($sqlContent);
+    //     // 结束当前租户上下文
+    //     Tenancy::end();
+    //     ReturnJson(true, trans('lang.add_success'));
+    // }
 
     /**
      * 远程连接服务器新建站点
@@ -214,7 +215,6 @@ class SiteController extends CrudController {
             } else {
                 $database = $database->toArray();
             }
-            DB::commit();
             // 更新租户
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
@@ -227,14 +227,20 @@ class SiteController extends CrudController {
                 $database['db_password'],
                 $database['db_port'] ?? 3306
             );
+            if ($res !== true) {
+                // 回滚事务
+                DB::rollBack();
+                ReturnJson(FALSE,
+                    $res
+                );
+            } else {
+
+                DB::commit();
+                ReturnJson(true, trans('lang.update_success'));
+            }
+            
             // return $res;
-            // if ($res !== true) {
-            //     // 回滚事务
-            //     DB::rollBack();
-            //     ReturnJson(FALSE, $res);
-            // }
             // DB::commit();
-            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
             // DB::rollBack();
