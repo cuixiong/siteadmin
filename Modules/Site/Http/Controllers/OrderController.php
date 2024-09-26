@@ -38,7 +38,7 @@ class OrderController extends CrudController
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_type', 'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at'];
+            $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_code', 'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at'];
             $model = $model->select($fieldsList);
             // 数据排序. 默认降序
             if(empty($request->sort )){
@@ -78,13 +78,16 @@ class OrderController extends CrudController
         try {
 
             //支付方式
-            $data['pay_type'] = (new Pay())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            // $data['pay_type'] = (new Pay())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            $data['pay_type'] = (new Pay())->GetListLabel(['code as value', 'name as label'], false, '', ['status' => 1]);
 
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
             } else {
                 $field = ['name as label', 'value'];
             }
+
+
 
             // 支付状态
             $data['pay_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Pay_State', 'status' => 1], ['sort' => 'ASC']);

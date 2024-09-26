@@ -35,6 +35,7 @@ class Order extends Base
         'is_pay',           // 支付状态
         'pay_time',         // 支付时间
         'pay_type',         // 支付方式
+        'pay_code',         // 支付方式code
         'wechat_type',      // 微信支付所调用的场景
         'is_mobile_pay',    // 移动端设备支付
         'order_amount',     // 订单总价(原价，不打折，无优惠，日语不计算消费税)
@@ -86,6 +87,10 @@ class Order extends Base
         // pay_type
         if (isset($search->pay_type) && $search->pay_type != '') {
             $model = $model->where('pay_type', $search->pay_type);
+        }
+        // pay_code
+        if (isset($search->pay_code) && $search->pay_code != '') {
+            $model = $model->where('pay_code', $search->pay_code);
         }
         // wechat_type
         if (isset($search->wechat_type) && $search->wechat_type != '') {
@@ -241,8 +246,8 @@ class Order extends Base
     public function getPayTypeTextAttribute()
     {
         $text = '';
-        if (isset($this->attributes['pay_type'])) {
-            $name = Pay::query()->where('id', $this->attributes['pay_type'])->value('name');
+        if (isset($this->attributes['pay_code'])) {
+            $name = Pay::query()->where('code', $this->attributes['pay_code'])->value('name');
 
             return $name ?? '';
         }
