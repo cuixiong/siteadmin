@@ -8,6 +8,7 @@ use Modules\Admin\Http\Models\Site;
 use phpseclib3\Net\SSH2;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class InitSite implements MessageComponentInterface
 {
@@ -27,10 +28,12 @@ class InitSite implements MessageComponentInterface
         if (!empty($param) && !is_array($param)) {
             $param = $param ? json_decode($param, true) : [];
         }
+        $user = JWTAuth::setToken($param['token'])->authenticate();
+
         // 创建者ID
-        // $created_by = request()->user->id;
+        $created_by = $user->id;
         // $from->send($created_by);
-        $created_by = 1;
+        // $created_by = 1;
         //获取站点配置
         $site = Site::findOrFail($siteId);
         //获取服务器配置
@@ -84,59 +87,62 @@ class InitSite implements MessageComponentInterface
         //     // return $output;
         // });
         // $from->send('Done');
+        $option = [];
+        $option['created_by'] = $created_by;
+        // 步骤是添加证书
+        if (isset($param['private_key'])) {
+            $option['private_key'] = $param['private_key'];
+        }
+        if (isset($param['csr'])) {
+            $option['csr'] = $param['csr'];
+        }
+
+        if ($stepCode == 'all') {
+            // 执行全部
+            $initWebsiteStep = Site::getInitWebsiteStep(true);
+            foreach ($initWebsiteStep as $key => $stepItem) {
+                $stepCode = $stepItem['commands'];
+                $this->executeStep($site, $stepCode, $server, $database, $option);
+            }
+        } else {
+            // 执行单个步骤
+            $this->executeStep($site, $stepCode, $server, $database, $option);
+        }
+
+
+        $from->send(json_encode(['code' => true, 'mag' => '运行结束断开']));
+        return;
+    }
+
+    public function executeStep($from, $stepCode, $site, $server, $database, $option = [])
+    {
 
         try {
             $initWebsiteStep = Site::getInitWebsiteStep(true);
-            if($initWebsiteStep['commands'] && $stepCode == 'all'){
-                // // 执行全部
-                // foreach ($initWebsiteStep as $key => $stepItem) {
-                //     $stepCode = $stepItem['commands'];
-                //     $output = Site::executeRemoteCommand($site, $stepCode, $server, $database,  ['created_by' => $created_by]);
-                //     $this->ouputMessage($from,$output);
-                // }
-                // return ;
-            } elseif ($initWebsiteStep['commands'] && in_array($stepCode, $initWebsiteStep['commands'])) {
-                $output = Site::executeRemoteCommand($site, $stepCode, $server, $database,  ['created_by' => $created_by]);
+
+            if ($initWebsiteStep['commands'] && in_array($stepCode, $initWebsiteStep['commands'])) {
+                // 执行服务器命令
+                $output = Site::executeRemoteCommand($site, $stepCode, $server, $database, $option);
             } elseif ($initWebsiteStep['btPanelApi'] && in_array($stepCode, $initWebsiteStep['btPanelApi'])) {
-                $option['created_by'] = $created_by;
-                if (isset($param['private_key'])) {
-                    $option['private_key'] = $param['private_key'];
-                }
-                if (isset($param['csr'])) {
-                    $option['csr'] = $param['csr'];
-                }
+                // 执行宝塔api
                 $output = Site::invokeBtApi($site, $server, $stepCode, $option);
-                // ReturnJson(FALSE, trans('lang.request_success'), $output);
             }
         } catch (\Throwable $th) {
             $from->send($th->getMessage());
             $from->send($th->getTraceAsString());
             return;
         }
+
         if (!$output['result']) {
             $result = json_encode([
                 'code' => false,
                 'msg' => !empty($output['message']) ? $output['message'] : $output['output']
             ]);
             $from->send($result);
-            return;
+        } else {
+            $from->send(json_encode($output));
         }
-        $from->send(json_encode($output));
-        return;
     }
-
-    // public function ouputMessage($from,$output){
-
-    //     if (!$output['result']) {
-    //         $result = json_encode([
-    //             'code' => false,
-    //             'msg' => !empty($output['message']) ? $output['message'] : $output['output']
-    //         ]);
-    //         $from->send($result);
-    //     }else{
-    //         $from->send(json_encode($output));
-    //     }
-    // }
 
 
     public function onClose(ConnectionInterface $conn)
