@@ -95,4 +95,5 @@ return [
     'exist_sensitive_words'          => '存在敏感词',
     'export_no_complete'             => '当前导出文件未完成',
     'site_not_exist'                 => '站点不存在',
+    'email_unique'                   => '邮箱已存在',
 ];
