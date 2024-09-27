@@ -22,36 +22,58 @@ class InitSite implements MessageComponentInterface
 
     public function onOpen(ConnectionInterface $conn)
     {
-        $request = $conn->httpRequest;  // 获取 HTTP 请求
-        $headers = $request->getHeaders();  // 获取请求头信息
 
-        // 检查请求头中是否包含 Authorization
-        if (isset($headers['Authorization'])) {
-            // 提取 Authorization 头中的 JWT 令牌
-            $authHeader = $headers['Authorization'][0]; // 获取 Authorization 头部的第一个值
-            $token = str_replace('Bearer ', '', $authHeader); // 去除 Bearer 前缀
-
+        // 通过 链接 取 token
+        $queryParams = [];
+        parse_str($conn->httpRequest->getUri()->getQuery(), $queryParams);
+        if (isset($queryParams['token'])) {
+            $token = $queryParams['token'];
             try {
-                // 使用 JWTAuth 验证并获取用户
                 $user = JWTAuth::setToken($token)->authenticate();
-
-                if ($user) {
-                    // 将用户信息保存到连接中
-                    $conn->user = $user;
-                    $this->clients->attach($conn);
-                    $conn->send("Welcome, {$user->name}!");
-                } else {
-                    $conn->send(json_encode(['error' => 'Unauthorized']));
-                    $conn->close();
-                }
+                $conn->user = $user;
+                $this->clients->attach($conn);
+                $conn->send("Welcome, {$user->name}!");
             } catch (\Exception $e) {
                 $conn->send(json_encode(['error' => 'Invalid token: ' . $e->getMessage()]));
                 $conn->close();
             }
         } else {
-            $conn->send(json_encode(['error' => 'Authorization header not found']));
+            $conn->send(json_encode(['error' => 'Token not provided']));
             $conn->close();
         }
+
+
+        // 通过 header 取 token
+        // $request = $conn->httpRequest;  // 获取 HTTP 请求
+        // $headers = $request->getHeaders();  // 获取请求头信息
+
+        // // 检查请求头中是否包含 Authorization
+        // if (isset($headers['Authorization'])) {
+        //     // 提取 Authorization 头中的 JWT 令牌
+        //     $authHeader = $headers['Authorization'][0]; // 获取 Authorization 头部的第一个值
+        //     $token = str_replace('Bearer ', '', $authHeader); // 去除 Bearer 前缀
+
+        //     try {
+        //         // 使用 JWTAuth 验证并获取用户
+        //         $user = JWTAuth::setToken($token)->authenticate();
+
+        //         if ($user) {
+        //             // 将用户信息保存到连接中
+        //             $conn->user = $user;
+        //             $this->clients->attach($conn);
+        //             $conn->send("Welcome, {$user->name}!");
+        //         } else {
+        //             $conn->send(json_encode(['error' => 'Unauthorized']));
+        //             $conn->close();
+        //         }
+        //     } catch (\Exception $e) {
+        //         $conn->send(json_encode(['error' => 'Invalid token: ' . $e->getMessage()]));
+        //         $conn->close();
+        //     }
+        // } else {
+        //     $conn->send(json_encode(['error' => 'Authorization header not found']));
+        //     $conn->close();
+        // }
     }
 
     public function onMessage(ConnectionInterface $from, $msg)
