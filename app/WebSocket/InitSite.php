@@ -32,7 +32,7 @@ class InitSite implements MessageComponentInterface
                 $user = JWTAuth::setToken($token)->authenticate();
                 $conn->user = $user;
                 $this->clients->attach($conn);
-                $conn->send("Welcome, {$user->name}!");
+                // $conn->send("Welcome, {$user->name}!");
             } catch (\Exception $e) {
                 $conn->send(json_encode(['result' => false, 'msg' => 'Invalid token: ' . $e->getMessage()]));
                 $conn->close();
