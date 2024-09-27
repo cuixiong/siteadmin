@@ -206,23 +206,23 @@ class Site extends Base
         //根据类型获取命令
         $commands = [];
         switch ($stepCode) {
-            case 'add_site':
-                //一整套流程：
-                // 拉取接口项目代码
-                $commandsGroup[] = self::getCloneCodeCommands($apiRepository, $apiDirName);
-                // 下载接口项目依赖
-                $commandsGroup[] = self::getApiDependencyCommands($apiDirName);
-                // 配置文件配置数据库
-                // $commandsGroup[] = self::getWriteDbConfigCommands($apiDirName, $database);
-                // 拉取前端代码
-                $commandsGroup[] = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
-                // 下载前端依赖
-                $commandsGroup[] = self::getFrontendDependencyCommands($frontedDirName);
+            // case 'add_site':
+            //     //一整套流程：
+            //     // 拉取接口项目代码
+            //     $commandsGroup[] = self::getCloneCodeCommands($apiRepository, $apiDirName);
+            //     // 下载接口项目依赖
+            //     $commandsGroup[] = self::getApiDependencyCommands($apiDirName);
+            //     // 配置文件配置数据库
+            //     // $commandsGroup[] = self::getWriteDbConfigCommands($apiDirName, $database);
+            //     // 拉取前端代码
+            //     $commandsGroup[] = self::getCloneCodeCommands($frontendRepository, $frontedDirName);
+            //     // 下载前端依赖
+            //     $commandsGroup[] = self::getFrontendDependencyCommands($frontedDirName);
 
-                foreach ($commandsGroup as  $commandsItem) {
-                    $commands = array_merge($commands, $commandsItem);
-                }
-                break;
+            //     foreach ($commandsGroup as  $commandsItem) {
+            //         $commands = array_merge($commands, $commandsItem);
+            //     }
+            //     break;
             case 'clone_api_code':
                 // 拉取接口项目代码
                 $commands = self::getCloneCodeCommands($apiRepository, $apiDirName);
@@ -235,7 +235,7 @@ class Site extends Base
 
             case 'write_db_config':
                 // 配置文件配置数据库
-                $commands = self::getWriteDbConfigCommands($apiDirName, $database);
+                $commands = self::getWriteDbConfigCommands($apiDirName, $database, $site);
                 break;
 
             case 'clone_frontend_code':
@@ -596,7 +596,7 @@ class Site extends Base
             /**
              * 更换镜像、下载依赖
              */
-            'cd ' . $dirName . ' && npm cache clean --force && npm config set registry https://registry.npmmirror.com && npm i ',
+            'cd ' . $dirName . ' && npm cache clean --force && npm config set registry https://registry.npmmirror.com && yarn build & yarn install',
             // 'cd ' . $dirName . ' && npm i ',
         ];
         return $commands;
@@ -608,7 +608,7 @@ class Site extends Base
      * @param string dirName 项目所在路径/文件夹
      * @return array|string commands 命令
      */
-    private static function getWriteDbConfigCommands($dirName, $database)
+    private static function getWriteDbConfigCommands($dirName, $database, $site)
     {
 
         //数据库信息，用于替换项目配置的数据库信息
@@ -617,6 +617,11 @@ class Site extends Base
         $dbUsername = $database->username;
         $dbPassword = $database->password;
         $tablePrefix = empty($database->prefix) ? $database->prefix : '';
+        $siteName = $site->name;
+        $domain = $site->domain;
+        if(strpos($domain,'http')!==0){
+            $domain = 'https://'.$domain;
+        }
         /**
          * 配置文件连接数据库
          * 复制env模板文件,替换其中的占位符，如果已存在env文件，须事先进行备份以免误覆盖
@@ -632,6 +637,8 @@ class Site extends Base
             'cd ' . $dirName . ' && sed -i "s/{{DB_DATABASE}}/' . $dbName . '/g" .env',
             'cd ' . $dirName . ' && sed -i "s/{{DB_USERNAME}}/' . $dbUsername . '/g" .env',
             'cd ' . $dirName . ' && sed -i "s/{{DB_PASSWORD}}/' . $dbPassword . '/g" .env',
+            'cd ' . $dirName . ' && sed -i "s/{{APP_NAME}}/' . $siteName . '/g" .env',
+            'cd ' . $dirName . ' && sed -i "s/{{DOMAIN}}/' . $domain . '/g" .env',
         ];
         return $commands;
     }
@@ -647,9 +654,9 @@ class Site extends Base
         $commands = [
             /**
              * 拉取代码命令
-             * 所有者的更改(部署项目时chown命令)可能导致提示
+             * 新版本的git可能提示
              * fatal: detected dubious ownership in repository at 'xxx' To add an exception for this directory, call:
-             * 需执行命令 git config --global --add safe.directory 项目路径
+             * 所以需事先执行命令加入信任目录 git config --global --add safe.directory 项目路径
              */
             'cd ' . $dirName . ' &&  git pull',
         ];
@@ -790,21 +797,22 @@ class Site extends Base
         $step = [
             ['name' => 'clone_api_code', 'type' => 'commands', 'title' => '(接口)克隆代码', 'field' => []],
             ['name' => 'api_dependency', 'type' => 'commands', 'title' => '(接口)下载依赖', 'field' => []],
-            // ['name' => 'write_db_config', 'type' => 'commands', 'title' => '(接口)配置数据库', 'field' => []],
+            ['name' => 'write_db_config', 'type' => 'commands', 'title' => '(接口)配置数据库', 'field' => []],
+            ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(前端网站)克隆代码', 'field' => []],
+            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(前端网站)下载依赖', 'field' => []],
+
             // ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '(接口)新建站点', 'field' => []],
-            ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(网站)克隆代码', 'field' => []],
-            // [
-            //     'name' => 'set_ssl',
-            //     'type' => 'btPanelApi',
-            //     'title' => '(接口)设置证书',
-            //     'field' => [
-            //         ['name' => 'private_key', 'type' => 'textarea'],
-            //         ['name' => 'csr', 'type' => 'textarea']
-            //     ]
-            // ],
-            ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(网站)下载依赖', 'field' => []],
-            // ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(网站)新建站点', 'field' => []],
-            // ['name' => 'deploy', 'type' => 'commands', 'title' => '(网站)部署项目']
+            [
+                'name' => 'set_ssl',
+                'type' => 'btPanelApi',
+                'title' => '(接口)设置证书',
+                'field' => [
+                    ['name' => 'private_key', 'type' => 'textarea'],
+                    ['name' => 'csr', 'type' => 'textarea']
+                ]
+            ],
+            // ['name' => 'add_bt_frontend_site', 'type' => 'btPanelApi', 'title' => '(前端网站)新建站点', 'field' => []],
+            // ['name' => 'deploy', 'type' => 'commands', 'title' => '(前端网站)部署项目']
         ];
         $data = [];
 

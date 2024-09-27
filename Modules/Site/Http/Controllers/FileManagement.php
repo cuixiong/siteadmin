@@ -832,8 +832,9 @@ class FileManagement extends Controller {
                     $tempRoot = trim($tempRoot, '/') ? $tempRoot.'/'.$value : $value;
                     $ccdir = scandir($dir.'/'.$value);
                     if (count($ccdir) > 2) {
+                        // 查询该文件夹下是否还有文件夹
                         foreach ($ccdir as $value2) {
-                            if (is_dir($dir.'/'.$value.'/'.$value2)) {
+                            if (is_dir($dir.'/'.$value.'/'.$value2) && !in_array($value2, array(".", ".."))) {
                                 $isLeaf = false;
                                 break;
                             }
