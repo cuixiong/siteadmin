@@ -143,7 +143,7 @@ class SiteCrontabController extends Controller {
         }
         $pinfo = Products::query()->where("status", 1)
                         ->where("category_id", $cate_id)
-                         ->where("author", "已售报告")
+                         ->where("author", "完成报告")
                          ->orderBy("sort", "asc")
                          ->orderBy("published_date", "desc")
                          ->orderBy("id", "desc");
