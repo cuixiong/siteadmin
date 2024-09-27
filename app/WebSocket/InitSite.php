@@ -14,8 +14,9 @@ class InitSite implements MessageComponentInterface
 {
 
     protected $clients;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->clients = new \SplObjectStorage;
     }
 
@@ -146,11 +147,11 @@ class InitSite implements MessageComponentInterface
             $initWebsiteStep = Site::getInitWebsiteStep(true);
             foreach ($initWebsiteStep as $key => $stepItem) {
                 $stepCode = $stepItem['commands'];
-                $this->executeStep($site, $stepCode, $server, $database, $option);
+                $this->executeStep($from, $stepCode, $site, $server, $database, $option);
             }
         } else {
             // 执行单个步骤
-            $this->executeStep($site, $stepCode, $server, $database, $option);
+            $this->executeStep($from, $stepCode, $site, $server, $database, $option);
         }
 
 
