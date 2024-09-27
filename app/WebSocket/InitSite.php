@@ -24,12 +24,13 @@ class InitSite implements MessageComponentInterface
         $data = json_decode($msg, true);
         $siteId = $data['site_id'] ?? '';
         $stepCode = $data['step'] ?? '';
+        $token = $data['token']?? '';
         $param = $data['param'] ?? '';
         if (!empty($param) && !is_array($param)) {
             $param = $param ? json_decode($param, true) : [];
         }
         
-        $user = JWTAuth::setToken($param['token'])->authenticate();
+        $user = JWTAuth::setToken($token)->authenticate();
         // 创建者ID
         $created_by = $user->id;
         // $from->send($created_by);
