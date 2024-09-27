@@ -15,6 +15,10 @@ class InitSite implements MessageComponentInterface
 
     protected $clients;
     
+    public function __construct() {
+        $this->clients = new \SplObjectStorage;
+    }
+
     public function onOpen(ConnectionInterface $conn)
     {
         $request = $conn->httpRequest;  // 获取 HTTP 请求
