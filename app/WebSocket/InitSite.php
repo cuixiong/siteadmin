@@ -34,11 +34,11 @@ class InitSite implements MessageComponentInterface
                 $this->clients->attach($conn);
                 $conn->send("Welcome, {$user->name}!");
             } catch (\Exception $e) {
-                $conn->send(json_encode(['error' => 'Invalid token: ' . $e->getMessage()]));
+                $conn->send(json_encode(['result' => false, 'msg' => 'Invalid token: ' . $e->getMessage()]));
                 $conn->close();
             }
         } else {
-            $conn->send(json_encode(['error' => 'Token not provided']));
+            $conn->send(json_encode(['result' => false, 'msg' => 'Token not provided']));
             $conn->close();
         }
 
@@ -177,7 +177,7 @@ class InitSite implements MessageComponentInterface
         }
 
 
-        $from->send(json_encode(['code' => true, 'mag' => '运行结束断开']));
+        // $from->send(json_encode(['code' => true, 'msg' => '运行结束断开']));
         return;
     }
 
