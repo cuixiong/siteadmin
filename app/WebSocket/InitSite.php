@@ -15,24 +15,61 @@ class InitSite implements MessageComponentInterface
 
     public function onOpen(ConnectionInterface $conn)
     {
-        echo "New connection! ({$conn->resourceId})\n";
+        $request = $conn->httpRequest;  // 获取 HTTP 请求
+        $headers = $request->getHeaders();  // 获取请求头信息
+
+        // 检查请求头中是否包含 Authorization
+        if (isset($headers['Authorization'])) {
+            // 提取 Authorization 头中的 JWT 令牌
+            $authHeader = $headers['Authorization'][0]; // 获取 Authorization 头部的第一个值
+            $token = str_replace('Bearer ', '', $authHeader); // 去除 Bearer 前缀
+
+            try {
+                // 使用 JWTAuth 验证并获取用户
+                $user = JWTAuth::setToken($token)->authenticate();
+
+                if ($user) {
+                    // 将用户信息保存到连接中
+                    $conn->user = $user;
+                    $this->clients->attach($conn);
+                    $conn->send("Welcome, {$user->name}!");
+                } else {
+                    $conn->send(json_encode(['error' => 'Unauthorized']));
+                    $conn->close();
+                }
+            } catch (\Exception $e) {
+                $conn->send(json_encode(['error' => 'Invalid token: ' . $e->getMessage()]));
+                $conn->close();
+            }
+        } else {
+            $conn->send(json_encode(['error' => 'Authorization header not found']));
+            $conn->close();
+        }
     }
 
     public function onMessage(ConnectionInterface $from, $msg)
     {
+
         // 接收参数
         $data = json_decode($msg, true);
         $siteId = $data['site_id'] ?? '';
         $stepCode = $data['step'] ?? '';
-        $token = $data['token']?? '';
         $param = $data['param'] ?? '';
         if (!empty($param) && !is_array($param)) {
             $param = $param ? json_decode($param, true) : [];
         }
-        
-        $user = JWTAuth::setToken($token)->authenticate();
-        // 创建者ID
-        $created_by = $user->id;
+
+        if (isset($from->user)) {
+            // 访问用户信息
+            $user = $from->user;
+            // 创建者ID
+            $created_by = $user->id;
+        } else {
+            // 创建者ID
+            // $created_by = 0;
+            // $from->send(json_encode(['error' => 'Unauthorized user']));
+            return;
+        }
         // $from->send($created_by);
         // $created_by = 1;
         //获取站点配置
