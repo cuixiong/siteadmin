@@ -91,4 +91,5 @@ return [
     'exist_sensitive_words'          => 'The Name Exist Sensitive Words',
     'export_no_complete'             => 'EXPORT NO COMPLETE',
     'site_not_exist'                 => 'SITE NOT EXIST',
+    'email_unique'                   => 'EMAIL ALREADY EXISTS',
 ];

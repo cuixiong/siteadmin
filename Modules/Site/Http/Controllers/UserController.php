@@ -75,6 +75,12 @@ class UserController extends CrudController {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
+            //邮箱唯一校验
+            $user_email_count = User::query()->where('email', $request->email)->count();
+            if ($user_email_count > 0) {
+                ReturnJson(false, trans('lang.email_unique'));
+            }
+
             $input['check_email'] = 1; //默认已验证
             $input['status'] = 1; //默认已验证
             $input['password'] = Hash::make($input['password']);
@@ -103,6 +109,11 @@ class UserController extends CrudController {
             }
             $siteUserModel = new SiteUser();
             $user = $siteUserModel->findOrFail($request->id);
+            //邮箱唯一校验
+            $user_email_count = $siteUserModel->where('email', $request->email)->where('id', '<>', $request->id)->count();
+            if ($user_email_count > 0) {
+                ReturnJson(false, trans('lang.email_unique'));
+            }
             $userData = [];
             $userData['id'] = $request->id;
             $userData['username'] = $request->username;
@@ -112,6 +123,8 @@ class UserController extends CrudController {
             $userData['status'] = $request->status;
             $userData['company'] = $request->company;
             $userData['address'] = $request->address;
+            $userData['province_id'] = $request->province_id;
+            $userData['city_id'] = $request->city_id;
             if (!empty($input['password'])) {
                 //管理员重置密码
                 $userData['password'] = Hash::make($input['password']);

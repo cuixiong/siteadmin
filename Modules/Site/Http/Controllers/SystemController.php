@@ -204,9 +204,9 @@ class SystemController extends CrudController {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            if($record->hidden == 1){
+            if ($record->hidden == 1) {
                 $type = 'update';
-            }else{
+            } else {
                 $type = 'delete';
             }
             $this->syncSiteCache($record, $type);
@@ -221,18 +221,14 @@ class SystemController extends CrudController {
      *
      */
     private function syncSiteCache($record, $type = 'update') {
-        $keyList = ['is_open_check_security', 'ip_white_rules', 'req_limit', 'window_time' , 'is_open_limit_req'];
+        $keyList = ['is_open_check_security', 'ip_white_rules', 'req_limit', 'window_time', 'is_open_limit_req'];
         $key = $record['key'];
-
-
         $value = $record['value'];
-        if($key == 'is_open_limit_req'){
-            if(isset($record['hidden'])){
+        if (in_array($key, ['is_open_check_security', 'is_open_limit_req'])) {
+            if (isset($record['hidden'])) {
                 $value = $record['hidden'];
             }
         }
-
-
         if (!empty($key) && in_array($key, $keyList)) {
             //写入缓存
             $siteKey = getSiteName();
@@ -246,7 +242,6 @@ class SystemController extends CrudController {
             ];
             $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
             $reqData['sign'] = $this->makeSign($reqData, $signKey);
-
             $response = Http::post($url, $reqData);
             $resp = $response->json();
             if (!empty($resp) && $resp['code'] == 200) {
@@ -292,9 +287,9 @@ class SystemController extends CrudController {
             //下面的子级全部变为隐藏状态
             $systemValueModel = new SystemValue();
             $childList = $systemValueModel->where('parent_id', $record->id)
-                                            ->select(['id', 'key', 'value'])
-                                            ->get()
-                                            ->toArray();
+                                          ->select(['id', 'key', 'value'])
+                                          ->get()
+                                          ->toArray();
 //            if($status == 1){
 //                $type = 'update';
 //            }else{
@@ -303,7 +298,7 @@ class SystemController extends CrudController {
             foreach ($childList as $childinfo) {
                 $updData = ['hidden' => $status, 'status' => $status];
                 $rs = $systemValueModel->where('id', $childinfo['id'])->update($updData);
-                if($rs){
+                if ($rs) {
                     $childinfo['hidden'] = $status;
                     $childinfo['status'] = $status;
                     $this->syncSiteCache($childinfo);
