@@ -13,6 +13,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class InitSite implements MessageComponentInterface
 {
 
+    protected $clients;
+    
     public function onOpen(ConnectionInterface $conn)
     {
         $request = $conn->httpRequest;  // 获取 HTTP 请求
