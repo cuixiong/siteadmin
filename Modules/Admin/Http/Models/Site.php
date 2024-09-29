@@ -802,7 +802,7 @@ class Site extends Base
             ['name' => 'clone_frontend_code', 'type' => 'commands', 'title' => '(前端网站)克隆代码', 'field' => []],
             ['name' => 'frontend_dependency', 'type' => 'commands', 'title' => '(前端网站)下载依赖', 'field' => []],
 
-            // ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '(接口)新建站点', 'field' => []],
+            ['name' => 'add_bt_site', 'type' => 'btPanelApi', 'title' => '新建站点', 'field' => []],
             [
                 'name' => 'set_ssl',
                 'type' => 'btPanelApi',
@@ -865,7 +865,7 @@ class Site extends Base
             case 'add_bt_site':
                 $webname = json_encode(["domain" => $site->domain, "domainlist" => [], "count" => 0]);
                 // 调用宝塔api新建站点
-                $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, $site->api_path);
+                $result = (new BtPanel($bt_link, $bt_apisecret))->addSite($webname, ($site->api_path).'/public');
                 // return $result;
                 break;
 
