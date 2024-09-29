@@ -904,13 +904,13 @@ class Site extends Base
 
         //执行的结果需要处理一下
         $output['message'] = $output['output'] ?? '';
-        if (in_array($type, ['add_bt_site'])) {
+        if ($type=='add_bt_site') {
             $writeUpdateLog = true;
             // $message = $type;
             $output['result'] = $result['siteStatus'] ?? false;
             $output['message'] = $result['msg'] ?? '';
             $output['output'] = '';
-        } elseif (in_array($type, ['set_ssl'])) {
+        } elseif ($type=='set_ssl') {
             $writeUpdateLog = true;
             $output['result'] = $result['status'] ?? false;
             $output['message'] = $result['msg'] ?? '';
