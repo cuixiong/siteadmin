@@ -616,7 +616,7 @@ class Site extends Base
         $dbName = $database->name;
         $dbUsername = $database->username;
         $dbPassword = $database->password;
-        $tablePrefix = empty($database->prefix) ? $database->prefix : '';
+        // $tablePrefix = empty($database->prefix) ? $database->prefix : '';
         $siteName = $site->name;
         $domain = $site->domain;
         if(strpos($domain,'http')!==0){
@@ -629,16 +629,17 @@ class Site extends Base
         $commands = [
             // 检查是否存在 .env 文件,备份当前的 .env 文件为时间戳命名的文件
             'cd ' . $dirName . ' && if [ -f .env ]; then
-                mv .env "env.backup' . date('YmdHis', time()) . '"
+                mv .env ".env.backup' . date('YmdHis', time()) . '"
             fi',
             // 替换操作
             'cd ' . $dirName . ' && cp .env.template .env',
-            'cd ' . $dirName . ' && sed -i "s/{{DB_HOST}}/' . $dbHost . '/g" .env',
-            'cd ' . $dirName . ' && sed -i "s/{{DB_DATABASE}}/' . $dbName . '/g" .env',
-            'cd ' . $dirName . ' && sed -i "s/{{DB_USERNAME}}/' . $dbUsername . '/g" .env',
-            'cd ' . $dirName . ' && sed -i "s/{{DB_PASSWORD}}/' . $dbPassword . '/g" .env',
-            'cd ' . $dirName . ' && sed -i "s/{{APP_NAME}}/' . $siteName . '/g" .env',
-            'cd ' . $dirName . ' && sed -i "s/{{DOMAIN}}/' . $domain . '/g" .env',
+            'cd ' . $dirName . ' && sed -i \'s|{{DB_HOST}}|' . $dbHost . '|g\' .env',
+            'cd ' . $dirName . ' && sed -i \'s|{{DB_DATABASE}}|' . $dbName . '|g\' .env',
+            'cd ' . $dirName . ' && sed -i \'s|{{DB_USERNAME}}|' . $dbUsername . '|g\' .env',
+            'cd ' . $dirName . ' && sed -i \'s|{{DB_PASSWORD}}|' . $dbPassword . '|g\' .env',
+            'cd ' . $dirName . ' && sed -i \'s|{{APP_NAME}}|' . $siteName . '|g\' .env',
+            'cd ' . $dirName . ' && sed -i \'s|{{DOMAIN}}|' . $domain . '|g\' .env',
+            
         ];
         return $commands;
     }

@@ -130,7 +130,7 @@ class InitSite implements MessageComponentInterface
             if (empty($value)) {
                 // 发送结果回客户端
                 $result = json_encode([
-                    'code' => false,
+                    'result' => false,
                     'msg' => !empty(trans('lang.' . $key)) ? trans('lang.' . $key) : trans('lang.param_empty')
                 ]);
                 $from->send($result);
@@ -177,7 +177,7 @@ class InitSite implements MessageComponentInterface
         }
 
 
-        // $from->send(json_encode(['code' => true, 'msg' => '运行结束断开']));
+        // $from->send(json_encode(['result' => true, 'msg' => '运行结束断开']));
         return;
     }
 
@@ -202,7 +202,7 @@ class InitSite implements MessageComponentInterface
 
         if (!$output['result']) {
             $result = json_encode([
-                'code' => false,
+                'result' => false,
                 'msg' => !empty($output['message']) ? $output['message'] : $output['output']
             ]);
             $from->send($result);
