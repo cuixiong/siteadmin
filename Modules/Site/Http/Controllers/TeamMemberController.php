@@ -30,7 +30,7 @@ class TeamMemberController extends CrudController
                 ReturnJson(FALSE, 'id is empty');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
-            $record->is_analyst = $request->is_analyst;
+            $record->is_analyst = $request->analyst;
             if (!$record->save()) {
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
