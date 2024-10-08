@@ -70,7 +70,7 @@ class ProductsController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
+            $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at', 'created_by',
                        'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
                        'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end', 'url'];
             $model = $model->select($fields);

@@ -39,7 +39,7 @@ class SystemController extends CrudController
                 $model = $model->orderBy('sort',$sort)->orderBy('created_at','DESC');
             }
             $record = $model->get();
-            
+
             $data = [
                 'total' => $total,
                 'list' => $record
@@ -169,7 +169,7 @@ class SystemController extends CrudController
         try {
             $record = (new SystemValue)->where('hidden',1)->where('parent_id',$request->parent_id)->get();
             ReturnJson(TRUE,trans('lang.request_success'),$record);
-            
+
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }

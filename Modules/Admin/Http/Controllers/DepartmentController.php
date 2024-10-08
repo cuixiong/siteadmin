@@ -16,8 +16,9 @@ class DepartmentController extends CrudController
     public function list (Request $request) {
         try {
             $search = $request->input('search');
-            $filed = ['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'];
-            $list = (new Department)->GetList($filed,false,'parent_id',$search);
+//            $filed = ['id','parent_id','name','status','sort','created_at as createTime','updated_at as updateTime'];
+//            $list = (new Department)->GetList($filed,false,'parent_id',$search);
+            $list = (new Department)->GetList('*',false,'parent_id',$search);
             $list = array_column($list,null,'id');
             $childNode = array(); // 储存已递归的ID
             foreach ($list as &$map) {

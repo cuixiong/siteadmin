@@ -221,7 +221,7 @@ class SystemController extends CrudController {
      *
      */
     private function syncSiteCache($record, $type = 'update') {
-        $keyList = ['is_open_check_security', 'ip_white_rules', 'req_limit', 'window_time', 'is_open_limit_req'];
+        $keyList = ['is_open_check_security', 'white_ip_security_check', 'ip_white_rules', 'req_limit', 'window_time', 'is_open_limit_req'];
         $key = $record['key'];
         $value = $record['value'];
         if (in_array($key, ['is_open_check_security', 'is_open_limit_req'])) {
