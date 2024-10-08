@@ -17,6 +17,7 @@ use App\Jobs\SyncSphinxIndex;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
@@ -721,6 +722,7 @@ class SyncThirdProductController extends CrudController {
                 return false;
             }
             tenancy()->initialize($site);
+            App::setLocale('zh');
 
             //如果来自定时任务那一端, 需要判断是否开启自动同步开关
             if($isCrontab){

@@ -80,10 +80,10 @@ class UserController extends CrudController {
             if ($user_email_count > 0) {
                 ReturnJson(false, trans('lang.email_unique'));
             }
-
             $input['check_email'] = 1; //默认已验证
             $input['status'] = 1; //默认已验证
-            $input['password'] = Hash::make($input['password']);
+            $password = request()->input('password', '123456');
+            $input['password'] = Hash::make($password);
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
@@ -110,7 +110,8 @@ class UserController extends CrudController {
             $siteUserModel = new SiteUser();
             $user = $siteUserModel->findOrFail($request->id);
             //邮箱唯一校验
-            $user_email_count = $siteUserModel->where('email', $request->email)->where('id', '<>', $request->id)->count();
+            $user_email_count = $siteUserModel->where('email', $request->email)->where('id', '<>', $request->id)->count(
+            );
             if ($user_email_count > 0) {
                 ReturnJson(false, trans('lang.email_unique'));
             }

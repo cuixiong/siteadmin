@@ -8,6 +8,7 @@ use App\Jobs\HandlerProductExcel;
 use App\Jobs\SyncSphinxIndex;
 use App\Jobs\UploadProduct;
 use App\Services\RabbitmqService;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Site\Http\Controllers\CrudController;
@@ -266,6 +267,7 @@ class ProductsUploadLogController extends CrudController {
         }
         // 设置当前租户
         tenancy()->initialize($params['site']);
+        App::setLocale('zh');
         $publisher_id = $params['publisher_id'];
         $user_id = $params['user_id'];
         $insertCount = 0;
