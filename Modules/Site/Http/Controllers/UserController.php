@@ -76,7 +76,7 @@ class UserController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             //邮箱唯一校验
-            $user_email_count = User::query()->where('email', $request->email)->count();
+            $user_email_count = SiteUser::query()->where('email', $request->email)->count();
             if ($user_email_count > 0) {
                 ReturnJson(false, trans('lang.email_unique'));
             }
