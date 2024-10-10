@@ -109,34 +109,35 @@ class SiteUploads {
 
 
         if($location == 'fit'){
-            // // 使用 fit 方法，使水印布满整个目标图片
-            // $watermark->fit($img->width(), $img->height());
-            // // 位置选择 'center' 或任意位置，因为水印已经铺满
-            // $location = 'center';
-            // 获取目标图片的宽度和高度
-            $imageWidth = $img->width();
-            $imageHeight = $img->height();
+            // 使用 fit 方法，使水印布满整个目标图片
+            $watermark->fit($img->width(), $img->height());
+            // 位置选择 'center' 或任意位置，因为水印已经铺满
+            $location = 'center';
+            // // 获取目标图片的宽度和高度
+            // $imageWidth = $img->width();
+            // $imageHeight = $img->height();
 
-            // 创建一个与目标图片相同大小的空白画布，用来放置平铺的水印
-            $canvas = Image::canvas($imageWidth, $imageHeight);
+            // // 创建一个与目标图片相同大小的空白画布，用来放置平铺的水印
+            // $canvas = Image::canvas($imageWidth, $imageHeight);
 
-            // 通过循环，将水印平铺到整个画布
-            for ($x = 0; $x < $imageWidth; $x += $watermark->width()) {
-                for ($y = 0; $y < $imageHeight; $y += $watermark->height()) {
-                    $canvas->insert($watermark, 'top-left', $x, $y);
-                }
-            }
+            // // 通过循环，将水印平铺到整个画布
+            // for ($x = 0; $x < $imageWidth; $x += $watermark->width()) {
+            //     for ($y = 0; $y < $imageHeight; $y += $watermark->height()) {
+            //         $canvas->insert($watermark, 'top-left', $x, $y);
+            //     }
+            // }
             
-            // 插入水印
-            $img->insert($canvas, 'top-left');
+            // // 插入水印
+            // $img->insert($canvas, 'top-left');
         }else{
-            // 插入水印
-            $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
+            // // 插入水印
+            // $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
         }
+        $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
 
         // 设置透明度
         $watermark->opacity($opacity);
-        
+
         return $img;
 
     }
