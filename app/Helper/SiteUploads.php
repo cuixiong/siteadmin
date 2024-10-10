@@ -98,28 +98,44 @@ class SiteUploads {
         $offsetWidth = $watermarkConfig['offsetWidth'];
         $offsetHeight = $watermarkConfig['offsetHeight'];
 
-        // 检查是否上传了图片
-        $imagePath = $image->getPathName();
 
         // 加载原始图像
+        $imagePath = $image->getPathName();
         $img = Image::make($imagePath);
 
         // 加载水印图像
         $watermark = Image::make(public_path($wmImage));
+        
+
 
         if($location == 'fit'){
-            // 使用 fit 方法，使水印布满整个目标图片
-            $watermark->fit($img->width(), $img->height());
-            // 位置选择 'center' 或任意位置，因为水印已经铺满
-            $location = 'center';
+            // // 使用 fit 方法，使水印布满整个目标图片
+            // $watermark->fit($img->width(), $img->height());
+            // // 位置选择 'center' 或任意位置，因为水印已经铺满
+            // $location = 'center';
+            // 获取目标图片的宽度和高度
+            $imageWidth = $img->width();
+            $imageHeight = $img->height();
+
+            // 创建一个与目标图片相同大小的空白画布，用来放置平铺的水印
+            $canvas = Image::canvas($imageWidth, $imageHeight);
+
+            // 通过循环，将水印平铺到整个画布
+            for ($x = 0; $x < $imageWidth; $x += $watermark->width()) {
+                for ($y = 0; $y < $imageHeight; $y += $watermark->height()) {
+                    $canvas->insert($watermark, 'top-left', $x, $y);
+                }
+            }
+            
+            // 插入水印
+            $img->insert($canvas, 'top-left');
+        }else{
+            // 插入水印
+            $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
         }
-        
+
         // 设置透明度
         $watermark->opacity($opacity);
-
-        // 插入水印
-        $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
-
         
         return $img;
 
