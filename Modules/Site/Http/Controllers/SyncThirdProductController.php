@@ -32,20 +32,19 @@ use Modules\Site\Http\Models\SyncPublisher;
 use Modules\Site\Http\Models\SystemValue;
 
 class SyncThirdProductController extends CrudController {
-    public $site            = '';
-    public $productCategory = [];
-    public $regionList      = [];
-    public $senWords        = [];
-    public $autoSyncDataKey = 'autoSyncData';
-    public $syncProductUrlKey = 'syncProductUrl';
-    public $syncProductTokenKey = 'syncProductToken';
-    public $notifyDataResUrlKey = 'notifyDataResUrl';
-    public $notifyDataResTableKey = 'notifyResTable';
-    public $notifyDataSyncTokenKey = 'notifyDataSyncToken';
-    public static $openAutoSyncData  = 1;
-    public static $closeAutoSyncData = 0;
-
-    public $syncConfig = [];
+    public        $site                   = '';
+    public        $productCategory        = [];
+    public        $regionList             = [];
+    public        $senWords               = [];
+    public        $autoSyncDataKey        = 'autoSyncData';
+    public        $syncProductUrlKey      = 'syncProductUrl';
+    public        $syncProductTokenKey    = 'syncProductToken';
+    public        $notifyDataResUrlKey    = 'notifyDataResUrl';
+    public        $notifyDataResTableKey  = 'notifyResTable';
+    public        $notifyDataSyncTokenKey = 'notifyDataSyncToken';
+    public static $openAutoSyncData       = 1;
+    public static $closeAutoSyncData      = 0;
+    public        $syncConfig             = [];
 
     public function searchDroplist(Request $request) {
         try {
@@ -183,15 +182,12 @@ class SyncThirdProductController extends CrudController {
         try {
             //5s内只能点击一次
             currentLimit($request, 5);
-
-            try{
+            try {
                 $respData = $this->pullProductData();
                 ReturnJson(true, 'ok', $respData);
-            }catch (\Exception $e){
+            } catch (\Exception $e) {
                 ReturnJson(false, $e->getMessage());
             }
-
-
         } catch (Exception $e) {
             // 处理异常
             ReturnJson(false, $e->getMessage());
@@ -215,12 +211,12 @@ class SyncThirdProductController extends CrudController {
     }
 
     public function handlerRespData($respDataList, $site) {
-        if(empty($respDataList )){
+        if (empty($respDataList)) {
             \Log::error('拉取北京数据本次为空');
             throw new \Exception('本次拉取数据为空');
+
             return false;
         }
-
         //默认出版商
         $publisherIds = Site::where('name', $site)->value('publisher_id');
         $publisherIdArray = explode(',', $publisherIds);
@@ -230,9 +226,11 @@ class SyncThirdProductController extends CrudController {
         $insertCount = 0;
         $updateCount = 0;
         $errorCount = 0;
+        $ingoreCount = 0;
         $details = '';
         $updateDetail = '';
         $insertDetail = '';
+        $ingore_detail = '';
         //移除事件监听
         $dispatcher = Products::getEventDispatcher();
         Products::unsetEventDispatcher();
@@ -306,7 +304,6 @@ class SyncThirdProductController extends CrudController {
 //                    array_push($errIdList, $row['id']);
 //                    continue;
 //                }
-
                 // 页数
                 $item['pages'] = $row['pages'] ?? 0;
                 // 图表数
@@ -315,7 +312,9 @@ class SyncThirdProductController extends CrudController {
                 $item['price'] = $row['price'] ?? 0;
                 // 忽略基础价为空的数据
                 if (empty($item['price'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans('lang.price_empty')."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans(
+                            'lang.price_empty'
+                        )."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -324,7 +323,9 @@ class SyncThirdProductController extends CrudController {
                 $item['published_date'] = strtotime($row['published_date']);
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name'] ?? '').'】'.trans(
+                            'lang.published_date_empty'
+                        )."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -338,7 +339,8 @@ class SyncThirdProductController extends CrudController {
                 $item['category_id'] = intval($tempCategoryId);
                 // 忽略分类为空的数据
                 if (empty($item['category_id'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$tempCateName.'-'.trans('lang.category_empty')
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$tempCateName.'-'
+                                .trans('lang.category_empty')
                                 ."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
@@ -357,12 +359,13 @@ class SyncThirdProductController extends CrudController {
                 $item['keywords'] = $row['keywords'] ?? '';
                 // 忽略关键词为空的数据
                 if (empty($item['keywords'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans('lang.keywords_empty')."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans(
+                            'lang.keywords_empty'
+                        )."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
                 }
-
                 //自定义链接
                 $item['url'] = $row['url'] ?? '';
                 // 如果链接为空，则用关键词做链接
@@ -378,7 +381,8 @@ class SyncThirdProductController extends CrudController {
                 $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans('lang.url_empty')."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans('lang.url_empty')
+                                ."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -386,12 +390,11 @@ class SyncThirdProductController extends CrudController {
                 //url链接也需要检测敏感词
                 $matchSenWord = $this->checkFitter($item['url']);
                 if (!empty($matchSenWord)) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   "."该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   "
+                                ."该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
                     $errorCount++;
                     continue;
                 }
-
-
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
@@ -504,9 +507,9 @@ class SyncThirdProductController extends CrudController {
                             && ($item['author'] != '已售报告'
                                 && $item['author'] != '完成报告'))
                     ) {
-                        $details .= "【错误】编号:{$item['third_sync_id']}:   ".  '【'.($row['name']).'】'.($item['author']).'-'.trans('lang.author_level')
+                        $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product->id};【{$row['name']}】".($item['author']).'-'.trans('lang.author_level')
                                     .($product->author)."\r\n";
-                        $errorCount++;
+                        $ingoreCount++;
                         array_push($errIdList, $row['id']);
                         continue;
                     }
@@ -586,8 +589,10 @@ class SyncThirdProductController extends CrudController {
             'count'         => $count,
             'insert_count'  => $insertCount,
             'update_count'  => $updateCount,
-            'ingore_count'  => $errorCount,
-            'ingore_detail' => $details,
+            'ingore_count'  => $ingoreCount,
+            'error_count'   => $errorCount,
+            'error_detail'  => $details,
+            'ingore_detail' => $ingore_detail,
             'update_detail' => $updateDetail,
             'insert_detail' => $insertDetail,
             'created_at'    => time(),
@@ -602,12 +607,12 @@ class SyncThirdProductController extends CrudController {
         $url = $this->syncConfig[$this->notifyDataResUrlKey];
         $token = $this->syncConfig[$this->notifyDataSyncTokenKey];
         $table = $this->syncConfig[$this->notifyDataResTableKey];
-        if(empty($url ) || empty($token ) || empty($table )){
+        if (empty($url) || empty($token) || empty($table)) {
             \Log::error('同步通知接口配置错误,请联系管理员');
             throw new \Exception("notify res url config error");
+
             return false;
         }
-
         $IdsData = [];
         foreach ($sucIdList as $forSucId) {
             $IdsData[] = [
@@ -661,7 +666,6 @@ class SyncThirdProductController extends CrudController {
 //        if (!empty($matchSenWord)) {
 //            return "该报告名称{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
 //        }
-
         return false;
     }
 
@@ -723,9 +727,8 @@ class SyncThirdProductController extends CrudController {
             }
             tenancy()->initialize($site);
             App::setLocale('zh');
-
             //如果来自定时任务那一端, 需要判断是否开启自动同步开关
-            if($isCrontab){
+            if ($isCrontab) {
                 $autoSyncDataVal = SystemValue::query()
                                               ->where("key", $this->autoSyncDataKey)
                                               ->value('value');
@@ -736,22 +739,19 @@ class SyncThirdProductController extends CrudController {
                     return false;
                 }
             }
-
             //获取配置数据
             $keyList = [$this->syncProductUrlKey, $this->syncProductTokenKey,
                         $this->notifyDataResUrlKey, $this->notifyDataSyncTokenKey, $this->notifyDataResTableKey
             ];
-            $this->syncConfig = SystemValue::query()->whereIn("key" , $keyList)->pluck('value' , 'key')->toArray();
-
-
+            $this->syncConfig = SystemValue::query()->whereIn("key", $keyList)->pluck('value', 'key')->toArray();
             $url = $this->syncConfig[$this->syncProductUrlKey];
             $token = $this->syncConfig[$this->syncProductTokenKey];
-            if(empty($url ) || empty($token )){
+            if (empty($url) || empty($token)) {
                 \Log::error('同步接口配置错误,请联系管理员');
                 throw new \Exception("sync products url config error");
+
                 return false;
             }
-
             $jsonData = json_encode([]);
             $client = new Client();
             $response = $client->request('POST', $url, [
