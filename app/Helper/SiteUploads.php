@@ -123,7 +123,7 @@ class SiteUploads
             // 获取目标图片的宽度和高度
             $imageWidth = $img->width();
             $imageHeight = $img->height();
-            $watermarkHeight = $watermark->height() * $imageWidth / $imageHeight;
+            $watermarkHeight = $watermark->height() * $imageHeight / $imageWidth;
             // 将水印图片调整为与目标图片相同的大小
             $watermark->resize($imageWidth, $watermarkHeight);
 
