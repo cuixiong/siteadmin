@@ -107,10 +107,15 @@ class SiteUploads {
         $watermark = Image::make(public_path($wmImage));
         
 
+        // 设置透明度
+        $watermark->opacity($opacity);
 
         if($location == 'fit'){
-            // 使用 fit 方法，使水印布满整个目标图片
-            $watermark->fit($img->width(), $img->height());
+
+            // 将水印图片调整为与目标图片相同的大小
+            $watermark->resize($img->width(), $img->height());
+            // // 使用 fit 方法，使水印布满整个目标图片
+            // $watermark->fit($img->width(), $img->height());
             // 位置选择 'center' 或任意位置，因为水印已经铺满
             $location = 'center';
             // // 获取目标图片的宽度和高度
@@ -135,8 +140,6 @@ class SiteUploads {
         }
         $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
 
-        // 设置透明度
-        $watermark->opacity($opacity);
 
         return $img;
 
