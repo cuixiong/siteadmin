@@ -110,10 +110,11 @@ class ProductsController extends CrudController {
                 ReturnJson(true, trans('lang.request_success'), $data);
             }
             $product_id_list = array_column($record, 'id');
-            $updAtList = DB::table("product_routine")->whereIn('id', $product_id_list)
-                           ->pluck('updated_at', 'id')
+            $productList = Products::query()->whereIn('id', $product_id_list)
+                           ->select(['updated_at' , 'updated_by', 'created_at' , 'created_by' , 'id'])
+                           ->get()->keyBy('id')
                            ->toArray();
-            $updAtList = (array)$updAtList;
+
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
@@ -130,8 +131,12 @@ class ProductsController extends CrudController {
                 //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
-                $baseTimestamp = $updAtList[$productId] ?? 0;
-                $record[$key]['updated_at'] = date("Y-m-d H:i:s", $baseTimestamp);
+
+                $productFor = $productList[$productId] ?? [];
+                $record[$key]['updated_at'] = $productFor['updated_at'];
+                $record[$key]['created_at'] = $productFor['created_at'];
+                $record[$key]['created_by'] = $productFor['created_by'];
+                $record[$key]['updated_by'] = $productFor['updated_by'];
                 //删除描述
                 unset($record[$key]['description']);
             }
