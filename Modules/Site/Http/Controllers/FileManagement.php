@@ -5,11 +5,20 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
+use Modules\Site\Http\Models\System;
+use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\OssFile;
 
 class FileManagement extends Controller {
     private $RootPath;
     private $i = 1;
+
+    public $watermarkKey = 'newsWatermark';
+    public $watermarkImageKey = 'newsWatermarkImage'; // 水印图片路径
+    public $watermarkOpacityKey = 'newsWatermarkOpacity'; // 透明度
+    public $watermarkLocationKey = 'newsWatermarkLocation'; // 位置
+    public $watermarkOffsetWidthKey = 'newsWatermarkOffsetWidth'; // 水平偏移
+    public $watermarkOffsetHeightKey = 'newsWatermarkOffsetHeight'; // 垂直偏移
 
     public function __construct() {
         $request = request();
@@ -687,14 +696,55 @@ class FileManagement extends Controller {
                 ReturnJson(false, '请选择上传文件');
             }
             $res = [];
+
+            $watermarkConfig = null;
+
             foreach ($files as $file) {
                 $name = $file->getClientOriginalName();
-                $res[] = SiteUploads::uploads($file, $path, $name);
+                // 是否新建年份文件夹
+                $createDateFolder = false;
+                // 是否使用水印
+                $watermark = null;
+
+                if (strpos($path, 'news/') !== false) {
+                    //新闻模块需要做年月路径
+                    $createDateFolder = true;
+                    //新闻图片需要添加水印
+                    $watermarkConfig = !empty($watermarkConfig)?$watermarkConfig:$this->getWatermarkConfig();
+                    $watermark = $watermarkConfig;
+                }
+                $res[] = SiteUploads::uploads($file, $path, $name, $createDateFolder, $watermark);
             }
             ReturnJson(true, '上传成功', $res);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    // 获取水印配置
+    public function getWatermarkConfig() {
+        $isOpen = System::query()->where("alias", $this->watermarkKey)->value('status');
+        if($isOpen && $isOpen == 1){
+            $keyList = [
+                $this->watermarkImageKey,
+                $this->watermarkOpacityKey,
+                $this->watermarkLocationKey,
+                $this->watermarkOffsetWidthKey,
+                $this->watermarkOffsetHeightKey,
+            ];
+            $data = SystemValue::query()->whereIn("key" , $keyList)->where("status", 1)->pluck('value' , 'key')->toArray();
+            $result = [];
+            if(!isset($data[$this->watermarkImageKey]) || empty($data[$this->watermarkImageKey])){
+                return null;
+            }
+            $result['image'] = $data[$this->watermarkImageKey];
+            $result['opacity'] = $data[$this->watermarkOpacityKey];
+            $result['location'] = $data[$this->watermarkLocationKey];
+            $result['offsetWidth'] = $data[$this->watermarkOffsetWidthKey];
+            $result['offsetHeight'] = $data[$this->watermarkOffsetHeightKey];
+            return $result;
+        }
+        return null;
     }
 
     // 下载文件

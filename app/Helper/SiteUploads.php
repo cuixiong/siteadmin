@@ -4,6 +4,7 @@ namespace App\Helper;
 
 use Modules\Admin\Http\Models\AliyunOssConfig;
 use Modules\Admin\Http\Models\Site;
+use Intervention\Image\Facades\Image;
 
 class SiteUploads {
     public static  $DIR = 'site';// 一级目录
@@ -50,9 +51,9 @@ class SiteUploads {
      *
      * @return string 文件URL
      */
-    public static function uploads($file, $path, $name) {
+    public static function uploads($file, $path, $name, $createDateFolder = false, $watermark = null) {
         //新闻模块需要做年月路径
-        if (strpos($path, 'news/') !== false) {
+        if ($createDateFolder) {
             //已经拼接好了年月的, 不需要再拼接
             if (strpos($path, '-') === false) {
                 //拼接年月日路径
@@ -62,7 +63,13 @@ class SiteUploads {
             }
         }
         $FilePath = self::GetRootPath($path);
-        $file->move($FilePath, $name);
+        if($watermark){
+            $imageWithWatermark = self::addWatermark($file, $watermark);
+            $imageWithWatermark->save($FilePath.$name);
+        }else{
+            $file->move($FilePath, $name);
+        }
+
         if (!empty($path)) {
             $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
         } else {
@@ -77,6 +84,45 @@ class SiteUploads {
         }
 
         return $ossPath;
+    }
+
+    /**
+     *  图片添加水印
+     */
+    public static function addWatermark($image, $watermarkConfig)
+    {
+        
+        $wmImage = $watermarkConfig['image'];
+        $location = $watermarkConfig['location'];
+        $opacity = $watermarkConfig['opacity'];
+        $offsetWidth = $watermarkConfig['offsetWidth'];
+        $offsetHeight = $watermarkConfig['offsetHeight'];
+
+        // 检查是否上传了图片
+        $imagePath = $image->getPathName();
+
+        // 加载原始图像
+        $img = Image::make($imagePath);
+
+        // 加载水印图像
+        $watermark = Image::make(public_path($wmImage));
+
+        if($location == 'fit'){
+            // 使用 fit 方法，使水印布满整个目标图片
+            $watermark->fit($img->width(), $img->height());
+            // 位置选择 'center' 或任意位置，因为水印已经铺满
+            $location = 'center';
+        }
+        
+        // 设置透明度
+        $watermark->opacity($opacity);
+
+        // 插入水印
+        $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
+
+        
+        return $img;
+
     }
 
     public static function GetRootPath($path = '') {
@@ -356,4 +402,5 @@ class SiteUploads {
 
         return false;
     }
+
 }
