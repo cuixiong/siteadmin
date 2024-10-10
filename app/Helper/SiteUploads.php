@@ -6,15 +6,18 @@ use Modules\Admin\Http\Models\AliyunOssConfig;
 use Modules\Admin\Http\Models\Site;
 use Intervention\Image\Facades\Image;
 
-class SiteUploads {
-    public static  $DIR = 'site';// 一级目录
-    private static $SiteDir;// 站点目录
+class SiteUploads
+{
+    public static  $DIR = 'site'; // 一级目录
+    private static $SiteDir; // 站点目录
 
-    public function __construct() {
+    public function __construct()
+    {
         self::$SiteDir = getSiteName();
     }
 
-    public static function OssClient() {
+    public static function OssClient()
+    {
         $site = request()->header('site');
         $siteId = Site::where('name', $site)->value('id');
         $config = AliyunOssConfig::where('site_id', $siteId)->first();
@@ -22,8 +25,10 @@ class SiteUploads {
             ReturnJson(false, "当前站点未配置阿里云OSS信息,请配置完整信息再上传");
         }
         $config = $config->toArray();
-        if (empty($config['access_key_id']) || empty($config['access_key_secret']) || empty($config['endpoint'])
-            || empty($config['bucket'])) {
+        if (
+            empty($config['access_key_id']) || empty($config['access_key_secret']) || empty($config['endpoint'])
+            || empty($config['bucket'])
+        ) {
             ReturnJson(false, "阿里云OSS配置信息不完整");
         }
         // 查询出站点OSS的配置信息
@@ -33,7 +38,10 @@ class SiteUploads {
         // $config['bucket'] = env('OSS_ACCESS_KEY_BUCKET');
         try {
             $ossClient = new AliyuncsOss(
-                $config['access_key_id'], $config['access_key_secret'], $config['endpoint'], $config['bucket']
+                $config['access_key_id'],
+                $config['access_key_secret'],
+                $config['endpoint'],
+                $config['bucket']
             );
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -51,7 +59,8 @@ class SiteUploads {
      *
      * @return string 文件URL
      */
-    public static function uploads($file, $path, $name, $createDateFolder = false, $watermark = null) {
+    public static function uploads($file, $path, $name, $createDateFolder = false, $watermark = null)
+    {
         //新闻模块需要做年月路径
         if ($createDateFolder) {
             //已经拼接好了年月的, 不需要再拼接
@@ -59,25 +68,25 @@ class SiteUploads {
                 //拼接年月日路径
                 $year = date('Y');
                 $shortYear = (int)$year % 100; // 提取年份的最后两位
-                $path = $path.'/'.$shortYear.'-'.date('m');
+                $path = $path . '/' . $shortYear . '-' . date('m');
             }
         }
         $FilePath = self::GetRootPath($path);
-        if($watermark){
+        if ($watermark) {
             $imageWithWatermark = self::addWatermark($file, $watermark);
-            $imageWithWatermark->save($FilePath.$name);
-        }else{
+            $imageWithWatermark->save($FilePath . $name);
+        } else {
             $file->move($FilePath, $name);
         }
 
         if (!empty($path)) {
-            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$path.'/'.$name;
+            $ossPath = '/' . self::$DIR . '/' . self::$SiteDir . '/' . $path . '/' . $name;
         } else {
-            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/'.$name;
+            $ossPath = '/' . self::$DIR . '/' . self::$SiteDir . '/' . $name;
         }
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossClient = self::OssClient();
-            $res = $ossClient->uploads($ossPath, $FilePath.$name);
+            $res = $ossClient->uploads($ossPath, $FilePath . $name);
             if ($res !== true) {
                 ReturnJson(false, $res);
             }
@@ -91,7 +100,7 @@ class SiteUploads {
      */
     public static function addWatermark($image, $watermarkConfig)
     {
-        
+
         $wmImage = $watermarkConfig['image'];
         $location = $watermarkConfig['location'];
         $opacity = $watermarkConfig['opacity'];
@@ -105,47 +114,29 @@ class SiteUploads {
 
         // 加载水印图像
         $watermark = Image::make(public_path($wmImage));
-        
+
 
         // 设置透明度
         $watermark->opacity($opacity);
 
-        if($location == 'fit'){
-
+        if ($location == 'fit') {
+            // 获取目标图片的宽度和高度
+            $imageWidth = $img->width();
+            $imageHeight = $img->height();
+            $watermarkHeight = $watermark->height() * $imageWidth / $imageHeight;
             // 将水印图片调整为与目标图片相同的大小
-            $watermark->resize($img->width(), $img->height());
-            // // 使用 fit 方法，使水印布满整个目标图片
-            // $watermark->fit($img->width(), $img->height());
+            $watermark->resize($imageWidth, $watermarkHeight);
+
             // 位置选择 'center' 或任意位置，因为水印已经铺满
             $location = 'center';
-            // // 获取目标图片的宽度和高度
-            // $imageWidth = $img->width();
-            // $imageHeight = $img->height();
-
-            // // 创建一个与目标图片相同大小的空白画布，用来放置平铺的水印
-            // $canvas = Image::canvas($imageWidth, $imageHeight);
-
-            // // 通过循环，将水印平铺到整个画布
-            // for ($x = 0; $x < $imageWidth; $x += $watermark->width()) {
-            //     for ($y = 0; $y < $imageHeight; $y += $watermark->height()) {
-            //         $canvas->insert($watermark, 'top-left', $x, $y);
-            //     }
-            // }
-            
-            // // 插入水印
-            // $img->insert($canvas, 'top-left');
-        }else{
-            // // 插入水印
-            // $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
         }
         $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
 
-
         return $img;
-
     }
 
-    public static function GetRootPath($path = '') {
+    public static function GetRootPath($path = '')
+    {
         $request = request();
         if (!$request->header('Site')) {
             if (!$request->site) {
@@ -153,12 +144,12 @@ class SiteUploads {
             }
         }
         self::$SiteDir = $request->header('Site') ? $request->header('Site') : $request->site;
-        $RootPath = public_path().'/'.self::$DIR.'/'.self::$SiteDir;
+        $RootPath = public_path() . '/' . self::$DIR . '/' . self::$SiteDir;
         if (!is_dir($RootPath)) {
             mkdir($RootPath, 0777, true);
         }
         $path = trim($path, '/');
-        $path = $path ? $RootPath.'/'.$path.'/' : $RootPath.'/';
+        $path = $path ? $RootPath . '/' . $path . '/' : $RootPath . '/';
 
         return $path;
     }
@@ -169,16 +160,18 @@ class SiteUploads {
      * @param $path 上传路径
      * @param $name 上传文件名
      */
-    public static function download($path, $name) {
+    public static function download($path, $name)
+    {
         $FilePath = self::GetRootPath($path);
-        if (!file_exists($FilePath.$name)) {
+        if (!file_exists($FilePath . $name)) {
             return false;
         }
 
-        return $FilePath.$name;
+        return $FilePath . $name;
     }
 
-    public static function delete($path) {
+    public static function delete($path)
+    {
         $ossPath = str_replace(public_path(), '', $path);
         $ossPath = str_replace("//", '/', $ossPath);
         //如果是目录则继续
@@ -189,14 +182,14 @@ class SiteUploads {
                 //排除目录中的.和..
                 if ($val != "." && $val != "..") {
                     //如果是目录则递归子目录，继续操作
-                    if (is_dir($path.'/'.$val)) {
+                    if (is_dir($path . '/' . $val)) {
                         //子目录中操作删除文件夹和文件
-                        self::delete($path.'/'.$val);
+                        self::delete($path . '/' . $val);
                         //目录清空后删除空文件夹
-                        @rmdir($path.'/'.$val);
+                        @rmdir($path . '/' . $val);
                     } else {
                         //如果是文件直接删除
-                        unlink($path.'/'.$val);
+                        unlink($path . '/' . $val);
                         if (env('OSS_ACCESS_IS_OPEN') == true) {
                             $ossClient = self::OssClient();
                             $ossClient->delete($ossPath);
@@ -221,7 +214,8 @@ class SiteUploads {
         }
     }
 
-    public static function rename($oldPath, $newPath) {
+    public static function rename($oldPath, $newPath)
+    {
         if (!file_exists($oldPath)) {
             return false;
         }
@@ -231,13 +225,13 @@ class SiteUploads {
         }
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             if (is_dir($newPath)) {
-                $ossPath = '/'.self::$DIR.'/'.self::$SiteDir;
+                $ossPath = '/' . self::$DIR . '/' . self::$SiteDir;
                 $oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
                 $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
                 $ossClient = self::OssClient();
                 $ossClient->RenameDir($oldPath, $newPath);
             } else {
-                $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
+                $ossPath = '/' . self::$DIR . '/' . self::$SiteDir . '/';
                 $oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
                 $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
                 $ossClient = self::OssClient();
@@ -257,7 +251,8 @@ class SiteUploads {
      *
      * @return boolean
      */
-    public static function copyFile($oldPath, $newPath, $overWrite = false) {
+    public static function copyFile($oldPath, $newPath, $overWrite = false)
+    {
         if (!file_exists($oldPath)) {
             return false;
         }
@@ -271,7 +266,7 @@ class SiteUploads {
         }
         copy($oldPath, $newPath);
         if (env('OSS_ACCESS_IS_OPEN') == true) {
-            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
+            $ossPath = '/' . self::$DIR . '/' . self::$SiteDir . '/';
             $newPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
             //$oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
             $ossClient = self::OssClient();
@@ -290,7 +285,8 @@ class SiteUploads {
      *
      * @return boolean
      */
-    public static function moveFile($oldPath, $newPath, $overWrite = false) {
+    public static function moveFile($oldPath, $newPath, $overWrite = false)
+    {
         $newPath = str_replace("//", "/", $newPath);
         $oldPath = str_replace("//", "/", $oldPath);
 
@@ -310,7 +306,7 @@ class SiteUploads {
         }
         rename($oldPath, $newPath);
         if (env('OSS_ACCESS_IS_OPEN') == true) {
-            $ossPath = '/'.self::$DIR.'/'.self::$SiteDir.'/';
+            $ossPath = '/' . self::$DIR . '/' . self::$SiteDir . '/';
             //$oldPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
             $newOssPath = str_replace(self::GetRootPath(), $ossPath, $newPath);
             $oldOssPath = str_replace(self::GetRootPath(), $ossPath, $oldPath);
@@ -332,9 +328,10 @@ class SiteUploads {
      *
      * @return bool
      */
-    public static function CreateDir($path, $mode = 0775) {
+    public static function CreateDir($path, $mode = 0775)
+    {
         $RootPath = self::GetRootPath();
-        $DirPath = $RootPath.trim($path, '/');
+        $DirPath = $RootPath . trim($path, '/');
         if ($path == '..') {
             //不能进去基本路径的上层
             return '超过文件管理范围';
@@ -347,7 +344,7 @@ class SiteUploads {
         if (file_exists($DirPath)) {
             if (env('OSS_ACCESS_IS_OPEN') == true) {
                 $ossClient = self::OssClient();
-                $ossClient->CreateDir(trim($path, '/').'/');
+                $ossClient->CreateDir(trim($path, '/') . '/');
             }
 
             return true;
@@ -356,10 +353,11 @@ class SiteUploads {
         }
     }
 
-    public static function unzip($path, $name, $unzipPath) {
+    public static function unzip($path, $name, $unzipPath)
+    {
         $path = trim($path, '/');
         $RootPath = self::GetRootPath();
-        $FilePath = $path ? $RootPath.$path.'/'.$name : $RootPath.$name;
+        $FilePath = $path ? $RootPath . $path . '/' . $name : $RootPath . $name;
         if (strpos($name, '.zip') == false) {
             return '文件不是ZIP文件';
         }
@@ -374,8 +372,8 @@ class SiteUploads {
             $unzipDirName = $name;
         }
         //$LocalUnzipPath = $RootPath.$unzipPath.'/';  //废弃
-        $unzipDirPath = $path.'/'.$unzipDirName.'/';
-        $LocalUnzipPath = $RootPath.$unzipDirPath;
+        $unzipDirPath = $path . '/' . $unzipDirName . '/';
+        $LocalUnzipPath = $RootPath . $unzipDirPath;
         $zip = new \ZipArchive();
         $res = $zip->open($FilePath);
         if ($res === true) {
@@ -384,17 +382,17 @@ class SiteUploads {
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $filename = $zip->getNameIndex($i);
                 //\Log::error('返回结果数据$filename:'.$filename);
-                if (is_dir($LocalUnzipPath.$filename)) {
+                if (is_dir($LocalUnzipPath . $filename)) {
                     if (env('OSS_ACCESS_IS_OPEN') == true) {
                         $ossClient = self::OssClient();
-                        $toPath = $unzipPath ? $unzipPath.'/'.trim($filename, '/').'/' : trim($filename, '/').'/';
+                        $toPath = $unzipPath ? $unzipPath . '/' . trim($filename, '/') . '/' : trim($filename, '/') . '/';
                         //\Log::error('返回结果数据:'.$toPath);
                         $ossClient->CreateDir($toPath);
                     }
                 } else {
                     if (env('OSS_ACCESS_IS_OPEN') == true) {
                         $ossClient = self::OssClient();
-                        $sourceFilePath = $LocalUnzipPath.$filename;
+                        $sourceFilePath = $LocalUnzipPath . $filename;
                         $ossPath = str_replace(public_path(), '', $sourceFilePath);
                         //\Log::error('返回结果数据:'.json_encode([$ossPath, $sourceFilePath]));
                         $ossClient->uploads($ossPath, $sourceFilePath);
@@ -412,7 +410,8 @@ class SiteUploads {
     /**
      *  文件分片上传
      */
-    public static function multipartUpload($sourceFilePath) {
+    public static function multipartUpload($sourceFilePath)
+    {
         if (env('OSS_ACCESS_IS_OPEN') == true) {
             $ossClient = self::OssClient();
             $ossPath = str_replace(public_path(), '', $sourceFilePath);
@@ -422,5 +421,4 @@ class SiteUploads {
 
         return false;
     }
-
 }
