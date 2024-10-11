@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Routing\Controller;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Illuminate\Support\Facades\Validator;
@@ -55,6 +56,7 @@ class ProductsCategoryController extends CrudController {
         }
     }
 
+    
     /**
      * 获取搜索下拉列表
      *
@@ -229,6 +231,37 @@ class ProductsCategoryController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
+     * 分类邮箱测试
+     *
+     * @param use Illuminate\Http\Request;
+     */
+    public function test(Request $request)
+    {
+        try {
+            //验证表单数据
+            $this->validatorData($request->all());
+            $testEmail = $request->email;
+            $res = $this->sendTestEmail('productSample', $testEmail);
+
+            $domain = getSiteDomain();
+            $url = $domain . '/api/third/test-send-email';
+            $reqData = [
+                'action'    => 'productSample',
+                'testEmail' => $testEmail,
+            ];
+            $reqData['sign'] = $this->makeSign($reqData, (new \App\Http\Controllers\SiteEmailController())->signKey);
+            $response = Http::post($url, $reqData);
+            $resp = $response->json();
+
+            !empty($resp) && $resp['code'] == 200
+                ? ReturnJson(true, trans()->get('lang.eamail_success'))
+                : ReturnJson(false, trans()->get('lang.eamail_error'), json_encode($resp));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }

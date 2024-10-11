@@ -138,6 +138,8 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'update'])->name('报告分类:修改分类');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'destroy'])->name('报告分类:删除分类');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'discount'])->name('报告分类:设置折扣');
+
+        Route::post('test', [Modules\Site\Http\Controllers\ProductsCategoryController::class, 'test'])->name('报告分类:测试邮箱');
     });
 
     // ProductsExcelField 控制器
