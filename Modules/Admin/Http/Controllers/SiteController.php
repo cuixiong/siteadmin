@@ -774,7 +774,7 @@ class SiteController extends CrudController {
             $res = Site::query()->whereIn('id', $site_ids)
                 ->where("status" , 1)
                 ->selectRaw('id as value , name as label')
-                ->pluck('label' , 'value')
+                ->get()
                 ->toArray();
             //$res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
         }
