@@ -238,7 +238,7 @@ class SiteController extends CrudController {
                 DB::commit();
                 ReturnJson(true, trans('lang.update_success'));
             }
-            
+
             // return $res;
             // DB::commit();
         } catch (\Exception $e) {
@@ -771,7 +771,12 @@ class SiteController extends CrudController {
         if ($is_super > 0) {
             $res = (new Site)->GetListLabel($field, false, '', ['status' => 1]);
         } else {
-            $res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
+            $res = Site::query()->whereIn('id', $site_ids)
+                ->where("status" , 1)
+                ->selectRaw('id as value , name as label')
+                ->pluck('label' , 'value')
+                ->toArray();
+            //$res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
         }
         ReturnJson(true, trans('lang.request_success'), $res);
     }

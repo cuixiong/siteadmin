@@ -121,6 +121,10 @@ Route::middleware([
     });
 
 
+    Route::prefix('public')->group(function () {
+        Route::any('truncate-table', [Modules\Admin\Http\Controllers\PublicController::class, 'truncateTable'])->name('清空数据表');
+    });
+
     // Department控制器
     Route::prefix('department')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\DepartmentController::class, 'list'])->name('部门管理:部门列表');

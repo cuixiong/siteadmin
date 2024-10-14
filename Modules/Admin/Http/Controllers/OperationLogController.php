@@ -172,6 +172,8 @@ class OperationLogController extends CrudController {
                 $ColumnComment = $DbManager->getColumn($field)->getComment();
                 $ColumnComment = $ColumnComment ? $ColumnComment : $field;
                 $OriginalValue = $model->getOriginal($field);
+                $OriginalName = '';
+                $NewName = '';
                 switch ($field) {
                     case 'rule_id':
                         $OriginalValue = $OriginalValue ? $OriginalValue : [];
@@ -190,11 +192,15 @@ class OperationLogController extends CrudController {
                         $NewName = $NewName ? implode(',', $NewName) : '';
                         break;
                     case 'site_id':
-                        $OriginalName = Site::whereIn('id', $OriginalValue)->pluck('name')->toArray();
-                        $OriginalName = $OriginalName ? implode(',', $OriginalName) : '';
-                        $value = is_array($value) ? $value : ($value ? explode(',', $value) : []);
-                        $NewName = Site::whereIn('id', $value)->pluck('name')->toArray();
-                        $NewName = $NewName ? implode(',', $NewName) : '';
+                        if (!empty($OriginalValue)) {
+                            $OriginalName = Site::whereIn('id', $OriginalValue)->pluck('name')->toArray();
+                            $OriginalName = $OriginalName ? implode(',', $OriginalName) : '';
+                        }
+                        if (!empty($value)) {
+                            $value = is_array($value) ? $value : ($value ? explode(',', $value) : []);
+                            $NewName = Site::whereIn('id', $value)->pluck('name')->toArray();
+                            $NewName = $NewName ? implode(',', $NewName) : '';
+                        }
                         break;
                     case 'is_super':
                         $OriginalName = DictionaryValue::GetNameAsCode('Administrator', $OriginalValue);
