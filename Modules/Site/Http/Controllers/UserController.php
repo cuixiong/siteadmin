@@ -84,7 +84,7 @@ class UserController extends CrudController {
             $input['status'] = 1; //默认已验证
             $password = request()->input('password', '123456');
             $input['password'] = Hash::make($password);
-            $record = $this->ModelInstance()->create($input);
+            $record = SiteUser::query()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
