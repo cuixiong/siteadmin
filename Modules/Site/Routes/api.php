@@ -630,6 +630,13 @@ Route::middleware([
         Route::post('form/{id}', [Modules\Site\Http\Controllers\IpBanLogController::class, 'form'])->name('封禁IP日志:查询详情');
     });
 
+    // 封禁IP记录
+    Route::prefix('ua-ban-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\RequestLogController::class, 'list'])->name('封禁UA日志:数据列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\RequestLogController::class, 'destroy'])->name('封禁UA日志:数据删除');
+        Route::post('change-status', [Modules\Site\Http\Controllers\RequestLogController::class, 'changeStatus'])->name('封禁UA日志:状态修改');
+        Route::post('form/{id}', [Modules\Site\Http\Controllers\RequestLogController::class, 'form'])->name('封禁UA日志:查询详情');
+    });
 
     //定时任务脚本(前端按钮接口调用)
     Route::prefix('crontab')->group(function () {
