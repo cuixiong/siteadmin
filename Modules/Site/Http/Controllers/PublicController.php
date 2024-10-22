@@ -10,6 +10,7 @@ use Modules\Site\Http\Models\EmailLog;
 use Modules\Site\Http\Models\IpBanLog;
 use Modules\Site\Http\Models\OperationLog;
 use Modules\Site\Http\Models\Order;
+use Modules\Site\Http\Models\RequestLog;
 use Modules\Site\Http\Models\SyncLog;
 
 class PublicController extends Controller {
@@ -49,6 +50,8 @@ class PublicController extends Controller {
                 IpBanLog::truncate();
             }elseif($type == 'sync_log'){
                 SyncLog::truncate();
+            }elseif('ua_ban'){
+                RequestLog::truncate();
             }
 
             ReturnJson(true, trans('lang.request_success'), []);
