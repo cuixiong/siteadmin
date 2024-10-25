@@ -13,6 +13,10 @@ namespace Modules\Site\Http\Controllers;
 
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Modules\Site\Http\Models\BanWhiteList;
+use Modules\Site\Http\Models\IpBanLog;
+use Modules\Site\Http\Models\RequestLog;
 
 class RequestLogController extends CrudController
 {
@@ -58,6 +62,78 @@ class RequestLogController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+
+
+    public function UaUnban(Request $request) {
+        try {
+            $id = $request->input('id', 0);
+            if (empty($id)) {
+                ReturnJson(false, trans('lang.param_error'));
+            }
+            $ipBanLog = IpBanLog::query()->findOrFail($id);
+            $key = $ipBanLog->ua_info;
+            //写入缓存
+            $domain = getSiteDomain();
+            $url = $domain.'/api/third/clear-ban';
+            $reqData = [
+                'type' => 2,
+                'key'  => $key,
+            ];
+            $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
+            $reqData['sign'] = $this->makeSign($reqData, $signKey);
+            $response = Http::post($url, $reqData);
+            $resp = $response->json();
+            if (!empty($resp) && $resp['code'] == 200) {
+                ReturnJson(true, trans('lang.request_success'), []);
+            } else {
+                ReturnJson(false, '清除失败');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
+     *  添加白名单
+     */
+    public function addWhiteList(Request $request) {
+        try {
+            $id = $request->input('id', 0);
+            if (empty($id)) {
+                ReturnJson(false, trans('lang.param_error'));
+            }
+            $ipBanLog = RequestLog::query()->findOrFail($id);
+            $key = $ipBanLog->ua_info;
+            $addWhiteData = [
+                'type'    => 2,
+                'ban_str' => $key,
+                'remark'  => '',
+            ];
+            $res = BanWhiteList::create($addWhiteData);
+
+            if (!empty($res)) {
+                ReturnJson(true, trans('lang.request_success'), []);
+            } else {
+                ReturnJson(false, '添加白名单失败');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function makeSign($data, $signkey) {
+        unset($data['sign']);
+        $signStr = '';
+        ksort($data);
+        foreach ($data as $key => $value) {
+            $signStr .= $key.'='.$value.'&';
+        }
+        $signStr .= "key={$signkey}";
+
+        //dump($signStr);
+        return md5($signStr);
     }
 
 }

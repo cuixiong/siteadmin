@@ -233,6 +233,10 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\NewsController::class, 'update'])->name('新闻管理:修改新闻');
         Route::post('destroy', [Modules\Site\Http\Controllers\NewsController::class, 'destroy'])->name('新闻管理:删除新闻');
 
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\NewsController::class, 'batchUpdateParam'])->name('新闻管理:批量修改参数');
+        Route::get('batch-update-option', [Modules\Site\Http\Controllers\NewsController::class, 'batchUpdateOption'])->name('新闻管理:批量修改参数子项');
+        Route::post('batch-update', [Modules\Site\Http\Controllers\NewsController::class, 'batchUpdate'])->name('新闻管理:批量修改');
+
     });
 
     // 热点资讯 控制器
@@ -247,6 +251,10 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\InformationController::class, 'update'])->name('资讯管理:修改资讯');
         Route::post('destroy', [Modules\Site\Http\Controllers\InformationController::class, 'destroy'])->name('资讯管理:删除资讯');
 
+
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\InformationController::class, 'batchUpdateParam'])->name('资讯管理:批量修改参数');
+        Route::get('batch-update-option', [Modules\Site\Http\Controllers\InformationController::class, 'batchUpdateOption'])->name('资讯管理:批量修改参数子项');
+        Route::post('batch-update', [Modules\Site\Http\Controllers\InformationController::class, 'batchUpdate'])->name('资讯管理:批量修改');
     });
 
     // 模版分类 控制器
@@ -339,6 +347,10 @@ Route::middleware([
         Route::get('option', [Modules\Site\Http\Controllers\MenuController::class, 'option'])->name('导航菜单:下拉数据');
         Route::get('options', [Modules\Site\Http\Controllers\MenuController::class, 'options'])->name('导航菜单:字典数据');
         Route::get('is-single', [Modules\Site\Http\Controllers\MenuController::class, 'isSingle'])->name('导航菜单:是否单页修改');
+
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\MenuController::class, 'batchUpdateParam'])->name('导航菜单:批量修改参数');
+        Route::get('batch-update-option', [Modules\Site\Http\Controllers\MenuController::class, 'batchUpdateOption'])->name('导航菜单:批量修改参数子项');
+        Route::post('batch-update', [Modules\Site\Http\Controllers\MenuController::class, 'batchUpdate'])->name('导航菜单:批量修改');
     });
 
     // System控制器
@@ -435,6 +447,10 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\AuthorityController::class, 'list'])->name('权威引用:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\AuthorityController::class, 'changeStatus'])->name('权威引用:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\AuthorityController::class, 'options'])->name('权威引用:字典数据');
+
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\AuthorityController::class, 'batchUpdateParam'])->name('权威引用:批量修改参数');
+        Route::get('batch-update-option', [Modules\Site\Http\Controllers\AuthorityController::class, 'batchUpdateOption'])->name('权威引用:批量修改参数子项');
+        Route::post('batch-update', [Modules\Site\Http\Controllers\AuthorityController::class, 'batchUpdate'])->name('权威引用:批量修改');
     });
     // Video控制器
     Route::prefix('video')->group(function () {
@@ -528,6 +544,10 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\ContactUsController::class, 'list'])->name('联系我们:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('联系我们:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\ContactUsController::class, 'options'])->name('联系我们:字典数据');
+
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateParam'])->name('联系我们:批量修改参数');
+        Route::get('batch-update-option', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateOption'])->name('联系我们:批量修改参数子项');
+        Route::post('batch-update', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdate'])->name('联系我们:批量修改');
     });
 
     Route::prefix('message-language-version')->group(function () {
@@ -628,6 +648,8 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\IpBanLogController::class, 'destroy'])->name('封禁IP日志:数据删除');
         Route::post('change-status', [Modules\Site\Http\Controllers\IpBanLogController::class, 'changeStatus'])->name('封禁IP日志:状态修改');
         Route::post('form/{id}', [Modules\Site\Http\Controllers\IpBanLogController::class, 'form'])->name('封禁IP日志:查询详情');
+        Route::post('ip-unban', [Modules\Site\Http\Controllers\IpBanLogController::class, 'IpUnban'])->name('IP解封');
+        Route::post('add-white', [Modules\Site\Http\Controllers\IpBanLogController::class, 'addWhiteList'])->name('添加白名单');
     });
 
     // 封禁IP记录
@@ -636,6 +658,20 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\RequestLogController::class, 'destroy'])->name('封禁UA日志:数据删除');
         Route::post('change-status', [Modules\Site\Http\Controllers\RequestLogController::class, 'changeStatus'])->name('封禁UA日志:状态修改');
         Route::post('form/{id}', [Modules\Site\Http\Controllers\RequestLogController::class, 'form'])->name('封禁UA日志:查询详情');
+        Route::post('ua-unban', [Modules\Site\Http\Controllers\RequestLogController::class, 'UaUnban'])->name('UA解封');
+        Route::post('add-white', [Modules\Site\Http\Controllers\RequestLogController::class, 'addWhiteList'])->name('添加白名单');
+    });
+
+
+    // 封禁白名单
+    Route::prefix('ban-white-list')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'list'])->name('封禁白名单:数据列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'destroy'])->name('封禁白名单:数据删除');
+        Route::post('change-status', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'changeStatus'])->name('封禁白名单:状态修改');
+        Route::post('form/{id}', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'form'])->name('封禁白名单:查询详情');
+        Route::post('update', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'update'])->name('封禁白名单:修改');
+        Route::post('store', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'store'])->name('封禁白名单:新增');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'searchDroplist'])->name('同步出版商:搜索下拉列表数据');
     });
 
     //定时任务脚本(前端按钮接口调用)

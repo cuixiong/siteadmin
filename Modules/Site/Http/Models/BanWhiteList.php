@@ -12,10 +12,10 @@
 
 namespace Modules\Site\Http\Models;
 
-class RequestLog extends Base {
-    protected $table = 'request_log';
+class BanWhiteList extends Base {
+    protected $table = 'ban_white_list';
     // 设置允许入库字段,数组形式
-    protected $fillable = ['id', 'ip', 'ip_addr', 'ua_info', 'ban_time', 'ban_cnt', 'header', 'sort', 'status'];
+    protected $fillable = ['id', 'type', 'ban_str', 'remark', 'sort', 'status'];
 
 
 
@@ -36,7 +36,7 @@ class RequestLog extends Base {
         if(!empty($search)){
             $timeArray = ['created_at','updated_at'];
             foreach ($search as $key => $value) {
-                if(in_array($key,['name','ua_info','ip_addr'])){
+                if(in_array($key,['name','ban_str','remark'])){
                     $model = $model->where($key,'like','%'.trim($value).'%');
                 } else if (in_array($key,$timeArray)){
                     if(is_array($value)){
@@ -44,6 +44,9 @@ class RequestLog extends Base {
                     }
                 } else if(is_array($value) && !in_array($key,$timeArray)){
                     $model = $model->whereIn($key,$value);
+                }elseif($key == 'created_by' && !empty($value )){
+                    $userIds = \Modules\Admin\Http\Models\User::where('nickname', 'like', '%' . $value . '%')->pluck('id')->toArray();
+                    $model = $model->whereIn('created_by',$userIds);
                 } else {
                     $model = $model->where($key,$value);
                 }
