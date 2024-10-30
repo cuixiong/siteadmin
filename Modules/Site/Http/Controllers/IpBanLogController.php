@@ -116,18 +116,27 @@ class IpBanLogController extends CrudController {
             $ip = $ipBanLog->ip;
             $ipList = explode('.', $ip);
             //最后一段变为*
-            $ipList[count($ipList)-1] = '*';
+            $ipList[count($ipList) - 1] = '*';
             $key = implode('.', $ipList);
-
-            BanWhiteList::query()->where('ban_str', $key)->delete();
-
-            $addWhiteData = [
-                'type'    => 1,
-                'ban_str' => $key,
-                'remark'  => $ipBanLog->remark,
-            ];
-            $res = BanWhiteList::create($addWhiteData);
-
+            $remark = $ipBanLog->ip_addr;
+            $banWhiteId = BanWhiteList::query()->where('remark', $remark)->value('id');
+            if (empty($banWhiteId)) {
+                $whiteIpList[] = $key;
+                $addWhiteData = [
+                    'type'    => 1,
+                    'ban_str' => json_encode($whiteIpList),
+                    'remark'  => $remark,
+                ];
+                $res = BanWhiteList::create($addWhiteData);
+            } else {
+                $banwhiteInfo = BanWhiteList::find($banWhiteId);
+                $whiteIpList = @json_decode($banwhiteInfo->ban_str, true);
+                if(!in_array($key, $whiteIpList)){
+                    $whiteIpList[] = $key;
+                    $banwhiteInfo->ban_str = json_encode($whiteIpList);
+                    $banwhiteInfo->save();
+                }
+            }
             if (!empty($res)) {
                 ReturnJson(true, trans('lang.request_success'), []);
             } else {

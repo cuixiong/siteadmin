@@ -777,6 +777,38 @@ class FileManagement extends Controller {
         return response()->download($res);
     }
 
+    public function newDownload(Request $request) {
+        $path = $request->path;
+        $name = base64_decode($request->name);
+        $site = $request->site;
+        if (empty($name)) {
+            ReturnJson(false, '请选择下载文件名称');
+        }
+        if (empty($site)) {
+            ReturnJson(false, '站点名称为空');
+        }
+        $RootPath = SiteUploads::getRootPath();
+        $filePath = rtrim($RootPath, '/');
+        if (!empty($path)) {
+            $filePath = $filePath.'/'.trim($path, '/');
+        }
+
+        $filePath = $filePath.'/'.$name;
+        if (!file_exists($filePath)) {
+            ReturnJson(false, '下载文件不存在');
+        }
+        $res = SiteUploads::download($path, $name);
+        if ($res == false) {
+            ReturnJson(false, '下载失败');
+        }
+        $fileAbsultPath = str_replace(public_path(), '', $res);
+        $domain = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
+        $newDownUrl = $domain . $fileAbsultPath;
+
+        ReturnJson(true, '请求成功' , ['downloadUrl' => $newDownUrl]);
+
+    }
+
     // 根目录查询文件夹
     public function DirList(Request $request) {
         $RootPath = SiteUploads::getRootPath();

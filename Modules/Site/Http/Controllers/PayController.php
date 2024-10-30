@@ -1,10 +1,35 @@
 <?php
 
 namespace Modules\Site\Http\Controllers;
+use App\Const\PayConst;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
 class PayController extends CrudController
 {
+
+    public function searchDroplist(Request $request) {
+        try {
+            $data = [];
+            // 状态开关
+            if ($request->HeaderLanguage == 'en') {
+                $field = ['english_name as label', 'value'];
+            } else {
+                $field = ['name as label', 'value'];
+            }
+            $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State','status' => 1], ['sort' => 'ASC']);
+            $coinTypeList = [];
+            $coinTypeMap = PayConst::$coinTypeMap;
+            foreach ($coinTypeMap as $key => $value){
+                $coinTypeList[] = ['label' => $value, 'value' => $key];
+            }
+            $data['coin_type'] = $coinTypeList;
+
+            ReturnJson(TRUE, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
 
     /**
      * 单个新增

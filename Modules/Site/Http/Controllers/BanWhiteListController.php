@@ -14,6 +14,7 @@ namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\BanWhiteList;
 use Modules\Site\Http\Models\Pay;
 
 class BanWhiteListController extends CrudController {
@@ -72,6 +73,67 @@ class BanWhiteListController extends CrudController {
         );
         ReturnJson(true, trans('lang.request_success'), $data);
     }
+
+
+    /**
+     * 单个新增
+     *
+     * @param $request 请求信息
+     */
+    protected function store(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $remark = $input['remark'];
+            $key = $input['ban_str'];
+            $banWhiteId = BanWhiteList::query()->where('remark', $remark)->value('id');
+            if (empty($banWhiteId)) {
+                $whiteIpList[] = $key;
+                $addWhiteData = [
+                    'type'    => 1,
+                    'ban_str' => json_encode($whiteIpList),
+                    'remark'  => $remark,
+                ];
+                $record = BanWhiteList::create($addWhiteData);
+            } else {
+                $banwhiteInfo = BanWhiteList::find($banWhiteId);
+                $whiteIpList = @json_decode($banwhiteInfo->ban_str, true);
+                if(!in_array($key, $whiteIpList)){
+                    $whiteIpList[] = $key;
+                    $banwhiteInfo->ban_str = json_encode($whiteIpList);
+                    $record = $banwhiteInfo->save();
+                }else{
+                    ReturnJson(false, 'IP已存在');
+                }
+            }
+
+            if (empty($record)) {
+                ReturnJson(false, trans('lang.add_error'));
+            }
+            ReturnJson(true, trans('lang.add_success'), []);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
+    /**
+     * AJax单个查询
+     *
+     * @param $request 请求信息
+     */
+    protected function form(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record['ban_list'] = json_decode($record['ban_str'] , true);
+            ReturnJson(true, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
 
 
 }

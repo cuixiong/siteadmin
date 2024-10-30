@@ -392,6 +392,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PayController::class, 'destroy'])->name('支付列表:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PayController::class, 'list'])->name('支付列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PayController::class, 'changeStatus'])->name('支付列表:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PayController::class, 'searchDroplist'])->name('支付列表:搜索下拉列表数据');
     });
     // Applyfor控制器
     Route::prefix('applyfor')->group(function () {
@@ -705,3 +706,4 @@ Route::middleware([
 });
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
+Route::get('site/file-management/newdownload/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'newDownload'])->name('站点端:文件管理:文件下载');
