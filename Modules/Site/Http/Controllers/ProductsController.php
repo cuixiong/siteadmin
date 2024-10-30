@@ -70,7 +70,8 @@ class ProductsController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at', 'created_by',
+            $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
+                       'created_by',
                        'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
                        'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end', 'url'];
             $model = $model->select($fields);
@@ -111,10 +112,9 @@ class ProductsController extends CrudController {
             }
             $product_id_list = array_column($record, 'id');
             $productList = Products::query()->whereIn('id', $product_id_list)
-                           ->select(['updated_at' , 'updated_by', 'created_at' , 'created_by' , 'id'])
-                           ->get()->keyBy('id')
-                           ->toArray();
-
+                                   ->select(['updated_at', 'updated_by', 'created_at', 'created_by', 'id'])
+                                   ->get()->keyBy('id')
+                                   ->toArray();
             $total = $data['total'];
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
@@ -131,7 +131,6 @@ class ProductsController extends CrudController {
                 //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 $record[$key]['template_data'] = $templateData;
-
                 $productFor = $productList[$productId] ?? [];
                 $record[$key]['updated_at'] = $productFor['updated_at'];
                 $record[$key]['created_at'] = $productFor['created_at'];
@@ -320,7 +319,6 @@ class ProductsController extends CrudController {
         if (empty($type)) {
             throw new \Exception('参数异常:搜索类型不能为空');
         }
-
         $conn = (new SphinxService())->getConnection();
         $query = (new SphinxQL($conn))->select('*')
                                       ->from('products_rt')
@@ -364,7 +362,7 @@ class ProductsController extends CrudController {
         $pageSize = $request->pageSize;
         $offset = ($request->pageNum - 1) * $pageSize;
         $query->limit($offset, $pageSize);
-        $query->option('max_matches' , $offset + $pageSize);
+        $query->option('max_matches', $offset + $pageSize);
         $query->setSelect('*');
         $result = $query->execute();
         $products = $result->fetchAllAssoc();
@@ -611,22 +609,19 @@ class ProductsController extends CrudController {
 //            if (empty($input['downloads'])) {
 //                $input['downloads'] = rand(100, 300);
 //            }
-
             //兼容操作日志
-            $valuesFields = ['thumb' , 'cagr' , 'last_scale' , 'current_scale' , 'future_scale'];
-            foreach ($input as $forKey  => $forValue){
-                if (in_array($forKey , $valuesFields)){
-                    if(empty($forValue )){
+            $valuesFields = ['thumb', 'cagr', 'last_scale', 'current_scale', 'future_scale'];
+            foreach ($input as $forKey => $forValue) {
+                if (in_array($forKey, $valuesFields)) {
+                    if (empty($forValue)) {
                         $input[$forKey] = '';
                     }
-                }elseif($forKey == 'country_id'){
-                    if(empty($forValue )){
+                } elseif ($forKey == 'country_id') {
+                    if (empty($forValue)) {
                         $input[$forKey] = 0;
                     }
                 }
-
             }
-
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
             }
@@ -1444,6 +1439,33 @@ class ProductsController extends CrudController {
     }
 
     /**
+     * 新下载导出文件
+     *
+     * @param $request 请求信息
+     */
+    public function newExportFileDownload(Request $request) {
+        $logId = $request->id;
+        if (empty($logId)) {
+            ReturnJson(true, trans('lang.param_empty'));
+        }
+        $logData = ProductsExportLog::where('id', $logId)->first();
+        if ($logData) {
+            $logData = $logData->toArray();
+        } else {
+            ReturnJson(true, trans('lang.data_empty'));
+        }
+        if ($logData['state'] == ProductsExportLog::EXPORT_COMPLETE) {
+            $basePath = public_path();
+            $file_path = $basePath.$logData['file'];
+            $fileAbsultPath = str_replace(public_path(), '', $file_path);
+            $domain = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
+            $newDownUrl = $domain . $fileAbsultPath;
+            ReturnJson(true, 'ok', ['down_url' => $newDownUrl]);
+        }
+        ReturnJson(true, trans('lang.file_not_exist'));
+    }
+
+    /**
      * 快速搜索-字典数据
      */
     public function QuickSearchDictionary(Request $request) {
@@ -1491,7 +1513,6 @@ class ProductsController extends CrudController {
         //分类
         $res['category'] = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid',
                                                              ['status' => 1]);
-
         $res['domain'] = getSiteDomain();
         ReturnJson(true, '', $res);
     }

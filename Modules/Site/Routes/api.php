@@ -91,6 +91,7 @@ Route::middleware([
         Route::post('export', [Modules\Site\Http\Controllers\ProductsController::class, 'export'])->name('报告管理:批量导出');
         Route::post('export-process', [Modules\Site\Http\Controllers\ProductsController::class, 'exportProcess'])->name('报告管理:导出进度');
         Route::post('export-file-download', [Modules\Site\Http\Controllers\ProductsController::class, 'exportFileDownload'])->name('报告管理:下载导出文件');
+        Route::post('newexport-file-download', [Modules\Site\Http\Controllers\ProductsController::class, 'newExportFileDownload'])->name('报告管理:新下载导出文件');
 
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdateParam'])->name('报告管理:批量修改参数');
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdateOption'])->name('报告管理:批量修改参数子项');
