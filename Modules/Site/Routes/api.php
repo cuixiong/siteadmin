@@ -676,6 +676,16 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\BanWhiteListController::class, 'searchDroplist'])->name('同步出版商:搜索下拉列表数据');
     });
 
+
+    // 访问日志记录
+    Route::prefix('access-log')->group(function () {
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\AccessLogController::class, 'searchDroplist'])->name('访问日志:搜索下拉列表数据');
+        Route::get('ip-report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'ipReportForms'])->name('访问日志:IP报表');
+        Route::get('ua-report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'uaReportForms'])->name('访问日志:UA报表');
+        Route::get('referer-report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'refererReportForms'])->name('访问日志:来源报表');
+    });
+
+
     //定时任务脚本(前端按钮接口调用)
     Route::prefix('crontab')->group(function () {
         Route::get('set-product-status', [Modules\Site\Http\Controllers\SiteCrontabController::class, 'handlerProductStatus'])->name('定时任务:设置产品状态');

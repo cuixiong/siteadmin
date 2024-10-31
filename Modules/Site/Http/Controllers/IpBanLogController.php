@@ -128,20 +128,20 @@ class IpBanLogController extends CrudController {
                     'remark'  => $remark,
                 ];
                 $res = BanWhiteList::create($addWhiteData);
+                ReturnJson(true, trans('lang.request_success'), []);
             } else {
                 $banwhiteInfo = BanWhiteList::find($banWhiteId);
                 $whiteIpList = @json_decode($banwhiteInfo->ban_str, true);
                 if(!in_array($key, $whiteIpList)){
                     $whiteIpList[] = $key;
                     $banwhiteInfo->ban_str = json_encode($whiteIpList);
-                    $banwhiteInfo->save();
+                    $res = $banwhiteInfo->save();
+                    ReturnJson(true, trans('lang.request_success'), []);
+                }else{
+                    ReturnJson(false, 'ip已添加白名单');
                 }
             }
-            if (!empty($res)) {
-                ReturnJson(true, trans('lang.request_success'), []);
-            } else {
-                ReturnJson(false, '添加白名单失败');
-            }
+            ReturnJson(false, '添加失败');
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }

@@ -48,9 +48,14 @@ class BanWhiteListController extends CrudController {
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                $model = $model->orderBy('id', 'desc');
+                //$model = $model->orderBy('id', 'desc');
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-            $record = $model->get();
+            $record = $model->get()->toArray();
+            foreach ($record as &$v){
+                $v['ban_list'] = @json_decode($v['ban_str'], true);
+                $v['ban_list'] = implode("\n", $v['ban_list']);
+            }
             $data = [
                 'total' => $total,
                 'list'  => $record
@@ -74,7 +79,6 @@ class BanWhiteListController extends CrudController {
         ReturnJson(true, trans('lang.request_success'), $data);
     }
 
-
     /**
      * 单个新增
      *
@@ -85,10 +89,9 @@ class BanWhiteListController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             $remark = $input['remark'];
-            $key = $input['ban_str'];
             $banWhiteId = BanWhiteList::query()->where('remark', $remark)->value('id');
+            $whiteIpList = @json_decode($input['ban_str'], true);
             if (empty($banWhiteId)) {
-                $whiteIpList[] = $key;
                 $addWhiteData = [
                     'type'    => 1,
                     'ban_str' => json_encode($whiteIpList),
@@ -97,16 +100,12 @@ class BanWhiteListController extends CrudController {
                 $record = BanWhiteList::create($addWhiteData);
             } else {
                 $banwhiteInfo = BanWhiteList::find($banWhiteId);
-                $whiteIpList = @json_decode($banwhiteInfo->ban_str, true);
-                if(!in_array($key, $whiteIpList)){
-                    $whiteIpList[] = $key;
-                    $banwhiteInfo->ban_str = json_encode($whiteIpList);
-                    $record = $banwhiteInfo->save();
-                }else{
-                    ReturnJson(false, 'IP已存在');
-                }
+                $dbWhiteIpList = @json_decode($banwhiteInfo->ban_str, true);
+                $whiteIpList = array_merge($dbWhiteIpList, $whiteIpList);
+                $whiteIpList = array_unique($whiteIpList);
+                $banwhiteInfo->ban_str = json_encode($whiteIpList);
+                $record = $banwhiteInfo->save();
             }
-
             if (empty($record)) {
                 ReturnJson(false, trans('lang.add_error'));
             }
@@ -115,7 +114,6 @@ class BanWhiteListController extends CrudController {
             ReturnJson(false, $e->getMessage());
         }
     }
-
 
     /**
      * AJax单个查询
@@ -126,14 +124,10 @@ class BanWhiteListController extends CrudController {
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
-            $record['ban_list'] = json_decode($record['ban_str'] , true);
+            $record['ban_list'] = json_decode($record['ban_str'], true);
             ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
     }
-
-
-
-
 }
