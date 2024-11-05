@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Const\OrderConst;
 use App\Const\PayConst;
 use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
@@ -87,9 +88,16 @@ class OrderController extends CrudController {
                 $field = ['name as label', 'value'];
             }
             // 支付状态
-            $data['pay_status'] = (new DictionaryValue())->GetListLabel(
-                $field, false, '', ['code' => 'Pay_State', 'status' => 1], ['sort' => 'ASC']
-            );
+            $paudStatus = [];
+            foreach (OrderConst::$PAY_STATUS_TYPE as $payKey => $payStatus){
+                $add_data = [];
+                $add_data['label'] = $payStatus;
+                $add_data['value'] = $payKey;
+                $paudStatus[] = $add_data;
+            }
+            $data['pay_status'] = $paudStatus;
+
+
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel(
                 $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']

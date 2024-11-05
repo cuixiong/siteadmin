@@ -10,6 +10,7 @@ use Modules\Admin\Http\Models\PriceEditionValue as AdminPriceEditionValue;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\Language;
+use Modules\Site\Http\Models\MessageLanguageVersion;
 use Modules\Site\Http\Models\PriceEdition;
 use Modules\Site\Http\Models\PriceEditionValue;
 
@@ -156,6 +157,48 @@ class PriceEditionController extends CrudController {
             }
         }
         PriceEditionValue::query()->whereNotIn("id", $existIdList)->delete();
+
+
+        //站点语言表
+        $siteName = getSiteName();
+        $publisher_ids = Site::query()->where('name', $siteName)->value('publisher_id');
+        $publisherIdList = explode(',', $publisher_ids);
+        $priceEditList = PriceEdition::query()->where("status", 1)
+                                      ->where("is_deleted", 1)->get()->toArray();
+        $editIdList = [];
+        foreach ($priceEditList as $edit) {
+            $for_publisher_id_list = explode(',', $edit['publisher_id']);
+            if (!empty($for_publisher_id_list) && !empty($publisherIdList)
+                && count(
+                    array_intersect($for_publisher_id_list, $publisherIdList)
+                )) {
+                $editIdList[] = $edit['id'];
+            }
+        }
+        $languageIdList = PriceEditionValue::query()
+                                            ->whereIn('edition_id', $editIdList)
+                                            ->where("status", 1)
+                                            ->where("is_deleted", 1)
+                                            ->pluck('language_id');
+        $languageList = Language::query()->whereIn('id', $languageIdList)->get()->toArray();
+        foreach ($languageList as $forlanguage) {
+            $for_id = $forlanguage['id'];
+            $existIdList[] = $for_id;
+            $data = [
+                'id' => $forlanguage['id'],
+                'name' => $forlanguage['name'],
+            ];
+            $isExist = MessageLanguageVersion::query()->where("id", $for_id)->count();
+            if ($isExist) {
+                // 存在则更新
+                MessageLanguageVersion::query()->where("id", $for_id)->update($data);
+            } else {
+                MessageLanguageVersion::insert($data);
+            }
+        }
+        MessageLanguageVersion::query()->whereNotIn("id", $existIdList)->delete();
+
+
 
         ReturnJson(true, trans('lang.request_success'));
     }

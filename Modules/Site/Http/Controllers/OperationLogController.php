@@ -66,7 +66,6 @@ class OperationLogController extends CrudController {
             ]
         ];
         $data = json_encode($data);
-        \Log::error('返回结果数据:'.$data.'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         \App\Jobs\OperationLog::dispatch($data)->onQueue(QueueConst::QUEEU_OPERATION_LOG);
     }
 
