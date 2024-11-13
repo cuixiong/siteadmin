@@ -25,7 +25,7 @@ class AccessLogController extends CrudController {
         try {
             $ip_muti_list_str = [
                 'ip_muti_second' => '*.*.0.0/16(二段)',
-                'ip_muti_third'  => '*.*.0.0/24(三段)',
+                'ip_muti_third'  => '*.*.*.0/24(三段)',
                 'ip_muti_full'   => '*.*.*.*(完整IP)',
             ];
             foreach ($ip_muti_list_str as $key => $forTime) {
@@ -39,11 +39,11 @@ class AccessLogController extends CrudController {
             $timeConst = [
                 '1m'        => '1分钟',
                 '5m'        => '5分钟',
-                '1h'        => '近一小时',
+                '1h'        => '1小时',
                 'today'     => '今日',
                 'yesterday' => '昨日',
-                '7d'        => '近七天',
-                '30d'       => '近30天',
+                '7d'        => '7天',
+                '30d'       => '30天',
             ];
             $timeList = [];
             foreach ($timeConst as $key => $forTime) {
@@ -540,7 +540,7 @@ class AccessLogController extends CrudController {
 
 
             $time = $search['time'] ?? '';
-            $selectTime = $search['selectTime'] ?? '';
+            $selectTime = $search['SelectTime'] ?? '';
             if (!empty($selectTime)) {
                 $start_time = $selectTime[0] ?? '';
                 $end_time = $selectTime[1] ?? '';
