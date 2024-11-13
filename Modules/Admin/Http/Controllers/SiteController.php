@@ -807,13 +807,19 @@ class SiteController extends CrudController {
                 'site'  => $site,
             ];
         } else {
-            if ($site == 'qyen') {
+            $siteInfo = Site::where('name', $site)->first();
+            if(empty($siteInfo )){
+                ReturnJson(false, '站点不存在!');
+            }
+            $is_local = $siteInfo->is_local;
+            if(empty($is_local )){
+                $third_domain = $siteInfo->third_domain;
                 $data = [
-                    'url'   => "http://giren.qyrdata.com/#{$site_redirect_url}",
+                    'url'   => "{$third_domain}/#{$site_redirect_url}",
                     'token' => $encryString,
                     'site'  => $site,
                 ];
-            } else {
+            }else{
                 $data = [
                     'url'   => "{$domain}/#{$site_redirect_url}",
                     'token' => $encryString,
