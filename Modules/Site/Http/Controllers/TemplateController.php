@@ -4,7 +4,10 @@ namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Modules\Admin\Http\Models\Role;
+use Modules\Admin\Http\Models\Rule;
 use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Products;
@@ -13,6 +16,7 @@ use Modules\Site\Http\Models\System;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
+use Modules\Site\Http\Models\TemplateUse;
 
 class TemplateController extends CrudController {
     public $classificationSubCode = 'classificationSubRules';
@@ -47,6 +51,22 @@ class TemplateController extends CrudController {
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
+            //不是超级管理员, 只展示当前角色已分配的模版
+            if (!$request->user->is_super) {
+                $postUsrList = $this->getSitePostUser();
+                $userIds = array_column($postUsrList, 'value');
+                $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
+                $model = $model->whereIn("id", $tempIdList);
+            }
+
+            //use_name_id
+            $searchStr = $request->input('search');
+            $search = @json_decode($searchStr, true);
+            if(!empty($search['use_name_id'] )){
+                $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")->toArray();
+                $model = $model->whereIn("id", $tempIdList);
+            }
+
             $recordList = $model->get();
             $dictModel = (new DictionaryValue());
             foreach ($recordList as $recordInfo) {
@@ -69,6 +89,22 @@ class TemplateController extends CrudController {
                     $recordInfo->cate_info = $cateInfo;
                 } else {
                     $recordInfo->cate_info = [];
+                }
+                //模版使用者昵称
+                $userIdList = TemplateUse::query()->where('temp_id', $recordInfo->id)->pluck('user_id')->toArray();
+                if (!empty($userIdList)) {
+                    $userList = User::query()->whereIn('id', $userIdList)->selectRaw('id as value , nickname as label ')
+                                    ->get()->toArray();
+                    $afterUserList = [];
+                    foreach ($userList as $userInfo) {
+                        $addData = [];
+                        $addData['value'] = $userInfo['value'];
+                        $addData['label'] = $userInfo['label'];
+                        $afterUserList[] = $addData;
+                    }
+                    $recordInfo->use_name_list = $afterUserList;
+                } else {
+                    $recordInfo->use_name_list = [];
                 }
             }
             $data = [
@@ -108,6 +144,9 @@ class TemplateController extends CrudController {
             $data['status'] = (new DictionaryValue())->GetListLabel(
                 $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
             );
+            //发帖用户
+            $postUserList = $this->getSitePostUser();
+            $data['post_user_list'] = $postUserList;
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -130,14 +169,15 @@ class TemplateController extends CrudController {
             }
             $modelInstance = $this->ModelInstance();
             $record = $modelInstance->create($input);
+            if (!$record) {
+                ReturnJson(false, trans('lang.add_error'));
+            }
             //先移除后添加
             $record->tempCates()->detach();
             if (!empty($cate_id_list)) {
                 $record->tempCates()->attach($cate_id_list);
             }
-            if (!$record) {
-                ReturnJson(false, trans('lang.add_error'));
-            }
+            $this->tempUseEdit($record, $input);
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -167,6 +207,7 @@ class TemplateController extends CrudController {
             if (!empty($cate_id_list)) {
                 $record->tempCates()->attach($cate_id_list);
             }
+            $this->tempUseEdit($request->id, $input);
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -227,10 +268,8 @@ class TemplateController extends CrudController {
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
         $tempContent = $template->content;
-
         //过滤模版标签的换行
         $tempContent = preg_replace('/(<\/[a-zA-Z][a-zA-Z0-9]*>)\r?\n/', '$1', $tempContent);
-
         // 处理模板变量   {{year}}
         $tempContent = $this->writeTempWord($tempContent, '{{year}}', date("Y"));
         // 处理模板变量   {{month}}
@@ -247,10 +286,8 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{seo_description}}', $pdArrData['description']);
         // 处理模板变量   {{toc}}
         $tempContent = $this->writeTempWord($tempContent, '{{toc}}', $pdArrData['table_of_content']);
-
         // 处理模板变量   {{tof}}
         $tempContent = $this->writeTempWord($tempContent, '{{tof}}', $pdArrData['tables_and_figures']);
-
         // 处理模板变量   {{company}}   (换行)
         $replaceWords = $pdArrData['companies_mentioned'];
         $replaceWords = $this->addChangeLineStr($replaceWords);
@@ -278,7 +315,6 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
-
         $tempContent = $this->handlerMuchLine($tempContent);
         $tempContent = str_replace(' ', '&nbsp;', $tempContent);
 
@@ -322,6 +358,7 @@ class TemplateController extends CrudController {
 
     /**
      * 处理多行
+     *
      * @param $sourceStr
      *
      * @return array|string|string[]
@@ -330,13 +367,12 @@ class TemplateController extends CrudController {
         return str_replace("\n", "<br/>", $sourceStr);
     }
 
-    public function getReportUrl($product)
-    {
+    public function getReportUrl($product) {
         $domain = getSiteDomain();
         if (!empty($product->url)) {
-            $url = $domain . "/reports/{$product->id}/$product->url";
+            $url = $domain."/reports/{$product->id}/$product->url";
         } else {
-            $url = $domain . "/reports/{$product->id}";
+            $url = $domain."/reports/{$product->id}";
         }
         $url = <<<EOF
 <a style="word-wrap:break-word;word-break:break-all;" href="{$url}" target="_blank" rel="noopener noreferrer nofollow">{$url}</a>
@@ -414,14 +450,12 @@ EOF;
         } else {
             $pdArrData['overview'] = '';
         }
-
         //报告图表
         if (isset($pdObj->tables_and_figures)) {
             $pdArrData['tables_and_figures'] = $pdObj->tables_and_figures;
         } else {
             $pdArrData['tables_and_figures'] = '';
         }
-
 
         return [$productArrData, $pdArrData];
     }
@@ -436,8 +470,8 @@ EOF;
         }
         $applicton = '';
         $rulesList = SystemValue::query()->where("parent_id", $systemId)
-                                         ->where("hidden" , 1)
-                                         ->pluck("value")->toArray();
+                                ->where("hidden", 1)
+                                ->pluck("value")->toArray();
         foreach ($rulesList as $forRule) {
             $pattern = '/'.$forRule.'[\r\n]+((?:(?:\s+[^\r\n]*[\r\n]+))*)/';
             if (preg_match($pattern, $description, $matches)) {
@@ -445,22 +479,20 @@ EOF;
                 $applicton = $matches[1];
             }
         }
+
         return $applicton;
     }
-
 
     public function autoIndent($text) {
         // 分割换行
         $lines = explode("\n", $text);
         $result = [];
-
         foreach ($lines as $line) {
             $line = trim($line);
-
             // 匹配 ( "1.1 ", "1.2.1 ")
             if (preg_match('/^(\d+(\.\d+)*)(.*)$/', $line, $matches)) {
                 $indentLevel = substr_count($matches[1], '.');
-                $indentedLine = str_repeat("  ", $indentLevel) . $line;
+                $indentedLine = str_repeat("  ", $indentLevel).$line;
                 $result[] = $indentedLine;
             } else {
                 $result[] = $line; // No change if the line does not match
@@ -470,4 +502,91 @@ EOF;
         return implode("\n", $result);
     }
 
+    public function getSitePostUser() {
+        //当前站点, 所有的使用者
+        $siteName = getSiteName();
+        $currentSiteId = Site::query()->where("name", $siteName)->value("id");
+        $roleList = Role::query()->where("status", 1)
+                        ->where("code", 'like', "%POST%")
+                        ->get()->toArray();
+        $afterRoleIdList = [];
+        foreach ($roleList as $roleInfo) {
+            if (!empty($roleInfo['site_id']) && is_array($roleInfo['site_id'])) {
+                $siteIds = $roleInfo['site_id'];
+                if (in_array($currentSiteId, $siteIds)) {
+                    $afterRoleIdList[] = $roleInfo['id'];
+                }
+            }
+        }
+        $userList = User::query()
+                        ->where("status", 1)
+                        ->where(function ($query) use ($afterRoleIdList) {
+                            foreach ($afterRoleIdList as $afRoleId) {
+                                $query->orWhere('role_id', 'like', "%{$afRoleId}%");
+                            }
+                        })
+                        ->selectRaw('id as value, nickname as label')
+                        ->get()
+                        ->toArray();
+        $afterUserList = [];
+        foreach ($userList as $userInfo) {
+            $addData = [];
+            $addData['value'] = $userInfo['value'];
+            $addData['label'] = $userInfo['label'];
+            $afterUserList[] = $addData;
+        }
+
+        return $afterUserList;
+    }
+
+    /**
+     *
+     * @param       $tempId
+     * @param mixed $input
+     *
+     */
+    private function tempUseEdit($tempId, array $input) {
+        //判断当前是否拥有该权限
+        //不是超级管理员
+        if (!request()->user->is_super) {
+            $siteName = getSiteName();
+            $currentSiteId = Site::query()->where("name", $siteName)->value("id");
+            $ruleIds = Rule::query()->whereIn("perm", ['products:template:normaledit', 'products:title:normaledit'])
+                           ->pluck("id")
+                           ->toArray();
+            if (!empty($ruleIds)) {
+                $currentUserId = request()->user->id;
+                $role_ids = User::query()->where('id', $currentUserId)->value('role_id');
+                $role_ids = explode(",", $role_ids);
+                $cnt = Role::query()->whereIn('id', $role_ids)
+                           ->where('status', 1)
+                           ->where('site_id', 'like', "%{$currentSiteId}%")
+                           ->where(function ($query) use ($ruleIds) {
+                               foreach ($ruleIds as $afRuleId) {
+                                   $query->orWhere('site_rule_id', 'like', "%{$afRuleId}%");
+                               }
+                           })->count();
+                //没权权限
+                if ($cnt <= 0) {
+                    return false;
+                }
+            } else {
+                //没配置权限
+                return false;
+            }
+        }
+        //维护模版使用者
+        TemplateUse::query()->where('temp_id', $tempId)->delete();
+        if (!empty($input['use_user_ids'])) {
+            $use_user_ids = $input['use_user_ids'];
+            $use_user_ids = explode(",", $use_user_ids);
+            foreach ($use_user_ids as $user_id) {
+                $temp_use_data = [
+                    'temp_id' => $tempId,
+                    'user_id' => $user_id,
+                ];
+                TemplateUse::query()->create($temp_use_data);
+            }
+        }
+    }
 }

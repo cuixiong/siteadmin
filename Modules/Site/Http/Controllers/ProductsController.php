@@ -11,7 +11,9 @@ use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
+use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Server;
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -35,6 +37,7 @@ use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 use Modules\Site\Http\Models\TemplateCateMapping;
+use Modules\Site\Http\Models\TemplateUse;
 use Modules\Site\Services\SenWordsService;
 use Modules\Site\Services\SphinxService;
 use XS;
@@ -1459,7 +1462,7 @@ class ProductsController extends CrudController {
             $file_path = $basePath.$logData['file'];
             $fileAbsultPath = str_replace(public_path(), '', $file_path);
             $domain = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
-            $newDownUrl = $domain . $fileAbsultPath;
+            $newDownUrl = $domain.$fileAbsultPath;
             ReturnJson(true, 'ok', ['down_url' => $newDownUrl]);
         }
         ReturnJson(true, trans('lang.file_not_exist'));
@@ -1669,6 +1672,15 @@ class ProductsController extends CrudController {
                 $matchTempLateList[] = $templateInfo;
             }
         }
+        //不是超级管理员
+        $currentUsetempIdList = [];
+        if (!request()->user->is_super) {
+            $postUsrList = $this->getSitePostUser();
+            $userIds = array_column($postUsrList, 'value');
+            $currentUsetempIdList = TemplateUse::query()
+                                               ->whereIn('user_id', $userIds)
+                                               ->pluck("temp_id")->toArray();
+        }
 //        $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
 //        $matchTempLateList = Template::whereIn('id', $tempIdList)
 //                                     ->where("status", 1)
@@ -1678,6 +1690,12 @@ class ProductsController extends CrudController {
         $template_title_list = [];
         //区分标题模板 , 内容模板
         foreach ($matchTempLateList as $forTempInfo) {
+            //不是超级管理员, 需要过滤模版
+            if (!request()->user->is_super) {
+                if (!in_array($forTempInfo['id'], $currentUsetempIdList)) {
+                    continue;
+                }
+            }
             //按钮颜色详情
             $btnColorId = $forTempInfo['btn_color'];
             if (!empty($this->dictList[$btnColorId])) {
@@ -1697,6 +1715,43 @@ class ProductsController extends CrudController {
         $rdata['template_title_list'] = $template_title_list;
 
         return $rdata;
+    }
+
+    public function getSitePostUser() {
+        //当前站点, 所有的使用者
+        $siteName = getSiteName();
+        $currentSiteId = Site::query()->where("name", $siteName)->value("id");
+        $roleList = Role::query()->where("status", 1)
+                        ->where("code", 'like', "%POST")
+                        ->get()->toArray();
+        $afterRoleIdList = [];
+        foreach ($roleList as $roleInfo) {
+            if (!empty($roleInfo['site_id']) && is_array($roleInfo['site_id'])) {
+                $siteIds = $roleInfo['site_id'];
+                if (in_array($currentSiteId, $siteIds)) {
+                    $afterRoleIdList[] = $roleInfo['id'];
+                }
+            }
+        }
+        $userList = User::query()
+                        ->where("status", 1)
+                        ->where(function ($query) use ($afterRoleIdList) {
+                            foreach ($afterRoleIdList as $afRoleId) {
+                                $query->orWhere('role_id', 'like', "%{$afRoleId}%");
+                            }
+                        })
+                        ->selectRaw('id as value, nickname as label')
+                        ->get()
+                        ->toArray();
+        $afterUserList = [];
+        foreach ($userList as $userInfo) {
+            $addData = [];
+            $addData['value'] = $userInfo['value'];
+            $addData['label'] = $userInfo['label'];
+            $afterUserList[] = $addData;
+        }
+
+        return $afterUserList;
     }
 
     /**
