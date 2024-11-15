@@ -680,12 +680,10 @@ Route::middleware([
     // 访问日志记录
     Route::prefix('access-log')->group(function () {
         Route::get('search-droplist', [Modules\Site\Http\Controllers\AccessLogController::class, 'searchDroplist'])->name('访问日志:搜索下拉列表数据');
-        Route::get('ip-report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'ipReportForms'])->name('访问日志:IP报表');
-        Route::get('ua-report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'uaReportForms'])->name('访问日志:UA报表');
-        Route::get('referer-report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'refererReportForms'])->name('访问日志:来源报表');
-
+        Route::get('report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'ReportForms'])->name('访问日志:报表');
+        Route::get('copy-field', [Modules\Site\Http\Controllers\AccessLogController::class, 'copyField'])->name('访问日志:拷贝字段');
         Route::get('access-detail-list', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessDetailList'])->name('访问日志:报表详情');
-        Route::get('access-log-del', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessLogDel'])->name('访问日志:报表日志删除');
+        Route::post('access-log-del', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessLogDel'])->name('访问日志:报表日志删除');
     });
 
 
