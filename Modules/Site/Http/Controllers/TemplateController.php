@@ -33,8 +33,6 @@ class TemplateController extends CrudController {
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
-            // 总数量
-            $total = $model->count();
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -66,7 +64,8 @@ class TemplateController extends CrudController {
                 $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")->toArray();
                 $model = $model->whereIn("id", $tempIdList);
             }
-
+            // 总数量
+            $total = $model->count();
             $recordList = $model->get();
             $dictModel = (new DictionaryValue());
             foreach ($recordList as $recordInfo) {

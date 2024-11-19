@@ -1677,9 +1677,11 @@ class ProductsController extends CrudController {
         if (!request()->user->is_super) {
             $postUsrList = $this->getSitePostUser();
             $userIds = array_column($postUsrList, 'value');
-            $currentUsetempIdList = TemplateUse::query()
-                                               ->whereIn('user_id', $userIds)
-                                               ->pluck("temp_id")->toArray();
+            if (in_array(request()->user->id, $userIds)) {
+                $currentUsetempIdList = TemplateUse::query()
+                                                   ->where('user_id', request()->user->id)
+                                                   ->pluck("temp_id")->toArray();
+            }
         }
 //        $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
 //        $matchTempLateList = Template::whereIn('id', $tempIdList)
