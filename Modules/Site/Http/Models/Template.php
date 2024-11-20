@@ -47,7 +47,7 @@ class Template extends Base {
                     $model = $model->where($key, '>=', $time[0]);
                     $model = $model->where($key, '<=', $time[1]);
                 } else if (in_array($key, $userField) && !empty($value)) {
-                    $userIds = Admin::where('name', 'like', '%'.$value.'%')->pluck('id');
+                    $userIds = Admin::where('nickname', 'like', '%'.$value.'%')->pluck('id')->toArray();
                     $userIds = $userIds ? $userIds : [];
                     $model = $model->whereIn($key, $userIds);
                 }

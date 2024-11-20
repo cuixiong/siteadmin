@@ -16,6 +16,9 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 */
 InitializeTenancyByRequestData::$header = 'Site';
 InitializeTenancyByRequestData::$queryParameter = null;
+
+
+Route::get('check-user-email', [\App\Http\Controllers\LoginController::class,'checkUserEmail'])->middleware('language');// 用户邮箱校验
 // Login控制器
 Route::post('login', [\App\Http\Controllers\LoginController::class,'login'])->middleware('language');// 账号登陆
 Route::middleware('language')->post('register', [\App\Http\Controllers\LoginController::class,'register']);// 账号注册

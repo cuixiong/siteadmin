@@ -13,6 +13,24 @@ use Modules\Admin\Http\Models\Site;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller {
+
+
+    public function checkUserEmail(Request $request) {
+        $email = $request->get('email');
+        //校验邮箱规则
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            ReturnJson(false, trans('lang.eamail_email'));
+        }
+
+        $cnt = \Modules\Admin\Http\Models\User::query()->where("email" , $email)->count();
+        if($cnt > 0){
+            ReturnJson(false, trans('lang.eamail_unique'));
+        }else{
+            ReturnJson(true);
+        }
+
+    }
+
     /**
      * user login
      *

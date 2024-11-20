@@ -33,6 +33,25 @@ class TemplateController extends CrudController {
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
+
+            //不是超级管理员, 只展示当前角色已分配的模版
+//            if (!$request->user->is_super) {
+//                $postUsrList = $this->getSitePostUser();
+//                $userIds = array_column($postUsrList, 'value');
+//                $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
+//                $model = $model->whereIn("id", $tempIdList);
+//            }
+
+            //use_name_id
+            $searchStr = $request->input('search');
+            $search = @json_decode($searchStr, true);
+            if(!empty($search['use_name_id'] )){
+                $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")->toArray();
+                $model = $model->whereIn("id", $tempIdList);
+            }
+            // 总数量
+            $total = $model->count();
+
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -49,23 +68,6 @@ class TemplateController extends CrudController {
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-            //不是超级管理员, 只展示当前角色已分配的模版
-            if (!$request->user->is_super) {
-                $postUsrList = $this->getSitePostUser();
-                $userIds = array_column($postUsrList, 'value');
-                $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
-                $model = $model->whereIn("id", $tempIdList);
-            }
-
-            //use_name_id
-            $searchStr = $request->input('search');
-            $search = @json_decode($searchStr, true);
-            if(!empty($search['use_name_id'] )){
-                $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")->toArray();
-                $model = $model->whereIn("id", $tempIdList);
-            }
-            // 总数量
-            $total = $model->count();
             $recordList = $model->get();
             $dictModel = (new DictionaryValue());
             foreach ($recordList as $recordInfo) {

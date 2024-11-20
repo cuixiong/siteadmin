@@ -684,6 +684,11 @@ Route::middleware([
         Route::get('copy-field', [Modules\Site\Http\Controllers\AccessLogController::class, 'copyField'])->name('访问日志:拷贝字段');
         Route::get('access-detail-list', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessDetailList'])->name('访问日志:报表详情');
         Route::post('access-log-del', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessLogDel'])->name('访问日志:报表日志删除');
+
+        Route::post('access-log-export', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessLogExport'])->name('访问日志:报表日志导出');
+        Route::post('export-process', [Modules\Site\Http\Controllers\AccessLogController::class, 'exportProcess'])->name('访问日志:导出进度');
+        Route::post('newexport-file-download', [Modules\Site\Http\Controllers\AccessLogController::class, 'newExportFileDownload'])->name('访问日志:新下载导出文件');
+
     });
 
 

@@ -12,9 +12,26 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Const\QueueConst;
+use App\Jobs\ExportAccess;
+use App\Jobs\ExportProduct;
+use App\Jobs\HandlerExportExcel;
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Modules\Admin\Http\Models\Site;
+use Modules\Site\Http\Models\AccessExportLog;
 use Modules\Site\Http\Models\AccessLog;
+use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Site\Http\Models\ProductsDescription;
+use Modules\Site\Http\Models\ProductsExcelField;
+use Modules\Site\Http\Models\ProductsExportLog;
+use Modules\Site\Http\Models\ViewProductsExportLog;
+use Modules\Site\Http\Models\ViewProductsLog;
 use Modules\Site\Services\IPAddrService;
 
 class AccessLogController extends CrudController {
@@ -60,6 +77,12 @@ class AccessLogController extends CrudController {
         }
     }
 
+    /**
+     * 三个报表
+     *
+     * @param Request $request
+     *
+     */
     public function ReportForms(Request $request) {
         //5分钟 , 今日, 昨日, 近一小时, 近七天, 近30天
         try {
@@ -209,6 +232,12 @@ class AccessLogController extends CrudController {
         return $cnt;
     }
 
+    /**
+     * 根据当前条件, 当前ip/引用头 获取访问详情
+     *
+     * @param Request $request
+     *
+     */
     public function accessDetailList(Request $request) {
         try {
             $searchStr = $request->input('search');
@@ -290,6 +319,12 @@ class AccessLogController extends CrudController {
         return $list_all;
     }
 
+    /**
+     * 根据条件去筛选 拷贝ip
+     *
+     * @param Request $request
+     *
+     */
     public function copyField(Request $request) {
         try {
             $searchStr = $request->input('search');
@@ -364,7 +399,8 @@ class AccessLogController extends CrudController {
                                    ->where($searchCondition)
                                    ->whereBetween('created_at', [$start_time, $end_time])
                                    ->groupBy($field)
-                                   ->selectRaw($field." as target_field ")
+                                   ->selectRaw($field." as target_field , count(*) as count ")
+                                   ->orderBy('count', 'desc')
                                    ->get()->toArray();
             $ipList = [];
             foreach ($list as $info) {
@@ -403,20 +439,20 @@ class AccessLogController extends CrudController {
                     if ($key == 'ip' && is_array($value)) {
                         if ($ip_muti_str == 'ip_muti_second') {
                             $searchCondition[] = ['ip_muti_second', 'in', $value];
-                            $accessLogModel = $accessLogModel->whereIn("ip_muti_second" , $value);
+                            $accessLogModel = $accessLogModel->whereIn("ip_muti_second", $value);
                         } elseif ($ip_muti_str == 'ip_muti_third') {
                             $searchCondition[] = ['ip_muti_third', 'in', $value];
-                            $accessLogModel = $accessLogModel->whereIn("ip_muti_third" , $value);
+                            $accessLogModel = $accessLogModel->whereIn("ip_muti_third", $value);
                         } else {
                             $searchCondition[] = ['ip', 'in', $value];
-                            $accessLogModel = $accessLogModel->whereIn("ip" , $value);
+                            $accessLogModel = $accessLogModel->whereIn("ip", $value);
                         }
                     } elseif ($key == 'referer' && is_array($value)) {
                         $searchCondition['referer'] = $value;
-                        $accessLogModel = $accessLogModel->whereIn("referer" , $value);
+                        $accessLogModel = $accessLogModel->whereIn("referer", $value);
                     } elseif ($key == 'ua_info' && is_array($value)) {
                         $searchCondition['ua_info'] = $value;
-                        $accessLogModel = $accessLogModel->whereIn("ua_info" , $value);
+                        $accessLogModel = $accessLogModel->whereIn("ua_info", $value);
                     }
                 }
             }
@@ -466,5 +502,463 @@ class AccessLogController extends CrudController {
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    public function accessLogExport(Request $request) {
+        //默认条件筛选
+        $search_type = $request->input('search_type', 1);
+        $type = $request->input('type', 1);
+        if ($search_type == 1) {
+            $conditionModel = $this->getSearchCondition($request);
+        } else {
+            $conditionModel = $this->getSelectCondition($request);
+        }
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $cnt = $this->getCntByCondition($conditionModel);
+            $data['count'] = $cnt;
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } else {
+            $ids = $conditionModel->pluck('id')->toArray();
+            if (empty($ids)) {
+                ReturnJson(true, trans('lang.data_empty'));
+            }
+            //加入队列
+            $basePath = public_path();
+            $dirMiddlePath = '/site/'.$request->header('Site').'/exportDir/';
+            //检验目录是否存在
+            if (!is_dir($basePath.$dirMiddlePath)) {
+                @mkdir($basePath.$dirMiddlePath, 0777, true);
+            }
+            //定义导出文件名
+            $dirName = "access_log_export_".time();
+            $filePath = $dirMiddlePath.$dirName.'.xlsx';
+            //导出记录初始化,每个文件单独一条记录
+            $logModel = AccessExportLog::create([
+                                                    'file'  => $filePath,
+                                                    'count' => count($ids),
+                                                ]);
+            $isQueue = false;
+            $data = [
+                'class'  => 'Modules\Site\Http\Controllers\AccessLogController',
+                'method' => 'handleExportExcel',
+                'site'   => $request->header('Site') ?? '',   //站点名称
+                'data'   => $ids,    //要导出的报告id数据
+                'log_id' => $logModel->id,  //写入日志的id
+            ];
+            if ($isQueue) {
+                $data = json_encode($data);
+                ExportAccess::dispatch($data)->onQueue(QueueConst::QUEEU_EXPORT_ACCESS_LOG);
+            } else {
+                $this->handleExportExcel($data);
+            }
+            ReturnJson(true, trans('lang.request_success'), $logModel->id);
+        }
+    }
+
+    /**
+     * 批量导出excel-导出到多个文件
+     *
+     * @param $params
+     */
+    public function handleExportExcel($params) {
+        set_time_limit(0);
+        ini_set('memory_limit', '2048M');
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+        $exportLogInfo = AccessExportLog::find($params['log_id']);
+        try {
+            //读取数据
+            $model = new AccessLog();
+            $idList = $params['data'];
+            $record = $model->whereIn('id', $idList)->get()->toArray();
+            $writer = WriterEntityFactory::createXLSXWriter();
+            $filename = public_path().$exportLogInfo['file'];
+            if (!file_exists($filename)) {
+                file_put_contents($filename, '');
+            }
+            $writer->openToFile($filename);
+            // 数据数组（每个数组表示一个工作表的数据）
+            //ip数组
+            $sheetsDataList = [];
+            $sheetsData = [];
+            $sheetsData[] = ['编号', 'IP', '归属地', '访问地址', '请求时间', '流量'];
+            foreach ($record as $key => $value) {
+                $rows = [];
+                $rows[] = $value['id'];
+                $rows[] = $value['ip'];
+                $rows[] = $value['ip_addr'];
+                $rows[] = $value['route'];
+                $rows[] = date('Y-m-d H:i:s', $value['log_time']);
+                $rows[] = bcdiv(1 , count($idList) , 2);
+                $sheetsData[] = $rows;
+            }
+            $sheetsDataList['IP统计'] = $sheetsData;
+            $sheetsData = [];
+            $sheetsData[] = ['编号', 'UA头', '归属地', '访问地址', '请求时间', '流量'];
+            foreach ($record as $key => $value) {
+                $rows = [];
+                $rows[] = $value['id'];
+                $rows[] = $value['ua_info'];
+                $rows[] = $value['ip_addr'];
+                $rows[] = $value['route'];
+                $rows[] = date('Y-m-d H:i:s', $value['log_time']);
+                $rows[] = bcdiv(1 , count($idList) , 2);
+                $sheetsData[] = $rows;
+            }
+            $sheetsDataList['UA统计'] = $sheetsData;
+            $sheetsData = [];
+            $sheetsData[] = ['编号', '来源', '访问地址', '请求时间', '流量'];
+            foreach ($record as $key => $value) {
+                $rows = [];
+                $rows[] = $value['id'];
+                $rows[] = $value['referer'];
+                $rows[] = $value['route'];
+                $rows[] = date('Y-m-d H:i:s', $value['log_time']);
+                $rows[] = bcdiv(1 , count($idList) , 2);
+                $sheetsData[] = $rows;
+            }
+            $sheetsDataList['来源统计'] = $sheetsData;
+            // 遍历工作表数据并创建工作表
+            foreach ($sheetsDataList as $sheetName => $rows) {
+                // 创建新工作表
+                if ($sheetName != 'IP统计') {
+                    $sheet = $writer->addNewSheetAndMakeItCurrent();
+                } else {
+                    $sheet = $writer->getCurrentSheet(); // 保持当前表
+                }
+                $sheet->setName($sheetName); // 设置工作表名称
+                // 写入数据行
+                foreach ($rows as $row) {
+                    $rowEntity = WriterEntityFactory::createRowFromArray($row);
+                    $writer->addRow($rowEntity);
+                }
+            }
+            $writer->close();
+        } catch (\Exception $th) {
+            $details = $th->getMessage();
+            throw $th;
+        }
+        //记录任务状态
+        $logModel = AccessExportLog::where(['id' => $params['log_id']])->first();
+        $logData = [
+            'state' => AccessExportLog::EXPORT_COMPLETE,
+        ];
+        $logData['success_count'] = count($record);
+        $logModel->update($logData);
+
+        return true;
+    }
+
+//    /**
+//     * 批量导出-合并文件
+//     *
+//     * @param $params
+//     */
+//    public function handleMergeFile($params = null) {
+//        try {
+//            set_time_limit(0);
+//            ini_set('memory_limit', '2048M');
+//            $dirPath = $params['dirPath'];
+//            // 扫描目录下的所有文件
+//            $existingFilePath = scandir($dirPath);
+//            $existingFilePath = array_values(
+//                array_filter($existingFilePath, function ($item) {
+//                    return $item !== '.' && $item !== '..';
+//                })
+//            );
+//            // $existingFilePath = ['0.xlsx', '1.xlsx', '2.xlsx'];
+//            $dirPath = $params['data'];
+//            $writer = WriterEntityFactory::createXLSXWriter();
+//            $writer->openToFile($dirPath.'.xlsx');
+//            $style = (new StyleBuilder())->setShouldWrapText(false)->build();
+//            //写入标题
+//            $title = ['编号', 'IP', '归属地', '访问地址', '请求时间', '流量'];
+//            $row = WriterEntityFactory::createRowFromArray($title, $style);
+//            $writer->addRow($row);
+//            //循环读取文件，写入excel
+//            foreach ($existingFilePath as $key => $path) {
+//                // we need a reader to read the existing file...
+//                $reader = ReaderEntityFactory::createXLSXReader();
+//                $reader->setShouldPreserveEmptyRows(true);
+//                $reader->open($dirPath.'/'.$path);
+//                // let's read the entire spreadsheet...
+//                foreach ($reader->getSheetIterator() as $sheetIndex => $sheet) {
+//                    // Add sheets in the new file, as we read new sheets in the existing one
+//                    foreach ($sheet->getRowIterator() as $row) {
+//                        // ... and copy each row into the new spreadsheet
+//                        $row = WriterEntityFactory::createRowFromArray($row->toArray(), $style);
+//                        $writer->addRow($row);
+//                    }
+//                }
+//                $reader->close();
+//            }
+//            $writer->close();
+//        } catch (\Throwable $th) {
+//            // file_put_contents('C:\\Users\\Administrator\\Desktop\\aaaaa.txt', $th->getLine().$th->getMessage().$th->getTraceAsString(), FILE_APPEND);
+//            $details = $th->getMessage();
+//        }
+//        //记录任务状态
+//        $logModel = AccessExportLog::where(['id' => $params['log_id']])->first();
+//        $logData = [
+//            'state' => AccessExportLog::EXPORT_COMPLETE,
+//        ];
+//        if (isset($details)) {
+//            $logData['details'] = $logModel->details.$details;
+//        }
+//        $logModel->update($logData);
+//        //删除临时文件夹
+//        if ($existingFilePath) {
+//            foreach ($existingFilePath as $path) {
+//                @unlink($dirPath.'/'.$path);
+//            }
+//            @rmdir($dirPath);
+//        }
+//    }
+
+
+    /**
+     *
+     * @param Request $request
+     *
+     * @return array|mixed
+     */
+    private function getSearchCondition(Request $request) {
+        $accessLogModel = new AccessLog();
+        //显示IP ,  归属地 ,  请求数
+        $searchStr = $request->input('search');
+        $search = @json_decode($searchStr, true);
+        $searchCondition = [];
+        //选项页
+        $tab = $request->input('tab', 'ip'); //ip , referer , ua_info
+        //搜索条件
+        if (!empty($search)) {
+            foreach ($search as $key => $value) {
+                if ($key == 'ip' && !empty($value)) {
+                    $ipList = explode(".", $value);
+                    $ipCnt = count($ipList);
+                    if ($ipCnt == 2) {
+                        $searchCondition['ip_muti_second'] = $value;
+                    } elseif ($ipCnt == 3) {
+                        $searchCondition['ip_muti_third'] = $value;
+                    } else {
+                        $searchCondition['ip'] = $value;
+                    }
+                } elseif ($key == 'ip_addr' && !empty($value)) {
+                    $searchCondition['ip_addr'] = $value;
+                } elseif ($key == 'referer' && !empty($value)) {
+                    $searchCondition['referer'] = $value;
+                } elseif ($key == 'ua_info' && !empty($value)) {
+                    $searchCondition['ua_info'] = $value;
+                }
+            }
+        }
+        $accessLogModel = $accessLogModel->where($searchCondition);
+        //时间条件
+        $time = $search['time'] ?? '';
+        $selectTime = $search['selectTime'] ?? '';
+        if (!empty($selectTime)) {
+            $start_time = $selectTime[0] ?? '';
+            $end_time = $selectTime[1] ?? '';
+        }
+        if (!empty($start_time) && !empty($end_time)) {
+            $srartTimeCoon = Carbon::parse($start_time);
+            $endTimeCoon = Carbon::parse($end_time);
+            $start_time = $srartTimeCoon->getTimestamp();
+            $end_time = $endTimeCoon->getTimestamp();
+        } else {
+            $endTimeCoon = Carbon::now();
+            if ($time == '1m') {
+                $srartTimeCoon = Carbon::now()->subMinutes(1);
+            } elseif ($time == '5m') {
+                $srartTimeCoon = Carbon::now()->subMinutes(5);
+            } elseif ($time == '1h') {
+                $srartTimeCoon = Carbon::now()->subHour();
+            } elseif ($time == 'today') {
+                $srartTimeCoon = Carbon::today();
+            } elseif ($time == 'yesterday') {
+                $srartTimeCoon = Carbon::yesterday();
+            } elseif ($time == '7d') {
+                $srartTimeCoon = Carbon::now()->subDays(7);
+            } elseif ($time == '30d') {
+                $srartTimeCoon = Carbon::now()->subDays(30);
+            } else {
+                $srartTimeCoon = Carbon::now()->subMinutes(1);
+            }
+            $start_time = $srartTimeCoon->getTimestamp();
+            $end_time = $endTimeCoon->getTimestamp();
+        }
+        $accessLogModel = $accessLogModel->whereBetween('created_at', [$start_time, $end_time]);
+
+        return $accessLogModel;
+    }
+
+    /**
+     *
+     * @param Request $request
+     *
+     * @return array|mixed
+     */
+    private function getSelectCondition(Request $request) {
+        $searchStr = $request->input('search');
+        $search = @json_decode($searchStr, true);
+        $ip_muti_str = $search['ip_muti_str'] ?? 'ip_muti_second';
+        $searchCondition = [];
+        //搜索条件
+        $accessLogModel = new AccessLog();
+        if (!empty($search)) {
+            foreach ($search as $key => $value) {
+                if ($key == 'ip' && is_array($value)) {
+                    if ($ip_muti_str == 'ip_muti_second') {
+                        $searchCondition[] = ['ip_muti_second', 'in', $value];
+                        $accessLogModel = $accessLogModel->whereIn("ip_muti_second", $value);
+                    } elseif ($ip_muti_str == 'ip_muti_third') {
+                        $searchCondition[] = ['ip_muti_third', 'in', $value];
+                        $accessLogModel = $accessLogModel->whereIn("ip_muti_third", $value);
+                    } else {
+                        $searchCondition[] = ['ip', 'in', $value];
+                        $accessLogModel = $accessLogModel->whereIn("ip", $value);
+                    }
+                } elseif ($key == 'referer' && is_array($value)) {
+                    $searchCondition['referer'] = $value;
+                    $accessLogModel = $accessLogModel->whereIn("referer", $value);
+                } elseif ($key == 'ua_info' && is_array($value)) {
+                    $searchCondition['ua_info'] = $value;
+                    $accessLogModel = $accessLogModel->whereIn("ua_info", $value);
+                }
+            }
+        }
+        if (empty($searchCondition)) {
+            ReturnJson(false, trans('请选中条件'));
+        }
+        //时间条件
+        $time = $search['time'] ?? '';
+        $selectTime = $search['selectTime'] ?? '';
+        if (!empty($selectTime)) {
+            $start_time = $selectTime[0] ?? '';
+            $end_time = $selectTime[1] ?? '';
+        }
+        if (!empty($start_time) && !empty($end_time)) {
+            $srartTimeCoon = Carbon::parse($start_time);
+            $endTimeCoon = Carbon::parse($end_time);
+        } else {
+            $endTimeCoon = Carbon::now();
+            if ($time == '1m') {
+                $srartTimeCoon = Carbon::now()->subMinutes(1);
+            } elseif ($time == '5m') {
+                $srartTimeCoon = Carbon::now()->subMinutes(5);
+            } elseif ($time == '1h') {
+                $srartTimeCoon = Carbon::now()->subHour();
+            } elseif ($time == 'today') {
+                $srartTimeCoon = Carbon::today();
+            } elseif ($time == 'yesterday') {
+                $srartTimeCoon = Carbon::yesterday();
+            } elseif ($time == '7d') {
+                $srartTimeCoon = Carbon::now()->subDays(7);
+            } elseif ($time == '30d') {
+                $srartTimeCoon = Carbon::now()->subDays(30);
+            } else {
+                //默认1分钟
+                $srartTimeCoon = Carbon::now()->subMinutes(1);
+            }
+        }
+        //$searchCondition
+        $start_time = $srartTimeCoon->getTimestamp();
+        $end_time = $endTimeCoon->getTimestamp();
+        $accessLogModel = $accessLogModel->whereBetween('created_at', [$start_time, $end_time]);
+
+        return $accessLogModel;
+    }
+
+    public function getCntByCondition($conditionModel) {
+        return $conditionModel->count();
+    }
+
+    /**
+     * 导出进度
+     *
+     * @param $request 请求信息
+     */
+    public function exportProcess(Request $request) {
+        $logId = $request->id;
+        if (empty($logId)) {
+            ReturnJson(true, trans('lang.param_empty'));
+        }
+        $logData = AccessExportLog::where('id', $logId)->first();
+        if ($logData) {
+            $logData = $logData->toArray();
+        } else {
+            ReturnJson(true, trans('lang.data_empty'));
+        }
+        $data = [
+            'result' => true,
+            'msg'    => '',
+            'file'   => $logData['file'],
+        ];
+        $text = '';
+        $updateTime = 0;
+        $updatedTimestamp = strtotime($logData['updated_at']);
+        if ($updatedTimestamp > $updateTime) {
+            $updateTime = $updatedTimestamp;
+        }
+        switch ($logData['state']) {
+            case AccessExportLog::EXPORT_INIT:
+                $text = trans('lang.export_init_msg');
+                break;
+            case AccessExportLog::EXPORT_RUNNING:
+                $text = trans('lang.export_running_msg').($logData['success_count'] + $logData['error_count']).'/'
+                        .$logData['count'];
+                break;
+            case AccessExportLog::EXPORT_MERGING:
+                $text = trans('lang.export_merging_msg');
+                break;
+            case AccessExportLog::EXPORT_COMPLETE:
+                $text = trans('lang.export_complete_msg');
+                break;
+            default:
+                # code...
+                break;
+        }
+        $data['msg'] = $text;
+        //五分钟没反应则提示
+
+        if (time() > $updateTime + 60 * 5 && $logData['state'] != AccessExportLog::EXPORT_COMPLETE) {
+            $data = [
+                'result' => false,
+                'msg'    => trans('lang.time_out'),
+            ];
+        }
+        ReturnJson(true, trans('lang.request_success'), $data);
+    }
+
+    /**
+     * 新下载导出文件
+     *
+     * @param $request 请求信息
+     */
+    public function newExportFileDownload(Request $request) {
+        $logId = $request->id;
+        if (empty($logId)) {
+            ReturnJson(true, trans('lang.param_empty'));
+        }
+        $logData = AccessExportLog::where('id', $logId)->first();
+        if ($logData) {
+            $logData = $logData->toArray();
+        } else {
+            ReturnJson(true, trans('lang.data_empty'));
+        }
+        if ($logData['state'] == AccessExportLog::EXPORT_COMPLETE) {
+            $basePath = public_path();
+            $file_path = $basePath.$logData['file'];
+            $fileAbsultPath = str_replace(public_path(), '', $file_path);
+            $domain = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
+            $newDownUrl = $domain.$fileAbsultPath;
+            ReturnJson(true, 'ok', ['down_url' => $newDownUrl]);
+        }
+        ReturnJson(true, trans('lang.file_not_exist'));
     }
 }

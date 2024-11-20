@@ -35,4 +35,7 @@ class QueueConst {
 
     // php artisan queue:work --queue=notify_site
     const QUEUE_NOTIFY_SITE = 'notify_site';  // 异步通知站点队列
+
+    // php artisan queue:work --queue=export_access_log
+    const QUEEU_EXPORT_ACCESS_LOG = 'export_access_log';  // 导出访问记录队列
 }
