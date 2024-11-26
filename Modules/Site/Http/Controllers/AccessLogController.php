@@ -158,6 +158,7 @@ class AccessLogController extends CrudController {
                 }
                 $list = $this->getCountInTable($srartTimeCoon, $now, $tab, $searchCondition, $is_delete);
             }
+            $data['total'] = $this->total;
             $data['list'] = $list;
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -198,7 +199,7 @@ class AccessLogController extends CrudController {
         $list = $list->orderBy('count', 'desc')
                      ->selectRaw(
                          $field
-                         .' as targetField , count(*) as count, max(route) as route , max(log_time) as log_time , max(ip) as ip_refer  '
+                         .' as targetField , count(*) as count, max(route) as route , max(log_time) as log_time , max(ip) as ip_refer , sum(content_size) as content_size '
                      );
         // 查询偏移量
         $request = request();
@@ -210,6 +211,8 @@ class AccessLogController extends CrudController {
             $value['percent'] = round($value['count'] / $sumCnt * 100, 2);
             $value['ip_addr'] = (new IPAddrService($value['ip_refer']))->getAddrStrByIp();
             $value['log_time'] = date("Y-m-d H:i:s", $value['log_time']);
+
+            $value['content_size'] = $this->formatBytes($value['content_size']);
         }
 
         return $list;
@@ -258,7 +261,7 @@ class AccessLogController extends CrudController {
                         }
                     } elseif ($key == 'ip_addr' && !empty($value)) {
                         $searchCondition['ip_addr'] = $value;
-                    } elseif ($key == 'referer' && !empty($value)) {
+                    } elseif ($key == 'referer') {
                         $searchCondition['referer'] = $value;
                     } elseif ($key == 'ua_info' && !empty($value)) {
                         $searchCondition['ua_info'] = $value;
@@ -298,6 +301,9 @@ class AccessLogController extends CrudController {
             }
             //$searchCondition
             $list = $this->getAcrossTablesDetail($srartTimeCoon, $endTimeCoon, $searchCondition);
+            $sumContentSize = array_column($list , 'content_size');
+            $sumContentSize = array_sum($sumContentSize);
+            $data['sum_size'] = $this->formatBytes($sumContentSize);
             $data['list'] = $list;
             $data['count'] = count($list);
             ReturnJson(true, trans('lang.request_success'), $data);
@@ -594,7 +600,7 @@ class AccessLogController extends CrudController {
                 $rows[] = $value['ip_addr'];
                 $rows[] = $value['route'];
                 $rows[] = date('Y-m-d H:i:s', $value['log_time']);
-                $rows[] = bcdiv(1 , count($idList) , 2);
+                $rows[] = $this->formatBytes($value['content_size']);
                 $sheetsData[] = $rows;
             }
             $sheetsDataList['IP统计'] = $sheetsData;
@@ -607,7 +613,7 @@ class AccessLogController extends CrudController {
                 $rows[] = $value['ip_addr'];
                 $rows[] = $value['route'];
                 $rows[] = date('Y-m-d H:i:s', $value['log_time']);
-                $rows[] = bcdiv(1 , count($idList) , 2);
+                $rows[] = $this->formatBytes($value['content_size']);
                 $sheetsData[] = $rows;
             }
             $sheetsDataList['UA统计'] = $sheetsData;
@@ -619,7 +625,7 @@ class AccessLogController extends CrudController {
                 $rows[] = $value['referer'];
                 $rows[] = $value['route'];
                 $rows[] = date('Y-m-d H:i:s', $value['log_time']);
-                $rows[] = bcdiv(1 , count($idList) , 2);
+                $rows[] = $this->formatBytes($value['content_size']);
                 $sheetsData[] = $rows;
             }
             $sheetsDataList['来源统计'] = $sheetsData;
@@ -961,4 +967,16 @@ class AccessLogController extends CrudController {
         }
         ReturnJson(true, trans('lang.file_not_exist'));
     }
+
+    public function formatBytes($bytes)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+
+        for ($i = 0; $bytes > 1024; $i++) {
+            $bytes /= 1024;
+        }
+
+        return round($bytes, 2) . ' ' . $units[$i];
+    }
+
 }
