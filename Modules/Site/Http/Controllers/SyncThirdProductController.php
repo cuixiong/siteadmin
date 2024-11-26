@@ -423,6 +423,7 @@ class SyncThirdProductController extends CrudController {
                 } else {
                     $item['cagr'] = '';
                 }
+
                 //详情数据
                 $itemDescription = [];
                 if (!empty($row['description'])) {
@@ -523,6 +524,10 @@ class SyncThirdProductController extends CrudController {
                  * 数据库操作
                  */
                 if ($product) {
+                    //新增字段 初始化一个浏览次数和下载次数,存在则不修改
+                    $item['hits'] = mt_rand(100, 500);
+                    $item['downloads'] = mt_rand(10, 99);
+                    
                     $itemDescription['product_id'] = $product->id;
                     //旧纪录年份
                     $oldPublishedDate = $product->published_date;
