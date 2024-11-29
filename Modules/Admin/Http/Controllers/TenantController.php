@@ -71,7 +71,7 @@ class TenantController extends Controller
      * @param string $DB_PASSWORD 数据库密码
      * @param string $DB_PORT 数据库端口
      */
-    public function updateTenant($oldName, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
+    public function updateTenant($oldDomain, $name, $domain, $DB_HOST, $DB_DATABASE, $DB_USERNAME, $DB_PASSWORD, $DB_PORT)
     {
         try {
             $time = date('Y-m-d H:i:s', time());
@@ -86,28 +86,24 @@ class TenantController extends Controller
             ];
             $data = json_encode($data);
             // 查询当前的租户信息
-            $domains = DB::table('domains')->where('tenant_id', $oldName)->first();
+            $domains = DB::table('domains')->where('domain', $oldDomain)->first();
+            
             if ($domains) {
 
-                // 入库tenants表
-                $tenants = DB::table('tenants')->where('id', $domains->tenant_id)->first();
-                if($tenants){
-                    DB::table('tenants')->where('id', $domains->tenant_id)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
-                }else{
-                    DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
-                }
+                // 删除旧数据
+                DB::table('tenants')->where('id', $domains->tenant_id)->delete();
+                DB::table('tenants')->where('id', $name)->delete();
 
+                
+                // 入库tenants表
+                DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
                 // 入库domains
-                DB::table('domains')->where('tenant_id', $domains->tenant_id)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
+                DB::table('domains')->where('domain', $oldDomain)->update(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);
 
             } else {
-                // 入库tenants表
-                $tenants = DB::table('tenants')->where('id', $name)->first();
-                if($tenants){
-                    DB::table('tenants')->where('id', $name)->update(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
-                }else{
-                    DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
-                }
+                // 删除旧数据
+                DB::table('tenants')->where('id', $name)->delete();
+                DB::table('tenants')->insert(['id' => $name, 'created_at' => $time, 'updated_at' => $time, 'data' => $data]);
                 
                 // 入库domains
                 DB::table('domains')->insert(['domain' => $domain, 'tenant_id' => $name, 'created_at' => $time, 'updated_at' => $time]);

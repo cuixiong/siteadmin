@@ -197,6 +197,7 @@ class SiteController extends CrudController {
             // 入库site表
             $model = new Site();
             $model = $model->findOrFail($input['id']);
+            $oldDomain = $model->domain;
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
@@ -218,7 +219,7 @@ class SiteController extends CrudController {
             // 更新租户
             $Tenant = new TenantController();
             $res = $Tenant->updateTenant(
-                $model->name,
+                $oldDomain,
                 $input['name'],
                 $input['domain'],
                 $database['db_host'],
