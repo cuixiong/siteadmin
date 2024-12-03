@@ -26,7 +26,7 @@ use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsUploadLog;
-use Modules\Site\Http\Models\Region;
+use Modules\Admin\Http\Models\Region;
 use Modules\Site\Http\Models\ProductsExcelField;
 use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
@@ -1155,6 +1155,7 @@ class ProductsController extends CrudController {
                               ->toArray();
             $writer = WriterEntityFactory::createXLSXWriter();
             $writer->openToFile($dirPath.'/'.$chip.'.xlsx');
+            $regionList = Region::query()->pluck('name', 'id')->toArray();
             foreach ($record as $key => $item) {
                 $year = date('Y', $item['published_date']);
                 if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
@@ -1172,6 +1173,7 @@ class ProductsController extends CrudController {
                 $item['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
                 $item['definition'] = $descriptionData['definition'] ?? '';
                 $item['overview'] = $descriptionData['overview'] ?? '';
+                $item['country_id'] = $regionList[$item['country_id']] ?? '';
                 $row = [];
                 foreach ($field as $value) {
                     if (empty($value) || !isset($item[$value])) {

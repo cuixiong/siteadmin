@@ -448,6 +448,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\AuthorityController::class, 'destroy'])->name('权威引用:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\AuthorityController::class, 'list'])->name('权威引用:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\AuthorityController::class, 'changeStatus'])->name('权威引用:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\AuthorityController::class, 'changeSort'])->name('权威引用:修改排序');
         Route::get('options', [Modules\Site\Http\Controllers\AuthorityController::class, 'options'])->name('权威引用:字典数据');
 
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\AuthorityController::class, 'batchUpdateParam'])->name('权威引用:批量修改参数');

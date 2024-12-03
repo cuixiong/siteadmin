@@ -136,10 +136,10 @@ class UserController extends CrudController {
                 ReturnJson(false, trans('lang.update_error'));
             }
             //修改收货地址
+            $userAddressModel = new UserAddress();
+            $user_id = $user['id'];
             if (!empty($userAddessList)) {
                 $addressIdList = [];
-                $userAddressModel = new UserAddress();
-                $user_id = $user['id'];
                 foreach ($userAddessList as $userAddress) {
                     $userAddress['user_id'] = $user_id;
                     if (!empty($userAddress['id'])) {
@@ -152,6 +152,8 @@ class UserController extends CrudController {
                     }
                 }
                 $userAddressModel->where('user_id', $user_id)->whereNotIn('id', $addressIdList)->delete();
+            }else{
+                $userAddressModel->where('user_id', $user_id)->delete();
             }
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {

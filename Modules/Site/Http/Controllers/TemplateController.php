@@ -178,7 +178,7 @@ class TemplateController extends CrudController {
             if (!empty($cate_id_list)) {
                 $record->tempCates()->attach($cate_id_list);
             }
-            $this->tempUseEdit($record, $input);
+            $this->tempUseEdit($record->id, $input);
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
