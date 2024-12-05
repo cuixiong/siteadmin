@@ -519,16 +519,19 @@ EOF;
                 }
             }
         }
-        $userList = User::query()
-                        ->where("status", 1)
-                        ->where(function ($query) use ($afterRoleIdList) {
-                            foreach ($afterRoleIdList as $afRoleId) {
-                                $query->orWhere('role_id', 'like', "%{$afRoleId}%");
-                            }
-                        })
-                        ->selectRaw('id as value, nickname as label')
-                        ->get()
-                        ->toArray();
+        $userList = [];
+        if(!empty($afterRoleIdList )) {
+            $userList = User::query()
+                            ->where("status", 1)
+                            ->where(function ($query) use ($afterRoleIdList) {
+                                foreach ($afterRoleIdList as $afRoleId) {
+                                    $query->orWhere('role_id', 'like', "%{$afRoleId}%");
+                                }
+                            })
+                            ->selectRaw('id as value, nickname as label')
+                            ->get()
+                            ->toArray();
+        }
         $afterUserList = [];
         foreach ($userList as $userInfo) {
             $addData = [];
