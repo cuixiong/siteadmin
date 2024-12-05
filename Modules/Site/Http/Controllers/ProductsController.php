@@ -26,7 +26,7 @@ use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsUploadLog;
-use Modules\Admin\Http\Models\Region;
+use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\ProductsExcelField;
 use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
@@ -1019,6 +1019,8 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      */
     public function export(Request $request) {
+        set_time_limit(-1);
+        ini_set('memory_limit', -1);
         // return Excel::download(new ProductsExport, 'products.xlsx');
         $input = $request->all();
         $ids = $input['ids'] ?? '';
@@ -1677,13 +1679,9 @@ class ProductsController extends CrudController {
         //不是超级管理员
         $currentUsetempIdList = [];
         if (!request()->user->is_super) {
-            $postUsrList = $this->getSitePostUser();
-            $userIds = array_column($postUsrList, 'value');
-            if (in_array(request()->user->id, $userIds)) {
-                $currentUsetempIdList = TemplateUse::query()
-                                                   ->where('user_id', request()->user->id)
-                                                   ->pluck("temp_id")->toArray();
-            }
+            $currentUsetempIdList = TemplateUse::query()
+                                               ->where('user_id', request()->user->id)
+                                               ->pluck("temp_id")->toArray();
         }
 //        $tempIdList = TemplateCateMapping::whereIn('cate_id', $cateIdList)->pluck('temp_id')->toArray();
 //        $matchTempLateList = Template::whereIn('id', $tempIdList)

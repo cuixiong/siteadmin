@@ -178,7 +178,7 @@ class TemplateController extends CrudController {
             if (!empty($cate_id_list)) {
                 $record->tempCates()->attach($cate_id_list);
             }
-            $this->tempUseEdit($record->id, $input);
+            $this->tempUseEdit($record->id, $input, false);
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -549,48 +549,55 @@ EOF;
      * @param mixed $input
      *
      */
-    private function tempUseEdit($tempId, array $input) {
+    private function tempUseEdit($tempId, array $input, $isEdit = true) {
         //判断当前是否拥有该权限
         //不是超级管理员
-        if (!request()->user->is_super) {
-            $siteName = getSiteName();
-            $currentSiteId = Site::query()->where("name", $siteName)->value("id");
-            $ruleIds = Rule::query()->whereIn("perm", ['products:template:normaledit', 'products:title:normaledit'])
-                           ->pluck("id")
-                           ->toArray();
-            if (!empty($ruleIds)) {
-                $currentUserId = request()->user->id;
-                $role_ids = User::query()->where('id', $currentUserId)->value('role_id');
-                $role_ids = explode(",", $role_ids);
-                $cnt = Role::query()->whereIn('id', $role_ids)
-                           ->where('status', 1)
-                           ->where('site_id', 'like', "%{$currentSiteId}%")
-                           ->where(function ($query) use ($ruleIds) {
-                               foreach ($ruleIds as $afRuleId) {
-                                   $query->orWhere('site_rule_id', 'like', "%{$afRuleId}%");
-                               }
-                           })->count();
-                //没权权限
-                if ($cnt <= 0) {
-                    return false;
-                }
-            } else {
-                //没配置权限
-                return false;
-            }
-        }
+//        if (!request()->user->is_super) {
+//            $siteName = getSiteName();
+//            $currentSiteId = Site::query()->where("name", $siteName)->value("id");
+//            $ruleIds = Rule::query()->whereIn("perm", ['products:template:normaledit', 'products:title:normaledit'])
+//                           ->pluck("id")
+//                           ->toArray();
+//            if (!empty($ruleIds)) {
+//                $currentUserId = request()->user->id;
+//                $role_ids = User::query()->where('id', $currentUserId)->value('role_id');
+//                $role_ids = explode(",", $role_ids);
+//                $cnt = Role::query()->whereIn('id', $role_ids)
+//                           ->where('status', 1)
+//                           ->where('site_id', 'like', "%{$currentSiteId}%")
+//                           ->where(function ($query) use ($ruleIds) {
+//                               foreach ($ruleIds as $afRuleId) {
+//                                   $query->orWhere('site_rule_id', 'like', "%{$afRuleId}%");
+//                               }
+//                           })->count();
+//                //没权权限
+//                if ($cnt <= 0) {
+//                    return false;
+//                }
+//            } else {
+//                //没配置权限
+//                return false;
+//            }
+//        }
         //维护模版使用者
         TemplateUse::query()->where('temp_id', $tempId)->delete();
         if (!empty($input['use_user_ids'])) {
             $use_user_ids = $input['use_user_ids'];
             $use_user_ids = explode(",", $use_user_ids);
-            foreach ($use_user_ids as $user_id) {
-                $temp_use_data = [
-                    'temp_id' => $tempId,
-                    'user_id' => $user_id,
-                ];
-                TemplateUse::query()->create($temp_use_data);
+        }else{
+            $use_user_ids = [];
+            if(!$isEdit) {
+                $use_user_ids[] = request()->user->id;
             }
         }
+
+        foreach ($use_user_ids as $user_id) {
+            $temp_use_data = [
+                'temp_id' => $tempId,
+                'user_id' => $user_id,
+            ];
+            TemplateUse::query()->create($temp_use_data);
+        }
+
     }
 }
