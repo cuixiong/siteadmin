@@ -100,7 +100,7 @@ class SiteUploads
      */
     public static function addWatermark($image, $watermarkConfig)
     {
-
+        ini_set('memory_limit', '512M');
         $wmImage = $watermarkConfig['image'];
         $location = $watermarkConfig['location'];
         $opacity = $watermarkConfig['opacity'];

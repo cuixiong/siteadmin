@@ -195,7 +195,9 @@ class TemplateController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
-            if (!$record->update($input)) {
+            $input['updated_at'] = time();
+            $record->fill($input);
+            if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
             //维护中间表

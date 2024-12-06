@@ -10,14 +10,8 @@ class Template extends Base {
     protected $table = 'template';
     protected $fillable
                      = [
-            'name',            // 名称
-            'type',           // 模版类型
-            'btn_color',      // 按钮颜色
-            'content',        // 模版内容
-            'status',           // 状态
-            'sort',             // 排序
-            'created_by',       // 创建者
-            'updated_by',       // 编辑者
+            'name', 'type', 'btn_color', 'content', 'status', 'sort', 'created_by', 'created_at', 'updated_by',
+            'updated_at'
         ];
 
     //模型关联
@@ -34,7 +28,7 @@ class Template extends Base {
         $search = json_decode($request->input('search'), true);
         if (!empty($search)) {
             $textField = ['name'];
-            $numberField = ['id', 'sort', 'status' , 'btn_color'];
+            $numberField = ['id', 'sort', 'status', 'btn_color'];
             $timeField = ['created_at', 'updated_at'];
             $userField = ['created_by', 'updated_by'];
             foreach ($search as $key => $value) {
@@ -56,13 +50,13 @@ class Template extends Base {
         //区分是内容模板,还是标题模版
         $type = $request->input('type');
         $model->where("type", $type);
-
         //分类查询
-        if(!empty($search['cate_id'] )){
+        if (!empty($search['cate_id'])) {
             $tcmModel = new TemplateCateMapping();
             $template_id_list = $tcmModel->where("cate_id", $search['cate_id'])->pluck("temp_id")->toArray();
             $model->whereIn("id", $template_id_list);
         }
+
         return $model;
     }
 }
