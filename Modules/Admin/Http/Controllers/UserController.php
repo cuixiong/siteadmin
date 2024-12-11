@@ -6,6 +6,8 @@ use App\Exports\UsersExport;
 use App\Imports\UserImport;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -38,6 +40,41 @@ class UserController extends CrudController
     }
 
     /**
+     * 修改状态
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeStatus(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if($request->status != 1){
+                //关闭状态需要重新登录
+                $model = User::where('id',$request->id)->first();
+                $model->updated_at = time();
+                $token = JWTAuth::fromUser($model);//生成token
+                $passRes = $model->save();
+                if($passRes > 0) {
+                    $tokenKey = 'login_token_'.$request->id;
+                    Redis::del($tokenKey);
+                }
+                $record->token = $token;
+            }
+            $record->status = $request->status;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
+    /**
      * AJax单个更新
      * @param $request 请求信息
      */
@@ -50,11 +87,37 @@ class UserController extends CrudController
             $input['department_id'] = $input['deptId'];
             $input['role_id'] = $input['roleIds'];
             $record = $this->ModelInstance()->findOrFail($request->id);
-            if(!empty($request->password)){
-                $model = User::where('id',$request->user->id)->first();
+
+            //邮箱校验
+            if($record->email != $input['email'] && !empty($input['email'])){
+                $cnt = $this->ModelInstance()->where("email" , $input['email'])->count();
+                if($cnt > 0){
+                    ReturnJson(false, trans('lang.eamail_unique'));
+                }
+                $model = User::where('id',$request->id)->first();
+                $model->email = $input['email'];
                 $token = JWTAuth::fromUser($model);//生成token
+                $rs = $model->save();
+                if($rs > 0) {
+                    $tokenKey = 'login_token_'.$request->id;
+                    Redis::del($tokenKey);
+                }
                 $input['token'] = $token;
             }
+
+            if(!empty($request->password)){
+                $model = User::where('id',$request->id)->first();
+                $model->password = Hash::make($request->password);
+                $token = JWTAuth::fromUser($model);//生成token
+                $passRes = $model->save();
+                if($passRes > 0) {
+                    $tokenKey = 'login_token_'.$request->id;
+                    Redis::del($tokenKey);
+                }
+                $input['token'] = $token;
+            }
+
+
             if(!$record->update($input)){
                 ReturnJson(FALSE,trans('lang.update_error'));
             }
@@ -66,7 +129,7 @@ class UserController extends CrudController
 
     /**
      * update user info
-     * @param $request 
+     * @param $request
      */
     public function updateInfo(Request $request)
     {
@@ -76,8 +139,16 @@ class UserController extends CrudController
             $record = $this->ModelInstance()->findOrFail($request->user->id);
             if(!empty($request->password)){
                 $model = User::where('id',$request->user->id)->first();
+                $model->password = Hash::make($request->password);
                 $token = JWTAuth::fromUser($model);//生成token
+                $passRes = $model->save();
+                if($passRes > 0) {
+                    $tokenKey = 'login_token_'.$request->user->id;
+                    Redis::del($tokenKey);
+                }
                 $input['token'] = $token;
+            }else{
+                unset($input['password']);
             }
             if(!$record->update($input)){
                 ReturnJson(FALSE,trans('lang.update_error'));

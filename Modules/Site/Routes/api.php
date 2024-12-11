@@ -720,8 +720,10 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
         Route::get('sync-admin-price', [Modules\Site\Http\Controllers\PriceEditionController::class, 'syncAdminPrice'])->name('价格版本管理:搜索下拉列表数据');
     });
-
+    Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
 });
+
+
 
 Route::get('site/file-management/download/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'download'])->name('站点端:文件管理:文件下载');
 Route::get('site/file-management/newdownload/{site}', [Modules\Site\Http\Controllers\FileManagement::class, 'newDownload'])->name('站点端:文件管理:文件下载');
