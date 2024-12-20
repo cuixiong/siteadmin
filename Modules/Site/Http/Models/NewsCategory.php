@@ -53,7 +53,7 @@ class NewsCategory extends Base
                     $model = $model->where($key, '<=', $time[1]);
                 } else if (in_array($key, $userField) && !empty($value)) {
 
-                    $userIds = Admin::where('name', 'like', '%' . $value . '%')->pluck('id');
+                    $userIds = Admin::where('nickname', 'like', '%' . $value . '%')->pluck('id');
                     $userIds = $userIds ? $userIds : [];
                     $model = $model->whereIn($key, $userIds);
                 }

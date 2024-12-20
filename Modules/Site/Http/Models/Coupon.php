@@ -115,14 +115,14 @@ class Coupon extends Base
 
         //创建者
         if (isset($search->created_by) && !empty($search->created_by)) {
-            $userIds = Admin::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
+            $userIds = Admin::where('nickname', 'like', '%' . $search->created_by . '%')->pluck('id');
             $userIds = $userIds ? $userIds : [];
             $model = $model->whereIn('created_by',$userIds);
         }
 
         //修改者
         if (isset($search->updated_by) && !empty($search->updated_by)) {
-            $userIds = Admin::where('name', 'like', '%' . $search->updated_by . '%')->pluck('id');
+            $userIds = Admin::where('nickname', 'like', '%' . $search->updated_by . '%')->pluck('id');
             $userIds = $userIds ? $userIds : [];
             $model = $model->whereIn('updated_by',$userIds);
         }

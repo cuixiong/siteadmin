@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Modules\Admin\Http\Models\User;
+use Modules\Admin\Http\Models\User as Admin;
 
 class Base extends Model
 {
@@ -188,6 +189,10 @@ class Base extends Model
                         }
                     } else if(is_array($value) && !in_array($key,$timeArray)){
                         $model = $model->whereIn($key,$value);
+                    } else if (in_array($key, ['created_by','updated_by']) && !empty($value)) {
+                        $userIds = Admin::where('nickname', 'like', '%'.$value.'%')->pluck('id');
+                        $userIds = $userIds ? $userIds : [];
+                        $model = $model->whereIn($key, $userIds);
                     } else {
                         $model = $model->where($key,$value);
                     }

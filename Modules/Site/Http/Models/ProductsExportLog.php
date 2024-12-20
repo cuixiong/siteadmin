@@ -41,7 +41,7 @@ class ProductsExportLog extends Base
     {
 
         $search = json_decode($request->input('search'));
-        //id 
+        //id
         if (isset($search->id) && !empty($search->id)) {
             $model = $model->where('id', $search->id);
         }
@@ -51,17 +51,17 @@ class ProductsExportLog extends Base
             $model = $model->where('file', 'like', '%' . $search->file . '%');
         }
 
-        //state 
+        //state
         if (isset($search->state) && $search->state != '') {
             $model = $model->where('state', $search->state);
         }
 
-        //count 
+        //count
         if (isset($search->count) && $search->count != '') {
             $model = $model->where('count', $search->count);
         }
 
-        //success_count 
+        //success_count
         if (isset($search->success_count) && $search->success_count != '') {
             $model = $model->where('success_count', $search->success_count);
         }
@@ -88,7 +88,7 @@ class ProductsExportLog extends Base
 
         //导出者
         if (isset($search->created_by) && !empty($search->created_by)) {
-            $createrIds = \Modules\Admin\Http\Models\User::where('name', 'like', '%' .$search->created_by .'%')->pluck('id');
+            $createrIds = \Modules\Admin\Http\Models\User::where('nickname', 'like', '%' .$search->created_by .'%')->pluck('id');
             $model = $model->whereIn('created_by', $createrIds);
         }
 

@@ -54,13 +54,13 @@ class Region extends Base
 
         //操作者
         if (!empty($search->created_by)) {
-            $userIds = User::where('name', 'like', '%' . $search->created_by . '%')->pluck('id');
+            $userIds = User::where('nickname', 'like', '%' . $search->created_by . '%')->pluck('id');
             $model = $model->whereIn('created_by',$userIds);
         }
 
         //修改
         if (!empty($search->updated_by)) {
-            $userIds = User::where('name', 'like', '%' . $search->updated_by . '%')->pluck('id');
+            $userIds = User::where('nickname', 'like', '%' . $search->updated_by . '%')->pluck('id');
             $model = $model->whereIn('updated_by',$userIds);
         }
 
