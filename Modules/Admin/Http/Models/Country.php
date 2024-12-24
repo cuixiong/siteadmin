@@ -160,15 +160,7 @@ class Country extends Base
     {
         //同步分站点不在总控直接同步 , 采用异步延时通知的方式
         // TODO: cuizhixiong 2024/9/12 待完善
-        $siteList = Site::where(['status' => 1])->pluck('id')->toArray();
-        foreach ($siteList as $forSiteId) {
-            $data = [
-                'sync_type' => NotityTypeConst::SYNC_SITE_COUNTRY,
-                'siteId'    => $forSiteId,
-            ];
-            $data = json_encode($data);
-            NotifySite::dispatch($data)->onQueue(QueueConst::QUEUE_NOTIFY_SITE);
-        }
+        syncSiteDbByType(NotityTypeConst::SYNC_SITE_COUNTRY);
         return true;
 
         $site = null;

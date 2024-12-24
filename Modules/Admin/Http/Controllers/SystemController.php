@@ -1,5 +1,6 @@
 <?php
 namespace Modules\Admin\Http\Controllers;
+use App\Const\NotityTypeConst;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\SystemValue;
@@ -173,6 +174,12 @@ class SystemController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(FALSE,$e->getMessage());
         }
+    }
+
+    public function syncSiteDb() {
+        // TODO: cuizhixiong 2024/9/12 待完善
+        syncSiteDbByType(NotityTypeConst::SYNC_SITE_SETTING);
+        ReturnJson(true, trans('lang.request_success'));
     }
 
     /**

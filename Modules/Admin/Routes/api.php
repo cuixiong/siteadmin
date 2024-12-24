@@ -425,6 +425,46 @@ Route::middleware([
         Route::post('destroy', [Modules\Admin\Http\Controllers\LanguageController::class, 'destroy'])->name('语言管理:语言删除');
     });
 
+    // 封禁白名单
+    Route::prefix('ban-white-list')->group(function () {
+        Route::get('list', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'list'])->name('封禁白名单:数据列表');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'destroy'])->name('封禁白名单:数据删除');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'changeStatus'])->name('封禁白名单:状态修改');
+        Route::post('form/{id}', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'form'])->name('封禁白名单:查询详情');
+        Route::post('update', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'update'])->name('封禁白名单:修改');
+        Route::post('store', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'store'])->name('封禁白名单:新增');
+        Route::get('search-droplist', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'searchDroplist'])->name('封禁白名单:搜索下拉列表数据');
+        Route::get('sync-site-db', [Modules\Admin\Http\Controllers\BanWhiteListController::class, 'syncSiteDb'])->name('封禁白名单:同步站点数据');
+    });
+
+
+
+    //总控端接口api
+    // System控制器
+    Route::prefix('system')->group(function () {
+        Route::post('store', [Modules\Admin\Http\Controllers\SystemController::class, 'store'])->name('网点配置:父级新增');
+        Route::post('update', [Modules\Admin\Http\Controllers\SystemController::class, 'update'])->name('网点配置:父级编辑');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\SystemController::class, 'destroy'])->name('网点配置:父级删除');
+        Route::get('list', [Modules\Admin\Http\Controllers\SystemController::class, 'list'])->name('网点配置:父级列表');
+        Route::get('form/{id}', [Modules\Admin\Http\Controllers\SystemController::class, 'form'])->name('网点配置:父级单查');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\SystemController::class, 'changeStatus'])->name('网点配置:父级修改状态');
+        Route::get('option', [Modules\Admin\Http\Controllers\SystemController::class, 'option'])->name('网点配置:父级下拉数据');
+        Route::get('value-list/{parent_id}', [Modules\Admin\Http\Controllers\SystemController::class, 'valueList'])->name('网点配置:某个父级下的子级列表');
+        Route::get('sync-site-db', [Modules\Admin\Http\Controllers\SystemController::class, 'syncSiteDb'])->name('网点配置:同步站点数据');
+    });
+
+    // System控制器
+    Route::prefix('system-value')->group(function () {
+        Route::post('store', [Modules\Admin\Http\Controllers\SystemController::class, 'systemValueStore'])->name('网点配置:子级新增');
+        Route::post('update', [Modules\Admin\Http\Controllers\SystemController::class, 'systemValueUpdate'])->name('网点配置:子级编辑');
+        Route::post('destroy', [Modules\Admin\Http\Controllers\SystemController::class, 'systemValueDestroy'])->name('网点配置:子级删除');
+        Route::get('list', [Modules\Admin\Http\Controllers\SystemController::class, 'systemValueList'])->name('网点配置:全部子级列表');
+        Route::post('change-status', [Modules\Admin\Http\Controllers\SystemController::class, 'valueChangeStatus'])->name('网点配置:子级修改状态');
+        Route::get('form/{id}', [Modules\Admin\Http\Controllers\SystemController::class, 'formValue'])->name('网点配置:子级单查');
+        Route::post('change-hidden', [Modules\Admin\Http\Controllers\SystemController::class, 'valueChangeHidden'])->name('网点配置:子级显示状态');
+    });
+
+
     // Publisher 控制器
     Route::prefix('publisher')->group(function () {
         Route::post('store', [Modules\Admin\Http\Controllers\PublisherController::class, 'store'])->name('出版商管理:出版商新增');

@@ -1,5 +1,7 @@
 <?php
 
+use App\Const\QueueConst;
+use App\Jobs\NotifySite;
 use Illuminate\Support\Facades\Redis;
 use Modules\Admin\Http\Models\Site;
 
@@ -30,7 +32,7 @@ function currentLimit($request, $second = 10, $site = '', $userId = 0) {
     $route = $request->route();
     $actionInfo = $route->getAction();
     $currentLimitKey = $actionInfo['controller'];
-    if(empty($site )){
+    if (empty($site)) {
         $site = $request->header('Site');
     }
     $currentLimitKey = $currentLimitKey."_{$site}_{$userId}";
@@ -43,22 +45,24 @@ function currentLimit($request, $second = 10, $site = '', $userId = 0) {
 
 /**
  * 转换前端需要的Select格式数据
+ *
  * @param $list
  *
  * @return array
  */
-function convertToFormData($list){
+function convertToFormData($list) {
     $selectList = [];
-    foreach ($list as $key => $value){
+    foreach ($list as $key => $value) {
         $data = [];
         $data['label'] = $value;
         $data['value'] = $key;
         $selectList[] = $data;
     }
+
     return $selectList;
 }
 
-function getSiteName(){
+function getSiteName() {
     if (php_sapi_name() === 'cli') {
         return false;
     } else {
@@ -66,7 +70,7 @@ function getSiteName(){
     }
 }
 
-function getSiteDomain(){
+function getSiteDomain() {
     if (php_sapi_name() === 'cli') {
         return false;
     } else {
@@ -75,13 +79,14 @@ function getSiteDomain(){
         if (strpos($domain, '://') === false) {
             $domain = 'https://'.$domain;
         }
+
         return $domain;
     }
 }
 
 function getReportUrl($product) {
     $domain = getSiteDomain();
-    if(empty($domain )){
+    if (empty($domain)) {
         return '';
     }
     $productId = $product['id'];
@@ -94,7 +99,22 @@ function getReportUrl($product) {
     return $url;
 }
 
-
+/**
+ *
+ * @param string $sync_type
+ *
+ */
+function syncSiteDbByType(string $sync_type) {
+    $siteList = Site::where(['status' => 1])->pluck('id')->toArray();
+    foreach ($siteList as $forSiteId) {
+        $data = [
+            'sync_type' => $sync_type,
+            'siteId'    => $forSiteId,
+        ];
+        $data = json_encode($data);
+        NotifySite::dispatch($data)->onQueue(QueueConst::QUEUE_NOTIFY_SITE);
+    }
+}
 
 
 

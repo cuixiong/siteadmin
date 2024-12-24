@@ -5,5 +5,5 @@ use Modules\Site\Http\Models\Base;
 class Problem extends Base
 {
     // 设置允许入库字段,数组形式
-    protected $fillable = ['problem', 'reply','status','sort', 'updated_by', 'created_by'];
+    protected $fillable = ['problem', 'reply', 'category_id' , 'status','sort', 'updated_by', 'created_by'];
 }

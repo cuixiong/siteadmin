@@ -18,6 +18,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Modules\Admin\Http\Models\Country as AdminCountry;
+use Modules\Site\Http\Models\BanWhiteList;
 use Modules\Site\Http\Models\Country;
 use Modules\Admin\Http\Models\Language as AdminLanguage;
 use Modules\Admin\Http\Models\PriceEdition as AdminPriceEdition;
@@ -26,6 +27,11 @@ use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\Language;
 use Modules\Site\Http\Models\PriceEdition;
 use Modules\Site\Http\Models\PriceEditionValue;
+use Modules\Admin\Http\Models\BanWhiteList as AdminBanWhiteList;
+use Modules\Admin\Http\Models\System as AdminSystem;
+use Modules\Admin\Http\Models\SystemValue as AdminSystemValue;
+use Modules\Site\Http\Models\System;
+use Modules\Site\Http\Models\SystemValue;
 
 class NotifySite implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, BaseJob;
@@ -64,6 +70,11 @@ class NotifySite implements ShouldQueue {
                     $this->syncSiteCountry($siteInfo);
                 case NotityTypeConst::SYNC_SITE_LANGUAGE:
                     $this->syncSiteLanguage($siteInfo);
+                case NotityTypeConst::SYNC_SITE_IP_WHITE:
+                    $this->syncSiteIpWhite($siteInfo);
+                case NotityTypeConst::SYNC_SITE_SETTING:
+                    $this->syncSiteSetting($siteInfo);
+                    break;
                 default:
                     break;
             }
@@ -172,4 +183,74 @@ class NotifySite implements ShouldQueue {
         }
         Language::query()->whereNotIn("id", $existIdList)->delete();
     }
+
+
+    public function syncSiteSetting($siteInfo) {
+        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
+        if (!$siteInfo['is_local']) {
+            return true;
+        }
+        // 设置当前租户
+        tenancy()->initialize($siteInfo['name']);
+        //同步 price_editions
+        //只控制ip限流与ua限流配置
+        $systemList = AdminSystem::query()->whereIn("alias" , ['ip_limit_rules' , 'ua_ban_rule'])::all()->map(function ($item) {
+            return $item->getAttributes();
+        })->toArray();
+
+        $systemIdList = [];
+        foreach ($systemList as $forCoutry) {
+            $for_id = $forCoutry['id'];
+            $systemIdList[] = $for_id;
+            $isExist = System::query()->where("alias", $forCoutry['alias'])->count();
+            if ($isExist) {
+                // 存在则更新
+                System::query()->where("id", $for_id)->update($forCoutry);
+            } else {
+                System::insert($forCoutry);
+            }
+        }
+        ######################################
+        $systemValueList = AdminSystemValue::query()->whereIn("system_id", $systemIdList)::all()->map(function ($item) {
+            return $item->getAttributes();
+        })->toArray();
+        foreach ($systemValueList as $forSystemValue) {
+            $for_id = $forSystemValue['id'];
+            $isExist = SystemValue::query()->where("alias", $forSystemValue['alias'])->count();
+            if ($isExist) {
+                // 存在则更新
+                SystemValue::query()->where("id", $for_id)->update($forSystemValue);
+            } else {
+                SystemValue::insert($forSystemValue);
+            }
+        }
+
+    }
+
+    public function syncSiteIpWhite($siteInfo) {
+        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
+        if (!$siteInfo['is_local']) {
+            return true;
+        }
+        // 设置当前租户
+        tenancy()->initialize($siteInfo['name']);
+        //同步 price_editions
+        $BanWhiteList = AdminBanWhiteList::all()->map(function ($item) {
+            return $item->getAttributes();
+        })->toArray();
+        $existIdList = [];
+        foreach ($BanWhiteList as $forCoutry) {
+            $for_id = $forCoutry['id'];
+            $existIdList[] = $for_id;
+            $isExist = BanWhiteList::query()->where("id", $for_id)->count();
+            if ($isExist) {
+                // 存在则更新
+                BanWhiteList::query()->where("id", $for_id)->update($forCoutry);
+            } else {
+                BanWhiteList::insert($forCoutry);
+            }
+        }
+        BanWhiteList::query()->whereNotIn("id", $existIdList)->delete();
+    }
+
 }
