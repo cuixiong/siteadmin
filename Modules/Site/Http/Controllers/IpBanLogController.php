@@ -147,6 +147,38 @@ class IpBanLogController extends CrudController {
         }
     }
 
+    public function copyField(Request $request) {
+        try {
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            $ids = $request->input('ids', '');
+            if(!empty($ids )){
+                $idList = explode(',' , $ids);
+                $model = $model->whereIn("id" , $idList);
+            }
+            $field = $request->input('field', 'ip');
+            $record = $model->groupBy($field)->pluck($field)->toArray();
+            $handlerFieldList = [];
+
+            foreach ($record as $key => $value){
+                if($field == 'ip'){
+                    $handlerFieldStr = 'deny '.$value;
+                }else{
+                    $handlerFieldStr = '';
+                }
+                $handlerFieldList[] = $handlerFieldStr;
+            }
+
+            $data = [
+                'list'  => $handlerFieldList
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
     public function makeSign($data, $signkey) {
         unset($data['sign']);
         $signStr = '';

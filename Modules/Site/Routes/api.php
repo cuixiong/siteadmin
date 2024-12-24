@@ -654,6 +654,7 @@ Route::middleware([
         Route::post('form/{id}', [Modules\Site\Http\Controllers\IpBanLogController::class, 'form'])->name('封禁IP日志:查询详情');
         Route::post('ip-unban', [Modules\Site\Http\Controllers\IpBanLogController::class, 'IpUnban'])->name('IP解封');
         Route::post('add-white', [Modules\Site\Http\Controllers\IpBanLogController::class, 'addWhiteList'])->name('添加白名单');
+        Route::get('copy-field', [Modules\Site\Http\Controllers\IpBanLogController::class, 'copyField'])->name('访问日志:拷贝字段');
     });
 
     // 封禁IP记录
@@ -664,6 +665,7 @@ Route::middleware([
         Route::post('form/{id}', [Modules\Site\Http\Controllers\RequestLogController::class, 'form'])->name('封禁UA日志:查询详情');
         Route::post('ua-unban', [Modules\Site\Http\Controllers\RequestLogController::class, 'UaUnban'])->name('UA解封');
         Route::post('add-white', [Modules\Site\Http\Controllers\RequestLogController::class, 'addWhiteList'])->name('添加白名单');
+        Route::get('copy-field', [Modules\Site\Http\Controllers\RequestLogController::class, 'copyField'])->name('访问日志:拷贝字段');
     });
 
 
@@ -684,6 +686,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\AccessLogController::class, 'searchDroplist'])->name('访问日志:搜索下拉列表数据');
         Route::get('report-forms', [Modules\Site\Http\Controllers\AccessLogController::class, 'ReportForms'])->name('访问日志:报表');
         Route::get('copy-field', [Modules\Site\Http\Controllers\AccessLogController::class, 'copyField'])->name('访问日志:拷贝字段');
+        Route::get('copy-ua-field', [Modules\Site\Http\Controllers\AccessLogController::class, 'copyUaField'])->name('访问日志:拷贝字段');
         Route::get('access-detail-list', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessDetailList'])->name('访问日志:报表详情');
         Route::post('access-log-del', [Modules\Site\Http\Controllers\AccessLogController::class, 'accessLogDel'])->name('访问日志:报表日志删除');
 

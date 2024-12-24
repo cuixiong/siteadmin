@@ -123,6 +123,53 @@ class RequestLogController extends CrudController
         }
     }
 
+    public function copyField(Request $request) {
+        try {
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            $ids = $request->input('ids', '');
+            if(!empty($ids )){
+                $idList = explode(',' , $ids);
+                $model = $model->whereIn("id" , $idList);
+            }
+
+            $field = $request->input('field', 'ip');
+            $record = $model->groupBy($field)->pluck($field)->toArray();
+            $handlerFieldList = [];
+
+            foreach ($record as $key => $value){
+                if($field == 'ip'){
+                    $handlerFieldStr = 'deny '.$value;
+                }else{
+                    $handlerFieldStr = $this->customEscape($value, ['.' , '(' , ')' , '+' ,'?' , "*" , '\\']);
+                }
+                $handlerFieldList[] = $handlerFieldStr;
+            }
+
+            $data = [
+                'list'  => $handlerFieldList
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    function customEscape($input, $characters) {
+        // 转义指定的字符
+        $escaped = '';
+        foreach (str_split($input) as $char) {
+            if (in_array($char, $characters)) {
+                $escaped .= '\\' . $char; // 添加单个反斜杠
+            } else {
+                $escaped .= $char;
+            }
+        }
+        return $escaped;
+    }
+
+
     public function makeSign($data, $signkey) {
         unset($data['sign']);
         $signStr = '';

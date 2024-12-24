@@ -426,6 +426,99 @@ class AccessLogController extends CrudController {
         }
     }
 
+
+    /**
+     * 根据条件去筛选 拷贝ip
+     *
+     * @param Request $request
+     *
+     */
+    public function copyUaField(Request $request) {
+        try {
+            $searchStr = $request->input('search');
+            $search = @json_decode($searchStr, true);
+            $searchCondition = [];
+            //搜索条件
+            if (!empty($search)) {
+                foreach ($search as $key => $value) {
+                    if ($key == 'referer' && !empty($value)) {
+                        $searchCondition['referer'] = $value;
+                    } elseif ($key == 'ua_info' && !empty($value)) {
+                        $searchCondition['ua_info'] = $value;
+                    }
+                }
+            }
+            //时间条件
+            $time = $search['time'] ?? '';
+            $selectTime = $search['SelectTime'] ?? '';
+            if (!empty($selectTime)) {
+                $start_time = $selectTime[0] ?? '';
+                $end_time = $selectTime[1] ?? '';
+            }
+            if (!empty($start_time) && !empty($end_time)) {
+                $srartTimeCoon = Carbon::parse($start_time);
+                $endTimeCoon = Carbon::parse($end_time);
+            } else {
+                $endTimeCoon = Carbon::now();
+                if ($time == '1m') {
+                    $srartTimeCoon = Carbon::now()->subMinutes(1);
+                } else if ($time == '5m') {
+                    $srartTimeCoon = Carbon::now()->subMinutes(5);
+                } elseif ($time == '1h') {
+                    $srartTimeCoon = Carbon::now()->subHour();
+                } elseif ($time == 'today') {
+                    $srartTimeCoon = Carbon::today();
+                } elseif ($time == 'yesterday') {
+                    $srartTimeCoon = Carbon::yesterday();
+                } elseif ($time == '7d') {
+                    $srartTimeCoon = Carbon::now()->subDays(7);
+                } elseif ($time == '30d') {
+                    $srartTimeCoon = Carbon::now()->subDays(30);
+                } else {
+                    //默认1分钟
+                    $srartTimeCoon = Carbon::now()->subMinutes(1);
+                }
+            }
+            $start_time = $srartTimeCoon->getTimestamp();
+            $end_time = $endTimeCoon->getTimestamp();
+
+            $field = 'ua_info';
+            $accessLogModel = new AccessLog();
+            $list = $accessLogModel::query()
+                                   ->where($searchCondition)
+                                   ->whereBetween('created_at', [$start_time, $end_time])
+                                   ->groupBy($field)
+                                   ->selectRaw($field." as target_field , count(*) as count ")
+                                   ->orderBy('count', 'desc')
+                                   ->get()->toArray();
+            $handlerFieldList = [];
+            foreach ($list as $key => $value){
+                $handlerFieldStr = $this->customEscape($value['target_field'], ['.' , '(' , ')' , '+' ,'?' , "*" , '\\']);
+                $handlerFieldList[] = $handlerFieldStr;
+            }
+
+            $data = [
+                'list'  => $handlerFieldList
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function customEscape($input, $characters) {
+        // 转义指定的字符
+        $escaped = '';
+        foreach (str_split($input) as $char) {
+            if (in_array($char, $characters)) {
+                $escaped .= '\\' . $char; // 添加单个反斜杠
+            } else {
+                $escaped .= $char;
+            }
+        }
+        return $escaped;
+    }
+
     /**
      * 选中删除
      *
