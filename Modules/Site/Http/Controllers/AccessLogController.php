@@ -1025,7 +1025,7 @@ class AccessLogController extends CrudController {
         $data['msg'] = $text;
         //五分钟没反应则提示
 
-        if (time() > $updateTime + 60 * 5 && $logData['state'] != AccessExportLog::EXPORT_COMPLETE) {
+        if (time() > $updateTime + 86400 && $logData['state'] != AccessExportLog::EXPORT_COMPLETE) {
             $data = [
                 'result' => false,
                 'msg'    => trans('lang.time_out'),

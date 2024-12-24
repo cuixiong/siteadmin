@@ -56,7 +56,7 @@ class ViewProductsExportLogController extends CrudController {
         }
         $data['msg'] = $text;
         //五分钟没反应则提示
-        if (time() > $updateTime + 60 * 5) {
+        if (time() > $updateTime + 86400) {
             $data = [
                 'result' => false,
                 'msg'    => trans('lang.time_out'),
