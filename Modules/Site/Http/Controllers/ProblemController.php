@@ -23,7 +23,7 @@ class ProblemController extends CrudController{
             }
             $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State','status' => 1], ['sort' => 'ASC']);
 
-            $data['category_list'] = FaqCategory::query()->where("status" , 1)->selectRaw('id as value,name as lable')->get()->toArray();
+            $data['category_list'] = FaqCategory::query()->where("status" , 1)->selectRaw('id as value,name as label')->get()->toArray();
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

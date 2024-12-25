@@ -539,6 +539,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\FaqCategoryController::class, 'destroy'])->name('常见问题分类:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\FaqCategoryController::class, 'list'])->name('常见问题分类:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\FaqCategoryController::class, 'changeStatus'])->name('常见问题分类:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\FaqCategoryController::class, 'searchDroplist'])->name('常见问题分类:搜索下拉列表数据');
     });
     // Problem控制器
     Route::prefix('problem')->group(function () {
