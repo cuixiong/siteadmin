@@ -89,11 +89,15 @@ class BanWhiteListController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             $remark = $input['remark'];
+            $status = $input['status'] ?? 1;
+            $sort = $input['sort'] ?? 100;
             $banWhiteId = BanWhiteList::query()->where('remark', $remark)->value('id');
             $whiteIpList = @json_decode($input['ban_str'], true);
             if (empty($banWhiteId)) {
                 $addWhiteData = [
                     'type'    => 1,
+                    'status'    => $status,
+                    'sort'    => $sort,
                     'ban_str' => json_encode($whiteIpList),
                     'remark'  => $remark,
                 ];

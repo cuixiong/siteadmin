@@ -12,9 +12,6 @@
 
 namespace Modules\Admin\Http\Models;
 
-use Modules\Site\Http\Models\Base;
-use Modules\Site\Http\Models\moxel;
-use Modules\Site\Http\Models\搜索条件;
 
 class BanWhiteList extends Base {
     protected $table = 'ban_white_list';
@@ -22,6 +19,13 @@ class BanWhiteList extends Base {
     protected $fillable = ['id', 'type', 'ban_str', 'remark', 'sort', 'status'];
 
 
+    /**
+     * Register the model events for updating.
+     * @return void
+     */
+    protected static function boot() {
+        parent::boot();
+    }
 
     /**
      * 处理查询列表条件数组

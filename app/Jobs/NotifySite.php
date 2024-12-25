@@ -66,12 +66,16 @@ class NotifySite implements ShouldQueue {
             switch ($sync_type) {
                 case NotityTypeConst::SYNC_SITE_PRICE:
                     $this->syncSitePrice($siteInfo);
+                    break;
                 case NotityTypeConst::SYNC_SITE_COUNTRY:
                     $this->syncSiteCountry($siteInfo);
+                    break;
                 case NotityTypeConst::SYNC_SITE_LANGUAGE:
                     $this->syncSiteLanguage($siteInfo);
+                    break;
                 case NotityTypeConst::SYNC_SITE_IP_WHITE:
                     $this->syncSiteIpWhite($siteInfo);
+                    break;
                 case NotityTypeConst::SYNC_SITE_SETTING:
                     $this->syncSiteSetting($siteInfo);
                     break;
@@ -184,7 +188,6 @@ class NotifySite implements ShouldQueue {
         Language::query()->whereNotIn("id", $existIdList)->delete();
     }
 
-
     public function syncSiteSetting($siteInfo) {
         // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
         if (!$siteInfo['is_local']) {
@@ -194,10 +197,11 @@ class NotifySite implements ShouldQueue {
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         //只控制ip限流与ua限流配置
-        $systemList = AdminSystem::query()->whereIn("alias" , ['ip_limit_rules' , 'ua_ban_rule'])::all()->map(function ($item) {
-            return $item->getAttributes();
-        })->toArray();
-
+        $systemList = AdminSystem::query()->whereIn("alias", ['ip_limit_rules', 'ua_ban_rule'])->get()->map(
+            function ($item) {
+                return $item->getAttributes();
+            }
+        )->toArray();
         $systemIdList = [];
         foreach ($systemList as $forCoutry) {
             $for_id = $forCoutry['id'];
@@ -211,20 +215,23 @@ class NotifySite implements ShouldQueue {
             }
         }
         ######################################
-        $systemValueList = AdminSystemValue::query()->whereIn("system_id", $systemIdList)::all()->map(function ($item) {
+        $systemValueList = AdminSystemValue::query()->whereIn("parent_id", $systemIdList)->get()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         foreach ($systemValueList as $forSystemValue) {
             $for_id = $forSystemValue['id'];
-            $isExist = SystemValue::query()->where("alias", $forSystemValue['alias'])->count();
-            if ($isExist) {
+            unset($forSystemValue['id']);
+            //parentid需要修改
+            $parentAlias = AdminSystem::query()->where("id", $forSystemValue['parent_id'])->value('alias');
+            $forSystemValue['parent_id'] = System::query()->where("alias", $parentAlias)->value('id');
+            $siteSysId = SystemValue::query()->where("key", $forSystemValue['key'])->value('id');
+            if ($siteSysId) {
                 // 存在则更新
-                SystemValue::query()->where("id", $for_id)->update($forSystemValue);
+                SystemValue::query()->where("id", $siteSysId)->update($forSystemValue);
             } else {
                 SystemValue::insert($forSystemValue);
             }
         }
-
     }
 
     public function syncSiteIpWhite($siteInfo) {
@@ -252,5 +259,4 @@ class NotifySite implements ShouldQueue {
         }
         BanWhiteList::query()->whereNotIn("id", $existIdList)->delete();
     }
-
 }
