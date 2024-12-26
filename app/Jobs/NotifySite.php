@@ -218,20 +218,25 @@ class NotifySite implements ShouldQueue {
         $systemValueList = AdminSystemValue::query()->whereIn("parent_id", $systemIdList)->get()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
-        foreach ($systemValueList as $forSystemValue) {
+        foreach ($systemValueList as &$forSystemValue) {
             $for_id = $forSystemValue['id'];
             unset($forSystemValue['id']);
             //parentid需要修改
             $parentAlias = AdminSystem::query()->where("id", $forSystemValue['parent_id'])->value('alias');
             $forSystemValue['parent_id'] = System::query()->where("alias", $parentAlias)->value('id');
-            $siteSysId = SystemValue::query()->where("key", $forSystemValue['key'])->value('id');
+            SystemValue::query()->where("parent_id" , $forSystemValue['parent_id'])->delete();
+        }
+
+        foreach ($systemValueList as $forsSystemValue){
+            $siteSysId = SystemValue::query()->where("key", $forsSystemValue['key'])->value('id');
             if ($siteSysId > 0) {
                 // 存在则更新
-                SystemValue::query()->where("id", $siteSysId)->update($forSystemValue);
+                SystemValue::query()->where("id", $siteSysId)->update($forsSystemValue);
             } else {
-                SystemValue::insert($forSystemValue);
+                SystemValue::insert($forsSystemValue);
             }
         }
+
     }
 
     public function syncSiteIpWhite($siteInfo) {
