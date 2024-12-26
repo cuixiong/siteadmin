@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
+use Modules\Site\Http\Models\SystemValue;
 
 class CrudController extends Controller {
     protected $model; // 模型类名:若没有指定模型，则根据控制器名找到对应的模型
@@ -193,6 +194,11 @@ class CrudController extends Controller {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
+            $status = $request->status;
+            $systemValueModel = new SystemValue();
+            $updData = ['hidden' => $status, 'status' => $status];
+            $systemValueModel->where('parent_id', $record->id)->update($updData);
+
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
