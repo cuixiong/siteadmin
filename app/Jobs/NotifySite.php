@@ -206,10 +206,10 @@ class NotifySite implements ShouldQueue {
         foreach ($systemList as $forCoutry) {
             $for_id = $forCoutry['id'];
             $systemIdList[] = $for_id;
-            $isExist = System::query()->where("alias", $forCoutry['alias'])->count();
-            if ($isExist) {
+            $idExist = System::query()->where("alias", $forCoutry['alias'])->value('id');
+            if ($idExist > 0) {
                 // 存在则更新
-                System::query()->where("id", $for_id)->update($forCoutry);
+                System::query()->where("id", $idExist)->update($forCoutry);
             } else {
                 System::insert($forCoutry);
             }
@@ -225,7 +225,7 @@ class NotifySite implements ShouldQueue {
             $parentAlias = AdminSystem::query()->where("id", $forSystemValue['parent_id'])->value('alias');
             $forSystemValue['parent_id'] = System::query()->where("alias", $parentAlias)->value('id');
             $siteSysId = SystemValue::query()->where("key", $forSystemValue['key'])->value('id');
-            if ($siteSysId) {
+            if ($siteSysId > 0) {
                 // 存在则更新
                 SystemValue::query()->where("id", $siteSysId)->update($forSystemValue);
             } else {
