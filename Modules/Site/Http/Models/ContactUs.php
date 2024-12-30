@@ -13,6 +13,7 @@ class ContactUs extends Base
         'product_id',
         'name',
         'email',
+        'product_name', 
         'country_id',
         'province_id',
         'city_id',
@@ -27,15 +28,20 @@ class ContactUs extends Base
         'updated_by',
         'created_by',
     ];
-    protected $appends = ['product_name', 'message_name', 'category_name', 'category_style', 'channel_name', 'buy_time_name'];
+    protected $appends = ['message_name', 'category_name', 'category_style', 'channel_name', 'buy_time_name'];
 
     // 产品名称获取器
     public function getProductNameAttribute()
     {
-        if (isset($this->attributes['product_id'])) {
+        if (isset($this->attributes['product_id']) && !empty($this->attributes['product_id'])) {
             $value = Products::where('id', $this->attributes['product_id'])->value('name');
+
         } else {
-            $value = "";
+            if (isset($this->attributes['product_name'])) {
+                $value = $this->attributes['product_name'];
+            }else{
+                $value = "";
+            }
         }
         return $value;
     }
