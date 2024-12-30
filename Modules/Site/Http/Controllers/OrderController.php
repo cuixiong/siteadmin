@@ -5,6 +5,8 @@ namespace Modules\Site\Http\Controllers;
 use App\Const\OrderConst;
 use App\Const\PayConst;
 use Illuminate\Http\Request;
+use Modules\Admin\Http\Models\City;
+use Modules\Admin\Http\Models\Country;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -60,8 +62,8 @@ class OrderController extends CrudController {
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
             }
             $data = [
-                'total' => $total,
-                'list' => $record,
+                'total'       => $total,
+                'list'        => $record,
                 'headerTitle' => [],
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
@@ -89,15 +91,13 @@ class OrderController extends CrudController {
             }
             // 支付状态
             $paudStatus = [];
-            foreach (OrderConst::$PAY_STATUS_TYPE as $payKey => $payStatus){
+            foreach (OrderConst::$PAY_STATUS_TYPE as $payKey => $payStatus) {
                 $add_data = [];
                 $add_data['label'] = $payStatus;
                 $add_data['value'] = $payKey;
                 $paudStatus[] = $add_data;
             }
             $data['pay_status'] = $paudStatus;
-
-
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel(
                 $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
@@ -151,11 +151,24 @@ class OrderController extends CrudController {
                 }
             }
             $record['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$record['pay_coin_type']] ?? '';
+            //订单地址信息
+            $record['country_str'] = '';
+            if (!empty($record['country_id'])) {
+                $record['country_str'] = Country::getCountryName($record['country_id']);
+            }
+            $record['province_str'] = '';
+            if (!empty($record['province_id'])) {
+                $record['province_str'] = City::query()->where('id', $record['province_id'])->value('name');
+            }
+            $record['city_id_str'] = '';
+            if (!empty($record['city_id'])) {
+                $record['city_id_str'] = City::query()->where('id', $record['city_id'])->value('name');
+            }
             $payInfo = Pay::where('code', $record['pay_code'])->first();
             $exchange_rate = 1;
             if (!empty($payInfo)) {
                 $exchange_rate = $payInfo->pay_exchange_rate;
-                if($exchange_rate <=0 ){
+                if ($exchange_rate <= 0) {
                     $exchange_rate = 1;
                 }
             }
