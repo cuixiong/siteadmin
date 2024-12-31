@@ -21,7 +21,7 @@ class ProductSetDataCommand extends Command {
      *
      * @var string
      */
-    protected $signature = 'task:handlerProductData {--site=}';
+    protected $signature = 'task:handlerProductData {--site=} {--hotSize=} {--recommendSize}';
 
     public function handle() {
         $option = $this->option();
@@ -31,9 +31,18 @@ class ProductSetDataCommand extends Command {
         if (!empty($option['site'])) {
             $site = $option['site'];
             $siteCrontab->site = $site;
+            
         } else {
             echo "参数异常".PHP_EOL;
             die;
+        }
+        if (!empty($option['hotSize'])) {
+            $hotSize = $option['hotSize'];
+            $siteCrontab->hotSize = $hotSize;
+        }
+        if (!empty($option['recommendSize'])) {
+            $recommendSize = $option['recommendSize'];
+            $siteCrontab->recommendSize = $recommendSize;
         }
         echo "开始处理报告数据".PHP_EOL;
         try {

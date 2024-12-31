@@ -18,6 +18,8 @@ use Modules\Site\Http\Models\ProductsCategory;
 
 class SiteCrontabController extends Controller {
     public $site  = '';
+    public $hotSize  = 6;
+    public $recommendSize  = 6;
     public $isCli = false;
 
     public $exitsIdList = [];
@@ -137,8 +139,8 @@ class SiteCrontabController extends Controller {
         }
     }
 
-    public function getHotProductList(&$id_list, &$keywords_list, $cate_id, $layer = 0, $limit = 6) {
-        if ($limit <= $layer) {
+    public function getHotProductList(&$id_list, &$keywords_list, $cate_id, $layer = 0) {
+        if ($this->hotSize <= $layer) {
             return true;
         }
         $pinfo = Products::query()->where("status", 1)
@@ -169,12 +171,12 @@ class SiteCrontabController extends Controller {
             $id_list[] = $pinfo->id;
             $keywords_list[] = $pinfo->keywords;
         }
-        return $this->getHotProductList($id_list, $keywords_list, $cate_id, ++$layer, $limit);
+        return $this->getHotProductList($id_list, $keywords_list, $cate_id, ++$layer);
     }
 
 
-    public function getRecomProductList(&$id_list, &$keywords_list, $cate_id, $layer = 0, $limit = 6) {
-        if ($limit <= $layer) {
+    public function getRecomProductList(&$id_list, &$keywords_list, $cate_id, $layer = 0) {
+        if ($this->recommendSite <= $layer) {
             return true;
         }
         $pinfo = Products::query()->where("status", 1)
@@ -205,7 +207,7 @@ class SiteCrontabController extends Controller {
             $id_list[] = $pinfo->id;
             $keywords_list[] = $pinfo->keywords;
         }
-        return $this->getRecomProductList($id_list, $keywords_list, $cate_id, ++$layer, $limit);
+        return $this->getRecomProductList($id_list, $keywords_list, $cate_id, ++$layer);
     }
 
 }
