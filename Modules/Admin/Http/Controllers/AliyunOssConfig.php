@@ -42,7 +42,7 @@ class AliyunOssConfig extends CrudController
     }
 
     
-    protected function formByName(Request $request) {
+    public function formByName(Request $request) {
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->where('name',$request->name)->first()->toArray();
