@@ -21,7 +21,7 @@ class ProductSetDataCommand extends Command {
      *
      * @var string
      */
-    protected $signature = 'task:handlerProductData {--site=} {--hotSize=} {--recommendSize}';
+    protected $signature = 'task:handlerProductData {--site=} {--hotSize=} {--recommendSize=}';
 
     public function handle() {
         $option = $this->option();
