@@ -176,7 +176,7 @@ class SiteCrontabController extends Controller {
 
 
     public function getRecomProductList(&$id_list, &$keywords_list, $cate_id, $layer = 0) {
-        if ($this->recommendSite <= $layer) {
+        if ($this->recommendSize <= $layer) {
             return true;
         }
         $pinfo = Products::query()->where("status", 1)
