@@ -40,15 +40,4 @@ class AliyunOssConfig extends CrudController
         $options['Site'] = (new Site)->GetListLabel(['id as value',$NameField],false,'',['status' => 1]);
         ReturnJson(TRUE,'', $options);
     }
-
-    
-    public function formByName(Request $request) {
-        try {
-            $this->ValidateInstance($request);
-            $record = $this->ModelInstance()->where('name',$request->name)->first()->toArray();
-            ReturnJson(true, trans('lang.request_success'), $record);
-        } catch (\Exception $e) {
-            ReturnJson(false, $e->getMessage());
-        }
-    }
 }
