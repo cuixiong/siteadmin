@@ -234,6 +234,7 @@ Route::middleware([
     Route::prefix('aliyun-oss-config')->group(function () {
         Route::get('list', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'list'])->name('阿里云OSS配置:数据列表');
         Route::get('form', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'form'])->name('阿里云OSS配置:数据单查');
+        Route::get('form-by-name', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'formByName'])->name('阿里云OSS配置:数据单查(站点名称)');
         Route::post('change-status', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'changeStatus'])->name('阿里云OSS配置:修改状态');
         Route::get('option', [Modules\Admin\Http\Controllers\AliyunOssConfig::class, 'option'])->name('阿里云OSS配置:字典数据');
     });
