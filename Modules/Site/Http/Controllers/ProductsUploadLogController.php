@@ -3,11 +3,9 @@
 namespace Modules\Site\Http\Controllers;
 
 use App\Const\QueueConst;
-use App\Imports\ProductsImport;
 use App\Jobs\HandlerProductExcel;
 use App\Jobs\SyncSphinxIndex;
 use App\Jobs\UploadProduct;
-use App\Services\RabbitmqService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
@@ -22,8 +20,6 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Site\Http\Models\ProductsUploadLog;
 use Modules\Site\Http\Models\Region;
-
-// use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use App\xlsx\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
@@ -62,7 +58,8 @@ class ProductsUploadLogController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $listSelect = [ 'id', 'file', 'count', 'insert_count', 'update_count', 'error_count', 'created_at', 'created_by', 'updated_at', 'updated_by', 'state', 'sort'];
+            $listSelect = ['id', 'file', 'count', 'insert_count', 'update_count', 'error_count', 'created_at',
+                           'created_by', 'updated_at', 'updated_by', 'state', 'sort'];
             $model = $model->select($listSelect);
             //$model = $model->select($ModelInstance->ListSelect);
             // 数据排序
@@ -140,7 +137,7 @@ class ProductsUploadLogController extends CrudController {
             if (strpos($value, '.aliyuncs.com') !== false) {
                 //阿里云oss, 直接获取文件路径
                 $path = $value;
-            }else{
+            } else {
                 $path = $basePath.$value;
             }
             //上传记录初始化,每个文件单独一条记录
@@ -228,31 +225,372 @@ class ProductsUploadLogController extends CrudController {
             $logModel->update($logData);
             //加入队列
             if ($excelData && count($excelData) > 0) {
-                $groupData = array_chunk($excelData, 100);
-                foreach ($groupData as $item) {
-                    $data = [
-                        'class'        => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
-                        'method'       => 'handleProducts',
-                        'site'         => $params['site'],
-                        'log_id'       => $params['log_id'],
-                        'publisher_id' => $params['publisher_id'],
-                        'data'         => $item,
-                        'user_id'      => $params['user_id'],
-                    ];
-                    $data = json_encode($data);
-//                    $RabbitMQ = new RabbitmqService();
-//                    $RabbitMQ->setQueueName('products-queue'); // 设置队列名称
-//                    $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-//                    $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-//                    $RabbitMQ->setRoutingKey('productsKey2');
-//                    $RabbitMQ->push($data); // 推送数据
-                    HandlerProductExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
-                }
+                $data = [
+                    'site'         => $params['site'],
+                    'log_id'       => $params['log_id'],
+                    'publisher_id' => $params['publisher_id'],
+                    'data'         => $excelData,
+                    'user_id'      => $params['user_id'],
+                ];
+                $this->handleNewProducts($data);
+//                $groupData = array_chunk($excelData, 1000);
+//                foreach ($groupData as $item) {
+//                    $data = [
+//                        'class'        => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+//                        'method'       => 'handleProducts',
+//                        'site'         => $params['site'],
+//                        'log_id'       => $params['log_id'],
+//                        'publisher_id' => $params['publisher_id'],
+//                        'data'         => $item,
+//                        'user_id'      => $params['user_id'],
+//                    ];
+//                    $data = json_encode($data);
+//                    HandlerProductExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
+//                }
             }
         } catch (\Exception $th) {
             // file_put_contents('ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
             throw $th;
         }
+    }
+
+    /**
+     * 批量上传报告/队列消费
+     *
+     * @param $params ['data'] 报告数据
+     * @param $params ['site'] 站点
+     */
+    public function handleNewProducts($params = null) {
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+        App::setLocale('zh');
+        $product_model = new Products();
+        $publisher_id = $params['publisher_id'];
+        $user_id = $params['user_id'];
+        //移除事件监听
+        $dispatcher = Products::getEventDispatcher();
+        Products::unsetEventDispatcher();
+        //获取敏感词列表
+        $this->senWords = SensitiveWords::query()->where("status", 1)
+                                        ->pluck("word")->toArray();
+        //获取报告分类列表
+        $this->productCategory = ProductsCategory::query()->where("status", 1)
+                                                 ->pluck("id", "name")->toArray();
+        //获取地区列表
+        $this->regionList = Region::query()->pluck("id", "name")->toArray();
+        $i = 0;
+        $groupData = array_chunk($params['data'], 200);
+        foreach ($groupData as $groupArr) {
+//            $i++;
+//            echo '开始处理第'.$i.'组(200条)数据'.microtime(true).PHP_EOL;
+            $insertCount = 0;
+            $updateCount = 0;
+            $errorCount = 0;
+            $details = '';
+            $sphinx_product_id_list = [];
+            $pro_name_list = array_column($groupArr, 'name');
+            $pro_ename_list = array_column($groupArr, 'english_name');
+            $handler_name_list = array_merge($pro_name_list, $pro_ename_list);
+            $handler_after_name_list = [];
+            if (!empty($handler_name_list)) {
+                $handler_name_list = array_unique($handler_name_list);
+                foreach ($handler_name_list as $forName) {
+                    if (!empty($forName)) {
+                        $handler_after_name_list[] = $forName;
+                    }
+                }
+            }
+            if (!empty($handler_after_name_list)) {
+                $productList = Products::whereIn('name', $handler_after_name_list)->select(
+                    ['id', 'name', 'author', 'published_date']
+                )->get()->keyBy('name')->toArray();
+            } else {
+                $productList = [];
+            }
+            foreach ($groupArr as $row) {
+                try {
+                    // 表头
+                    $item = [];
+                    //出版商
+                    $item['publisher_id'] = $publisher_id;
+                    //操作用户
+                    $item['created_by'] = $user_id;
+                    $item['updated_by'] = $user_id;
+                    // 报告名称
+                    $item['name'] = $row['name'] ?? '';
+                    //校验报告名称
+                    $checkMsg = $this->checkProductName($item['name']);
+                    if ($checkMsg) {
+                        $details .= $checkMsg;
+                        $errorCount++;
+                        continue;
+                    }
+                    // 报告名称(英)
+                    $item['english_name'] = $row['english_name'] ?? '';
+                    //作者
+                    $item['author'] = $row['author'] ?? '';
+                    // 过滤不符合作者覆盖策略的数据
+                    $product = [];
+                    if (!empty($productList[$item['name']])) {
+                        $product = $productList[$item['name']];
+                        if (($product['author'] == '已售报告' && $item['author'] != '已售报告')
+                            || ($product['author'] == '完成报告'
+                                && ($item['author'] != '已售报告'
+                                    && $item['author'] != '完成报告'))
+                        ) {
+                            $details .= '【'.($row['name']).'】'.($item['author']).'-'.trans('lang.author_level')
+                                        .($product['author'])."\r\n";
+                            $errorCount++;
+                            continue;
+                        }
+                    }
+                    // 页数
+                    $item['pages'] = $row['pages'] ?? 0;
+                    // 图表数
+                    $item['tables'] = $row['tables'] ?? 0;
+                    // 基础价
+                    $item['price'] = $row['price'] ?? 0;
+                    // 忽略基础价为空的数据
+                    if (empty($item['price'])) {
+                        $details .= '【'.($row['name']).'】'.trans('lang.price_empty')."\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                    // 出版时间
+//                if (!empty($row['published_date'])) {
+//                    if (is_numeric($row['published_date'])) {
+//                        $item['published_date'] = $row['published_date'];
+//                    } elseif (is_string($row['published_date'])) {
+//                        $item['published_date'] = strtotime($row['published_date']);
+//                    } else {
+//                        $item['published_date'] = 0;
+//                    }
+//                }
+                    try {
+                        // 出版时间
+                        if (!empty($row['published_date'])) {
+                            //转为 时间戳
+                            $item['published_date'] = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToTimestamp(
+                                $row['published_date']
+                            );
+                        }
+                    } catch (\Throwable $th) {
+                        //throw $th;
+                    }
+                    if (empty($item['published_date']) || $item['published_date'] < 0) {
+                        $item['published_date'] = strtotime($row['published_date']);
+                    }
+                    // 忽略出版时间为空或转化失败的数据
+                    if (empty($item['published_date']) || $item['published_date'] < 0) {
+                        $details .= '【'.($row['name'] ?? '').'】'.trans('lang.published_date_empty')."\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                    // 报告分类
+                    $tempCategoryId = 0;
+                    $tempCateName = $row['category_id'] ?? '';
+                    if (!empty($this->productCategory[trim($tempCateName)])) {
+                        $tempCategoryId = $this->productCategory[trim($tempCateName)];
+                    }
+                    $item['category_id'] = intval($tempCategoryId);
+                    // 忽略分类为空的数据
+                    if (empty($item['category_id'])) {
+                        $details .= '【'.($row['name']).'】'.$tempCateName.'-'.trans('lang.category_empty')
+                                    ."\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                    //报告所属区域
+                    $tempCountryId = $row['country_id'] ?? 0;
+                    if (!empty($tempCountryId) && !empty($this->regionList[trim($tempCountryId)])) {
+                        $item['country_id'] = intval($this->regionList[trim($tempCountryId)]);
+                    } else {
+                        $item['country_id'] = 0;
+                    }
+                    //关键词
+                    $item['keywords'] = $row['keywords'] ?? '';
+                    // 忽略关键词为空的数据
+                    if (empty($item['keywords'])) {
+                        $details .= '【'.($row['name']).'】'.trans('lang.keywords_empty')."\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                    //自定义链接
+                    $item['url'] = $row['url'] ?? '';
+                    // 如果链接为空，则用关键词做链接
+                    if (!empty($row['keywords']) && empty($row['url'])) {
+                        $item['url'] = $row['keywords'];
+                    }
+                    $item['url'] = strtolower(
+                        preg_replace('/%[0-9A-Fa-f]{2}/', '-', urlencode(str_replace(' ', '-', trim($item['url']))))
+                    );
+                    $item['url'] = strtolower(
+                        preg_replace('/[^A-Za-z0-9-]/', '-', urlencode(str_replace(' ', '-', trim($item['url']))))
+                    );
+                    $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
+                    // 忽略url为空的数据
+                    if (empty($item['url'])) {
+                        $details .= '【'.($row['name']).'】'.trans('lang.url_empty')."\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                    //url链接也需要检测敏感词
+                    $matchSenWord = $this->checkFitter($item['url']);
+                    if (!empty($matchSenWord)) {
+                        $details .= "该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                        $errorCount++;
+                        continue;
+                    }
+                    //新增其他扩展字段
+                    $item['classification'] = $row['classification'] ?? '';
+                    $item['application'] = $row['application'] ?? '';
+                    //强校验几个字段
+                    $last_scale = $row['last_scale'] ?? '';
+                    if ($this->isDecimalString($last_scale) || is_numeric($last_scale)) {
+                        $item['last_scale'] = $last_scale;
+                    } else {
+                        $item['last_scale'] = '';
+                    }
+                    $current_scale = $row['current_scale'] ?? '';
+                    if ($this->isDecimalString($current_scale) || is_numeric($current_scale)) {
+                        $item['current_scale'] = $current_scale;
+                    } else {
+                        $item['current_scale'] = '';
+                    }
+                    $future_scale = $row['future_scale'] ?? '';
+                    if ($this->isDecimalString($future_scale) || is_numeric($future_scale)) {
+                        $item['future_scale'] = $future_scale;
+                    } else {
+                        $item['future_scale'] = '';
+                    }
+                    $cagr = $row['cagr'] ?? '';
+                    if ($this->isDecimalString($cagr) || is_numeric($cagr)) {
+                        $item['cagr'] = $cagr;
+                    } else {
+                        $item['cagr'] = '';
+                    }
+                    //详情数据
+                    $itemDescription = [];
+                    isset($row['description'])
+                    && $itemDescription['description'] = str_replace('_x000D_', '', $row['description']);
+                    isset($row['table_of_content'])
+                    && $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row['table_of_content']);
+                    isset($row['tables_and_figures'])
+                    && $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row['tables_and_figures']);
+                    isset($row['description_en'])
+                    && $itemDescription['description_en'] = str_replace('_x000D_', '', $row['description_en']);
+                    isset($row['table_of_content_en'])
+                    &&
+                    $itemDescription['table_of_content_en'] = str_replace('_x000D_', '', $row['table_of_content_en']);
+                    isset($row['tables_and_figures_en'])
+                    && $itemDescription['tables_and_figures_en'] = str_replace(
+                        '_x000D_', '', $row['tables_and_figures_en']
+                    );
+                    isset($row['companies_mentioned'])
+                    &&
+                    $itemDescription['companies_mentioned'] = str_replace('_x000D_', '', $row['companies_mentioned']);
+                    //新增详情字段
+                    isset($row['definition'])
+                    && $itemDescription['definition'] = str_replace('_x000D_', '', $row['definition']);
+                    isset($row['overview'])
+                    && $itemDescription['overview'] = str_replace('_x000D_', '', $row['overview']);
+                    $item['year'] = date('Y', $item['published_date']);
+//                $redisKey = 'upload_products_'.$item['name'];
+//                if(!Redis::setnx($redisKey , 1)){
+//                    //设置失败,休眠2s
+//                    sleep(2);
+//                }
+                    //新纪录年份
+                    $newYear = Products::publishedDateFormatYear($item['published_date']);
+                    /**
+                     * 数据库操作
+                     */
+                    if (!empty($product['id'])) {
+                        $itemDescription['product_id'] = $product['id'];
+                        //旧纪录年份
+                        $oldPublishedDate = $product['published_date'];
+                        $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
+                        //更新报告
+                        $product_model->where("id", $product['id'])->update($item);
+                        $newProductDescription = (new ProductsDescription($newYear));
+                        //出版时间年份更改
+                        if ($oldYear != $newYear) {
+                            //删除旧详情
+                            if ($oldYear) {
+                                $oldProductDescription = (new ProductsDescription($oldYear))->where(
+                                    'product_id', $product['id']
+                                )->first();
+                                if ($oldProductDescription) {
+                                    $oldProductDescription->delete();
+                                }
+                            }
+                            //然后新增
+                            $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                        } else {
+                            //直接更新
+                            $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product['id'])
+                                                                                 ->first();
+                            if ($newProductDescriptionUpdate) {
+                                $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes(
+                                    $itemDescription
+                                );
+                            } else {
+                                $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                            }
+                        }
+                        $sphinx_product_id_list[] = $product['id'];
+                        $updateCount++;
+                    } else {
+                        //新增报告
+                        $product = Products::create($item);
+                        //新增报告详情
+                        $newProductDescription = (new ProductsDescription($newYear));
+                        $itemDescription['product_id'] = $product['id'];
+                        $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
+                        $insertCount++;
+                        $sphinx_product_id_list[] = $product['id'];
+                    }
+                } catch (\Throwable $th) {
+                    $details .= '【'.($row['name']).'】'.$th->getMessage()."\r\n";
+                    $errorCount++;
+                }
+            }
+            try {
+                //同步当前组的sphinx
+                $this->PushSphinxQueueByIdList($sphinx_product_id_list, $params['site']);
+                $logModel = ProductsUploadLog::where(['id' => $params['log_id']])->first();
+                $logData = [
+                    'insert_count' => DB::raw("insert_count + {$insertCount}"),
+                    'update_count' => DB::raw("update_count + {$updateCount}"),
+                    'error_count'  => DB::raw("error_count + {$errorCount}"),
+                    'details'      => ($logModel->details ?? '').$details,
+                ];
+                //使用redis, 保证多线程数据安全
+                $totCnt = $insertCount + $updateCount + $errorCount;
+                $redisKey = $params['site'].'_product_upload_log_id_'.$params['log_id'];
+                //如果数量吻合，则证明上传完成了
+                if ($logModel->count == Redis::incrby($redisKey, $totCnt)) {
+                    $logData['state'] = ProductsUploadLog::UPLOAD_COMPLETE;
+                } else {
+                    $logData['state'] = ProductsUploadLog::UPLOAD_RUNNING;
+                }
+                $logFlag = $logModel->update($logData);
+//            if ($logFlag) {
+//                DB::commit();
+//            } else {
+//                DB::rollBack();
+//            }
+            } catch (\Exception $e) {
+                //DB::rollBack();
+                throw $e;
+            }
+            //echo '结束处理第'.$i.'组(200条)数据'.microtime(true).PHP_EOL;
+        }
+        //恢复监听
+        Products::setEventDispatcher($dispatcher);
     }
 
     /**
@@ -312,7 +650,6 @@ class ProductsUploadLogController extends CrudController {
 //                    $errorCount++;
 //                    continue;
 //                }
-
                 // 页数
                 $item['pages'] = $row['pages'] ?? 0;
                 // 图表数
@@ -386,7 +723,6 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-
                 //自定义链接
                 $item['url'] = $row['url'] ?? '';
                 // 如果链接为空，则用关键词做链接
@@ -413,7 +749,6 @@ class ProductsUploadLogController extends CrudController {
                     $errorCount++;
                     continue;
                 }
-
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
@@ -464,14 +799,11 @@ class ProductsUploadLogController extends CrudController {
                 && $itemDescription['definition'] = str_replace('_x000D_', '', $row['definition']);
                 isset($row['overview']) && $itemDescription['overview'] = str_replace('_x000D_', '', $row['overview']);
                 $item['year'] = date('Y', $item['published_date']);
-
-                $redisKey = 'upload_products_'.$item['name'];
-                if(!Redis::setnx($redisKey , 1)){
-                    //设置失败,休眠2s
-                    sleep(2);
-                }
-
-
+//                $redisKey = 'upload_products_'.$item['name'];
+//                if(!Redis::setnx($redisKey , 1)){
+//                    //设置失败,休眠2s
+//                    sleep(2);
+//                }
                 // 查询单个报告数据/去重
                 $product = Products::where('name', trim($item['name']))->orWhere(
                     'name', isset($row['english_name']) ? trim(
@@ -543,7 +875,7 @@ class ProductsUploadLogController extends CrudController {
                 if (!empty($product)) {
                     //维护xunSearch索引, 队列执行
                     $description = $row['description'] ?? '';
-                    $this->pushSyncSphinxQueue($product, $description, $params['site']);
+                    $this->pushSyncSphinxQueue($product, $params['site']);
                 }
             } catch (\Throwable $th) {
                 //throw $th;
@@ -552,9 +884,9 @@ class ProductsUploadLogController extends CrudController {
                 // $details = json_encode($row) . "\r\n";
                 $errorCount++;
             }
-            if(!empty($redisKey )){
-                Redis::del($redisKey);
-            }
+//            if(!empty($redisKey )){
+//                Redis::del($redisKey);
+//            }
         }
         //恢复监听
         Products::setEventDispatcher($dispatcher);
@@ -739,7 +1071,6 @@ class ProductsUploadLogController extends CrudController {
 //        if (!empty($matchSenWord)) {
 //            return "该报告名称:{$productName}含有 {$matchSenWord} 敏感词,请检查\r\n";
 //        }
-
         return false;
     }
 
@@ -768,7 +1099,41 @@ class ProductsUploadLogController extends CrudController {
         $RabbitMQ->push($data); // 推送数据
     }
 
-    public function pushSyncSphinxQueue($product, $description, $site) {
+    /**
+     *  推送sphinx队列
+     */
+    public function PushSphinxQueueByIdList($product_id_list, $site) {
+        if (empty($product_id_list)) {
+            return false;
+        }
+        $product_id_list = array_unique($product_id_list);
+        $data = [
+            'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+            'method' => 'SyncSphinxByIdList',
+            'site'   => $site,
+            'data'   => $product_id_list,
+        ];
+        $data = json_encode($data);
+        SyncSphinxIndex::dispatch($data)->onQueue(QueueConst::SYNC_SPGINX_INDEX);
+    }
+
+    /**
+     *  批量同步sphinx索引
+     */
+    public function SyncSphinxByIdList($params) {
+        $product_id_list = $params['data'];
+        try {
+            (new Products())->batchUpdateSphinx($product_id_list, $params['site']);
+        } catch (\Exception $e) {
+            \Log::error('批量同步sphinx索引异常:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            echo '批量同步sphinx索引异常:'.$e->getMessage().PHP_EOL;
+        }
+
+        return true;
+    }
+
+    public function pushSyncSphinxQueue($product, $site) {
+        return false;
         $xsProductData = $product->toArray();
         //$xsProductData['description'] = $description ?? '';
         $data = [
@@ -821,15 +1186,16 @@ class ProductsUploadLogController extends CrudController {
     }
 
     public function convertMinutes($seconds) {
-        if($seconds >= 60) {
+        if ($seconds >= 60) {
             $minutes = intval($seconds / 60); // 获取分钟数
             $remainingSeconds = $seconds % 60; // 获取剩余的秒数
             // 如果剩余的秒数小于10，前面补0
             $remainingSeconds = str_pad($remainingSeconds, 2, '0', STR_PAD_LEFT);
-        }else{
+        } else {
             $minutes = 0;
             $remainingSeconds = $seconds;
         }
+
         return [
             'minutes' => $minutes,
             'seconds' => $remainingSeconds

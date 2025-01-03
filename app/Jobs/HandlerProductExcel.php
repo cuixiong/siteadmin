@@ -39,7 +39,8 @@ class HandlerProductExcel implements ShouldQueue {
      * @return void
      */
     public function handle() {
-        echo "开始".PHP_EOL;
+        $start_time = microtime(true);
+        echo "开始{$start_time}".PHP_EOL;
 //        try {
             $this->callFuncBack($this->data);
 //        } catch (\Exception $e) {
@@ -49,7 +50,8 @@ class HandlerProductExcel implements ShouldQueue {
 //            ];
 //            \Log::error('处理上传报告数据--错误信息与数据:'.json_encode($errData));
 //        }
-        echo "结束".PHP_EOL;
+        $end_time = microtime(true);
+        echo "结束{$end_time}".PHP_EOL;
         return true;
     }
 }

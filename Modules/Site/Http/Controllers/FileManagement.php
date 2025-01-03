@@ -963,7 +963,7 @@ class FileManagement extends Controller {
             try {
                 // 获取 OSS 文件内容
                 $ossClient = SiteUploads::OssClient();
-                $content = $ossClient->download($file_name);
+                $content = $ossClient->download($file_fullpath);
                 // 保存到本地
                 $localPath = rtrim(public_path(), "/").$file_fullpath;
                 file_put_contents($localPath, $content);

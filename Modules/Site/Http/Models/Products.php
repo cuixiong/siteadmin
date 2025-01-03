@@ -579,4 +579,62 @@ class Products extends Base {
             $index->del($data['id'])->flushIndex();;
         }
     }
+
+    /**
+     * 根据商品id批量更新sphinx索引
+     *
+     * @param $product_id_list
+     * @param $site
+     *
+     */
+    public function batchUpdateSphinx($product_id_list, $site) {
+        // 设置当前租户
+        tenancy()->initialize($site);
+        // TODO: cuizhixiong 2025/1/3 'publisher_id',后续加上
+        $fieldList = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords', 'url',
+                      'published_date', 'status', 'author', 'discount', 'discount_amount', 'show_hot', 'show_recommend',
+                      'sort', 'created_at'];
+        $productList = Products::query()->whereIn('id', $product_id_list)->select($fieldList)->get()->toArray();
+        $handlerProductList = [];
+        foreach ($productList as $data) {
+            $price = $data['price'] ?? 0;
+            $discount = $data['discount'] ?? 0;
+            $discount_amount = $data['discount_amount'] ?? 0;
+            $handlerData = [
+                'id'              => $data['id'],
+                'name'            => $data['name'] ?? '',
+                'english_name'    => $data['english_name'] ?? '',
+                'country_id'      => $data['country_id'] ?? 0,
+                'category_id'     => $data['category_id'] ?? 0,
+                'price'           => floatval($price),
+                'discount'        => floatval($discount),
+                'discount_amount' => floatval($discount_amount),
+                'created_at'      => strtotime($data['created_at']),
+                'published_date'  => $data['published_date'] ?? 0,
+                'author'          => $data['author'] ?? '',
+                'show_hot'        => $data['show_hot'] ?? 1,
+                'show_recommend'  => $data['show_recommend'] ?? 1,
+                'status'          => $data['status'] ?? 1,
+                'keywords'        => $data['keywords'] ?? '',
+                'sort'            => $data['sort'] ?? 100,
+                'url'             => $data['url'] ?? '',
+            ];
+            $handlerProductList[] = $handlerData;
+        }
+        if (!empty($handlerProductList)) {
+            $sphinxFields = array_keys($handlerProductList[0]);
+            //同步sphinx索引
+            $conn = (new SphinxService($site))->getConnection();
+            $product_id_num_list = array_map('intval', $product_id_list);
+            (new SphinxQL($conn))->delete()->from('products_rt')->where('id', 'IN', $product_id_num_list)->execute();
+            $query = (new SphinxQL($conn))->insert()->into('products_rt')->columns($sphinxFields);
+            foreach ($handlerProductList as $forData) {
+                $values = array_values($forData);
+                $query->values($values);
+            }
+            $result = $query->execute();
+
+            return $result->getAffectedRows();
+        }
+    }
 }
