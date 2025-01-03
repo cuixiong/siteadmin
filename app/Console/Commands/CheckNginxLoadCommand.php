@@ -1,0 +1,181 @@
+<?php
+/**
+ * ProductSetDataCommand.php UTF-8
+ * 游戏设置数据命令行
+ *
+ * @date    : 2024/6/20 11:27 上午
+ *
+ * @license 这不是一个自由软件，未经授权不许任何使用和传播。
+ * @author  : cuizhixiong <cuizhixiong@qyresearch.com>
+ * @version : 1.0
+ */
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use Modules\Admin\Http\Models\Site;
+use Modules\Admin\Http\Models\SiteNginxConf;
+use Modules\Site\Http\Controllers\SiteCrontabController;
+use Modules\Site\Http\Models\AccessLog;
+use Modules\Site\Http\Models\SystemValue;
+use Modules\Admin\Http\Models\SystemValue as AdminSystemValue;
+
+class CheckNginxLoadCommand extends Command {
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'task:check_nginx_load';
+
+    public function handle() {
+        try {
+            //设置日志
+            config(['logging.default' => 'cli']);
+            $script_path = 'sh /www/wwwroot/nginx_shell/query_os_load.sh';
+            exec($script_path, $load_os_arr);
+            $load_os_data = current($load_os_arr);
+            $load_os_val = explode(":", $load_os_data)[1] ?? 0;
+            $siteNameList = Site::query()->where("status", 1)
+                                ->where("is_local", 1)
+                                ->pluck("name");
+            $siteNameList = ['mmgcn'];
+            $siteNginxConfList = SiteNginxConf::query()->whereIn("name", $siteNameList)->get()->toArray();
+            foreach ($siteNginxConfList as $siteNginxConfInfo) {
+                $site = $siteNginxConfInfo['name'];
+                tenancy()->initialize($site);
+                $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
+                $check_max_load = $sysValList['check_max_load'] ?? 30;
+                if ($load_os_val >= $check_max_load) {
+                    $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
+                    \Log::error("{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+                    echo $banStr.PHP_EOL;
+                    $this->writeNginxConf($banStr, $siteNginxConfInfo);
+                }
+            }
+            $this->reloadNginx();
+        } catch (\Exception $e) {
+            \Log::error(
+                '检测nginx负载异常:'.json_encode([$e->getMessage()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
+            );
+            echo $e->getMessage().PHP_EOL;
+            exit;
+        }
+        echo "当前时间:".date("Y-m-d H:i:s")."服务器正常!".PHP_EOL;
+    }
+
+    /**
+     *
+     * @param  $siteNginxConfInfo
+     *
+     */
+    private function getBanNginxStr($siteNginxConfInfo, $sysValList) {
+        if (empty($siteNginxConfInfo['conf_temp_path']) || empty($siteNginxConfInfo['conf_real_path'])) {
+            return false;
+        }
+        //获取当前站点, 异常流量
+        $beforeIpTime = $sysValList['beforeIpTime'] ?? 5; //默认5分钟
+        $ipMaxCnt = $sysValList['ipMaxReqCnt'] ?? 100; //默认100次
+        $ipMutiType = $sysValList['ipMutiType'] ?? 3; //默认3段ip
+        if ($ipMutiType == 2) {
+            $tab = 'ip_muti_second';
+        } elseif ($ipMutiType == 3) {
+            $tab = 'ip_muti_third';
+        } else {
+            $tab = 'ip';
+        }
+        $start_time = time() - $beforeIpTime * 60;
+        $accessIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
+                                    ->groupBy($tab)
+                                    ->selectRaw("count(*) as cnt, ".$tab)
+                                    ->having('cnt', '>=', $ipMaxCnt)
+                                    ->pluck('cnt', $tab)->toArray();
+        $banStr = '';
+        foreach ($accessIpLogList as $forIp => $forVal) {
+            if ($tab == 'ip_muti_second') {
+                $ipstr = 'deny '.$forIp.'.0.0/16;';
+            } elseif ($tab == 'ip_muti_third') {
+                $ipstr = 'deny '.$forIp.'.0/24;';
+            } else {
+                $ipstr = 'deny '.$forIp.";";
+            }
+            $banStr .= PHP_EOL.$ipstr;
+        }
+        $UaMaxCnt = $sysValList['uaMaxReqCnt'] ?? 100; //默认100次
+        $beforeUaTime = $sysValList['beforeUaTime'] ?? 5; //默认5分钟
+        $ua_start_time = time() - $beforeUaTime * 60;
+        $accessUaLogList = AccessLog::query()->where("created_at", ">", $ua_start_time)
+                                    ->groupBy('ua_info')
+                                    ->selectRaw("count(*) as cnt, ua_info")
+                                    ->having('cnt', '>=', $UaMaxCnt)
+                                    ->pluck('cnt', 'ua_info')->toArray();
+        if (!empty($accessUaLogList)) {
+            $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
+            $uaListStr = '';
+            foreach ($accessUaLogList as $forUa => $forUaVal) {
+                $handler_ua = "(".$this->customEscape($forUa, ['.', '(', ')', '+', '?', "*", '\\']).")|";
+                $uaListStr .= $handler_ua;
+            }
+            $uabanStr .= rtrim($uaListStr, '|');
+            $uabanStr .= '") {';
+            $uabanStr .= PHP_EOL.'return 403;'.PHP_EOL;
+            $uabanStr .= '}'.PHP_EOL;
+        }
+        if (!empty($uabanStr)) {
+            $banStr .= PHP_EOL.$uabanStr;
+        }
+        $banStr .= PHP_EOL;
+        return $banStr;
+        //$banStr = "";
+        //字符串替换
+        //$this->writeNginxConf($banStr, $siteNginxConfInfo);
+    }
+
+    public function customEscape($input, $characters) {
+        // 转义指定的字符
+        $escaped = '';
+        foreach (str_split($input) as $char) {
+            if (in_array($char, $characters)) {
+                $escaped .= '\\'.$char; // 添加单个反斜杠
+            } else {
+                $escaped .= $char;
+            }
+        }
+
+        return $escaped;
+    }
+
+    /**
+     *
+     * @param $output
+     * @param $return_var
+     *
+     * @return array
+     */
+    private function reloadNginx() {
+        $nginx_reload_path = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
+        exec($nginx_reload_path, $output, $return_var);
+        if ($return_var) {
+            \Log::error('重启nginx失败:'.json_encode($output));
+        } else {
+            \Log::info('重启nginx成功:'.json_encode($output));
+        }
+    }
+
+    /**
+     * 修改nginx配置
+     *
+     * @param string $banStr
+     * @param        $siteNginxConfInfo
+     *
+     */
+    private function writeNginxConf(string $banStr, $siteNginxConfInfo) {
+        $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
+        if (empty($temp_content)) {
+            return false;
+        }
+        $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
+        $new_file_path = $siteNginxConfInfo['conf_real_path'];
+        file_put_contents($new_file_path, $modifiedString);
+    }
+}

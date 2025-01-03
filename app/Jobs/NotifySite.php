@@ -197,7 +197,7 @@ class NotifySite implements ShouldQueue {
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         //只控制ip限流与ua限流配置
-        $systemList = AdminSystem::query()->whereIn("alias", ['ip_limit_rules', 'ua_ban_rule'])->get()->map(
+        $systemList = AdminSystem::query()->whereIn("alias", ['ip_limit_rules', 'ua_ban_rule' , 'nginx_ban_rules'])->get()->map(
             function ($item) {
                 return $item->getAttributes();
             }
