@@ -217,19 +217,25 @@ class ProductsUploadLogController extends CrudController {
                     }
                 }
             }
-            //记录任务状态、总数量
-            $logData = [
-                'count' => count($excelData),
-                'state' => ProductsUploadLog::UPLOAD_READY,
-            ];
-            $logModel->update($logData);
             //加入队列
-            if ($excelData && count($excelData) > 0) {
+            if (!empty($excelData) && count($excelData) > 0) {
+                //昵称去重
+                $uniqueDataList = [];
+                foreach ($excelData as $forParamsData) {
+                    $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                }
+                $uniqueDataList = array_values($uniqueDataList);
+                //记录任务状态、总数量
+                $logData = [
+                    'count' => count($uniqueDataList),
+                    'state' => ProductsUploadLog::UPLOAD_READY,
+                ];
+                $logModel->update($logData);
                 $data = [
                     'site'         => $params['site'],
                     'log_id'       => $params['log_id'],
                     'publisher_id' => $params['publisher_id'],
-                    'data'         => $excelData,
+                    'data'         => $uniqueDataList,
                     'user_id'      => $params['user_id'],
                 ];
                 $this->handleNewProducts($data);
@@ -247,6 +253,8 @@ class ProductsUploadLogController extends CrudController {
 //                    $data = json_encode($data);
 //                    HandlerProductExcel::dispatch($data)->onQueue(QueueConst::QUEEU_HANDLER_PRODUCT_EXCEL);
 //                }
+            } else {
+                throw new \Exception('excel文件没有数据');
             }
         } catch (\Exception $th) {
             // file_put_contents('ddddddddddd.txt', $th->getLine() . $th->getMessage() . $th->getTraceAsString(), FILE_APPEND);
