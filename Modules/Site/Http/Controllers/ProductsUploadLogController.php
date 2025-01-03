@@ -509,6 +509,7 @@ class ProductsUploadLogController extends CrudController {
                      * 数据库操作
                      */
                     if (!empty($product['id'])) {
+                        unset($item['created_by']);
                         $itemDescription['product_id'] = $product['id'];
                         //旧纪录年份
                         $oldPublishedDate = $product['published_date'];
@@ -545,6 +546,7 @@ class ProductsUploadLogController extends CrudController {
                         $updateCount++;
                     } else {
                         //新增报告
+                        unset($item['updated_by']);
                         $product = Products::create($item);
                         //新增报告详情
                         $newProductDescription = (new ProductsDescription($newYear));
