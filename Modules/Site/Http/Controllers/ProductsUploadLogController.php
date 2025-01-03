@@ -221,8 +221,24 @@ class ProductsUploadLogController extends CrudController {
             if (!empty($excelData) && count($excelData) > 0) {
                 //昵称去重
                 $uniqueDataList = [];
+                $authorCheck = ['已售报告', '完成报告'];
                 foreach ($excelData as $forParamsData) {
-                    $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                    //已售报告>完成报告>人名作者
+                    if (!empty($uniqueDataList[$forParamsData['name']])) {
+                        if (!in_array($uniqueDataList[$forParamsData['name']]['author'], $authorCheck)
+                            && in_array($forParamsData['author'], $authorCheck)
+                        ) {
+                            //作者报告需要被这种报告替换
+                            $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                        } elseif (in_array($uniqueDataList[$forParamsData['name']]['author'], $authorCheck)
+                                  && $forParamsData['author'] == '已售报告') {
+                            $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                        } elseif ($uniqueDataList[$forParamsData['name']]['author'] == $forParamsData['author']) {
+                            $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                        }
+                    } else {
+                        $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                    }
                 }
                 $uniqueDataList = array_values($uniqueDataList);
                 //记录任务状态、总数量

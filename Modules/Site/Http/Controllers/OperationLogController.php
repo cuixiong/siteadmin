@@ -88,7 +88,7 @@ class OperationLogController extends CrudController {
                 $model->module = $params['module'];
                 $model->created_by = $params['created_by'];
                 $model->created_at = $params['created_at'];
-                \Log::error('返回结果数据:'.json_encode([$model]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+                //\Log::error('返回结果数据:'.json_encode([$model]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
                 $res = $model->save();
 
                 return true;
