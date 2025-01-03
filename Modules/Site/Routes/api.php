@@ -717,6 +717,8 @@ Route::middleware([
         Route::get('get-read-msg-cnt', [Modules\Site\Http\Controllers\PublicController::class, 'getNoReadMsgCnt'])->name('公共:获取未读消息数量');
         Route::get('get-init-data', [Modules\Site\Http\Controllers\PublicController::class, 'getInitData'])->name('公共:获取初始化数据');
         Route::any('truncate-table', [Modules\Site\Http\Controllers\PublicController::class, 'truncateTable'])->name('清空数据表');
+        Route::get('get-site-security-conf', [Modules\Site\Http\Controllers\PublicController::class, 'getSiteSecurityConf'])->name('获取站点安全数据');
+        Route::get('test', [Modules\Site\Http\Controllers\PublicController::class, 'test'])->name('测试');
     });
 
     // OperationLogController 控制器
