@@ -208,6 +208,7 @@ class NotifySite implements ShouldQueue {
             $systemIdList[] = $for_id;
             $idExist = System::query()->where("alias", $forCoutry['alias'])->value('id');
             unset($forCoutry['id']);
+            //$forCoutry['updated_at'] = time();
             if ($idExist > 0) {
                 // 存在则更新
                 System::query()->where("id", $idExist)->update($forCoutry);
@@ -231,6 +232,7 @@ class NotifySite implements ShouldQueue {
         foreach ($systemValueList as $forsSystemValue){
             $siteSysId = SystemValue::query()->where("key", $forsSystemValue['key'])->value('id');
             unset($forsSystemValue['id']);
+            //$forsSystemValue['updated_at'] = time();
             if ($siteSysId > 0) {
                 // 存在则更新
                 SystemValue::query()->where("id", $siteSysId)->update($forsSystemValue);
@@ -257,6 +259,7 @@ class NotifySite implements ShouldQueue {
             $for_id = $forCoutry['id'];
             $existIdList[] = $for_id;
             $isExist = BanWhiteList::query()->where("id", $for_id)->count();
+            $forCoutry['updated_at'] = time();
             if ($isExist) {
                 // 存在则更新
                 BanWhiteList::query()->where("id", $for_id)->update($forCoutry);

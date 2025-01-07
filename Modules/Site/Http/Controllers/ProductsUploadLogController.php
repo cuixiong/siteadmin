@@ -89,6 +89,24 @@ class ProductsUploadLogController extends CrudController {
     }
 
     /**
+     * AJax单个查询
+     *
+     * @param $request 请求信息
+     */
+    protected function form(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if(!empty($record ) && !empty($record->details )){
+                $record->details = nl2br($record->details);
+            }
+            ReturnJson(true, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      * 获取该站点的出版商,下拉选择框数据
      *
      * @param $request 请求信息
