@@ -1119,29 +1119,29 @@ class ProductsUploadLogController extends CrudController {
     }
 
     /**
-     *
+     * 讯搜废弃
      * @param $product
      * @param $description
      * @param $site
      *
      */
-    private function pushXsSyncQueue($product, $description, $site): void {
-        $xsProductData = $product->toArray();
-        $xsProductData['description'] = $description ?? '';
-        $data = [
-            'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
-            'method' => 'xsSyncProductIndex',
-            'site'   => $site,
-            'data'   => $xsProductData,
-        ];
-        $data = json_encode($data);
-        $RabbitMQ = new RabbitmqService();
-        $RabbitMQ->setQueueName('xssyncindex-queue'); // 设置队列名称
-        $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
-        $RabbitMQ->setQueueMode('direct'); // 设置队列模式
-        $RabbitMQ->setRoutingKey('productsKey1');
-        $RabbitMQ->push($data); // 推送数据
-    }
+//    private function pushXsSyncQueue($product, $description, $site): void {
+//        $xsProductData = $product->toArray();
+//        $xsProductData['description'] = $description ?? '';
+//        $data = [
+//            'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+//            'method' => 'xsSyncProductIndex',
+//            'site'   => $site,
+//            'data'   => $xsProductData,
+//        ];
+//        $data = json_encode($data);
+//        $RabbitMQ = new RabbitmqService();
+//        $RabbitMQ->setQueueName('xssyncindex-queue'); // 设置队列名称
+//        $RabbitMQ->setExchangeName('Products'); // 设置交换机名称
+//        $RabbitMQ->setQueueMode('direct'); // 设置队列模式
+//        $RabbitMQ->setRoutingKey('productsKey1');
+//        $RabbitMQ->push($data); // 推送数据
+//    }
 
     /**
      *  推送sphinx队列
@@ -1192,28 +1192,9 @@ class ProductsUploadLogController extends CrudController {
 
     public function xsSyncProductIndex($params) {
         $data = $params['data'];
-        $handlerData = [
-            'id'              => intval($data['id']),
-            'name'            => $data['name']."",
-            'english_name'    => $data['english_name']."",
-            'country_id'      => intval($data['country_id']),
-            'category_id'     => intval($data['category_id']),
-            'price'           => floatval($data['price']),
-            'discount'        => $data['discount'] ?? 0,
-            'discount_amount' => $data['discount_amount'] ?? 0,
-            'created_at'      => strtotime($data['created_at'] ?? 0),
-            'published_date'  => $data['published_date'],
-            'author'          => $data['author'],
-            'show_hot'        => $data['show_hot'] ?? 0,
-            'show_recommend'  => $data['show_recommend'] ?? 0,
-            'status'          => $data['status'] ?? 1,
-            'keywords'        => $data['keywords'],
-            'sort'            => $data['sort'] ?? 100,
-            'url'             => $data['url'],
-            //'description'     => $data['description'],
-        ];
+        //不想多维护一遍, 宁愿再查一遍
         try {
-            (new Products())->excuteSphinxReq($handlerData, 'update', $params['site']);
+            (new Products())->excuteSphinxReq($data['id'], 'update', $params['site']);
         } catch (\Exception $e) {
             var_dump($e->getMessage());
         }

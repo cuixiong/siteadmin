@@ -324,7 +324,7 @@ class Products extends Base {
      * 处理sphinx搜索服务
      *
      * @param $id           报告id
-     * @param $action       操作类型
+     * @param $action       string    操作类型
      * @param $siteName     站点标识
      *
      */
@@ -406,6 +406,8 @@ class Products extends Base {
                 'show_recommend'  => $data['show_recommend'] ?? 1,
                 'status'          => $data['status'] ?? 1,
                 'keywords'        => $data['keywords'] ?? '',
+                'year'            => $data['year'] ?? 0,
+                'degree_keyword'  => strlen($data['keywords']),
                 'sort'            => $data['sort'] ?? 100,
                 'url'             => $data['url'] ?? '',
             ];
@@ -591,7 +593,7 @@ class Products extends Base {
         // 设置当前租户
         tenancy()->initialize($site);
         // TODO: cuizhixiong 2025/1/3 'publisher_id',后续加上
-        $fieldList = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords', 'url',
+        $fieldList = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords', 'year', 'url',
                       'published_date', 'status', 'author', 'discount', 'discount_amount', 'show_hot', 'show_recommend',
                       'sort', 'created_at'];
         $productList = Products::query()->whereIn('id', $product_id_list)->select($fieldList)->get()->toArray();
@@ -616,6 +618,8 @@ class Products extends Base {
                 'show_recommend'  => $data['show_recommend'] ?? 1,
                 'status'          => $data['status'] ?? 1,
                 'keywords'        => $data['keywords'] ?? '',
+                'year'            => $data['year'] ?? 0,
+                'degree_keyword'  => strlen($data['keywords']),
                 'sort'            => $data['sort'] ?? 100,
                 'url'             => $data['url'] ?? '',
             ];

@@ -11,7 +11,7 @@ use Modules\Admin\Http\Models\City;
 
 class Order extends Base {
     //单查数据需要追加的字段
-    protected $formAppends
+    public $formAppends
         = [
             'is_pay_text',
             'pay_time_format',
@@ -272,7 +272,11 @@ class Order extends Base {
             $text = DictionaryValue::where('code', 'Invoice_State')->where('value', $apply_status)->value('name');
         }
 
-        return $text ?? '';
+        if(!empty($text )){
+            return $text;
+        }else{
+            return '未开票';
+        }
     }
 
     /**

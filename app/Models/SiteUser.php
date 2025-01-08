@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
@@ -16,6 +17,31 @@ class SiteUser extends Authenticatable implements JWTSubject {
     protected $dateFormat = 'U';
     /** 隐藏不需要输出的字段 */
     protected $hidden = ["password"];
+
+
+    /**
+     * 模型的“引导”方法。
+     * 使用闭包的方式进行使用模型事件
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $user = Auth::user();
+            if(isset($user->id)){
+                $model->created_by = $user->id;
+            } else {
+                $model->created_by = 0;
+            }
+        });
+
+        static::updating(function ($model) {
+            $user = Auth::user();
+            if(isset($user->id)){
+                $model->updated_by = $user->id;
+            }
+        });
+    }
 
     /**
      * 创建时间获取器

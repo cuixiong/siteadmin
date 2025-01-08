@@ -84,10 +84,20 @@ class UserController extends CrudController {
             $input['status'] = 1; //默认已验证
             $password = request()->input('password', '123456');
             $input['password'] = Hash::make($password);
+
+            if (!empty($input['userAddess'])) {
+                $userAddessList = @json_decode($input['userAddess'], true);
+            }
+            unset($input['userAddess']);
             $record = SiteUser::query()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
+
+            if(!empty($userAddessList )){
+
+            }
+
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
