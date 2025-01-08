@@ -626,19 +626,22 @@ class Products extends Base {
             $handlerProductList[] = $handlerData;
         }
         if (!empty($handlerProductList)) {
-            $sphinxFields = array_keys($handlerProductList[0]);
             //同步sphinx索引
             $conn = (new SphinxService($site))->getConnection();
             $product_id_num_list = array_map('intval', $product_id_list);
             (new SphinxQL($conn))->delete()->from('products_rt')->where('id', 'IN', $product_id_num_list)->execute();
-            $query = (new SphinxQL($conn))->insert()->into('products_rt')->columns($sphinxFields);
-            foreach ($handlerProductList as $forData) {
-                $values = array_values($forData);
-                $query->values($values);
+//            $sphinxFields = array_keys($handlerProductList[0]);
+//            $query = (new SphinxQL($conn))->insert()->into('products_rt')->columns($sphinxFields);
+//            foreach ($handlerProductList as $forData) {
+//                $values = array_values($forData);
+//                $query->values($values);
+//            }
+//            $result = $query->execute();
+//            return $result->getAffectedRows();
+            //稳妥起见还是一条一条的插入吧 (假设失败,会导致大批量的索引得不到插入)
+            foreach ($handlerProductList as $forData){
+                $res = (new SphinxQL($conn))->insert()->into('products_rt')->set($forData)->execute();
             }
-            $result = $query->execute();
-
-            return $result->getAffectedRows();
         }
     }
 }
