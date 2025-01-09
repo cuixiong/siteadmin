@@ -40,7 +40,7 @@ class CheckNginxLoadCommand extends Command {
             $siteNameList = Site::query()->where("status", 1)
                                 ->where("is_local", 1)
                                 ->pluck("name");
-            $siteNameList = ['mmgcn'];
+            //$siteNameList = ['mmgcn'];
             $siteNginxConfList = SiteNginxConf::query()->whereIn("name", $siteNameList)->get()->toArray();
             foreach ($siteNginxConfList as $siteNginxConfInfo) {
                 $site = $siteNginxConfInfo['name'];
@@ -53,6 +53,12 @@ class CheckNginxLoadCommand extends Command {
                         "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
                         .__LINE__
                     );
+                    echo $banStr.PHP_EOL;
+                    $this->writeNginxConf($banStr, $siteNginxConfInfo);
+                } else {
+                    //恢复nginx配置
+                    //$banStr = $this->getBlackBanNginxStr($siteNginxConfInfo, $sysValList);
+                    $banStr = '';
                     echo $banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                 }
@@ -97,16 +103,16 @@ class CheckNginxLoadCommand extends Command {
         $banStr = '';
         $banIpStrList = [];
         //查询超过1次的
-        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
-                                      ->groupBy('ban_str')
-                                      ->having('cnt', '>=', 1)
-                                      ->selectRaw('count(*) as cnt, ban_str')
-                                      ->pluck('ban_str')->toArray();
-        if (!empty($cntBlackIpList)) {
-            foreach ($cntBlackIpList as $forIp) {
-                $banIpStrList[] = PHP_EOL.$forIp;
-            }
-        }
+//        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
+//                                      ->groupBy('ban_str')
+//                                      ->having('cnt', '>', 1)
+//                                      ->selectRaw('count(*) as cnt, ban_str')
+//                                      ->pluck('ban_str')->toArray();
+//        if (!empty($cntBlackIpList)) {
+//            foreach ($cntBlackIpList as $forIp) {
+//                $banIpStrList[] = PHP_EOL.$forIp;
+//            }
+//        }
         $blackAddIpList = [];
         foreach ($accessIpLogList as $forIp => $forVal) {
             if ($tab == 'ip_muti_second') {
@@ -116,25 +122,25 @@ class CheckNginxLoadCommand extends Command {
             } else {
                 $ipstr = 'deny '.$forIp.";";
             }
-            $blackAddIpList[] = [
-                'ban_str'    => $ipstr,
-                'ban_type'   => 1,
-                'created_at' => time(),
-            ];
+//            $blackAddIpList[] = [
+//                'ban_str'    => $ipstr,
+//                'ban_type'   => 1,
+//                'created_at' => time(),
+//            ];
             $banIpStrList[] = PHP_EOL.$ipstr;
         }
-        BlackBanList::query()->insert($blackAddIpList);
+        //BlackBanList::query()->insert($blackAddIpList);
         if (!empty($banIpStrList)) {
             $banIpStrList = array_unique($banIpStrList);
             $banStr = implode('', $banIpStrList);
         }
         ########################################################################
         //查询超过1次的UA
-        $cntBlackUaList = BlackBanList::query()->where("ban_type", 2)
-                                      ->groupBy('ban_str')
-                                      ->having('cnt', '>=', 1)
-                                      ->selectRaw('count(*) as cnt, ban_str')
-                                      ->pluck('ban_str')->toArray();
+//        $cntBlackUaList = BlackBanList::query()->where("ban_type", 2)
+//                                      ->groupBy('ban_str')
+//                                      ->having('cnt', '>', 1)
+//                                      ->selectRaw('count(*) as cnt, ban_str')
+//                                      ->pluck('ban_str')->toArray();
         $banUaStrList = [];
         $UaMaxCnt = $sysValList['uaMaxReqCnt'] ?? 100; //默认100次
         $beforeUaTime = $sysValList['beforeUaTime'] ?? 5; //默认5分钟
@@ -145,17 +151,19 @@ class CheckNginxLoadCommand extends Command {
                                     ->having('cnt', '>=', $UaMaxCnt)
                                     ->pluck('ua_info')->toArray();
         //插入黑名单
-        $blackUaList = [];
-        foreach ($accessUaLogList as $forAccUaVal) {
-            $blackUaList[] = [
-                'ban_str'    => $forAccUaVal,
-                'ban_type'   => 2,
-                'created_at' => time(),
-            ];
-        }
-        BlackBanList::query()->insert($blackUaList);
+//        $blackUaList = [];
+//        foreach ($accessUaLogList as $forAccUaVal) {
+//            $blackUaList[] = [
+//                'ban_str'    => $forAccUaVal,
+//                'ban_type'   => 2,
+//                'created_at' => time(),
+//            ];
+//        }
+//        BlackBanList::query()->insert($blackUaList);
+
         //合并UA列表
-        $banUaStrList = array_merge($accessUaLogList, $cntBlackUaList);
+        //$banUaStrList = array_merge($accessUaLogList, $cntBlackUaList);
+        $banUaStrList = $accessUaLogList;
         if (!empty($banUaStrList)) {
             $banUaStrList = array_unique($banUaStrList);
             $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
@@ -178,6 +186,50 @@ class CheckNginxLoadCommand extends Command {
         //$banStr = "";
         //字符串替换
         //$this->writeNginxConf($banStr, $siteNginxConfInfo);
+    }
+
+    public function getBlackBanNginxStr($siteNginxConfInfo, $sysValList) {
+        //查询超过1次的
+        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
+                                      ->groupBy('ban_str')
+                                      ->having('cnt', '>', 1)
+                                      ->selectRaw('count(*) as cnt, ban_str')
+                                      ->pluck('ban_str')->toArray();
+        if (!empty($cntBlackIpList)) {
+            foreach ($cntBlackIpList as $forIp) {
+                $banIpStrList[] = PHP_EOL.$forIp;
+            }
+        }
+        $banStr = '';
+        if (!empty($banIpStrList)) {
+            $banIpStrList = array_unique($banIpStrList);
+            $banStr = implode('', $banIpStrList);
+        }
+        //查询超过1次的UA
+        $banUaStrList = BlackBanList::query()->where("ban_type", 2)
+                                    ->groupBy('ban_str')
+                                    ->having('cnt', '>', 1)
+                                    ->selectRaw('count(*) as cnt, ban_str')
+                                    ->pluck('ban_str')->toArray();
+        if (!empty($banUaStrList)) {
+            $banUaStrList = array_unique($banUaStrList);
+            $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
+            $uaListStr = '';
+            foreach ($banUaStrList as $forUaVal) {
+                $handler_ua = "(".$this->customEscape($forUaVal, ['.', '(', ')', '+', '?', "*", '\\']).")|";
+                $uaListStr .= $handler_ua;
+            }
+            $uabanStr .= rtrim($uaListStr, '|');
+            $uabanStr .= '") {';
+            $uabanStr .= PHP_EOL.'return 403;'.PHP_EOL;
+            $uabanStr .= '}'.PHP_EOL;
+        }
+        if (!empty($uabanStr)) {
+            $banStr .= PHP_EOL.$uabanStr;
+        }
+        $banStr .= PHP_EOL;
+
+        return $banStr;
     }
 
     public function customEscape($input, $characters) {
@@ -230,6 +282,5 @@ class CheckNginxLoadCommand extends Command {
 
     public function testgetBanNginxStr($siteNginxConfInfo, $sysValList) {
         tenancy()->initialize('mmgcn');
-
     }
 }

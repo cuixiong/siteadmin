@@ -87,7 +87,7 @@ class Products extends Base {
         }
         // name
         if (isset($search->name) && !empty($search->name)) {
-            $model = $model->where('name', 'like', $search->name.'%');
+            $model = $model->where('name', 'like', '%'.$search->name.'%');
         }
         // english_name
         if (isset($search->english_name) && !empty($search->english_name)) {
