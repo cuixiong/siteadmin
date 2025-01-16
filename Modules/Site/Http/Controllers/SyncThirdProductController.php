@@ -527,7 +527,7 @@ class SyncThirdProductController extends CrudController {
                     //新增字段 初始化一个浏览次数和下载次数,存在则不修改
                     $item['hits'] = mt_rand(100, 500);
                     $item['downloads'] = mt_rand(10, 99);
-                    
+
                     $itemDescription['product_id'] = $product->id;
                     //旧纪录年份
                     $oldPublishedDate = $product->published_date;
@@ -574,8 +574,7 @@ class SyncThirdProductController extends CrudController {
                 array_push($succIdList, $row['id']);
                 if (!empty($product)) {
                     //维护xunSearch索引, 队列执行
-                    $description = $row['description'] ?? '';
-                    $this->pushSyncSphinxQueue($product, $description, $site);
+                    $this->pushSyncSphinxQueue($product, $site);
                 }
             } catch (\Throwable $th) {
                 //throw $th;
@@ -652,8 +651,8 @@ class SyncThirdProductController extends CrudController {
             if (!empty($respData) && !empty($respData['errcode']) && $respData['errcode'] == 1) {
                 return true;
             } else {
-                throw new \Exception('请求通知接口失败,请联系管理员');
                 \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));
+                throw new \Exception('请求通知接口失败,请联系管理员');
             }
         } catch (Exception $e) {
             // 处理异常
@@ -700,9 +699,11 @@ class SyncThirdProductController extends CrudController {
         return preg_match($pattern, $str) === 1;
     }
 
-    public function pushSyncSphinxQueue($product, $description, $site) {
-        $xsProductData = $product->toArray();
-        //$xsProductData['description'] = $description ?? '';
+    public function pushSyncSphinxQueue($product, $site) {
+        $xsProductData = [];
+        if(!empty($product )) {
+            $xsProductData = $product->toArray();
+        }
         $data = [
             'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
             'method' => 'xsSyncProductIndex',

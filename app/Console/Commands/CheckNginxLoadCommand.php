@@ -13,13 +13,16 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\SiteNginxConf;
 use Modules\Site\Http\Controllers\SiteCrontabController;
 use Modules\Site\Http\Models\AccessLog;
 use Modules\Site\Http\Models\BlackBanList;
+use Modules\Site\Http\Models\NginxBanList;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Admin\Http\Models\SystemValue as AdminSystemValue;
+use phpseclib3\Net\SSH2;
 
 class CheckNginxLoadCommand extends Command {
     /**
@@ -37,11 +40,11 @@ class CheckNginxLoadCommand extends Command {
             exec($script_path, $load_os_arr);
             $load_os_data = current($load_os_arr);
             $load_os_val = explode(":", $load_os_data)[1] ?? 0;
-            $siteNameList = Site::query()->where("status", 1)
-                                ->where("is_local", 1)
-                                ->pluck("name");
-            //$siteNameList = ['mmgcn'];
-            $siteNginxConfList = SiteNginxConf::query()->whereIn("name", $siteNameList)->get()->toArray();
+//            $siteNameList = Site::query()->where("status", 1)
+//                                ->where("is_loc!al", 1)
+//                                ->pluck("name");
+//            $siteNameList = ['168report'];
+            $siteNginxConfList = SiteNginxConf::query()->get()->toArray();
             foreach ($siteNginxConfList as $siteNginxConfInfo) {
                 $site = $siteNginxConfInfo['name'];
                 tenancy()->initialize($site);
@@ -57,8 +60,7 @@ class CheckNginxLoadCommand extends Command {
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                 } else {
                     //恢复nginx配置
-                    //$banStr = $this->getBlackBanNginxStr($siteNginxConfInfo, $sysValList);
-                    $banStr = '';
+                    $banStr = $this->getBlackBanNginxStr($sysValList);
                     echo $banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                 }
@@ -79,7 +81,7 @@ class CheckNginxLoadCommand extends Command {
      * @param  $siteNginxConfInfo
      *
      */
-    private function getBanNginxStr($siteNginxConfInfo, $sysValList) {
+    public function getBanNginxStr($siteNginxConfInfo, $sysValList) {
         if (empty($siteNginxConfInfo['conf_temp_path']) || empty($siteNginxConfInfo['conf_real_path'])) {
             return false;
         }
@@ -103,16 +105,18 @@ class CheckNginxLoadCommand extends Command {
         $banStr = '';
         $banIpStrList = [];
         //查询超过1次的
-//        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
-//                                      ->groupBy('ban_str')
-//                                      ->having('cnt', '>', 1)
-//                                      ->selectRaw('count(*) as cnt, ban_str')
-//                                      ->pluck('ban_str')->toArray();
-//        if (!empty($cntBlackIpList)) {
-//            foreach ($cntBlackIpList as $forIp) {
-//                $banIpStrList[] = PHP_EOL.$forIp;
-//            }
-//        }
+        $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
+        $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
+                                      ->where("status", 1)
+                                      ->groupBy('ban_str')
+                                      ->having('cnt', '>=', $black_ban_cnt)
+                                      ->selectRaw('count(*) as cnt, ban_str')
+                                      ->pluck('ban_str')->toArray();
+        if (!empty($cntBlackIpList)) {
+            foreach ($cntBlackIpList as $forIp) {
+                $banIpStrList[] = PHP_EOL.$forIp;
+            }
+        }
         $blackAddIpList = [];
         foreach ($accessIpLogList as $forIp => $forVal) {
             if ($tab == 'ip_muti_second') {
@@ -122,25 +126,26 @@ class CheckNginxLoadCommand extends Command {
             } else {
                 $ipstr = 'deny '.$forIp.";";
             }
-//            $blackAddIpList[] = [
-//                'ban_str'    => $ipstr,
-//                'ban_type'   => 1,
-//                'created_at' => time(),
-//            ];
+            $blackAddIpList[] = [
+                'ban_str'    => $ipstr,
+                'ban_type'   => 1,
+                'created_at' => time(),
+            ];
             $banIpStrList[] = PHP_EOL.$ipstr;
         }
-        //BlackBanList::query()->insert($blackAddIpList);
+        NginxBanList::query()->insert($blackAddIpList);
         if (!empty($banIpStrList)) {
             $banIpStrList = array_unique($banIpStrList);
             $banStr = implode('', $banIpStrList);
         }
         ########################################################################
         //查询超过1次的UA
-//        $cntBlackUaList = BlackBanList::query()->where("ban_type", 2)
-//                                      ->groupBy('ban_str')
-//                                      ->having('cnt', '>', 1)
-//                                      ->selectRaw('count(*) as cnt, ban_str')
-//                                      ->pluck('ban_str')->toArray();
+        $cntBlackUaList = NginxBanList::query()->where("ban_type", 2)
+                                      ->where("status", 1)
+                                      ->groupBy('ban_str')
+                                      ->having('cnt', '>=', $black_ban_cnt)
+                                      ->selectRaw('count(*) as cnt, ban_str')
+                                      ->pluck('ban_str')->toArray();
         $banUaStrList = [];
         $UaMaxCnt = $sysValList['uaMaxReqCnt'] ?? 100; //默认100次
         $beforeUaTime = $sysValList['beforeUaTime'] ?? 5; //默认5分钟
@@ -151,19 +156,17 @@ class CheckNginxLoadCommand extends Command {
                                     ->having('cnt', '>=', $UaMaxCnt)
                                     ->pluck('ua_info')->toArray();
         //插入黑名单
-//        $blackUaList = [];
-//        foreach ($accessUaLogList as $forAccUaVal) {
-//            $blackUaList[] = [
-//                'ban_str'    => $forAccUaVal,
-//                'ban_type'   => 2,
-//                'created_at' => time(),
-//            ];
-//        }
-//        BlackBanList::query()->insert($blackUaList);
-
+        $blackUaList = [];
+        foreach ($accessUaLogList as $forAccUaVal) {
+            $blackUaList[] = [
+                'ban_str'    => $forAccUaVal,
+                'ban_type'   => 2,
+                'created_at' => time(),
+            ];
+        }
+        NginxBanList::query()->insert($blackUaList);
         //合并UA列表
-        //$banUaStrList = array_merge($accessUaLogList, $cntBlackUaList);
-        $banUaStrList = $accessUaLogList;
+        $banUaStrList = array_merge($accessUaLogList, $cntBlackUaList);
         if (!empty($banUaStrList)) {
             $banUaStrList = array_unique($banUaStrList);
             $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
@@ -188,13 +191,16 @@ class CheckNginxLoadCommand extends Command {
         //$this->writeNginxConf($banStr, $siteNginxConfInfo);
     }
 
-    public function getBlackBanNginxStr($siteNginxConfInfo, $sysValList) {
-        //查询超过1次的
-        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
+    public function getBlackBanNginxStr($sysValList) {
+        //查询超过N次的IP
+        $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
+        $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
+                                      ->where("status", 1)
                                       ->groupBy('ban_str')
-                                      ->having('cnt', '>', 1)
+                                      ->having('cnt', '>=', $black_ban_cnt)
                                       ->selectRaw('count(*) as cnt, ban_str')
                                       ->pluck('ban_str')->toArray();
+
         if (!empty($cntBlackIpList)) {
             foreach ($cntBlackIpList as $forIp) {
                 $banIpStrList[] = PHP_EOL.$forIp;
@@ -205,12 +211,15 @@ class CheckNginxLoadCommand extends Command {
             $banIpStrList = array_unique($banIpStrList);
             $banStr = implode('', $banIpStrList);
         }
-        //查询超过1次的UA
-        $banUaStrList = BlackBanList::query()->where("ban_type", 2)
-                                    ->groupBy('ban_str')
-                                    ->having('cnt', '>', 1)
-                                    ->selectRaw('count(*) as cnt, ban_str')
-                                    ->pluck('ban_str')->toArray();
+        //查询超过N次的UA
+        $banUaStrList = NginxBanList::query()->where("ban_type", 2)
+                                      ->where("status", 1)
+                                      ->groupBy('ban_str')
+                                      ->having('cnt', '>=', $black_ban_cnt)
+                                      ->selectRaw('count(*) as cnt, ban_str')
+                                      ->pluck('ban_str')->toArray();
+
+
         if (!empty($banUaStrList)) {
             $banUaStrList = array_unique($banUaStrList);
             $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
@@ -280,7 +289,105 @@ class CheckNginxLoadCommand extends Command {
         file_put_contents($new_file_path, $modifiedString);
     }
 
-    public function testgetBanNginxStr($siteNginxConfInfo, $sysValList) {
-        tenancy()->initialize('mmgcn');
+    public function reloadNginxBySite($siteName) {
+        $server_id = Site::query()->where("name", $siteName)->value("server_id");
+        if(empty($server_id )){
+            return true;
+        }
+        $server_info  = Server::find($server_id);
+        if(empty($server_info )){
+            return true;
+        }
+
+        $ssh_host = $server_info['ip'];
+        $username = $server_info['username'];
+        $password = $server_info['password'];
+
+        $siteNameList[] = $siteName;
+        $siteNginxConfList = SiteNginxConf::query()->whereIn("name", $siteNameList)->get()->toArray();
+        foreach ($siteNginxConfList as $siteNginxConfInfo) {
+            $site = $siteNginxConfInfo['name'];
+            tenancy()->initialize($site);
+            $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
+            //$banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
+            $banStr = $this->getBlackBanNginxStr($sysValList);
+            \Log::error(
+                "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
+                .__LINE__
+            );
+            //$this->writeNginxConf($banStr, $siteNginxConfInfo); //open_basedir restriction in effect.
+            //连接远程服务器
+            $ssh = new SSH2($ssh_host);
+            if (!$ssh->login($username, $password)) {
+                return [
+                    'result' => false,
+                    'output' => trans('lang.server_login_fail'),
+                ];
+            }
+            $ssh->setTimeout(600);
+
+            $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
+            if (empty($temp_content)) {
+                return false;
+            }
+            //$banStr = '#czx';
+            $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
+            $temp_file_path = "/www/wwwroot/nginx_shell/temp_site_{$site}_nginx.conf";
+            file_put_contents($temp_file_path , $modifiedString);
+
+            $new_file_path = $siteNginxConfInfo['conf_real_path'];
+            //$modifiedString = escapeshellarg($modifiedString);
+            //$commands = "echo $modifiedString > $new_file_path";
+            $commands = "mv {$temp_file_path} {$new_file_path}";
+            $execute_res = $this->executeCommands($ssh , $commands);
+            \Log::error('执行命令:'.$commands.'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            \Log::error('执行结果:'.json_encode([$execute_res]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            //$this->reloadNginx();
+
+            $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
+            $execute_reload_res = $this->executeCommands($ssh , $nginx_reload_commands);
+            \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+
+        }
+    }
+
+    /**
+     * 远程服务器执行命令
+     *
+     * @param \phpseclib3\Net\SSH2 $ssh
+     * @param array|string         $commands
+     */
+    private static function executeCommands($ssh, $commands) {
+        $output = '';
+        if (is_array($commands)) {
+            foreach ($commands as $command) {
+                if (!empty($command)) {
+                    $output = '';
+                    $ssh->exec($command, function ($outputLine) use (&$output) {
+                        $outputLine = self::removeAnsiControlChars($outputLine);
+                        $output .= $outputLine;
+                    });
+                    if ($ssh->getExitStatus() !== 0) {
+                        // 执行失败
+                        return [
+                            'result'  => false,
+                            'output'  => $output,
+                            'command' => $command,
+                        ];
+                    }
+                }
+            }
+        } elseif (!empty($commands)) {
+            $output = $ssh->exec($commands);
+        }
+
+        return [
+            'result' => true,
+            'output' => $output,
+        ];
+    }
+    public static function removeAnsiControlChars($text)
+    {
+        return preg_replace('/\e[[][A-Za-z0-9.;?]*[a-zA-Z]/', '', $text);
     }
 }

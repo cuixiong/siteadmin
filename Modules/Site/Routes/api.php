@@ -736,6 +736,17 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
         Route::get('sync-admin-price', [Modules\Site\Http\Controllers\PriceEditionController::class, 'syncAdminPrice'])->name('价格版本管理:搜索下拉列表数据');
     });
+
+
+    // nginxBanList 控制器
+    Route::prefix('nginx-ban')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\NginxBanListController::class, 'list'])->name('nginx封禁:封禁列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\NginxBanListController::class, 'searchDroplist'])->name('nginx封禁:搜索下拉列表数据');
+        Route::get('unban', [Modules\Site\Http\Controllers\NginxBanListController::class, 'unBan'])->name('nginx封禁:解封');
+        Route::get('black-list', [Modules\Site\Http\Controllers\NginxBanListController::class, 'blackList'])->name('nginx封禁:黑名单列表');
+        Route::post('del-black', [Modules\Site\Http\Controllers\NginxBanListController::class, 'delBlack'])->name('nginx封禁:删除黑名单');
+    });
+
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
 });
 
