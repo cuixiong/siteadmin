@@ -210,7 +210,7 @@ class SyncThirdProductController extends CrudController {
         }
     }
 
-    public function handlerRespData($respDataList, $site) {
+    public function newHandlerRespData($respDataList, $site) {
         if (empty($respDataList)) {
             \Log::error('拉取北京数据本次为空');
             throw new \Exception('本次拉取数据为空');
@@ -223,6 +223,7 @@ class SyncThirdProductController extends CrudController {
         $defaultPublisherId = $publisherIdArray[0];
         $syncFieldList = SyncField::query()->where("status", 1)->get()->keyBy('name')->toArray();
         $count = 0;
+        $start_time = time();
         $insertCount = 0;
         $updateCount = 0;
         $errorCount = 0;
@@ -257,17 +258,61 @@ class SyncThirdProductController extends CrudController {
         $idsSort = array_column($respDataList, 'id');
         // 使用 array_multisort 对原数组进行升序排序
         array_multisort($idsSort, SORT_ASC, $respDataList);
-        foreach ($respDataList as &$row) {
-            $count++;
-            try {
-                //字段转换
-                foreach ($row as $fieldKey => $fieldVal) {
-                    if (!empty($syncFieldList[$fieldKey])) {
-                        $realKey = $syncFieldList[$fieldKey]['as_name'];
-                        $row[$realKey] = $fieldVal;
-                        unset($row[$fieldKey]);
+        foreach ($respDataList as &$respData) {
+            //字段转换
+            foreach ($respData as $fieldKey => $fieldVal) {
+                if (!empty($syncFieldList[$fieldKey])) {
+                    $realKey = $syncFieldList[$fieldKey]['as_name'];
+                    $respData[$realKey] = $fieldVal;
+                    unset($respData[$fieldKey]);
+                }
+            }
+        }
+        //昵称去重
+        $uniqueDataList = [];
+        $authorCheck = ['已售报告', '完成报告'];
+        foreach ($respDataList as $forParamsData) {
+            //已售报告>完成报告>人名作者
+            if (!empty($uniqueDataList[$forParamsData['name']])) {
+                if (!in_array($uniqueDataList[$forParamsData['name']]['author'], $authorCheck)
+                    && in_array($forParamsData['author'], $authorCheck)
+                ) {
+                    //作者报告需要被这种报告替换
+                    $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                } elseif (in_array($uniqueDataList[$forParamsData['name']]['author'], $authorCheck)
+                          && $forParamsData['author'] == '已售报告') {
+                    $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                } elseif ($uniqueDataList[$forParamsData['name']]['author'] == $forParamsData['author']) {
+                    $uniqueDataList[$forParamsData['name']] = $forParamsData;
+                }
+            } else {
+                $uniqueDataList[$forParamsData['name']] = $forParamsData;
+            }
+        }
+        $uniqueDataList = array_values($uniqueDataList);
+        try {
+            $pro_name_list = array_column($uniqueDataList, 'name');
+            $pro_ename_list = array_column($uniqueDataList, 'english_name');
+            $handler_name_list = array_merge($pro_name_list, $pro_ename_list);
+            $handler_after_name_list = [];
+            if (!empty($handler_name_list)) {
+                $handler_name_list = array_unique($handler_name_list);
+                foreach ($handler_name_list as $forName) {
+                    if (!empty($forName)) {
+                        $handler_after_name_list[] = $forName;
                     }
                 }
+            }
+            if (!empty($handler_after_name_list)) {
+                $productList = Products::whereIn('name', $handler_after_name_list)->select(
+                    ['id', 'name', 'author', 'published_date']
+                )->get()->keyBy('name')->toArray();
+            } else {
+                $productList = [];
+            }
+            $product_model = new Products();
+            foreach ($uniqueDataList as &$row) {
+                $count++;
                 // 表头
                 $item = [];
                 //出版商映射关系
@@ -284,6 +329,23 @@ class SyncThirdProductController extends CrudController {
                 $item['third_sync_id'] = $row['id'];
                 $item['created_by'] = $userID;
                 $item['updated_by'] = $userID;
+                //报告名称
+                $product = [];
+                if (!empty($productList[$row['name']])) {
+                    $product = $productList[$row['name']];
+                    if (($product['author'] == '已售报告' && $row['author'] != '已售报告')
+                        || ($product['author'] == '完成报告'
+                            && ($row['author'] != '已售报告'
+                                && $row['author'] != '完成报告'))
+                    ) {
+                        $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"
+                                          .($row['author']).'-'.trans('lang.author_level')
+                                          .($product['author'])."\r\n";
+                        $ingoreCount++;
+                        array_push($errIdList, $row['id']);
+                        continue;
+                    }
+                }
                 // 报告名称
                 $item['name'] = $row['name'] ?? '';
                 //校验报告名称
@@ -423,7 +485,6 @@ class SyncThirdProductController extends CrudController {
                 } else {
                     $item['cagr'] = '';
                 }
-
                 //详情数据
                 $itemDescription = [];
                 if (!empty($row['description'])) {
@@ -495,26 +556,6 @@ class SyncThirdProductController extends CrudController {
                     $itemDescription['overview'] = '';
                 }
                 $item['year'] = date('Y', $item['published_date']);
-                // 查询单个报告数据/去重
-                $product = Products::where('name', trim($item['name']))->orWhere(
-                    'name', isset($row['english_name']) ? trim(
-                    $row['name']
-                ) : ''
-                )->first();
-                // 过滤不符合作者覆盖策略的数据
-                if ($product) {
-                    if (($product->author == '已售报告' && $item['author'] != '已售报告')
-                        || ($product->author == '完成报告'
-                            && ($item['author'] != '已售报告'
-                                && $item['author'] != '完成报告'))
-                    ) {
-                        $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product->id};【{$row['name']}】".($item['author']).'-'.trans('lang.author_level')
-                                    .($product->author)."\r\n";
-                        $ingoreCount++;
-                        array_push($errIdList, $row['id']);
-                        continue;
-                    }
-                }
                 //测试要求导入报告, 默认 热门 + 精品
 //                $item['show_hot'] = 1;
 //                $item['show_recommend'] = 1;
@@ -523,24 +564,23 @@ class SyncThirdProductController extends CrudController {
                 /**
                  * 数据库操作
                  */
-                if ($product) {
+                if (!empty($product)) {
                     //新增字段 初始化一个浏览次数和下载次数,存在则不修改
                     $item['hits'] = mt_rand(100, 500);
                     $item['downloads'] = mt_rand(10, 99);
-
-                    $itemDescription['product_id'] = $product->id;
+                    $itemDescription['product_id'] = $product['id'];
                     //旧纪录年份
-                    $oldPublishedDate = $product->published_date;
+                    $oldPublishedDate = $product['published_date'];
                     $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
                     //更新报告
-                    $product->update($item);
+                    $product_model->where("id", $product['id'])->update($item);
                     $newProductDescription = (new ProductsDescription($newYear));
                     //出版时间年份更改
                     if ($oldYear != $newYear) {
                         //删除旧详情
                         if ($oldYear) {
                             $oldProductDescription = (new ProductsDescription($oldYear))->where(
-                                'product_id', $product->id
+                                'product_id', $product['id']
                             )->first();
                             if ($oldProductDescription) {
                                 $oldProductDescription->delete();
@@ -550,8 +590,8 @@ class SyncThirdProductController extends CrudController {
                         $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     } else {
                         //直接更新
-                        $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product->id)->first(
-                        );
+                        $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product['id'])
+                                                                             ->first();
                         if ($newProductDescriptionUpdate) {
                             $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
                         } else {
@@ -559,16 +599,16 @@ class SyncThirdProductController extends CrudController {
                         }
                     }
                     $updateCount++;
-                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product->id};【{$row['name']}】"."\r\n";
+                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
                 } else {
                     //新增报告
                     $product = Products::create($item);
                     //新增报告详情
                     $newProductDescription = (new ProductsDescription($newYear));
-                    $itemDescription['product_id'] = $product->id;
+                    $itemDescription['product_id'] = $product['id'];
                     $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     $insertCount++;
-                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product->id};【{$row['name']}】"."\r\n";
+                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
                 }
                 //执行到这里算是操作成功的
                 array_push($succIdList, $row['id']);
@@ -576,14 +616,14 @@ class SyncThirdProductController extends CrudController {
                     //维护xunSearch索引, 队列执行
                     $this->pushSyncSphinxQueue($product, $site);
                 }
-            } catch (\Throwable $th) {
-                //throw $th;
-                $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$th->getMessage()."\r\n";
-                // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
-                // $details = json_encode($row) . "\r\n";
-                $errorCount++;
-                array_push($errIdList, $row['id']);
             }
+        } catch (\Throwable $th) {
+            //throw $th;
+            $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$th->getMessage()."\r\n";
+            // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
+            // $details = json_encode($row) . "\r\n";
+            $errorCount++;
+            array_push($errIdList, $row['id']);
         }
         //恢复监听
         Products::setEventDispatcher($dispatcher);
@@ -599,7 +639,7 @@ class SyncThirdProductController extends CrudController {
             'ingore_detail' => $ingore_detail,
             'update_detail' => $updateDetail,
             'insert_detail' => $insertDetail,
-            'created_at'    => time(),
+            'created_at'    => $start_time,
             'updated_at'    => time(),
         ];
         $logModel->insert($logData);
@@ -700,15 +740,11 @@ class SyncThirdProductController extends CrudController {
     }
 
     public function pushSyncSphinxQueue($product, $site) {
-        $xsProductData = [];
-        if(!empty($product )) {
-            $xsProductData = $product->toArray();
-        }
         $data = [
             'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
             'method' => 'xsSyncProductIndex',
             'site'   => $site,
-            'data'   => $xsProductData,
+            'data'   => $product,
         ];
         $data = json_encode($data);
         SyncSphinxIndex::dispatch($data)->onQueue(QueueConst::SYNC_SPGINX_INDEX);
@@ -773,7 +809,7 @@ class SyncThirdProductController extends CrudController {
             $respData = json_decode($responseBody, true);
             if (!empty($respData) && $statusCode == 200) {
                 $respDataList = $respData['data']['data'];
-                $this->handlerRespData($respDataList, $site);
+                $this->newHandlerRespData($respDataList, $site);
                 \Log::error('同步完成');
             } else {
                 throw new \Exception("请求接口失败,请联系管理员");
