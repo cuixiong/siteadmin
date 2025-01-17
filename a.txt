@@ -1,3 +1,0 @@
-123顶顶顶顶{"class":"Modules\\Admin\\Http\\Controllers\\TestController","method":"TestPop","data":{"tenant_id":"168report","name":"123","email":"321"}}
-{"class":"Modules\\Admin\\Http\\Controllers\\TestController","method":"TestPop","data":{"tenant_id":"168report","name":"123","email":"321"}}
-{"class":"Modules\\Admin\\Http\\Controllers\\TestController","method":"TestPop","data":{"tenant_id":"168report","name":"123","email":"321"}}

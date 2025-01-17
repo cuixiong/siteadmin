@@ -13,6 +13,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Modules\Site\Http\Controllers\SiteCrontabController;
 
 class ProductSetDataCommand extends Command {
@@ -24,6 +25,7 @@ class ProductSetDataCommand extends Command {
     protected $signature = 'task:handlerProductData {--site=} {--hotSize=} {--recommendSize=}';
 
     public function handle() {
+        config(['logging.default' => 'cli']);
         $option = $this->option();
         $siteCrontab = new SiteCrontabController();
         $siteCrontab->isCli = true;
@@ -31,7 +33,7 @@ class ProductSetDataCommand extends Command {
         if (!empty($option['site'])) {
             $site = $option['site'];
             $siteCrontab->site = $site;
-            
+
         } else {
             echo "参数异常".PHP_EOL;
             die;
@@ -49,7 +51,7 @@ class ProductSetDataCommand extends Command {
             $siteCrontab->handlerProductStatus();
         } catch (\Exception $e) {
             echo "处理报告数据异常{$e->getMessage()}".PHP_EOL;
-            \Log::error('处理报告数据异常--错误信息与数据:'.json_encode([$e]));
+            Log::error('处理报告数据异常--错误信息与数据:'.json_encode([$e->getMessage()]));
         }
         echo "处理报告数据完成".PHP_EOL;
     }
