@@ -57,14 +57,24 @@ class NginxBanListController extends CrudController {
         }
     }
 
-    public function blackList() {
+    public function blackList(Request $request) {
         try {
             $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
             $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
-            $query = NginxBanList::query()->where("status", 1)
-                                 ->groupBy('ban_str')
-                                 ->having('cnt', '>=', $black_ban_cnt)
-                                 ->selectRaw('count(*) as cnt, ban_str , max(created_at) as created_at');
+            $query = NginxBanList::query()->where("status", 1);
+            $search = $request->search ?? '';
+            if (!is_array($search)) {
+                $search = json_decode($search, true);
+                if (!empty($search['created_at'])) {
+                    $query = $query->whereBetween('created_at', $search['created_at']);
+                }
+                if (!empty($search['ban_str'])) {
+                    $query = $query->where("ban_str", $search['ban_str']);
+                }
+            }
+            $query = $query->groupBy('ban_str')
+                           ->having('cnt', '>=', $black_ban_cnt)
+                           ->selectRaw('count(*) as cnt, ban_str , max(created_at) as created_at');
             $total = $query->count();
             // 查询偏移量
             $request = request();
@@ -91,7 +101,6 @@ class NginxBanListController extends CrudController {
             }
             NginxBanList::query()->whereIn("ban_str", $ban_str)->delete();
             (new CheckNginxLoadCommand())->reloadNginxBySite(getSiteName());
-
             ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
