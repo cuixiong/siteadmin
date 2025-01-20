@@ -272,17 +272,32 @@ class SyncThirdProductController extends CrudController {
         $uniqueDataList = [];
         $authorCheck = ['已售报告', '完成报告'];
         foreach ($respDataList as $forParamsData) {
+            $count++;
             //已售报告>完成报告>人名作者
             if (!empty($uniqueDataList[$forParamsData['name']])) {
                 if (!in_array($uniqueDataList[$forParamsData['name']]['author'], $authorCheck)
                     && in_array($forParamsData['author'], $authorCheck)
                 ) {
-                    //作者报告需要被这种报告替换
+                    $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['name']]['id']};【{$forParamsData['name']}】"
+                                      .($uniqueDataList[$forParamsData['name']]['author']).'-'.trans('lang.author_level')
+                                      .($forParamsData['author'])."\r\n";
+                    $ingoreCount++;
+                    array_push($errIdList, $uniqueDataList[$forParamsData['name']]['id']);
                     $uniqueDataList[$forParamsData['name']] = $forParamsData;
                 } elseif (in_array($uniqueDataList[$forParamsData['name']]['author'], $authorCheck)
                           && $forParamsData['author'] == '已售报告') {
+                    $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['name']]['id']};【{$forParamsData['name']}】"
+                                      .($uniqueDataList[$forParamsData['name']]['author']).'-'.trans('lang.author_level')
+                                      .($forParamsData['author'])."\r\n";
+                    $ingoreCount++;
+                    array_push($errIdList, $uniqueDataList[$forParamsData['name']]['id']);
                     $uniqueDataList[$forParamsData['name']] = $forParamsData;
                 } elseif ($uniqueDataList[$forParamsData['name']]['author'] == $forParamsData['author']) {
+                    $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['name']]['id']};【{$forParamsData['name']}】"
+                                      .($uniqueDataList[$forParamsData['name']]['author']).'-'.trans('lang.author_level')
+                                      .($forParamsData['author'])."\r\n";
+                    $ingoreCount++;
+                    array_push($errIdList, $uniqueDataList[$forParamsData['name']]['id']);
                     $uniqueDataList[$forParamsData['name']] = $forParamsData;
                 }
             } else {
@@ -312,7 +327,6 @@ class SyncThirdProductController extends CrudController {
             }
             $product_model = new Products();
             foreach ($uniqueDataList as &$row) {
-                $count++;
                 // 表头
                 $item = [];
                 //出版商映射关系
@@ -454,6 +468,7 @@ class SyncThirdProductController extends CrudController {
                 if (!empty($matchSenWord)) {
                     $details .= "【错误】编号:{$item['third_sync_id']}:   "
                                 ."该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                    array_push($errIdList, $row['id']);
                     $errorCount++;
                     continue;
                 }
@@ -619,7 +634,7 @@ class SyncThirdProductController extends CrudController {
             }
         } catch (\Throwable $th) {
             //throw $th;
-            $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$th->getMessage()."\r\n";
+            $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($item['name']).'】'.$th->getMessage()."\r\n";
             // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
             // $details = json_encode($row) . "\r\n";
             $errorCount++;
@@ -703,7 +718,7 @@ class SyncThirdProductController extends CrudController {
     public function checkProductName($productName) {
         // 忽略报告名为空的数据
         if (empty($productName)) {
-            return trans('lang.name_empty')."\r\n";
+            return trans('lang.product_name_empty')."\r\n";
         }
         // 含有敏感词的报告需要过滤
 //        $matchSenWord = $this->checkFitter($productName);
