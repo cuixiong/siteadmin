@@ -88,6 +88,8 @@ class SiteUploads
             $ossClient = self::OssClient();
             $res = $ossClient->uploads($ossPath, $FilePath . $name);
             if ($res !== true) {
+                //产品确认上传失败需要删除原文件
+                unlink($FilePath . $name);
                 ReturnJson(false, $res);
             }
         }

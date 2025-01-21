@@ -399,7 +399,7 @@ EOF;
             $productArrData['keywords'] = '';
         }
         //类型
-        if (isset($product->classification)) {
+        if (!empty($product->classification)) {
             $productArrData['classification'] = $product->classification;
         } else {
             $productArrData['classification'] = $this->handlerSubRules(
@@ -407,7 +407,7 @@ EOF;
             );
         }
         //应用
-        if (isset($product->application)) {
+        if (!empty($product->application)) {
             $productArrData['application'] = $product->application;
         } else {
             $productArrData['application'] = $this->handlerSubRules($pdObj->description, $this->applicationSubCode);
@@ -480,6 +480,13 @@ EOF;
             if (preg_match($pattern, $description, $matches)) {
                 // 打印提取的部分
                 $applicton = $matches[1];
+                break;
+            }
+            $pattern2 = '/'.$forRule.'.*?\r?\n([\s\S]*?)(?:\r?\n\S|$)/';
+            if (preg_match($pattern2, $description, $matches)) {
+                // 打印提取的部分
+                $applicton = $matches[1];
+                break;
             }
         }
 

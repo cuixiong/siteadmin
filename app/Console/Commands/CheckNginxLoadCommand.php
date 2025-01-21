@@ -36,7 +36,7 @@ class CheckNginxLoadCommand extends Command {
         try {
             //设置日志
             config(['logging.default' => 'cli']);
-            $script_path = 'sh /www/wwwroot/nginx_shell/query_os_load.sh';
+            $script_path = 'sh /www/wwwroot/nginx_shell/new_query_os_load.sh';
             exec($script_path, $load_os_arr);
             $load_os_data = current($load_os_arr);
             $load_os_val = explode(":", $load_os_data)[1] ?? 0;
@@ -49,7 +49,8 @@ class CheckNginxLoadCommand extends Command {
                 $site = $siteNginxConfInfo['name'];
                 tenancy()->initialize($site);
                 $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
-                $check_max_load = $sysValList['check_max_load'] ?? 30;
+                $check_max_load = $sysValList['check_max_load'] ?? 80;
+                $check_min_load = $sysValList['check_min_load'] ?? 60;
                 if ($load_os_val >= $check_max_load) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
                     \Log::error(
@@ -58,14 +59,16 @@ class CheckNginxLoadCommand extends Command {
                     );
                     echo $banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
-                } else {
+                    $this->reloadNginx();
+                } elseif($load_os_val < $check_min_load) {
+                    //小于最低负载
                     //恢复nginx配置
                     $banStr = $this->getBlackBanNginxStr($sysValList);
                     echo $banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
+                    $this->reloadNginx();
                 }
             }
-            $this->reloadNginx();
         } catch (\Exception $e) {
             \Log::error(
                 '检测nginx负载异常:'.json_encode([$e->getMessage()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
