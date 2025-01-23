@@ -51,6 +51,7 @@ class CheckNginxLoadCommand extends Command {
                 $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
                 $check_max_load = $sysValList['check_max_load'] ?? 80;
                 $check_min_load = $sysValList['check_min_load'] ?? 60;
+                echo "当前时间:".date("Y-m-d H:i:s")."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}".PHP_EOL;
                 if ($load_os_val >= $check_max_load) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
                     \Log::error(
