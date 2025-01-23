@@ -33,11 +33,11 @@ class CheckNginxRestartCommand extends Command {
             $load_os_data = current($load_os_arr);
             $load_os_val = explode(":", $load_os_data)[1] ?? 0;
             if($load_os_val >= 90){
-                $restart_script_path = 'sh /www/wwwroot/nginx_shell/nginx_restart.sh';
+                $restart_script_path = 'service nginx restart';
                 exec($restart_script_path, $restart_arr);
                 $msg = implode(',', $restart_arr);
                 echo "当前时间:".date("Y-m-d H:i:s")."服务器负载率{$load_os_val}, 重启nginx!".$msg.PHP_EOL;
-            }else{
+            } else {
                 echo "当前时间:".date("Y-m-d H:i:s")."服务器负载率{$load_os_val}, 正常!".PHP_EOL;
             }
         } catch (\Exception $e) {
