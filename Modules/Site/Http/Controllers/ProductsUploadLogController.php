@@ -1191,10 +1191,10 @@ class ProductsUploadLogController extends CrudController {
     }
 
     public function xsSyncProductIndex($params) {
-        $data = $params['data'];
+        $dataId = $params['data'];
         //不想多维护一遍, 宁愿再查一遍
         try {
-            (new Products())->excuteSphinxReq($data['id'], 'update', $params['site']);
+            (new Products())->excuteSphinxReq($dataId, 'update', $params['site']);
         } catch (\Exception $e) {
             var_dump($e->getMessage());
         }

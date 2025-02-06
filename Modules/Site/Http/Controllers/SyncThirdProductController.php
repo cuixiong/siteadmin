@@ -627,9 +627,9 @@ class SyncThirdProductController extends CrudController {
                 }
                 //执行到这里算是操作成功的
                 array_push($succIdList, $row['id']);
-                if (!empty($product)) {
+                if (!empty($row['id'])) {
                     //维护xunSearch索引, 队列执行
-                    $this->pushSyncSphinxQueue($product, $site);
+                    $this->pushSyncSphinxQueue($row['id'], $site);
                 }
             }
         } catch (\Throwable $th) {
@@ -754,12 +754,12 @@ class SyncThirdProductController extends CrudController {
         return preg_match($pattern, $str) === 1;
     }
 
-    public function pushSyncSphinxQueue($product, $site) {
+    public function pushSyncSphinxQueue($productId, $site) {
         $data = [
             'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
             'method' => 'xsSyncProductIndex',
             'site'   => $site,
-            'data'   => $product,
+            'data'   => $productId,
         ];
         $data = json_encode($data);
         SyncSphinxIndex::dispatch($data)->onQueue(QueueConst::SYNC_SPGINX_INDEX);
