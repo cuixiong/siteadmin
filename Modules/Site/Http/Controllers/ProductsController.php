@@ -1018,7 +1018,7 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function export(Request $request) {
+    public function old_export(Request $request) {
         set_time_limit(-1);
         ini_set('memory_limit', -1);
         // return Excel::download(new ProductsExport, 'products.xlsx');
@@ -1131,6 +1131,97 @@ class ProductsController extends CrudController {
             }
             ReturnJson(true, trans('lang.request_success'), $logModel->id);
         }
+    }
+
+    /**
+     * 批量导出
+     *
+     * @param $request 请求信息
+     */
+    public function export(Request $request) {
+        // return Excel::download(new ProductsExport, 'products.xlsx');
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+        $exportType = (!isset($input['export_type']) || empty($input['export_type'])) ? 'txt'
+            : $input['export_type']; //导出
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            if ($ids) {
+                //选中
+                $ids = explode(',', $ids);
+                if (!(count($ids) > 0)) {
+                    ReturnJson(true, trans('lang.param_empty').':ids');
+                }
+                $model = $ModelInstance->whereIn('id', $ids);
+            } else {
+                //筛选
+                $model = $ModelInstance->HandleWhere($model, $request);
+            }
+            $data['count'] = $model->count();
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } else {
+            $dirName = time().rand(10000, 99999);
+            $basePath = public_path();
+            $dirMiddlePath = '/site/'.$request->header('Site').'/exportDir/';
+            //检验目录是否存在
+            if (!is_dir($basePath.$dirMiddlePath)) {
+                @mkdir($basePath.$dirMiddlePath, 0777, true);
+            }
+            $dirPath = $basePath.$dirMiddlePath.$dirName;
+            //创建目录
+            if (!is_dir($dirPath)) {
+                @mkdir($dirPath, 0777, true);
+            }
+            if ($exportType == 'txt') {
+                $logModel = ProductsExportLog::create([
+                                                          'file'  => $dirMiddlePath.$dirName.'.txt',
+                                                          'count' => 0,
+                                                      ]);
+            } elseif ($exportType == 'excel') {
+                $logModel = ProductsExportLog::create([
+                                                          'file'  => $dirMiddlePath.$dirName.'.xlsx',
+                                                          'count' => 0,
+                                                      ]);
+            } else {
+                ReturnJson(false, trans('lang.param_empty').':export_type');
+            }
+            //加入队列
+            $data = [
+                'class'   => 'Modules\Site\Http\Controllers\ProductsController',
+                'method'  => 'handlerExportByQueue',
+                'site'    => $request->header('Site') ?? '',   //站点名称
+                'data'    => $request->input(),
+                'dirPath' => $dirPath,
+                'log_id'  => $logModel->id,  //写入日志的id
+            ];
+            $data = json_encode($data);
+            ExportProduct::dispatch($data)->onQueue(QueueConst::QUEEU_EXPORT_PRODUCT);
+            ReturnJson(true, trans('lang.request_success'), $logModel->id);
+        }
+    }
+
+    /**
+     *  队列处理导出
+     */
+    public function handlerExportByQueue($params) {
+        set_time_limit(-1);
+        ini_set('memory_limit', -1);
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+        try{
+
+
+        }catch (\Exception $e){
+            var_dump($e->getMessage()); exit;
+        }
+
     }
 
     /**
