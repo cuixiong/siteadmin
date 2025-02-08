@@ -281,6 +281,8 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("d"));
         // 处理模板变量   @@@@
         $tempContent = $this->writeTempWord($tempContent, '@@@@', $productArrData['keywords']);
+        // 处理模板变量   keywords 兼容@@@@
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords}}', $productArrData['keywords']);
         // 处理模板变量  {{id}}
         $tempContent = $this->writeTempWord($tempContent, '{{id}}', $productId);
         // 处理模板变量  {{title_en}}
