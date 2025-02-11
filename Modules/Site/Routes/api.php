@@ -89,6 +89,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsController::class, 'destroy'])->name('报告管理:删除报告');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsController::class, 'discount'])->name('报告管理:设置折扣');
         Route::post('export', [Modules\Site\Http\Controllers\ProductsController::class, 'export'])->name('报告管理:批量导出');
+        Route::post('newExport', [Modules\Site\Http\Controllers\ProductsController::class, 'newExport'])->name('报告管理:新批量导出');
         Route::post('export-process', [Modules\Site\Http\Controllers\ProductsController::class, 'exportProcess'])->name('报告管理:导出进度');
         Route::post('export-file-download', [Modules\Site\Http\Controllers\ProductsController::class, 'exportFileDownload'])->name('报告管理:下载导出文件');
         Route::post('newexport-file-download', [Modules\Site\Http\Controllers\ProductsController::class, 'newExportFileDownload'])->name('报告管理:新下载导出文件');

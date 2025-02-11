@@ -72,7 +72,7 @@ class RequestLogController extends CrudController
             if (empty($id)) {
                 ReturnJson(false, trans('lang.param_error'));
             }
-            $ipBanLog = IpBanLog::query()->findOrFail($id);
+            $ipBanLog = RequestLog::query()->findOrFail($id);
             $key = $ipBanLog->ua_info;
             //写入缓存
             $domain = getSiteDomain();

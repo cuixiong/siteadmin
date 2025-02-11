@@ -43,7 +43,7 @@ class OrderController extends CrudController {
             }
             $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_code',
                            'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at',
-                           'pay_coin_type'];
+                           'pay_coin_type', 'send_email_time'];
             $model = $model->select($fieldsList);
             // 数据排序. 默认降序
             if (empty($request->sort)) {
@@ -58,6 +58,11 @@ class OrderController extends CrudController {
             $record = $model->get()->toArray();
             $orderModel = new Order();
             foreach ($record as $key => &$value) {
+                if(!empty($value['send_email_time'] )){
+                    $value['send_email_time_str'] = date('Y-m-d H:i:s', $value['send_email_time']);
+                }else{
+                    $value['send_email_time_str'] = '';
+                }
                 $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
             }
