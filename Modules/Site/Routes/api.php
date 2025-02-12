@@ -747,6 +747,29 @@ Route::middleware([
         Route::post('del-black', [Modules\Site\Http\Controllers\NginxBanListController::class, 'delBlack'])->name('nginx封禁:删除黑名单');
     });
 
+    
+    // PostPlatform 发帖平台
+    Route::prefix('post-platform')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PostPlatformController::class, 'store'])->name('发帖平台:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PostPlatformController::class, 'update'])->name('发帖平台:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PostPlatformController::class, 'destroy'])->name('发帖平台:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PostPlatformController::class, 'list'])->name('发帖平台:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PostPlatformController::class, 'changeStatus'])->name('发帖平台:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PostPlatformController::class, 'searchDroplist'])->name('发帖平台:搜索下拉列表数据');
+    });
+
+    // PostSubject 发帖课题
+    Route::prefix('post-subject')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PostSubjectController::class, 'store'])->name('发帖课题:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PostSubjectController::class, 'update'])->name('发帖课题:数据更新');
+        Route::post('destory', [Modules\Site\Http\Controllers\PostSubjectController::class, 'destory'])->name('发帖课题:数据删除');
+        Route::get('get-product-info', [Modules\Site\Http\Controllers\PostSubjectController::class, 'getProductInfo'])->name('发帖课题:查询报告');
+        Route::get('list', [Modules\Site\Http\Controllers\PostSubjectController::class, 'list'])->name('发帖课题:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectController::class, 'changeStatus'])->name('发帖课题:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectController::class, 'searchDroplist'])->name('发帖课题:搜索下拉列表数据');
+        Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectController::class, 'accept'])->name('发帖课题:领取/分配');
+    });
+
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
 });
 
