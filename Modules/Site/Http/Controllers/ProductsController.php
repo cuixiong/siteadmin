@@ -1134,11 +1134,210 @@ class ProductsController extends CrudController {
     }
 
     /**
+     * 批量导出
+     *
+     * @param $request 请求信息
+     */
+    public function newExport(Request $request) {
+        // return Excel::download(new ProductsExport, 'products.xlsx');
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+        $exportType = (!isset($input['export_type']) || empty($input['export_type'])) ? 'txt'
+            : $input['export_type']; //导出
+        $data = [];
+        // 总数量
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(true, trans('lang.param_empty').':ids');
+            }
+            $model = $ModelInstance->whereIn('id', $ids);
+        } else {
+            //筛选
+            $model = $ModelInstance->HandleWhere($model, $request);
+        }
+        $data['count'] = $model->count();
+        if ($type == 1) {
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } else {
+            if ($data['count'] <= 0) {
+                ReturnJson(false, '无可导出数据~');
+            }
+            $dirName = time().rand(10000, 99999);
+            $basePath = public_path();
+            $dirMiddlePath = $basePath.'/site/'.$request->header('Site').'/exportDir/';
+            //检验目录是否存在
+            if (!is_dir($basePath.$dirMiddlePath)) {
+                @mkdir($basePath.$dirMiddlePath, 0777, true);
+            }
+            $dirPath = $basePath.$dirMiddlePath.$dirName;
+            //创建目录
+            if (!is_dir($dirPath)) {
+                @mkdir($dirPath, 0777, true);
+            }
+            if ($exportType == 'txt') {
+                $logModel = ProductsExportLog::create([
+                                                          'file'  => $dirMiddlePath.$dirName.'.txt',
+                                                          'count' => $data['count'],
+                                                      ]);
+            } elseif ($exportType == 'excel') {
+                $logModel = ProductsExportLog::create([
+                                                          'file'  => $dirMiddlePath.$dirName.'.xlsx',
+                                                          'count' => $data['count'],
+                                                      ]);
+            } else {
+                ReturnJson(false, trans('lang.param_empty').':export_type');
+            }
+            //加入队列
+            $data = [
+                'class'      => 'Modules\Site\Http\Controllers\ProductsController',
+                'method'     => 'handlerExportByQueue',
+                'site'       => $request->header('Site') ?? '',   //站点名称
+                'data'       => $request->input(),
+                'exportType' => $exportType,
+                'dirPath'    => $dirPath,
+                'log_id'     => $logModel->id,  //写入日志的id
+            ];
+            //$this->handlerExportByQueue($data);
+            $data = json_encode($data);
+            ExportProduct::dispatch($data)->onQueue('test_export');
+            ReturnJson(true, trans('lang.request_success'), $logModel->id);
+        }
+    }
+
+    /**
+     *  队列处理导出
+     */
+    public function handlerExportByQueue($params) {
+        set_time_limit(-1);
+        ini_set('memory_limit', -1);
+        if (empty($params['site'])) {
+            throw new \Exception("site is empty", 1);
+        }
+        // 设置当前租户
+        tenancy()->initialize($params['site']);
+        try {
+            //获取参数
+            $data = $params['data'];
+            $logId = $params['log_id'];
+            $dirPath = $params['dirPath'];
+            $exportType = $params['exportType'];
+            $pelogInfo = ProductsExportLog::query()->where('id', $logId)->first();
+            if (empty($pelogInfo)) {
+                throw new \Exception("导出日志数据不存在", 1);
+            }
+            //查出数据
+            $ids = $data['ids'];
+            $productModel = new Products();
+            if ($ids) {
+                //选中
+                $ids = explode(',', $ids);
+                if (!(count($ids) > 0)) {
+                    ReturnJson(true, trans('lang.param_empty').':ids');
+                }
+                $model = $productModel->whereIn('id', $ids);
+            } else {
+                //筛选
+                $model = $productModel->newHandleWhere($data['search']);
+            }
+            //获取表头与字段关系
+            $excelTitleList = ProductsExcelField::where(['status' => 1])
+                                                ->orderBy('sort', 'asc')
+                                                ->get()
+                                                ->pluck('name', 'field')
+                                                ->toArray();
+            //新增需求, 规模字段根据当前导出的时间为准
+            $currentDate = intval(date('Y', time()));
+            $excelTitleList['last_scale'] = $currentDate - 1;
+            $excelTitleList['current_scale'] = $currentDate;
+            $excelTitleList['future_scale'] = $currentDate + 6;
+            list($field, $title) = Arr::divide($excelTitleList);
+            $writer = WriterEntityFactory::createXLSXWriter();
+            $writer->openToFile($pelogInfo['file']);
+            //写入标题
+            $style = (new StyleBuilder())->setShouldWrapText(false)->build();
+            $row = WriterEntityFactory::createRowFromArray($title, $style);
+            $writer->addRow($row);
+            //查映射数据
+            $size_cnt = 2000;
+            $regionList = Region::query()->pluck('name', 'id')->toArray();
+            $productCateList = ProductsCategory::query()->pluck('name', 'id')->toArray();
+            $model->chunk(
+                $size_cnt, function ($records) use ($logId, $size_cnt, $writer, $field, $productCateList, $regionList) {
+                $groupArr = $records->makeHidden((new Products())->getAppends())->toArray();
+                $yearProIdDescList = [];
+                $yearProIdList = [];
+                foreach ($groupArr as $key => $item) {
+                    $yearProIdList[$item['year']][] = $item['id'];
+                }
+                $yearsList = array_keys($yearProIdList);
+                foreach ($yearsList as $foryear) {
+                    $yearProIdData = $yearProIdList[$foryear];
+                    $forDescList = (new ProductsDescription($foryear))->whereIn("product_id", $yearProIdData)->get()->keyBy('product_id')->toArray();
+                    $yearProIdDescList[$foryear] = $forDescList;
+                }
+
+                foreach ($groupArr as $key => $item) {
+                    $year = date('Y', $item['published_date']);
+                    if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
+                        continue;
+                    }
+                    $item['published_date'] = date('Y-m-d', $item['published_date']);
+                    $item['category_id'] = $productCateList[$item['category_id']];
+                    $descriptionData = $yearProIdDescList[$item['year']][$item['id']];
+                    $item['description'] = $descriptionData['description'] ?? '';
+                    $item['table_of_content'] = $descriptionData['table_of_content'] ?? '';
+                    $item['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
+                    $item['description_en'] = $descriptionData['description_en'] ?? '';
+                    $item['table_of_content_en'] = $descriptionData['table_of_content_en'] ?? '';
+                    $item['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
+                    $item['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
+                    $item['definition'] = $descriptionData['definition'] ?? '';
+                    $item['overview'] = $descriptionData['overview'] ?? '';
+                    $item['country_id'] = $regionList[$item['country_id']] ?? '';
+                    $row = [];
+                    foreach ($field as $value) {
+                        if (empty($value) || !isset($item[$value])) {
+                            $row[] = '';
+                        } else {
+                            $row[] = $item[$value];
+                        }
+                    }
+                    $rowFromValues = WriterEntityFactory::createRowFromArray($row);
+                    $writer->addRow($rowFromValues);
+                }
+                $updateData = [
+                    'state'         => ProductsExportLog::EXPORT_RUNNING,
+                    'success_count' => DB::raw("success_count + $size_cnt")
+                ];
+                ProductsExportLog::query()->where('id', $logId)->update($updateData);
+                echo "已成功导出".$size_cnt."条数据".PHP_EOL;
+            }
+            );
+            $writer->close();
+            $updateData = [
+                'state' => ProductsExportLog::EXPORT_COMPLETE,
+            ];
+            ProductsExportLog::query()->where('id', $logId)->update($updateData);
+            echo "导出完成".$pelogInfo['file'].PHP_EOL;
+        } catch (\Exception $e) {
+            //\Log::error('数据导出失败:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+            echo "导出失败".$e->getMessage();
+        }
+    }
+
+    /**
      * 批量导出excel-导出到多个文件
      *
      * @param $params
      */
-    public function handleExportExcel($params = null) {
+    public function handleExportExcel(
+        $params = null
+    ) {
         set_time_limit(0);
         ini_set('memory_limit', '2048M');
         $dirPath = $params['dirPath'];
@@ -1158,14 +1357,30 @@ class ProductsController extends CrudController {
             $writer = WriterEntityFactory::createXLSXWriter();
             $writer->openToFile($dirPath.'/'.$chip.'.xlsx');
             $regionList = Region::query()->pluck('name', 'id')->toArray();
+            $productCateList = ProductsCategory::query()->pluck('name', 'id')->toArray();
+
+            ##########
+            $yearProIdDescList = [];
+            $yearProIdList = [];
+            foreach ($record as $key => $item) {
+                $yearProIdList[$item['year']][] = $item['id'];
+            }
+            $yearsList = array_keys($yearProIdList);
+            foreach ($yearsList as $foryear) {
+                $yearProIdData = $yearProIdList[$foryear];
+                $forDescList = (new ProductsDescription($foryear))->whereIn("product_id", $yearProIdData)->get()->keyBy('product_id')->toArray();
+                $yearProIdDescList[$foryear] = $forDescList;
+            }
+
+
             foreach ($record as $key => $item) {
                 $year = date('Y', $item['published_date']);
                 if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
                     continue;
                 }
                 $item['published_date'] = date('Y-m-d', $item['published_date']);
-                $item['category_id'] = ProductsCategory::query()->where('id', $item['category_id'])->value('name');
-                $descriptionData = (new ProductsDescription($year))->where('product_id', $item['id'])->first();
+                $item['category_id'] = $productCateList[$item['category_id']];
+                $descriptionData = $yearProIdDescList[$item['year']][$item['id']];
                 $item['description'] = $descriptionData['description'] ?? '';
                 $item['table_of_content'] = $descriptionData['table_of_content'] ?? '';
                 $item['tables_and_figures'] = $descriptionData['tables_and_figures'] ?? '';
@@ -1238,7 +1453,10 @@ class ProductsController extends CrudController {
      *
      * @param $params
      */
-    public function handleMergeFile($params = null) {
+    public
+    function handleMergeFile(
+        $params = null
+    ) {
         try {
             set_time_limit(0);
             ini_set('memory_limit', '2048M');
@@ -1304,7 +1522,10 @@ class ProductsController extends CrudController {
      *
      * @param $params
      */
-    public function handleExportTxt($params = null) {
+    public
+    function handleExportTxt(
+        $params = null
+    ) {
         set_time_limit(0);
         ini_set('memory_limit', '2048M');
         $dirPath = $params['dirPath'];
@@ -1358,7 +1579,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function exportProcess(Request $request) {
+    public
+    function exportProcess(
+        Request $request
+    ) {
         $logId = $request->id;
         if (empty($logId)) {
             ReturnJson(true, trans('lang.param_empty'));
@@ -1417,7 +1641,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function exportFileDownload(Request $request) {
+    public
+    function exportFileDownload(
+        Request $request
+    ) {
         $logId = $request->id;
         if (empty($logId)) {
             ReturnJson(true, trans('lang.param_empty'));
@@ -1450,7 +1677,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function newExportFileDownload(Request $request) {
+    public
+    function newExportFileDownload(
+        Request $request
+    ) {
         $logId = $request->id;
         if (empty($logId)) {
             ReturnJson(true, trans('lang.param_empty'));
@@ -1475,7 +1705,10 @@ class ProductsController extends CrudController {
     /**
      * 快速搜索-字典数据
      */
-    public function QuickSearchDictionary(Request $request) {
+    public
+    function QuickSearchDictionary(
+        Request $request
+    ) {
         $options = [];
         $codes = ['Switch_State', 'Show_Home_State', 'Has_Sample', 'Discount_Type', 'Quick_Search'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
@@ -1527,7 +1760,8 @@ class ProductsController extends CrudController {
     /**
      *  处理模版之前处理数据
      */
-    public function beforeMatchTemplateData() {
+    public
+    function beforeMatchTemplateData() {
         $SiteName = request()->header('Site');
         // TODO: cuizhixiong 2024/6/3 后期还要优化速度的话, 需使用缓存参数改为false, 且需要再Observers监听模型的CRUD(删缓存)
         $isNoUseCache = true;
@@ -1610,7 +1844,10 @@ class ProductsController extends CrudController {
      *
      * @return array[]
      */
-    public function matchTemplateData($description) {
+    public
+    function matchTemplateData(
+        $description
+    ) {
         //测试需求, 模板分类必须所有关键词匹配, 且报告可以匹配多个模板分类
         $rdata = [
             'template_cate_list'    => [],
@@ -1719,7 +1956,8 @@ class ProductsController extends CrudController {
         return $rdata;
     }
 
-    public function getSitePostUser() {
+    public
+    function getSitePostUser() {
         //当前站点, 所有的使用者
         $siteName = getSiteName();
         $currentSiteId = Site::query()->where("name", $siteName)->value("id");
@@ -1762,7 +2000,10 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeStatus(Request $request) {
+    public
+    function changeStatus(
+        Request $request
+    ) {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
@@ -1786,7 +2027,10 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeSort(Request $request) {
+    public
+    function changeSort(
+        Request $request
+    ) {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
