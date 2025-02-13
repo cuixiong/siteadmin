@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
+use Modules\Site\Http\Models\PostPlatform;
 use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\PostSubjectLink;
 use Modules\Site\Http\Models\Products;
@@ -154,13 +155,33 @@ class PostSubjectController extends CrudController
             // 新增子项
             $hasChild = false;
             if ($urlData && is_array($urlData) && count($urlData) > 0) {
+                $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
+
                 foreach ($urlData as $key => $urlItem) {
+
+
+                    if ($postPlatformData) {
+
+                        foreach ($postPlatformData as $postPlatformItem) {
+                            if (strpos($urlItem['link'], $postPlatformItem['keywords'])) {
+                                $postPlatformId = $postPlatformItem['id'];
+                                break;
+                            }
+                        }
+                    } else {
+                        continue;
+                    }
+                    if (!isset($postPlatformId) || empty($postPlatformId)) {
+                        continue;
+                    }
+
                     $inputChild = [];
                     $inputChild['post_subject_id'] = $record->id;
                     $inputChild['link'] = $urlItem['link'];
-                    $inputChild['post_platform_id'] = $urlItem['post_platform_id'];
+                    $inputChild['post_platform_id'] = $postPlatformId;
                     $inputChild['status'] = 1;
                     $inputChild['sort'] = 100;
+
                     $postSubjectLinkModel = new PostSubjectLink();
                     $recordChild = $postSubjectLinkModel->create($inputChild);
                     if ($recordChild) {
@@ -195,6 +216,8 @@ class PostSubjectController extends CrudController
     }
 
 
+
+
     /**
      * 修改
      *
@@ -204,13 +227,10 @@ class PostSubjectController extends CrudController
         try {
 
             $input = $request->all();
-            $this->ValidateInstance($request);
-
 
             $urlData = $input['url_data'] ?? null;
             if ($urlData) {
                 $urlData = json_decode($urlData, true);
-                $input['last_time'] = time();
             } else {
                 $urlData = [];
             }
@@ -219,7 +239,10 @@ class PostSubjectController extends CrudController
             DB::beginTransaction();
             $model = new PostSubject();
             $model = $model->findOrFail($input['id']);
-
+            if (!$model) {
+                ReturnJson(FALSE, trans('lang.data_empty'));
+            }
+            $this->ValidateInstance($request);
             $res = $model->update($input);
             if (!$res) {
                 // 回滚事务
@@ -246,29 +269,57 @@ class PostSubjectController extends CrudController
                 PostSubjectLink::query()->whereIn('id', $deletedIds)->delete();
             }
             // 修改或新增子项
+            $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
+            
+            $hasChild = false;
+            $isChange = false;
             foreach ($urlData as $urlItem) {
+                // 获取平台id
+                if ($postPlatformData) {
+                    foreach ($postPlatformData as $postPlatformItem) {
+                        if (strpos($urlItem['link'], $postPlatformItem['keywords'])) {
+                            $postPlatformId = $postPlatformItem['id'];
+                            break;
+                        }
+                    }
+                } else {
+                    continue;
+                }
+                if (!isset($postPlatformId) || empty($postPlatformId)) {
+                    continue;
+                }
+
                 $isExist = isset($urlItem['id']) && !empty($urlItem['id']);
+                // 修改
                 if ($isExist) {
                     $itemModel = PostSubjectLink::find($urlItem['id']);
-                    if ($itemModel) {
+                    if ($itemModel && ($itemModel->link != $urlItem['link'] || $itemModel->post_platform_id != $postPlatformId)) {
                         $itemModel->link = $urlItem['link'];
-                        $itemModel->post_platform_id = $urlItem['post_platform_id'];
+                        $itemModel->post_platform_id = $postPlatformId;
                         $recordChild = $itemModel->update();
+                        $isChange = true;
                     } else {
                         $isExist = false;
                     }
                 }
-
+                // 新增
                 if (!$isExist) {
+
                     $inputChild = [];
                     $inputChild['post_subject_id'] = $model->id;
                     $inputChild['link'] = $urlItem['link'];
-                    $inputChild['post_platform_id'] = $urlItem['post_platform_id'];
+                    $inputChild['post_platform_id'] = $postPlatformId;
                     $inputChild['status'] = 1;
                     $inputChild['sort'] = 100;
                     $postSubjectLinkModel = new PostSubjectLink();
                     $recordChild = $postSubjectLinkModel->create($inputChild);
+                    if ($recordChild) {
+                        $hasChild = true;
+                    }
                 }
+
+                
+
 
                 if (!isset($recordChild) || !$recordChild) {
                     // 回滚事务
@@ -276,7 +327,27 @@ class PostSubjectController extends CrudController
                     ReturnJson(FALSE, trans('lang.update_error'));
                 }
             }
+            
+            // 帖子的变动需更新课题表的宣传状态等字段
+            $recordUpdate = [];
+            if ($hasChild || $isChange){
+                $recordUpdate['propagate_status'] = 1;
+                $recordUpdate['last_propagate_time'] = time();
+            }
+            if ($hasChild && empty($model->accepter)) {
+                $recordUpdate['accept_time'] = time();
+                $recordUpdate['accept_status'] = 1;
+                if (!empty($input['accepter'])) {
+                    $recordUpdate['accepter'] = $input['accepter'];
+                } elseif (empty($input['accepter']) && isset($request->user->id)) {
+                    // 没有领取人则自己领取
+                    $recordUpdate['accepter'] = $request->user->id;
+                }
 
+            }
+            if(count($recordUpdate)>0){
+                $res = $model->update($recordUpdate);
+            }
             DB::commit();
 
             ReturnJson(TRUE, trans('lang.update_success'));

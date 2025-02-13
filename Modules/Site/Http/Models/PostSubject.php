@@ -9,7 +9,7 @@ class PostSubject extends Base
     protected $table = 'post_subject';
 
     // 设置允许入库字段,数组形式
-    protected $fillable = ['name', 'product_id', 'product_category_id', 'analyst', 'propagate_status', 'last_propagate_time', 'accepter','accept_time', 
+    protected $fillable = ['name', 'product_id', 'product_category_id', 'analyst', 'version', 'propagate_status', 'last_propagate_time', 'accepter','accept_time', 
     'accept_status', 'status', 'sort', 'updated_by', 'created_by'];
 
     protected $attributes = [
