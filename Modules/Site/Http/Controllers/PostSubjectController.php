@@ -52,8 +52,11 @@ class PostSubjectController extends CrudController
                 'created_by',
                 'updated_at',
                 'updated_by',
-                'last_time',
-                'accept_time'
+                'last_propagate_time',
+                'propagate_status',
+                'accepter',
+                'accept_time',
+                'accept_status',
             ];
             $model = $model->select($fields);
             // 数据排序
@@ -70,7 +73,7 @@ class PostSubjectController extends CrudController
                 $categoryData = ProductsCategory::query()->whereIn("id", $categoryIds)->pluck("name", "id")->toArray();
                 foreach ($record as $key => $item) {
                     $record[$key]['product_category_name'] = $categoryData[$item['product_category_id']] ?? '';
-                    $record[$key]['last_time_format'] = !empty($record[$key]['last_time']) ? date('Y-m-d H:i:s', $record[$key]['last_time']) : '';
+                    $record[$key]['last_propagate_time_format'] = !empty($record[$key]['last_propagate_time']) ? date('Y-m-d H:i:s', $record[$key]['last_propagate_time']) : '';
                     $record[$key]['accept_time_format'] = !empty($record[$key]['accept_time']) ? date('Y-m-d H:i:s', $record[$key]['accept_time']) : '';
                     $record[$key]['url_data'] = PostSubjectLink::query()->where(['post_subject_id' => $item['id']])->get()->toArray();
                 }
