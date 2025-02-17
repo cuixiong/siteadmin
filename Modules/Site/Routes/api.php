@@ -769,6 +769,10 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectController::class, 'changeStatus'])->name('发帖课题:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectController::class, 'searchDroplist'])->name('发帖课题:搜索下拉列表数据');
         Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectController::class, 'accept'])->name('发帖课题:领取/分配');
+
+        Route::post('export-subject', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubject'])->name('发帖课题:导出课题');
+        Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubjectLink'])->name('发帖课题:导出日志');
+        Route::post('upload-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLink'])->name('发帖课题:上传日志');
     });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
