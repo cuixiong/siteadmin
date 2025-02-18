@@ -162,6 +162,12 @@ class PostSubject extends Base
             self::CONDITION_NOT_IN => [
                 'name' => '除此之外'
             ],
+            self::CONDITION_EXISTS_IN => [
+                'name' => '符合其一'
+            ],
+            self::CONDITION_EXISTS_NOT_IN => [
+                'name' => '除此之外'
+            ],
         ];
         //添加id
         $data = array_map(function ($key, $item) {
