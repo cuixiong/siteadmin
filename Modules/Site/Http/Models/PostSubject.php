@@ -97,4 +97,69 @@ class PostSubject extends Base
         }
         return $model;
     }
+
+    
+    //前端高级筛选不同控件类型
+    const ADVANCED_FILTERS_TYPE_TEXT = 1; //普通输入框
+    const ADVANCED_FILTERS_TYPE_DROPDOWNLIST = 2; //下拉框
+    const ADVANCED_FILTERS_TYPE_TIME = 3; //时间选择
+    
+    //组合条件
+    const CONDITION_EQUAL = 1;   // 等于 = 
+    const CONDITION_NOT_EQUAL = 2;   // 不等于 <>或!=
+    const CONDITION_TIME_BETWEEN = 3;   // 时间-在区间内 
+    const CONDITION_TIME_NOT_BETWEEN = 4; // 时间-不在区间内
+    const CONDITION_CONTAIN = 5;    // 文字包含,like
+    const CONDITION_NOT_CONTAIN = 6;    // 文字不包含,not like
+    const CONDITION_IN = 7;    // 包含,in
+    const CONDITION_NOT_IN = 8;    // 不包含,not in
+
+    
+    /**
+     * 目录列表高级筛选-组合条件
+     */
+    public static function getFiltersCondition(...$indexs)
+    {
+        $data =  [
+            self::CONDITION_EQUAL => [
+                'name' => '等于'
+            ],
+            self::CONDITION_NOT_EQUAL => [
+                'name' => '不等于'
+            ],
+            self::CONDITION_TIME_BETWEEN => [
+                'name' => '等于'
+            ],
+            self::CONDITION_TIME_NOT_BETWEEN => [
+                'name' => '不等于'
+            ],
+            self::CONDITION_CONTAIN => [
+                'name' => '包含'
+            ],
+            self::CONDITION_NOT_CONTAIN => [
+                'name' => '不包含'
+            ],
+            self::CONDITION_IN => [
+                'name' => '符合其一'
+            ],
+            self::CONDITION_NOT_IN => [
+                'name' => '除此之外'
+            ],
+        ];
+        //添加id
+        $data = array_map(function ($key, $item) {
+            $item['id'] = $key;
+            return $item;
+        },  array_keys($data), $data);
+        $data = array_column($data, null, 'id');
+        $result = [];
+        if (!empty($indexs)) {
+            foreach ($indexs as $index) {
+                array_push($result, $data[$index]);
+            }
+        } else {
+            $result = $data;
+        }
+        return array_values($result);
+    }
 }

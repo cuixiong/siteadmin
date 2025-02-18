@@ -765,9 +765,11 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\PostSubjectController::class, 'update'])->name('发帖课题:数据更新');
         Route::post('destory', [Modules\Site\Http\Controllers\PostSubjectController::class, 'destory'])->name('发帖课题:数据删除');
         Route::get('get-product-info', [Modules\Site\Http\Controllers\PostSubjectController::class, 'getProductInfo'])->name('发帖课题:查询报告');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\PostSubjectController::class, 'form'])->name('报告管理:报告单查');
         Route::get('list', [Modules\Site\Http\Controllers\PostSubjectController::class, 'list'])->name('发帖课题:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectController::class, 'changeStatus'])->name('发帖课题:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectController::class, 'searchDroplist'])->name('发帖课题:搜索下拉列表数据');
+        Route::get('advanced-filters', [Modules\Site\Http\Controllers\PostSubjectController::class, 'advancedFilters'])->name('发帖课题:高级筛选数据');
         Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectController::class, 'accept'])->name('发帖课题:领取/分配');
 
         Route::post('export-subject', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubject'])->name('发帖课题:导出课题');

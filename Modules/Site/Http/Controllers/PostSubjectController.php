@@ -109,6 +109,164 @@ class PostSubjectController extends CrudController
     }
 
     /**
+     * 高级筛选
+     */
+    public function advancedFilters(Request $request)
+    {
+        $showData = [];
+        $hiddenData = [];
+
+        if ($request->HeaderLanguage == 'en') {
+            $field = ['english_name as label', 'value'];
+        } else {
+            $field = ['name as label', 'value'];
+        }
+
+        //当天的时间戳
+        // $currentDayTimestamp = strtotime(date('Y-m-d', time())) * 1000;
+        // $nextDayTimestamp = $currentDayTimestamp + 86400000 - 1000;
+        // // $currentDayDate = date("D M d Y H:i:s \G\M\TO \(中国标准时间\)",$currentDayTimestamp);
+        // // $nextDayDate = date("D M d Y H:i:s \G\M\TO \(中国标准时间\)",$nextDayTimestamp);
+        // // return [$currentDayDate,$nextDayDate];
+
+        // id
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // 报告名称
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('name', '报告名称', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // product_id
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // 行业
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_IN, PostSubject::CONDITION_NOT_IN);
+        $options = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
+        $temp_filter = $this->getAdvancedFiltersItem('product_category_id', '行业', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
+        array_push($showData, $temp_filter);
+
+        // 分析师
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('analyst', '分析师', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // 版本
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+        
+        // 宣传平台
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_IN, PostSubject::CONDITION_NOT_IN);
+        $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->pluck("label", "value")->toArray();
+        $temp_filter = $this->getAdvancedFiltersItem('post_platform_id', '宣传平台', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
+        array_push($showData, $temp_filter);
+
+        // 宣传状态
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($showData, $temp_filter);
+
+        // 最后宣传时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($showData, $temp_filter);
+
+
+        // 领取人/发帖用户
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new TemplateController())->getSitePostUser();
+        $temp_filter = $this->getAdvancedFiltersItem('accepter', '领取人', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($showData, $temp_filter);
+
+        // 领取状态
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('accept_status', '领取状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($showData, $temp_filter);
+
+        // 领取时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('accept_time', '领取时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($showData, $temp_filter);
+
+
+        /**
+         * 隐藏条件
+         */
+        // 状态
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('status', '状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($hiddenData, $temp_filter);
+
+        // 创建时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('created_at', '创建时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($hiddenData, $temp_filter);
+
+        // 修改时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('updated_at', '修改时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($hiddenData, $temp_filter);
+
+
+        // foreach ($showData as $key => $value) {
+
+        //     $showData[$key]['condition_id'] = array_column($showData[$key]['condition'], 'id', null)[0];
+        //     if (isset($showData[$key]['child']) && is_array($showData[$key]['child'])) {
+        //         foreach ($showData[$key]['child'] as $key2 => $value2) {
+        //             $showData[$key]['child'][$key2]['condition_id'] = array_column($showData[$key]['child'][$key2]['condition'], 'id', null)[0];
+        //         }
+        //     }
+        // }
+
+        // foreach ($hiddenData as $key => $value) {
+
+        //     $hiddenData[$key]['condition_id'] = array_column($hiddenData[$key]['condition'], 'id', null)[0];
+        //     if (isset($hiddenData[$key]['child']) && is_array($hiddenData[$key]['child'])) {
+        //         foreach ($hiddenData[$key]['child'] as $key2 => $value2) {
+        //             $hiddenData[$key]['child'][$key2]['condition_id'] = array_column($hiddenData[$key]['child'][$key2]['condition'], 'id', null)[0];
+        //         }
+        //     }
+        // }
+
+        ReturnJson(TRUE, trans('lang.request_success'),  ['showData' => $showData, 'hiddenData' => $hiddenData]);
+    }
+
+    private function getAdvancedFiltersItem($keyword, $wordTitle, $type, $condition, $multiple = false, $option = [], $timeArr = [])
+    {
+
+        $init = [
+            "keyword" => '',
+            "wordTitle" => "", //标题
+            "type" => "", //1：普通输入框 2：下拉框 3：时间选择
+            "multiple" => false,
+            "condition" => [],
+            "condition_id" => 0,
+            "content" => "",
+            "options" => [],
+            "optionArr" => [], //下拉框 id-value
+            "timeArr" => [],
+        ];
+
+        $temp_filter = $init;
+        $temp_filter['keyword'] = $keyword;
+        $temp_filter['wordTitle'] = $wordTitle;
+        $temp_filter['type'] = $type;
+        $temp_filter['condition'] = $condition;
+        $temp_filter['multiple'] = $multiple;
+        $temp_filter['options'] = $option;
+        $temp_filter['timeArr'] = $timeArr;
+        return $temp_filter;
+    }
+
+    /**
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
@@ -127,7 +285,12 @@ class PostSubjectController extends CrudController
                 $field = ['name as label', 'value'];
             }
             $data['status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
-
+            // $data['status'] = array_map(function($item){
+            //     if(is_int($item['value'])){
+            //         $item['value'] = intval($item['value']);
+            //     }
+            //     return $item;
+            // },$data['status']);
             // 领取状态
             $data['accept_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Accept_State', 'status' => 1], ['sort' => 'ASC']);
 
@@ -234,9 +397,6 @@ class PostSubjectController extends CrudController
             ReturnJson(false, $e->getMessage());
         }
     }
-
-
-
 
     /**
      * 修改
@@ -390,31 +550,64 @@ class PostSubjectController extends CrudController
         $product_name = $input['name'] ?? '';
         $data = [];
         if (!empty($product_id)) {
-            $data = Products::query()->select([
+            $query = Products::query()->select([
                 'id as product_id',
                 'name',
                 'category_id as product_category_id',
                 'author as analyst',
             ])
                 ->where(['id' => $product_id])
-                ->first()
-                ->makeHidden((new Products())->getAppends())
-                ->toArray();
+                ->first();
+            if ($query) {
+                $data = $query->makeHidden((new Products())->getAppends())->toArray();
+            }
         } elseif (!empty($product_name)) {
 
-            $data = Products::query()->select([
+            $query = Products::query()->select([
                 'id as product_id',
                 'name',
                 'category_id as product_category_id',
                 'author as analyst',
             ])
                 ->where(['name' => trim($product_name)])
-                ->first()
-                ->makeHidden((new Products())->getAppends())
-                ->toArray();
+                ->first();
+            if ($query) {
+                $data = $query->makeHidden((new Products())->getAppends())->toArray();
+            }
         }
 
         ReturnJson(true, trans('lang.request_success'), $data);
+    }
+
+    
+    /**
+     * AJax单个查询
+     *
+     * @param $request 请求信息
+     */
+    protected function form(Request $request) {
+
+        try {
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            
+            $record['product_category_name'] = ProductsCategory::query()->where("id", $record['product_category_id'])->value("name") ?? '';
+            $record['accepter_name'] = User::query()->where('id', $record['accepter'])->value('nickname') ?? '';
+            $record['last_propagate_time_format'] = !empty($record['last_propagate_time']) ? date('Y-m-d H:i:s', $record['last_propagate_time']) : '';
+            $record['accept_time_format'] = !empty($record['accept_time']) ? date('Y-m-d H:i:s', $record['accept_time']) : '';
+
+            $urlData = PostSubjectLink::query()->where(['post_subject_id' => $record['id']])->get()->toArray();
+            $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
+            $urlData = array_map(function ($urlItem) use ($platformList) {
+                $urlItem['platform_name'] = $platformList[$urlItem['post_subject_id']] ?? '';
+                return $urlItem;
+            }, $urlData);
+            $record['url_data'] = $urlData;
+
+            ReturnJson(true, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
     }
 
     /**
@@ -840,8 +1033,8 @@ class PostSubjectController extends CrudController
         $reader->open($excelPath);
         $excelData = [];
 
-        $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
-        
+        $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
+
         foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
             $sheetName = $sheet->getName();
             // 查询用户
@@ -850,7 +1043,7 @@ class PostSubjectController extends CrudController
                 continue;
             }
             $excelData[$sheetName] = [];
-            $prevId = 0;
+            $prevProductId = 0;
             foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
 
                 if ($rowKey == 1) {
@@ -860,31 +1053,84 @@ class PostSubjectController extends CrudController
                 $fastLink = $tempRow[2];
                 $postLink = $tempRow[3];
 
-                if (empty($fastLink) && !empty($prevId)) {
-                    $postId = $prevId;
+                if (empty($fastLink) && !empty($prevProductId)) {
+                    $productId = $prevProductId;
                 } elseif (!empty($fastLink) && preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
-                    $postId = $matches[1];
+                    $productId = $prevProductId = $matches[1];
                 } else {
                     continue;
                 }
-                if(empty($postId) || empty($postLink)){
+                if (empty($productId) || empty($postLink)) {
                     continue;
                 }
 
-
-                // $tempRow = [
-                //     'id' => $postId,
-                //     'link' => $postLink,
-                // ];
-                $excelData[$sheetName][$postId][] = $postLink;
+                $excelData[$sheetName][$prevProductId][] = $postLink;
             }
-
             // 处理每个工作簿的数据
-            foreach ($excelData[$sheetName] as $postId => $postLink) {
-                
+            foreach ($excelData[$sheetName] as $productId => $postLinkGroup) {
+                if (!$postLinkGroup || count($postLinkGroup) == 0) {
+                    // 没有链接数据,跳过
+                    continue;
+                }
+
+                $postSubjectData = PostSubject::query()->select(['id', 'accepter'])->where("product_id", $productId)->first()?->toArray();
+
+                if (!$postSubjectData) {
+                    // 查不到该课题,跳过
+                    continue;
+                }
+                if ($accepter != $postSubjectData['accepter']) {
+                    // 领取人不一致,跳过
+                    continue;
+                }
+
+                $urlData = [];
+                $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
+                $isUpdate = false;
+                foreach ($postLinkGroup as $postLinkValue) {
+                    if (in_array($postLinkValue, $urlData)) {
+                        // 链接一致不变动
+                        continue;
+                    } else {
+                        // 获取平台id
+                        if ($postPlatformData) {
+                            foreach ($postPlatformData as $postPlatformItem) {
+                                if (strpos($postLinkValue, $postPlatformItem['keywords'])) {
+                                    $postPlatformId = $postPlatformItem['id'];
+                                    break;
+                                }
+                            }
+                        } else {
+                            continue;
+                        }
+                        if (!isset($postPlatformId) || empty($postPlatformId)) {
+                            continue;
+                        }
+                        // 新增
+                        $insertChild = [];
+                        $insertChild['post_subject_id'] = $postSubjectData['id'];
+                        $insertChild['link'] = $postLinkValue;
+                        $insertChild['post_platform_id'] = $postPlatformId;
+                        $insertChild['status'] = 1;
+                        $insertChild['sort'] = 100;
+                        $postSubjectLinkModel = new PostSubjectLink();
+                        $recordChild = $postSubjectLinkModel->create($insertChild);
+                        if ($recordChild) {
+                            $isUpdate = true;
+                        }
+                    }
+                }
+                // 如果新增了链接，更新课题时间
+                if ($isUpdate) {
+                    $recordUpdate = [];
+                    $recordUpdate['propagate_status'] = 1;
+                    $recordUpdate['last_propagate_time'] = time();
+                    $recordUpdate['accept_time'] = time();
+                    $recordUpdate['accept_status'] = 1;
+                    $recordUpdate['accepter'] = $accepter;
+                    PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
+                }
             }
-
-
         }
         ReturnJson(true, trans('lang.request_error'), $excelData);
 
