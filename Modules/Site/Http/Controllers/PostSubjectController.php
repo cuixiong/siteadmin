@@ -219,25 +219,25 @@ class PostSubjectController extends CrudController
         array_push($hiddenData, $temp_filter);
 
 
-        // foreach ($showData as $key => $value) {
+        foreach ($showData as $key => $value) {
 
-        //     $showData[$key]['condition_id'] = array_column($showData[$key]['condition'], 'id', null)[0];
-        //     if (isset($showData[$key]['child']) && is_array($showData[$key]['child'])) {
-        //         foreach ($showData[$key]['child'] as $key2 => $value2) {
-        //             $showData[$key]['child'][$key2]['condition_id'] = array_column($showData[$key]['child'][$key2]['condition'], 'id', null)[0];
-        //         }
-        //     }
-        // }
+            $showData[$key]['condition_id'] = array_column($showData[$key]['condition'], 'id', null)[0];
+            // if (isset($showData[$key]['child']) && is_array($showData[$key]['child'])) {
+            //     foreach ($showData[$key]['child'] as $key2 => $value2) {
+            //         $showData[$key]['child'][$key2]['condition_id'] = array_column($showData[$key]['child'][$key2]['condition'], 'id', null)[0];
+            //     }
+            // }
+        }
 
-        // foreach ($hiddenData as $key => $value) {
+        foreach ($hiddenData as $key => $value) {
 
-        //     $hiddenData[$key]['condition_id'] = array_column($hiddenData[$key]['condition'], 'id', null)[0];
-        //     if (isset($hiddenData[$key]['child']) && is_array($hiddenData[$key]['child'])) {
-        //         foreach ($hiddenData[$key]['child'] as $key2 => $value2) {
-        //             $hiddenData[$key]['child'][$key2]['condition_id'] = array_column($hiddenData[$key]['child'][$key2]['condition'], 'id', null)[0];
-        //         }
-        //     }
-        // }
+            $hiddenData[$key]['condition_id'] = array_column($hiddenData[$key]['condition'], 'id', null)[0];
+            // if (isset($hiddenData[$key]['child']) && is_array($hiddenData[$key]['child'])) {
+            //     foreach ($hiddenData[$key]['child'] as $key2 => $value2) {
+            //         $hiddenData[$key]['child'][$key2]['condition_id'] = array_column($hiddenData[$key]['child'][$key2]['condition'], 'id', null)[0];
+            //     }
+            // }
+        }
 
         ReturnJson(TRUE, trans('lang.request_success'),  ['showData' => $showData, 'hiddenData' => $hiddenData]);
     }
