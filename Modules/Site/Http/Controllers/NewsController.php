@@ -60,6 +60,9 @@ class NewsController extends CrudController {
             if (!isset($input['upload_at']) || empty($input['upload_at'])) {
                 $input['upload_at'] = time();
             }
+            if(empty($input['author'] )){
+                $input['author'] = $request->user()->nickname;
+            }
             $record = $this->ModelInstance()->create($input);
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
@@ -87,6 +90,9 @@ class NewsController extends CrudController {
             // 出版时间为空则设定为当前时间
             if ((!isset($input['upload_at']) || empty($input['upload_at'])) && empty($record->upload_at)) {
                 $input['upload_at'] = time();
+            }
+            if(empty($input['author'] )){
+                $input['author'] = $request->user()->nickname;
             }
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));

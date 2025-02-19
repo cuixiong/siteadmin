@@ -748,7 +748,17 @@ Route::middleware([
         Route::post('del-black', [Modules\Site\Http\Controllers\NginxBanListController::class, 'delBlack'])->name('nginx封禁:删除黑名单');
     });
 
-    
+    // 出版商
+    Route::prefix('publisher')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\PublisherController::class, 'list'])->name('出版商:列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PublisherController::class, 'searchDroplist'])->name('出版商:搜索下拉列表数据');
+        Route::get('sync', [Modules\Site\Http\Controllers\PublisherController::class, 'sync'])->name('出版商:同步数据');
+        Route::post('change-status',[Modules\Site\Http\Controllers\PublisherController::class, 'changeStatus'])->name('出版商管理:状态修改');
+        Route::post('store', [Modules\Site\Http\Controllers\PublisherController::class, 'store'])->name('出版商管理:出版商新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PublisherController::class, 'update'])->name('出版商管理:出版商编辑');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PublisherController::class, 'destroy'])->name('出版商管理:出版商删除');
+    });
+
     // PostPlatform 发帖平台
     Route::prefix('post-platform')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostPlatformController::class, 'store'])->name('发帖平台:数据新增');
