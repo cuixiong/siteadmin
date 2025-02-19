@@ -120,14 +120,14 @@ class PostSubject extends Base
     const ADVANCED_FILTERS_TYPE_TIME = 3; //时间选择
 
     //组合条件
-    const CONDITION_EQUAL = 1;  
-    const CONDITION_NOT_EQUAL = 2;   
-    const CONDITION_TIME_BETWEEN = 3;   
-    const CONDITION_TIME_NOT_BETWEEN = 4; 
-    const CONDITION_CONTAIN = 5;    
-    const CONDITION_NOT_CONTAIN = 6;   
-    const CONDITION_IN = 7; 
-    const CONDITION_NOT_IN = 8;  
+    const CONDITION_EQUAL = 1;
+    const CONDITION_NOT_EQUAL = 2;
+    const CONDITION_TIME_BETWEEN = 3;
+    const CONDITION_TIME_NOT_BETWEEN = 4;
+    const CONDITION_CONTAIN = 5;
+    const CONDITION_NOT_CONTAIN = 6;
+    const CONDITION_IN = 7;
+    const CONDITION_NOT_IN = 8;
     const CONDITION_EXISTS_IN = 9;
     const CONDITION_EXISTS_NOT_IN = 10;
 
@@ -243,23 +243,23 @@ class PostSubject extends Base
                     $query->where($fields, '>', $content[1]);
                 }
             }
-        }elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_EXISTS_IN) {
+        } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_EXISTS_IN) {
             // 关联子表-存在
-            $query->whereExists(function ($query) use ($content){
+            $query->whereExists(function ($query) use ($content) {
                 $query->select(DB::raw(1))
-                      ->from('post_subject_link as psl')
-                      ->whereRaw('psl.post_subject_id = ps.id')
-                      ->whereIn('post_platform_id', $content);
+                    ->from('post_subject_link as psl')
+                    ->whereRaw('psl.post_subject_id = ps.id')
+                    ->whereIn('post_platform_id', $content);
             });
         } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_EXISTS_NOT_IN) {
             // 关联子表-不存在
-            $query->whereNotExists(function ($query) use ($content){
+            $query->whereNotExists(function ($query) use ($content) {
                 $query->select(DB::raw(1))
-                      ->from('post_subject_link as psl')
-                      ->whereRaw('psl.post_subject_id = ps.id')
-                      ->whereIn('post_platform_id', $content);
+                    ->from('post_subject_link as psl')
+                    ->whereRaw('psl.post_subject_id = ps.id')
+                    ->whereIn('post_platform_id', $content);
             });
-        } 
+        }
 
         return $query;
     }
@@ -270,7 +270,7 @@ class PostSubject extends Base
         $search = json_decode($search, true);
         if (!empty($search)) {
             $search = array_column($search, null, 'keyword');
-        }else{
+        } else {
             return $query;
         }
         // return $search;
@@ -358,7 +358,7 @@ class PostSubject extends Base
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.updated_at', $searchItem['content']);
         }
 
-        
+
         // 宣传状态
         if (!empty($search['propagate_status']) && !empty($search['propagate_status']['content'])) {
             $condition = self::CONDITION_EQUAL;
@@ -378,7 +378,7 @@ class PostSubject extends Base
             }
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.propagate_time', $searchItem['content']);
         }
-        
+
         // 领取人
         if (!empty($searchModel['accepter']) && isset($searchModel['accepter']['content']) && count($searchModel['accepter']['content']) > 0) {
             $condition = self::CONDITION_IN;
@@ -496,4 +496,18 @@ class PostSubject extends Base
         // 数据筛选 结束
         return $query;
     }
+
+
+    public static function getAttributesChange($originalAttributes, $changedAttributes)
+    {
+        $data = [];
+        if (!empty($changedAttributes)) {
+            foreach ($changedAttributes as $attribute => $newValue) {
+                $originalValue = $originalAttributes[$attribute];
+                $data[$attribute] = ['before' => $originalValue, 'after' => $newValue];
+            }
+        }
+        return $data;
+    }
+
 }
