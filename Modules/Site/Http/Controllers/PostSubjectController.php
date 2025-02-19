@@ -30,9 +30,12 @@ class PostSubjectController extends CrudController
     {
         try {
             $this->ValidateInstance($request);
-            $ModelInstance = $this->ModelInstance();
-            $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request);
+            $model = PostSubject::from('post_subject as ps');
+            $searchJson = $request->input('search');
+            if(!empty($searchJson)){
+                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
+                // ReturnJson(true, trans('lang.request_success'), $model);
+            }
             if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
                 $model = $model->where('accepter', $request->user->id);
             }
@@ -89,7 +92,7 @@ class PostSubjectController extends CrudController
 
                     $urlData = PostSubjectLink::query()->where(['post_subject_id' => $item['id']])->get()->toArray();
                     $urlData = array_map(function ($urlItem) use ($platformList) {
-                        $urlItem['platform_name'] = $platformList[$urlItem['post_subject_id']] ?? '';
+                        $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
                         return $urlItem;
                     }, $urlData);
                     $record[$key]['url_data'] = $urlData;
@@ -161,7 +164,7 @@ class PostSubjectController extends CrudController
         array_push($showData, $temp_filter);
         
         // 宣传平台
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_IN, PostSubject::CONDITION_NOT_IN);
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EXISTS_IN, PostSubject::CONDITION_EXISTS_NOT_IN);
         $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->pluck("label", "value")->toArray();
         $temp_filter = $this->getAdvancedFiltersItem('post_platform_id', '宣传平台', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
         array_push($showData, $temp_filter);
@@ -216,25 +219,25 @@ class PostSubjectController extends CrudController
         array_push($hiddenData, $temp_filter);
 
 
-        // foreach ($showData as $key => $value) {
+        foreach ($showData as $key => $value) {
 
-        //     $showData[$key]['condition_id'] = array_column($showData[$key]['condition'], 'id', null)[0];
-        //     if (isset($showData[$key]['child']) && is_array($showData[$key]['child'])) {
-        //         foreach ($showData[$key]['child'] as $key2 => $value2) {
-        //             $showData[$key]['child'][$key2]['condition_id'] = array_column($showData[$key]['child'][$key2]['condition'], 'id', null)[0];
-        //         }
-        //     }
-        // }
+            $showData[$key]['condition_id'] = array_column($showData[$key]['condition'], 'id', null)[0];
+            // if (isset($showData[$key]['child']) && is_array($showData[$key]['child'])) {
+            //     foreach ($showData[$key]['child'] as $key2 => $value2) {
+            //         $showData[$key]['child'][$key2]['condition_id'] = array_column($showData[$key]['child'][$key2]['condition'], 'id', null)[0];
+            //     }
+            // }
+        }
 
-        // foreach ($hiddenData as $key => $value) {
+        foreach ($hiddenData as $key => $value) {
 
-        //     $hiddenData[$key]['condition_id'] = array_column($hiddenData[$key]['condition'], 'id', null)[0];
-        //     if (isset($hiddenData[$key]['child']) && is_array($hiddenData[$key]['child'])) {
-        //         foreach ($hiddenData[$key]['child'] as $key2 => $value2) {
-        //             $hiddenData[$key]['child'][$key2]['condition_id'] = array_column($hiddenData[$key]['child'][$key2]['condition'], 'id', null)[0];
-        //         }
-        //     }
-        // }
+            $hiddenData[$key]['condition_id'] = array_column($hiddenData[$key]['condition'], 'id', null)[0];
+            // if (isset($hiddenData[$key]['child']) && is_array($hiddenData[$key]['child'])) {
+            //     foreach ($hiddenData[$key]['child'] as $key2 => $value2) {
+            //         $hiddenData[$key]['child'][$key2]['condition_id'] = array_column($hiddenData[$key]['child'][$key2]['condition'], 'id', null)[0];
+            //     }
+            // }
+        }
 
         ReturnJson(TRUE, trans('lang.request_success'),  ['showData' => $showData, 'hiddenData' => $hiddenData]);
     }
@@ -679,7 +682,7 @@ class PostSubjectController extends CrudController
         if (empty($accepter) && isset($request->user->id)) {
             // 没有领取人则自己领取
             $accepter = $request->user->id;
-        } else {
+        } elseif (empty($accepter) && !isset($request->user->id)) {
             ReturnJson(FALSE, trans('lang.param_empty'), '未登录或缺少领取人');
         }
 
@@ -1132,11 +1135,10 @@ class PostSubjectController extends CrudController
                 }
             }
         }
-        ReturnJson(true, trans('lang.request_error'), $excelData);
-
 
         if (!$excelData || count($excelData) < 1) {
             ReturnJson(FALSE, trans('lang.data_empty'), '没数据');
         }
+        ReturnJson(true, trans('lang.request_success'));
     }
 }
