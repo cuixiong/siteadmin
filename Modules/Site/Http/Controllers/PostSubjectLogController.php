@@ -20,7 +20,8 @@ class PostSubjectLogController extends CrudController
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    protected function list(Request $request) {
+    protected function list(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
@@ -44,10 +45,10 @@ class PostSubjectLogController extends CrudController
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-            $record = $model->get()?->toArray()??[];
+            $record = $model->get()?->toArray() ?? [];
             foreach ($record as $key => $item) {
-                $record[$key]['created_at_format'] = date('Y-m-d H:i:s', $item['created_at']);
                 $record[$key]['details'] = !empty($item['details']) ? explode("\n", $item['details']) : [];
+                $record[$key]['type_name'] = PostSubjectLog::getLogTypeList($record[$key]['type']) ?? '';
             }
             $data = [
                 'total' => $total,
@@ -85,7 +86,7 @@ class PostSubjectLogController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
-    
+
     /**
      * 删除
      * @param Request $request

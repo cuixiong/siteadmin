@@ -185,6 +185,9 @@ class PostSubjectController extends CrudController
         // 领取人/发帖用户
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new TemplateController())->getSitePostUser();
+        if (count($options) > 0) {
+            array_unshift($options, ['label' => '请选择', 'value' => '']);
+        }
         $temp_filter = $this->getAdvancedFiltersItem('accepter', '领取人', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
 
@@ -303,7 +306,9 @@ class PostSubjectController extends CrudController
 
             // 领取人/发帖用户
             $data['accepter_list'] = (new TemplateController())->getSitePostUser();
-
+            if (count($data['accepter_list']) > 0) {
+                array_unshift($data['accepter_list'], ['label' => '请选择', 'value' => '']);
+            }
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -595,7 +600,7 @@ class PostSubjectController extends CrudController
                 $log = new PostSubjectLog();
                 $logData['type'] = PostSubjectLog::POST_SUBJECT_CURD;
                 $logData['post_subject_id'] = $model->id;
-                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】'."\n" . (implode("\n", $details));
+                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】' . "\n" . (implode("\n", $details));
                 $log->create($logData);
             }
 
