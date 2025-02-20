@@ -642,6 +642,7 @@ class PostSubjectController extends CrudController
                 $data = $query->makeHidden((new Products())->getAppends())->toArray();
             }
         }
+        // 查看是否已有课题
         if ($data && $data['product_id']) {
             $postSubject = PostSubject::select([
                 'id',
@@ -651,6 +652,8 @@ class PostSubjectController extends CrudController
             if ($postSubject) {
                 ReturnJson(true, trans('lang.request_success'), $postSubject);
             }
+        }else{
+            ReturnJson(true, trans('lang.data_empty'), '查询此报告不存在');
         }
 
         ReturnJson(true, trans('lang.request_success'), $data);
