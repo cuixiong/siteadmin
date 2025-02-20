@@ -650,7 +650,7 @@ class PostSubjectController extends CrudController
                 ->where(['product_id' => $data['product_id']])
                 ->first();
             if ($postSubject) {
-                ReturnJson(true, trans('lang.request_success'), $postSubject);
+                ReturnJson(true, trans('lang.data_empty'), $postSubject);
             }
         }else{
             ReturnJson(true, trans('lang.data_empty'), '查询此报告不存在');
