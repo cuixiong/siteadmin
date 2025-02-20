@@ -138,9 +138,9 @@ class NotifySite implements ShouldQueue {
 
     public function syncSiteCountry($siteInfo) {
         // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-        if (!$siteInfo['is_local']) {
-            return true;
-        }
+//        if (!$siteInfo['is_local']) {
+//            return true;
+//        }
         // 设置当前租户
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
@@ -164,9 +164,9 @@ class NotifySite implements ShouldQueue {
 
     public function syncSiteLanguage($siteInfo) {
         // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-        if (!$siteInfo['is_local']) {
-            return true;
-        }
+//        if (!$siteInfo['is_local']) {
+//            return true;
+//        }
         // 设置当前租户
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
@@ -190,9 +190,9 @@ class NotifySite implements ShouldQueue {
 
     public function syncSiteSetting($siteInfo) {
         // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-        if (!$siteInfo['is_local']) {
-            return true;
-        }
+//        if (!$siteInfo['is_local']) {
+//            return true;
+//        }
         // 设置当前租户
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
@@ -245,9 +245,9 @@ class NotifySite implements ShouldQueue {
 
     public function syncSiteIpWhite($siteInfo) {
         // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-        if (!$siteInfo['is_local']) {
-            return true;
-        }
+//        if (!$siteInfo['is_local']) {
+//            return true;
+//        }
         // 设置当前租户
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
