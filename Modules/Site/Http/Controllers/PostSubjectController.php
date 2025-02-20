@@ -528,6 +528,9 @@ class PostSubjectController extends CrudController
                     $inputChild['post_platform_id'] = $postPlatformId;
                     $inputChild['status'] = 1;
                     $inputChild['sort'] = 100;
+                    $inputChild['sort'] = 100;
+                    $inputChild['success_count'] = 1;
+                    $inputChild['ingore_count'] = 0;
                     $postSubjectLinkModel = new PostSubjectLink();
                     $recordChild = $postSubjectLinkModel->create($inputChild);
                     if ($recordChild) {
@@ -592,7 +595,7 @@ class PostSubjectController extends CrudController
                 $log = new PostSubjectLog();
                 $logData['type'] = PostSubjectLog::POST_SUBJECT_CURD;
                 $logData['post_subject_id'] = $model->id;
-                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】' . (implode("\n", $details));
+                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】'."\n" . (implode("\n", $details));
                 $log->create($logData);
             }
 
@@ -654,7 +657,7 @@ class PostSubjectController extends CrudController
             if ($postSubject) {
                 ReturnJson(true, trans('lang.request_success'), $postSubject);
             }
-        }else{
+        } else {
             ReturnJson(true, trans('lang.data_empty'), false); // 报告不存在
         }
 
@@ -1344,5 +1347,25 @@ class PostSubjectController extends CrudController
             ReturnJson(FALSE, trans('lang.data_empty'), '没数据');
         }
         ReturnJson(true, trans('lang.request_success'));
+    }
+
+
+    /**
+     * 课题操作记录
+     */
+    public function postSubjectLog(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'] ?? '';
+        if (empty($id)) {
+            ReturnJson(true, trans('lang.param_empty'));
+        }
+        $data = PostSubjectLog::query()->select(['id', 'created_at', 'details'])->where('post_subject_id', $id)->get()?->toArray();
+        if ($data) {
+            foreach ($data as $key => $item) {
+                $data[$key]['details'] = !empty($item['details']) ? explode("\n", $item['details']) : [];
+            }
+        }
+        ReturnJson(true, trans('lang.request_success'), $data);
     }
 }

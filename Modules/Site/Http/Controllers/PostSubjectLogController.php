@@ -11,6 +11,54 @@ use Modules\Site\Http\Models\PostSubjectLog;
 
 class PostSubjectLogController extends CrudController
 {
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get()?->toArray()??[];
+            foreach ($record as $key => $item) {
+                $record[$key]['created_at_format'] = date('Y-m-d H:i:s', $item['created_at']);
+                $record[$key]['details'] = !empty($item['details']) ? explode("\n", $item['details']) : [];
+            }
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -54,7 +102,7 @@ class PostSubjectLogController extends CrudController
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            
+
             $rs = $record->whereIn('id', $ids)->delete();
             if (!$rs) {
                 DB::rollBack();
