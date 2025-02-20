@@ -777,6 +777,13 @@ Route::middleware([
         Route::post('upload-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLink'])->name('发帖课题:上传日志');
     });
 
+    // PostSubjectLog 发帖课题操作记录
+    Route::prefix('post-subject-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'list'])->name('发帖操作记录:数据列表');
+        Route::post('destory', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'destory'])->name('发帖操作记录:数据删除');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'searchDroplist'])->name('发帖操作记录:搜索下拉列表数据');
+    });
+
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
 });
 

@@ -9,14 +9,30 @@ class PostSubjectLog extends Base
     protected $table = 'post_subject_log';
 
     // 设置允许入库字段,数组形式
-    protected $fillable = ['type', 'details', 'post_subject_id', 'created_by', 'updated_by',];
+    protected $fillable = ['type', 'details', 'post_subject_id', 'success_count', 'ingore_count', 'created_by', 'updated_by',];
 
-    const POST_SUBJECT_CURD = 1; // 增删改查
+
+    protected $attributes = [
+        'status' => 1,
+        'sort' => 100,
+    ];
+    
+    const POST_SUBJECT_CURD = 1; // 课题修改
     const POST_SUBJECT_ACCEPT = 2; // 领取分配
     const POST_SUBJECT_EXPORT = 3; // 导出课题
     const POST_SUBJECT_LINK_EXPORT = 4; // 导出日志(链接)
     const POST_SUBJECT_LINK_UPLOAD = 5; // 上传日志
 
+    public static function getLogTypeList()
+    {
+        return [
+            self::POST_SUBJECT_CURD => '课题修改',
+            self::POST_SUBJECT_ACCEPT => '领取分配',
+            self::POST_SUBJECT_EXPORT => '导出课题',
+            self::POST_SUBJECT_LINK_EXPORT => '导出日志',
+            self::POST_SUBJECT_LINK_UPLOAD => '上传日志',
+        ];
+    }
 
     /**
      * 处理查询列表条件数组
@@ -30,9 +46,24 @@ class PostSubjectLog extends Base
             $model = $model->where('id', $search->id);
         }
 
+        // post_subject_id
+        if (isset($search->post_subject_id) && !empty($search->post_subject_id)) {
+            $model = $model->where('post_subject_id', $search->post_subject_id);
+        }
+
         // type
         if (isset($search->type) && !empty($search->type)) {
             $model = $model->where('type', $search->type);
+        }
+
+        // success_count
+        if (isset($search->success_count) && !empty($search->success_count)) {
+            $model = $model->where('success_count', $search->success_count);
+        }
+
+        // ingore_count
+        if (isset($search->ingore_count) && !empty($search->ingore_count)) {
+            $model = $model->where('ingore_count', $search->ingore_count);
         }
 
         //时间为数组形式

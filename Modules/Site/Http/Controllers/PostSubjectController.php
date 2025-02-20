@@ -120,11 +120,11 @@ class PostSubjectController extends CrudController
         $showData = [];
         $hiddenData = [];
 
-        if ($request->HeaderLanguage == 'en') {
-            $field = ['english_name as label', 'value'];
-        } else {
-            $field = ['name as label', 'value'];
-        }
+        // if ($request->HeaderLanguage == 'en') {
+        //     $field = ['english_name as label', 'value'];
+        // } else {
+        $field = ['name as label', 'value'];
+        // }
 
         //当天的时间戳
         // $currentDayTimestamp = strtotime(date('Y-m-d', time())) * 1000;
@@ -642,6 +642,16 @@ class PostSubjectController extends CrudController
                 $data = $query->makeHidden((new Products())->getAppends())->toArray();
             }
         }
+        if ($data && $data['product_id']) {
+            $postSubject = PostSubject::select([
+                'id',
+            ])
+                ->where(['product_id' => $data['product_id']])
+                ->first();
+            if ($postSubject) {
+                ReturnJson(true, trans('lang.request_success'), $postSubject);
+            }
+        }
 
         ReturnJson(true, trans('lang.request_success'), $data);
     }
@@ -777,7 +787,8 @@ class PostSubjectController extends CrudController
             ReturnJson(true, trans('lang.request_success'), $data);
         } else {
             //查询出涉及的id
-            $idsData = $model->select('id')->pluck('id')->toArray();
+            $postSubjectData = $model->select(['id', 'name'])->get()->toArray();
+            $idsData = array_column($postSubjectData, 'id');
             // 领取操作
             $updateData = [
                 'accepter' => $accepter,
@@ -786,24 +797,43 @@ class PostSubjectController extends CrudController
             ];
             PostSubject::query()->whereIn("id", $idsData)->update($updateData);
             // 添加日志
-            $logData = [];
-            foreach ($idsData as $key => $id) {
-                $logDataChild = [];
-                $logDataChild['type'] = PostSubjectLog::POST_SUBJECT_ACCEPT;
-                $logDataChild['post_subject_id'] = $id;
-                if ($isOwn) {
-                    $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】将课题分配给【' . $request->user->nickname . '】';
-                } else {
-                    $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $accepterName . '】领取了课题';
-                }
-                $logDataChild['created_by']= $logDataChild['updated_by'] = $request->user->id;
-                $logDataChild['created_at'] = $logDataChild['updated_at'] = time();
+            // $logData = [];
+            // foreach ($idsData as $key => $id) {
+            //     $logDataChild = [];
+            //     $logDataChild['type'] = PostSubjectLog::POST_SUBJECT_ACCEPT;
+            //     $logDataChild['post_subject_id'] = $id;
+            //     if ($isOwn) {
+            //         $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $accepterName . '】领取了课题';
+            //     } else {
+            //         $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】将课题分配给【' . $accepterName . '】';
+            //     }
+            //     $logDataChild['created_by']= $logDataChild['updated_by'] = $request->user->id;
+            //     $logDataChild['created_at'] = $logDataChild['updated_at'] = time();
 
-                $logData[] = $logDataChild;
+            //     $logData[] = $logDataChild;
+            // }
+
+            // if (count($logData) > 0) {
+            //     PostSubjectLog::insert($logData);
+            // }
+            $details = [];
+            $acceptCount = count($idsData);
+            $logData = [];
+            $logData['type'] = PostSubjectLog::POST_SUBJECT_ACCEPT;
+            $logData['success_count'] = $acceptCount;
+            $logData['ingore_count'] = 0;
+            // $logData['post_subject_id'] = ;
+            if ($isOwn) {
+                $details[] = date('Y-m-d H:i:s', time()) . ' 【' . $accepterName . '】领取了' . $acceptCount . '个课题';
+            } else {
+                $details[] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】将' . $acceptCount . '个课题分配给【' . $accepterName . '】';
             }
-            if (count($logData) > 0) {
-                PostSubjectLog::insert($logData);
+            foreach ($postSubjectData as $key => $value) {
+                $details[] = '【编号' . $value['id'] . '】' . $value['name'];
             }
+            $logData['details'] = implode("\n", $details);
+            PostSubjectLog::create($logData);
+
             ReturnJson(TRUE, trans('lang.request_success'));
         }
     }
@@ -873,6 +903,7 @@ class PostSubjectController extends CrudController
         $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
         $writer->addRow($rowData);
 
+        $details = [];
         foreach ($subjectData as $key => $subject) {
             $rowData = [];
             $rowData[] = $subject['name'];
@@ -883,8 +914,23 @@ class PostSubjectController extends CrudController
 
             $rowData = WriterEntityFactory::createRowFromArray($rowData);
             $writer->addRow($rowData);
+            $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
         }
         $writer->close();
+
+        // exit;
+        $exportCount = count($subjectData);
+
+        if ($exportCount) {
+            $logData = [];
+            $logData['type'] = PostSubjectLog::POST_SUBJECT_EXPORT;
+            $logData['success_count'] = $exportCount;
+            $logData['ingore_count'] = 0;
+            // $logData['post_subject_id'] = ;
+            $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】导出了' . $exportCount . '个课题' . "\n" . (implode("\n", $details));
+            $logData['details'] .= implode("\n", $details);
+            PostSubjectLog::create($logData);
+        }
         exit;
     }
 
@@ -979,11 +1025,22 @@ class PostSubjectController extends CrudController
             '快速搜索链接',
             '发贴链接',
         ];
+        $details = [];
+        $subjectSuccess = 0;
+        $subjectLinkSuccess = 0;
+        $subjectFail = 0;
+        $subjectLinkFail = 0;
         $firstSheetName = '';
         foreach ($subjectGroup as $groupAccepterId => $subjectGroupItem) {
             // 按每个领取人分不同的工作簿
             $sheetName = $accepterList[$groupAccepterId] ?? '';
             if (empty($sheetName)) {
+                $subjectFail++;
+                $subjectLinkFail += count($subjectGroupItem);
+                $details[] = '【领取人ID' . $groupAccepterId . '不存在】';
+                foreach ($subjectGroupItem as $key => $value) {
+                    $details[] = '--【编号' . $value['id'] . '】' . $value['name'];
+                }
                 continue;
             }
             // 确认是否第一个工作簿
@@ -1007,7 +1064,7 @@ class PostSubjectController extends CrudController
                 // https://siteadmin.marketmonitorglobal.com.cn/#/gircn/products/fastList?type=id&keyword=2124513
                 $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
                 if (isset($subjectLinkGroup[$subject['id']]) && is_array($subjectLinkGroup[$subject['id']]) && count($subjectLinkGroup[$subject['id']]) > 0) {
-
+                    $subjectSuccess++;
                     foreach ($subjectLinkGroup[$subject['id']] as $LinkIndex => $linkValue) {
                         $tempRowData = $rowData;
                         if ($LinkIndex != 0) {
@@ -1018,6 +1075,7 @@ class PostSubjectController extends CrudController
                         $tempRowData[] = !empty($linkValue) ? $linkValue : "";
                         $tempRowData = WriterEntityFactory::createRowFromArray($tempRowData);
                         $writer->addRow($tempRowData);
+                        $subjectLinkSuccess++;
                     }
                 }
             }
@@ -1025,6 +1083,22 @@ class PostSubjectController extends CrudController
         // return json_encode($a);
 
         $writer->close();
+
+        $exportCount = count($subjectData);
+        if ($exportCount) {
+            $logData = [];
+            $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_EXPORT;
+            // $logData['post_subject_id'] = ;
+            $logData['success_count'] = $subjectSuccess;
+            $logData['ingore_count'] = $subjectFail;
+            $logData['details'] = '';
+            $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】';
+            $logData['details'] .= '成功导出' . $subjectSuccess . '个课题, ' . $subjectLinkSuccess . '个链接, ';
+            $logData['details'] .= '有' . $subjectFail . '个课题, ' . $subjectLinkFail . '个链接导出失败' . "\n";
+            $logData['details'] .= implode("\n", $details);
+            PostSubjectLog::create($logData);
+        }
+
         exit;
     }
 
@@ -1126,11 +1200,22 @@ class PostSubjectController extends CrudController
 
         $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
 
+        $details = [];
+        $failDetails = [];
+        $subjectSuccess = 0;
+        // $subjectLinkSuccess = 0;
+        $subjectFail = 0;
+        // $subjectLinkFail = 0;
+
         foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
             $sheetName = $sheet->getName();
             // 查询用户
             $accepter = User::query()->where('nickname', $sheetName)->value('id');
             if (!$accepter) {
+                // $subjectFail++;
+                $failDetails[] = '【' . $sheetName . '】领取人' . $sheetName . '不存在';
+                // 
+                $subjectFail += iterator_count($sheet->getRowIterator()) ?? 0;
                 continue;
             }
             $excelData[$sheetName] = [];
@@ -1149,9 +1234,13 @@ class PostSubjectController extends CrudController
                 } elseif (!empty($fastLink) && preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
                     $productId = $prevProductId = $matches[1];
                 } else {
+                    $subjectFail++;
+                    $failDetails[] = '【' . $sheetName . '】第' . $rowKey . '行，缺少快速搜索链接';
                     continue;
                 }
                 if (empty($productId) || empty($postLink)) {
+                    $subjectFail++;
+                    $failDetails[] = '【' . $sheetName . '】第' . $rowKey . '行，无法提取报告id或发帖链接未填写';
                     continue;
                 }
 
@@ -1159,19 +1248,23 @@ class PostSubjectController extends CrudController
             }
             // 处理每个工作簿的数据
             foreach ($excelData[$sheetName] as $productId => $postLinkGroup) {
-                if (!$postLinkGroup || count($postLinkGroup) == 0) {
-                    // 没有链接数据,跳过
-                    continue;
-                }
+                // if (!$postLinkGroup || count($postLinkGroup) == 0) {
+                //     // 没有链接数据,跳过
+                //     continue;
+                // }
 
                 $postSubjectData = PostSubject::query()->select(['id', 'accepter'])->where("product_id", $productId)->first()?->toArray();
 
                 if (!$postSubjectData) {
                     // 查不到该课题,跳过
+                    $subjectFail += count($postLinkGroup);
+                    $failDetails[] = '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
                     continue;
                 }
                 if ($accepter != $postSubjectData['accepter']) {
                     // 领取人不一致,跳过
+                    $subjectFail += count($postLinkGroup);
+                    $failDetails[] = '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】课题领取者不一致';
                     continue;
                 }
 
@@ -1181,6 +1274,8 @@ class PostSubjectController extends CrudController
                 foreach ($postLinkGroup as $postLinkValue) {
                     if (in_array($postLinkValue, $urlData)) {
                         // 链接一致不变动
+                        $subjectFail++;
+                        $failDetails[] = '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】' . $postLinkValue . ' 链接已存在';
                         continue;
                     } else {
                         // 获取平台id
@@ -1195,6 +1290,8 @@ class PostSubjectController extends CrudController
                             continue;
                         }
                         if (!isset($postPlatformId) || empty($postPlatformId)) {
+                            $subjectFail++;
+                            $failDetails[] = '【' . $sheetName . '】【课题id' . $postSubjectData['id'] . '】' . $postLinkValue . ' 没有对应平台';
                             continue;
                         }
                         // 新增
@@ -1207,6 +1304,7 @@ class PostSubjectController extends CrudController
                         $postSubjectLinkModel = new PostSubjectLink();
                         $recordChild = $postSubjectLinkModel->create($insertChild);
                         if ($recordChild) {
+                            $subjectSuccess++;
                             $isUpdate = true;
                         }
                     }
@@ -1223,6 +1321,18 @@ class PostSubjectController extends CrudController
                 }
             }
         }
+
+        $logData = [];
+        $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD;
+        // $logData['post_subject_id'] = ;
+        $logData['success_count'] = $subjectSuccess;
+        $logData['ingore_count'] = $subjectFail;
+        $logData['details'] = '';
+        $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】';
+        $logData['details'] .= '成功导入' . $subjectSuccess . '个链接';
+        $logData['details'] .= '，有' . $subjectFail . '个链接导入失败' . "\n";
+        $logData['details'] .= implode("\n", $failDetails);
+        PostSubjectLog::create($logData);
 
         if (!$excelData || count($excelData) < 1) {
             ReturnJson(FALSE, trans('lang.data_empty'), '没数据');
