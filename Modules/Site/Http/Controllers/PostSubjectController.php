@@ -655,9 +655,10 @@ class PostSubjectController extends CrudController
                 ReturnJson(true, trans('lang.request_success'), $postSubject);
             }
         }else{
-            ReturnJson(false, trans('lang.data_empty'), false); // 报告不存在
+            ReturnJson(true, trans('lang.data_empty'), false); // 报告不存在
         }
 
+        $data['version'] = floatval($data['version']);
         ReturnJson(true, trans('lang.request_success'), $data);
     }
 
