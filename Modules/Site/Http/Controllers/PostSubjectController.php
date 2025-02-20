@@ -622,6 +622,7 @@ class PostSubjectController extends CrudController
                 'name',
                 'category_id as product_category_id',
                 'author as analyst',
+                'price as version',
             ])
                 ->where(['id' => $product_id])
                 ->first();
@@ -635,6 +636,7 @@ class PostSubjectController extends CrudController
                 'name',
                 'category_id as product_category_id',
                 'author as analyst',
+                'price as version',
             ])
                 ->where(['name' => trim($product_name)])
                 ->first();
@@ -650,10 +652,10 @@ class PostSubjectController extends CrudController
                 ->where(['product_id' => $data['product_id']])
                 ->first();
             if ($postSubject) {
-                ReturnJson(false, trans('lang.data_empty'), $postSubject);
+                ReturnJson(true, trans('lang.request_success'), $postSubject);
             }
         }else{
-            ReturnJson(true, trans('lang.data_empty'), '查询此报告不存在');
+            ReturnJson(false, trans('lang.data_empty'), false); // 报告不存在
         }
 
         ReturnJson(true, trans('lang.request_success'), $data);
