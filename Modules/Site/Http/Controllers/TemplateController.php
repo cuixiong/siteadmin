@@ -34,13 +34,6 @@ class TemplateController extends CrudController {
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
 
-            //不是超级管理员, 只展示当前角色已分配的模版
-//            if (!$request->user->is_super) {
-//                $postUsrList = $this->getSitePostUser();
-//                $userIds = array_column($postUsrList, 'value');
-//                $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
-//                $model = $model->whereIn("id", $tempIdList);
-//            }
 
             //use_name_id
             $searchStr = $request->input('search');
@@ -49,6 +42,23 @@ class TemplateController extends CrudController {
                 $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")->toArray();
                 $model = $model->whereIn("id", $tempIdList);
             }
+
+
+            //不是超级管理员, 只展示当前角色已分配的模版
+            $type = $request->type ?? 1;
+            if (!$request->user->is_super) {
+                $isExistRule = $this->checkEditRule($type , $request->user);
+            }else{
+                $isExistRule = true;
+            }
+            if(!$isExistRule) {
+                $postUsrList = $this->getSitePostUser();
+                $userIds = array_column($postUsrList, 'value');
+                $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
+                $model = $model->whereIn("id", $tempIdList);
+            }
+
+
             // 总数量
             $total = $model->count();
 
@@ -116,6 +126,31 @@ class TemplateController extends CrudController {
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    /**
+     *
+     */
+    public function checkEditRule($type, $user) {
+        if($type == 1){
+            $rule_perm = 'products:template:normaledit';
+        }else{
+            $rule_perm = 'products:title:normaledit';
+        }
+        $rule_id = Rule::query()->where("perm" , $rule_perm)->value("id");
+        $role_ids = $user->role_id;
+        $role_id_list = explode("," , $role_ids);
+        $rule_id_list = Role::query()->whereIn("id" , $role_id_list)->pluck('rule_id')->toArray();
+        $merge_rule_id_list = [];
+        foreach ($rule_id_list as $forIdList) {
+            $merge_rule_id_list = array_merge($merge_rule_id_list, $forIdList);
+        }
+        $merge_rule_id_list = array_unique($merge_rule_id_list);
+        if(!in_array($rule_id , $merge_rule_id_list)){
+            return false;
+        }
+        return true;
+
     }
 
     /**
