@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Site\Http\Models\FaqCategory;
 use Modules\Site\Http\Models\PostSubjectLog;
@@ -48,7 +49,7 @@ class PostSubjectLogController extends CrudController
             $record = $model->get()?->toArray() ?? [];
             foreach ($record as $key => $item) {
                 $record[$key]['details'] = !empty($item['details']) ? explode("\n", $item['details']) : [];
-                $record[$key]['type_name'] = PostSubjectLog::getLogTypeList($record[$key]['type']) ?? '';
+                $record[$key]['type_name'] = PostSubjectLog::getLogTypeList()[$record[$key]['type']] ?? '';
             }
             $data = [
                 'total' => $total,
@@ -80,7 +81,10 @@ class PostSubjectLogController extends CrudController
             foreach ($logType as $key => $value) {
                 $data['type'][] = ['label' => $value, 'value' => $key];
             }
-
+            
+            $createrIds = PostSubjectLog::query()->distinct()->select('created_by')->pluck('created_by');
+            $data['created_by'] = $createrIds;
+        
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());

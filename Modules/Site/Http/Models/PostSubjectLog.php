@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Models;
 
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\Base;
 
 class PostSubjectLog extends Base
@@ -65,6 +66,13 @@ class PostSubjectLog extends Base
         if (isset($search->ingore_count) && !empty($search->ingore_count)) {
             $model = $model->where('ingore_count', $search->ingore_count);
         }
+        
+        if (isset($search->created_by) && !empty($search->created_by)) {
+            $userIds = User::where('nickname', 'like', '%'.($search->created_by).'%')->pluck('id');
+            $userIds = $userIds ? $userIds : [];
+            $model = $model->whereIn('created_by', $userIds);
+        }
+        
 
         //时间为数组形式
         //创建时间

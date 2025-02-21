@@ -299,9 +299,9 @@ class PostSubject extends Base
             // return $query->dd();
         }
         // 行业
-        if (!empty($searchModel['product_category_id']) && isset($searchModel['product_category_id']['content']) && count($searchModel['product_category_id']['content']) > 0) {
+        if (!empty($search['product_category_id']) && isset($search['product_category_id']['content']) && count($search['product_category_id']['content']) > 0) {
             $condition = self::CONDITION_IN;
-            $searchItem = $searchModel['product_category_id'];
+            $searchItem = $search['product_category_id'];
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
@@ -349,7 +349,7 @@ class PostSubject extends Base
         }
 
         // 修改时间
-        if (!empty($searchModel['updated_at']) && isset($searchModel['updated_at']['content'])) {
+        if (!empty($search['updated_at']) && isset($search['updated_at']['content'])) {
             $condition = self::CONDITION_TIME_BETWEEN;
             $searchItem = $search['updated_at'];
             if (isset($searchItem['condition'])) {
@@ -370,7 +370,7 @@ class PostSubject extends Base
         }
 
         // 最后宣传时间
-        if (!empty($searchModel['propagate_time']) && isset($searchModel['propagate_time']['content'])) {
+        if (!empty($search['propagate_time']) && isset($search['propagate_time']['content'])) {
             $condition = self::CONDITION_TIME_BETWEEN;
             $searchItem = $search['propagate_time'];
             if (isset($searchItem['condition'])) {
@@ -380,9 +380,9 @@ class PostSubject extends Base
         }
 
         // 领取人
-        if (!empty($searchModel['accepter']) && isset($searchModel['accepter']['content']) && count($searchModel['accepter']['content']) > 0) {
+        if (!empty($search['accepter']) && isset($search['accepter']['content']) && count($search['accepter']['content']) > 0) {
             $condition = self::CONDITION_IN;
-            $searchItem = $searchModel['accepter'];
+            $searchItem = $search['accepter'];
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
@@ -400,7 +400,7 @@ class PostSubject extends Base
         }
 
         // 领取时间
-        if (!empty($searchModel['accept_time']) && isset($searchModel['accept_time']['content'])) {
+        if (!empty($search['accept_time']) && isset($search['accept_time']['content'])) {
             $condition = self::CONDITION_TIME_BETWEEN;
             $searchItem = $search['accept_time'];
             if (isset($searchItem['condition'])) {
@@ -424,9 +424,9 @@ class PostSubject extends Base
 
 
         // //创建者
-        // if (!empty($searchModel['created_by']) && isset($searchModel['created_by']['content'])) {
+        // if (!empty($search['created_by']) && isset($search['created_by']['content'])) {
         //     $condition = "in";
-        //     $searchItem = $searchModel['created_by'];
+        //     $searchItem = $search['created_by'];
         //     if (isset($searchItem['condition'])) {
         //         $condition = $conditionArray[$searchItem['condition']];
         //     }
@@ -435,9 +435,9 @@ class PostSubject extends Base
 
 
         // //修改者
-        // if (!empty($searchModel['updated_by']) && isset($searchModel['updated_by']['content'])) {
+        // if (!empty($search['updated_by']) && isset($search['updated_by']['content'])) {
         //     $condition = "in";
-        //     $searchItem = $searchModel['updated_by'];
+        //     $searchItem = $search['updated_by'];
         //     if (isset($searchItem['condition'])) {
         //         $condition = $conditionArray[$searchItem['condition']];
         //     }
@@ -448,9 +448,9 @@ class PostSubject extends Base
 
 
         // //链接
-        // if (!empty($searchModel['url']) && isset($searchModel['url']['content']) && $searchModel['url']['content'] != '') {
+        // if (!empty($search['url']) && isset($search['url']['content']) && $search['url']['content'] != '') {
         //     $condition = $conditionArray[self::CONDITION_EXISTS_CONTAIN];
-        //     $searchItem = $searchModel['url'];
+        //     $searchItem = $search['url'];
         //     if (isset($searchItem['condition'])) {
         //         $condition = $conditionArray[$searchItem['condition']];
         //     }
@@ -472,7 +472,7 @@ class PostSubject extends Base
         // //领取人-查看个人
         // if (!empty($requesterOwn)) {
 
-        //     $searchItem = $searchModel['request_id'];
+        //     $searchItem = $search['request_id'];
         //     $query->andFilterWhere([
         //         'exists',
         //         (new yii\db\Query())

@@ -709,25 +709,47 @@ class PostSubjectController extends CrudController
     public function destory(Request $request)
     {
         try {
-            if (empty($request->ids)) {
-                ReturnJson(FALSE, '请输入需要删除的ID');
-            }
-            DB::beginTransaction();
-            $record = $this->ModelInstance()->query();
-            $ids = $request->ids;
-            if (!is_array($ids)) {
-                $ids = explode(",", $ids);
-            }
-            $rs = $record->whereIn('id', $ids)->delete();
-            if (!$rs) {
-                DB::rollBack();
-                ReturnJson(FALSE, trans('lang.delete_error'));
-            }
-            //删除子项
-            PostSubjectLink::whereIn('post_subject_id', $ids)->delete();
+            $input = $request->all();
+            $ids = $input['ids'] ?? '';
+            $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
 
-            DB::commit();
-            ReturnJson(TRUE, trans('lang.delete_success'));
+            $model = PostSubject::from('post_subject as ps');
+            if ($ids) {
+                //选中
+                $ids = explode(',', $ids);
+                if (!(count($ids) > 0)) {
+                    ReturnJson(true, trans('lang.param_empty') . ':ids');
+                }
+                $model = $model->whereIn('id', $ids);
+            } else {
+                //筛选
+                $searchJson = $request->input('search');
+                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
+            }
+            $data = [];
+            if ($type == 1) {
+                // 总数量
+                $data['count'] = $model->count();
+                ReturnJson(true, trans('lang.request_success'), $data);
+            } else {
+
+                DB::beginTransaction();
+                $record = $this->ModelInstance()->query();
+                $ids = $request->ids;
+                if (!is_array($ids)) {
+                    $ids = explode(",", $ids);
+                }
+                $rs = $record->whereIn('id', $ids)->delete();
+                if (!$rs) {
+                    DB::rollBack();
+                    ReturnJson(FALSE, trans('lang.delete_error'));
+                }
+                //删除子项
+                PostSubjectLink::whereIn('post_subject_id', $ids)->delete();
+
+                DB::commit();
+                ReturnJson(TRUE, trans('lang.delete_success'));
+            }
         } catch (\Exception $e) {
             // 回滚事务
             DB::rollBack();
@@ -780,18 +802,18 @@ class PostSubjectController extends CrudController
 
         $accepterName = User::query()->where('id', $accepter)->value('nickname');
 
-        $ModelInstance = $this->ModelInstance();
-        $model = $ModelInstance->query();
+        $model = PostSubject::from('post_subject as ps');
         if ($ids) {
             //选中
             $ids = explode(',', $ids);
             if (!(count($ids) > 0)) {
                 ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
-            $model = $ModelInstance->whereIn('id', $ids);
+            $model = $model->whereIn('id', $ids);
         } else {
             //筛选
-            $model = $ModelInstance->HandleWhere($model, $request);
+            $searchJson = $request->input('search');
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
         }
 
         $data = [];
@@ -864,18 +886,19 @@ class PostSubjectController extends CrudController
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
-        $ModelInstance = $this->ModelInstance();
-        $model = $ModelInstance->query();
+       
+        $model = PostSubject::from('post_subject as ps');
         if ($ids) {
             //选中
             $ids = explode(',', $ids);
             if (!(count($ids) > 0)) {
                 ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
-            $model = $ModelInstance->whereIn('id', $ids);
+            $model = $model->whereIn('id', $ids);
         } else {
             //筛选
-            $model = $ModelInstance->HandleWhere($model, $request);
+            $searchJson = $request->input('search');
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
         }
 
         $data = [];
@@ -961,18 +984,19 @@ class PostSubjectController extends CrudController
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
-        $ModelInstance = $this->ModelInstance();
-        $model = $ModelInstance->query();
+        
+        $model = PostSubject::from('post_subject as ps');
         if ($ids) {
             //选中
             $ids = explode(',', $ids);
             if (!(count($ids) > 0)) {
                 ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
-            $model = $ModelInstance->whereIn('id', $ids);
+            $model = $model->whereIn('id', $ids);
         } else {
             //筛选
-            $model = $ModelInstance->HandleWhere($model, $request);
+            $searchJson = $request->input('search');
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
         }
 
         $data = [];
