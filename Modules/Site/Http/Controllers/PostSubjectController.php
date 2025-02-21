@@ -184,7 +184,7 @@ class PostSubjectController extends CrudController
 
 
         // 领取人/发帖用户
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_IN, PostSubject::CONDITION_NOT_IN);
         $options = (new TemplateController())->getSitePostUser();
         if (count($options) > 0) {
             array_unshift($options, ['label' => '公客', 'value' => '-1']);
@@ -581,16 +581,16 @@ class PostSubjectController extends CrudController
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = $isInsert ? time() : $lastPropagateTime;
             }
-            if ($isInsert && empty($model->accepter)) {
+            if (!empty($input['accepter'])) {
                 $recordUpdate['accept_time'] = time();
-                if (!empty($input['accepter'])) {
-                    $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
-                    $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
-                } elseif (empty($input['accepter']) && isset($request->user->id)) {
-                    // 没有领取人则自己领取
-                    $recordUpdate['accepter'] = $request->user->id;
-                    $recordUpdate['accept_status'] = 1;
-                }
+                $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
+                $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
+            }
+            if ($isInsert && empty($input['accepter'])) {
+                $recordUpdate['accept_time'] = time();
+                // 没有领取人则自己领取
+                $recordUpdate['accepter'] = $request->user->id;
+                $recordUpdate['accept_status'] = 1;
             } elseif (!$isInsert && (!$updateUrl || count($updateUrl) == 0)) {
                 $recordUpdate['accept_time'] = null;
                 $recordUpdate['accept_status'] = 0;
@@ -806,8 +806,12 @@ class PostSubjectController extends CrudController
         } elseif (empty($accepter) && !isset($request->user->id)) {
             ReturnJson(FALSE, trans('lang.param_empty'), '未登录或缺少领取人');
         }
+        if ($accepter == -1) {
+            $accepterName = '公客';
+        } else {
+            $accepterName = User::query()->where('id', $accepter)->value('nickname');
+        }
 
-        $accepterName = User::query()->where('id', $accepter)->value('nickname');
 
         $model = PostSubject::from('post_subject as ps');
         if ($ids) {
@@ -834,9 +838,10 @@ class PostSubjectController extends CrudController
             $idsData = array_column($postSubjectData, 'id');
             // 领取操作
             $updateData = [
-                'accepter' => $accepter,
+                'accepter' => $accepter != -1 ? $accepter : null,
                 'accept_time' => time(),
-                'accept_status' => 1
+                'accept_status' => $accepter != -1 ? 1 : 0,
+                'updated_by' => $request->user->id,
             ];
             PostSubject::query()->whereIn("id", $idsData)->update($updateData);
             // 添加日志
