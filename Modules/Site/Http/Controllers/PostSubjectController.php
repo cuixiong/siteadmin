@@ -68,6 +68,7 @@ class PostSubjectController extends CrudController
                 'accepter',
                 'accept_time',
                 'accept_status',
+                'change_status',
             ];
             $model = $model->select($fields);
             // 数据排序
@@ -186,9 +187,9 @@ class PostSubjectController extends CrudController
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new TemplateController())->getSitePostUser();
         if (count($options) > 0) {
-            array_unshift($options, ['label' => '请选择', 'value' => '']);
+            array_unshift($options, ['label' => '公客', 'value' => '-1']);
         }
-        $temp_filter = $this->getAdvancedFiltersItem('accepter', '领取人', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        $temp_filter = $this->getAdvancedFiltersItem('accepter', '领取人', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
         array_push($showData, $temp_filter);
 
         // 领取状态
@@ -307,7 +308,7 @@ class PostSubjectController extends CrudController
             // 领取人/发帖用户
             $data['accepter_list'] = (new TemplateController())->getSitePostUser();
             if (count($data['accepter_list']) > 0) {
-                array_unshift($data['accepter_list'], ['label' => '请选择', 'value' => '']);
+                array_unshift($data['accepter_list'], ['label' => '公客', 'value' => '-1']);
             }
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
@@ -391,12 +392,13 @@ class PostSubjectController extends CrudController
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = time();
                 $recordUpdate['accept_time'] = time();
-                $recordUpdate['accept_status'] = 1;
                 if (!empty($input['accepter'])) {
-                    $recordUpdate['accepter'] = $input['accepter'];
+                    $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
+                    $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
                 } elseif (empty($input['accepter']) && isset($request->user->id)) {
                     // 没有领取人则自己领取
                     $recordUpdate['accepter'] = $request->user->id;
+                    $recordUpdate['accept_status'] = 1;
                 }
 
                 $res = $record->update($recordUpdate);
@@ -486,9 +488,13 @@ class PostSubjectController extends CrudController
             if (count($deleteUrl) > 0) {
                 $isDelete = true;
                 foreach ($existLinkData as $key => $value) {
+                    if (empty($value['link'])) {
+                        $deleteIds[] = $value['id'];
+                        continue;
+                    }
                     foreach ($deleteUrl as $key2 => $value2) {
 
-                        if (empty($value['link']) || $value2 == $value['link']) {
+                        if ($value2 == $value['link']) {
                             $deleteIds[] = $value['id'];
                         }
                     }
@@ -577,14 +583,15 @@ class PostSubjectController extends CrudController
             }
             if ($isInsert && empty($model->accepter)) {
                 $recordUpdate['accept_time'] = time();
-                $recordUpdate['accept_status'] = 1;
                 if (!empty($input['accepter'])) {
-                    $recordUpdate['accepter'] = $input['accepter'];
+                    $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
+                    $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
                 } elseif (empty($input['accepter']) && isset($request->user->id)) {
                     // 没有领取人则自己领取
                     $recordUpdate['accepter'] = $request->user->id;
+                    $recordUpdate['accept_status'] = 1;
                 }
-            } elseif ($isInsert && (!$updateUrl || count($updateUrl) == 0)) {
+            } elseif (!$isInsert && (!$updateUrl || count($updateUrl) == 0)) {
                 $recordUpdate['accept_time'] = null;
                 $recordUpdate['accept_status'] = 0;
                 $recordUpdate['propagate_status'] = 0;
@@ -886,7 +893,7 @@ class PostSubjectController extends CrudController
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
-       
+
         $model = PostSubject::from('post_subject as ps');
         if ($ids) {
             //选中
@@ -984,7 +991,7 @@ class PostSubjectController extends CrudController
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
-        
+
         $model = PostSubject::from('post_subject as ps');
         if ($ids) {
             //选中

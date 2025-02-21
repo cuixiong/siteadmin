@@ -24,7 +24,8 @@ class PostSubject extends Base
         'status',
         'sort',
         'updated_by',
-        'created_by'
+        'created_by',
+        'change_status',
     ];
 
     protected $attributes = [
@@ -71,6 +72,11 @@ class PostSubject extends Base
             $model = $model->where('accept_status ', $search->accept_status);
         }
 
+        // change_status 修改状态
+        if (isset($search->change_status) && $search->change_status != '') {
+            $model = $model->where('change_status ', $search->change_status);
+        }
+        
 
         //sort
         if (isset($search->sort) && !empty($search->sort)) {
@@ -209,6 +215,18 @@ class PostSubject extends Base
             $query->where($fields, 'not like', "%{$content}%");
         } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_IN) {
             // 下拉-多选-任一
+            $query->where(function ($query) use ($fields, $content) {
+                if (in_array('-1', $content)) {
+                    // 筛选出公客数据
+                    $query->whereIn($fields, array_filter($content, function ($value) {
+                        return $value !== '-1';  // 过滤掉 -1
+                    }))
+                          ->orWhereNull($fields);
+                } else {
+                    // 如果没有 -1，仅使用 whereIn
+                    $query->whereIn($fields, $content);
+                }
+            });
             $query->whereIn($fields, $content);
         } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_NOT_IN) {
             // 下拉-多选-排除
@@ -407,6 +425,16 @@ class PostSubject extends Base
                 $condition = $searchItem['condition'];
             }
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.accept_time', $searchItem['content']);
+        }
+        
+        // 修改状态
+        if (!empty($search['change_status']) && !empty($search['change_status']['content'])) {
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['change_status'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.change_status', $searchItem['content']);
         }
 
         // 平台-子查询
