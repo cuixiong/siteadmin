@@ -88,6 +88,10 @@ class Country extends Base
             if (!$language) {
                 $language = request()->HeaderLanguage ?? '';
             }
+            $sitename = getSiteName();
+            if(in_array($sitename , ['mrrs'])){
+                $language = 'en';
+            }
             switch ($language) {
                 case 'en':
                     $name = $data['en'];
