@@ -800,7 +800,7 @@ class SiteController extends CrudController {
             time()
         ];
         $encryString = encrypt(implode(',', $eccryData));
-        $domain = env('APP_DOMAIN', 'https://site.yhresearch.cn');
+        $domain = env('CENTER_DOMAIN', 'https://site.yhresearch.cn');
         if ($site == 'center') {
             $data = [
                 'url'   => "{$domain}/#/control/dashboard",
@@ -844,11 +844,11 @@ class SiteController extends CrudController {
             $decryptData = decrypt($token);
         } catch (\Exception $e) {
             \Log::error('返回结果数据:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
-            $domian = env('CENTER_DOMAIN', 'https://site.yhresearch.cn');
+            $domain = env('CENTER_DOMAIN', 'https://site.yhresearch.cn');
             $respData = [
                 'code' => true,
                 'msg'  => '解析失败!',
-                'data' => ['domain' => $domian]
+                'data' => ['domain' => $domain]
             ];
             ReturnJson(true, '解析失败', $respData);
         }
