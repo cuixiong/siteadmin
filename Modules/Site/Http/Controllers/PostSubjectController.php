@@ -538,7 +538,7 @@ class PostSubjectController extends CrudController
                         continue;
                     }
                     if (!isset($postPlatformId) || empty($postPlatformId)) {
-                        ReturnJson(false, trans('lang.update_success'),'没有对应平台'); 
+                        ReturnJson(false, trans('lang.update_success'),$urlItem.' 没有对应平台'); 
                         continue;
                     }
 
