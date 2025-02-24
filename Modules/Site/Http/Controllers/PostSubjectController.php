@@ -203,7 +203,7 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('accept_time', '领取时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($showData, $temp_filter);
 
-        
+
         // 修改状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
@@ -438,7 +438,7 @@ class PostSubjectController extends CrudController
                 $urlData = [];
             }
 
-            $details = [];
+            $details = '';
 
             // 开启事务
             DB::beginTransaction();
@@ -462,9 +462,9 @@ class PostSubjectController extends CrudController
             if ($changeData && count($changeData) > 0) {
                 $string = '';
                 foreach ($changeData as $key => $value) {
-                    $string .= $key . '从' . $value['before'] . '修改成' . $value['after'] . ';';
+                    $string .= $value['label'] . '从' . $value['before'] . '修改成' . $value['after'] . "\n";
                 }
-                $details[] = $string;
+                $details .= $string;
             }
 
             $postSubjectId = $model->id;
@@ -510,7 +510,7 @@ class PostSubjectController extends CrudController
                 $isDelete = PostSubjectLink::query()->whereIn('id', $deleteIds)->delete();
                 $isDelete = $isDelete > 0 ? true : false;
                 if ($isDelete) {
-                    $details[] = '删除了' . $isDelete . '个帖子';
+                    $details = '删除了' . $isDelete . '个帖子' . "\n";
                 }
                 // $deleteRecord = PostSubjectLink::query()->whereIn('id', $deletedIds)->update(['status' => 0]);
             }
@@ -534,11 +534,11 @@ class PostSubjectController extends CrudController
                             }
                         }
                     } else {
-                        ReturnJson(false, trans('lang.update_success'),'平台列表没有数据'); 
+                        ReturnJson(false, trans('lang.update_error'), '平台列表没有数据');
                         continue;
                     }
                     if (!isset($postPlatformId) || empty($postPlatformId)) {
-                        ReturnJson(false, trans('lang.update_success'),$urlItem.' 没有对应平台'); 
+                        ReturnJson(false, trans('lang.update_error'), $urlItem . ' 没有对应平台');
                         continue;
                     }
 
@@ -565,7 +565,7 @@ class PostSubjectController extends CrudController
                 }
                 if ($isInsert) {
 
-                    $details[] = '宣传了' . $insertCount . '个帖子';
+                    $details = '宣传了' . $insertCount . '个帖子' . "\n";
                 }
             }
 
@@ -613,11 +613,11 @@ class PostSubjectController extends CrudController
             DB::commit();
 
             // 添加日志
-            if (count($details) > 0) {
+            if (!empty($details)) {
                 $log = new PostSubjectLog();
                 $logData['type'] = PostSubjectLog::POST_SUBJECT_CURD;
                 $logData['post_subject_id'] = $model->id;
-                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】' . "\n" . (implode("\n", $details));
+                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】' . "\n" . $details;
                 $log->create($logData);
             }
 
