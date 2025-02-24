@@ -194,7 +194,7 @@ class PostSubjectController extends CrudController
 
         // 领取状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Accept_State', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('accept_status', '领取状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
 
@@ -206,7 +206,7 @@ class PostSubjectController extends CrudController
 
         // 修改状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Change_State', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('change_status', '修改状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
 
@@ -462,7 +462,7 @@ class PostSubjectController extends CrudController
             if ($changeData && count($changeData) > 0) {
                 $string = '';
                 foreach ($changeData as $key => $value) {
-                    $string .= $value['label'] . '从' . $value['before'] . '修改成' . $value['after'] . "\n";
+                    $string .= '    【' .$value['label'] . '】从【' . $value['before'] . '】修改成【' . $value['after'] . "】\n";
                 }
                 $details .= $string;
             }
@@ -510,7 +510,7 @@ class PostSubjectController extends CrudController
                 $isDelete = PostSubjectLink::query()->whereIn('id', $deleteIds)->delete();
                 $isDelete = $isDelete > 0 ? true : false;
                 if ($isDelete) {
-                    $details = '删除了' . $isDelete . '个帖子' . "\n";
+                    $details = '    删除了' . $isDelete . '个链接' . "\n";
                 }
                 // $deleteRecord = PostSubjectLink::query()->whereIn('id', $deletedIds)->update(['status' => 0]);
             }
@@ -565,7 +565,7 @@ class PostSubjectController extends CrudController
                 }
                 if ($isInsert) {
 
-                    $details = '宣传了' . $insertCount . '个帖子' . "\n";
+                    $details = '    新增了' . $insertCount . '个链接' . "\n";
                 }
             }
 
@@ -617,7 +617,7 @@ class PostSubjectController extends CrudController
                 $log = new PostSubjectLog();
                 $logData['type'] = PostSubjectLog::POST_SUBJECT_CURD;
                 $logData['post_subject_id'] = $model->id;
-                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】' . "\n" . $details;
+                $logData['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】-' . "\n" . $details;
                 $log->create($logData);
             }
 
