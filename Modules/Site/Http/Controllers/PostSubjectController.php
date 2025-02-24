@@ -203,6 +203,13 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('accept_time', '领取时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($showData, $temp_filter);
 
+        
+        // 修改状态
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('change_status', '修改状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($showData, $temp_filter);
+
 
         /**
          * 隐藏条件
@@ -444,7 +451,7 @@ class PostSubjectController extends CrudController
             $originalAttributes = $model->getAttributes();
             $res = $model->update($input);
             // 获取修改后的数据
-            $changedAttributes = $model->getDirty();
+            $changedAttributes = $model->getChanges();
             if (!$res) {
                 // 回滚事务
                 DB::rollBack();
@@ -527,9 +534,11 @@ class PostSubjectController extends CrudController
                             }
                         }
                     } else {
+                        ReturnJson(false, trans('lang.update_success'),'平台列表没有数据'); 
                         continue;
                     }
                     if (!isset($postPlatformId) || empty($postPlatformId)) {
+                        ReturnJson(false, trans('lang.update_success'),'没有对应平台'); 
                         continue;
                     }
 
@@ -580,6 +589,7 @@ class PostSubjectController extends CrudController
             if ($isInsert || !empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = $isInsert ? time() : $lastPropagateTime;
+                $recordUpdate['change_status'] = 0;
             }
             if (!empty($input['accepter'])) {
                 $recordUpdate['accept_time'] = time();
@@ -628,6 +638,7 @@ class PostSubjectController extends CrudController
     {
 
         $input = $request->all();
+        $id = $input['id'] ?? '';
         $product_id = $input['product_id'] ?? '';
         $product_name = $input['name'] ?? '';
         $data = [];
@@ -1367,6 +1378,7 @@ class PostSubjectController extends CrudController
                     $recordUpdate['accept_time'] = time();
                     $recordUpdate['accept_status'] = 1;
                     $recordUpdate['accepter'] = $accepter;
+                    $recordUpdate['change_status'] = 0;
                     PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
                 }
             }

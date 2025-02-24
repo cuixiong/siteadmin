@@ -76,7 +76,7 @@ class PostSubject extends Base
         if (isset($search->change_status) && $search->change_status != '') {
             $model = $model->where('change_status ', $search->change_status);
         }
-        
+
 
         //sort
         if (isset($search->sort) && !empty($search->sort)) {
@@ -221,7 +221,7 @@ class PostSubject extends Base
                     $query->whereIn($fields, array_filter($content, function ($value) {
                         return $value !== '-1';  // 过滤掉 -1
                     }))
-                          ->orWhereNull($fields);
+                        ->orWhereNull($fields);
                 } else {
                     // 如果没有 -1，仅使用 whereIn
                     $query->whereIn($fields, $content);
@@ -426,7 +426,7 @@ class PostSubject extends Base
             }
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.accept_time', $searchItem['content']);
         }
-        
+
         // 修改状态
         if (!empty($search['change_status']) && !empty($search['change_status']['content'])) {
             $condition = self::CONDITION_EQUAL;
@@ -529,13 +529,49 @@ class PostSubject extends Base
     public static function getAttributesChange($originalAttributes, $changedAttributes)
     {
         $data = [];
+        $needRecordAttributes = [
+            'name' => [
+                'label' => '课题名称',
+                'model' => '',
+            ],
+            'product_id' => [
+                'label' => '报告id',
+                'model' => '',
+            ],
+            'product_category_id' => [
+                'label' => '行业',
+                'model' => 'Modules\Site\Http\Models\ProductsCategory',
+            ],
+            'analyst' => [
+                'label' => '分析师',
+                'model' => '',
+            ],
+            'version' => [
+                'label' => '版本',
+                'model' => '',
+            ],
+            'accepter' => [
+                'label' => '领取人',
+                'model' => 'Modules\Admin\Http\Models\User',
+                'field' => 'nickname',
+            ],
+        ];
         if (!empty($changedAttributes)) {
             foreach ($changedAttributes as $attribute => $newValue) {
-                $originalValue = $originalAttributes[$attribute];
-                $data[$attribute] = ['before' => $originalValue, 'after' => $newValue];
+                if (!in_array($attribute, array_keys($needRecordAttributes))) {
+                    continue;
+                } else {
+                    $originalValue = $originalAttributes[$attribute];
+                    $modelClass = $needRecordAttributes[$attribute]['model'] ?? '';
+                    $field = $needRecordAttributes[$attribute]['field'] ?? 'name';
+                    if (!empty($modelClass) && class_exists($modelClass)) {
+                        $originalValue = $modelClass::query()->where('id', $originalValue)->value($field);
+                        $newValue = $modelClass::query()->where('id', $newValue)->value($field);
+                    }
+                    $data[$attribute] = ['label' => $needRecordAttributes[$attribute]['label'], 'before' => $originalValue, 'after' => $newValue];
+                }
             }
         }
         return $data;
     }
-
 }
