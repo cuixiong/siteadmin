@@ -140,7 +140,7 @@ class TemplateController extends CrudController {
         $rule_id = Rule::query()->where("perm" , $rule_perm)->value("id");
         $role_ids = $user->role_id;
         $role_id_list = explode("," , $role_ids);
-        $rule_id_list = Role::query()->whereIn("id" , $role_id_list)->pluck('rule_id')->toArray();
+        $rule_id_list = Role::query()->whereIn("id" , $role_id_list)->pluck('site_rule_id')->toArray();
         $merge_rule_id_list = [];
         foreach ($rule_id_list as $forIdList) {
             $merge_rule_id_list = array_merge($merge_rule_id_list, $forIdList);
