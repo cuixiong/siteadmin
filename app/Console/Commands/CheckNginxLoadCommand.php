@@ -44,14 +44,18 @@ class CheckNginxLoadCommand extends Command {
 //                                ->where("is_loc!al", 1)
 //                                ->pluck("name");
 //            $siteNameList = ['168report'];
-            $siteNginxConfList = SiteNginxConf::query()->get()->toArray();
+            $is_overseas = env('is_overseas', 1);
+            $siteNginxConfList = SiteNginxConf::query()
+                                              ->where("is_overseas", $is_overseas)
+                                              ->get()->toArray();
             foreach ($siteNginxConfList as $siteNginxConfInfo) {
                 $site = $siteNginxConfInfo['name'];
                 tenancy()->initialize($site);
                 $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
                 $check_max_load = $sysValList['check_max_load'] ?? 80;
                 $check_min_load = $sysValList['check_min_load'] ?? 60;
-                echo "当前时间:".date("Y-m-d H:i:s")."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}".PHP_EOL;
+                echo "当前时间:".date("Y-m-d H:i:s")
+                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}".PHP_EOL;
                 if ($load_os_val >= $check_max_load) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
                     \Log::error(
@@ -61,7 +65,7 @@ class CheckNginxLoadCommand extends Command {
                     echo $banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                     $this->reloadNginx();
-                } elseif($load_os_val < $check_min_load) {
+                } elseif ($load_os_val < $check_min_load) {
                     //小于最低负载
                     //恢复nginx配置
                     $banStr = $this->getBlackBanNginxStr($sysValList);
@@ -204,7 +208,6 @@ class CheckNginxLoadCommand extends Command {
                                       ->having('cnt', '>=', $black_ban_cnt)
                                       ->selectRaw('count(*) as cnt, ban_str')
                                       ->pluck('ban_str')->toArray();
-
         if (!empty($cntBlackIpList)) {
             foreach ($cntBlackIpList as $forIp) {
                 $banIpStrList[] = PHP_EOL.$forIp;
@@ -217,13 +220,11 @@ class CheckNginxLoadCommand extends Command {
         }
         //查询超过N次的UA
         $banUaStrList = NginxBanList::query()->where("ban_type", 2)
-                                      ->where("status", 1)
-                                      ->groupBy('ban_str')
-                                      ->having('cnt', '>=', $black_ban_cnt)
-                                      ->selectRaw('count(*) as cnt, ban_str')
-                                      ->pluck('ban_str')->toArray();
-
-
+                                    ->where("status", 1)
+                                    ->groupBy('ban_str')
+                                    ->having('cnt', '>=', $black_ban_cnt)
+                                    ->selectRaw('count(*) as cnt, ban_str')
+                                    ->pluck('ban_str')->toArray();
         if (!empty($banUaStrList)) {
             $banUaStrList = array_unique($banUaStrList);
             $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
@@ -295,18 +296,16 @@ class CheckNginxLoadCommand extends Command {
 
     public function reloadNginxBySite($siteName) {
         $server_id = Site::query()->where("name", $siteName)->value("server_id");
-        if(empty($server_id )){
+        if (empty($server_id)) {
             return true;
         }
-        $server_info  = Server::find($server_id);
-        if(empty($server_info )){
+        $server_info = Server::find($server_id);
+        if (empty($server_info)) {
             return true;
         }
-
         $ssh_host = $server_info['ip'];
         $username = $server_info['username'];
         $password = $server_info['password'];
-
         $siteNameList[] = $siteName;
         $siteNginxConfList = SiteNginxConf::query()->whereIn("name", $siteNameList)->get()->toArray();
         foreach ($siteNginxConfList as $siteNginxConfInfo) {
@@ -329,7 +328,6 @@ class CheckNginxLoadCommand extends Command {
                 ];
             }
             $ssh->setTimeout(600);
-
             $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
             if (empty($temp_content)) {
                 return false;
@@ -337,21 +335,18 @@ class CheckNginxLoadCommand extends Command {
             //$banStr = '#czx';
             $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
             $temp_file_path = "/www/wwwroot/nginx_shell/temp_site_{$site}_nginx.conf";
-            file_put_contents($temp_file_path , $modifiedString);
-
+            file_put_contents($temp_file_path, $modifiedString);
             $new_file_path = $siteNginxConfInfo['conf_real_path'];
             //$modifiedString = escapeshellarg($modifiedString);
             //$commands = "echo $modifiedString > $new_file_path";
             $commands = "mv {$temp_file_path} {$new_file_path}";
-            $execute_res = $this->executeCommands($ssh , $commands);
+            $execute_res = $this->executeCommands($ssh, $commands);
             \Log::error('执行命令:'.$commands.'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
             \Log::error('执行结果:'.json_encode([$execute_res]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
             //$this->reloadNginx();
-
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
-            $execute_reload_res = $this->executeCommands($ssh , $nginx_reload_commands);
+            $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);
             \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
-
         }
     }
 
@@ -390,8 +385,8 @@ class CheckNginxLoadCommand extends Command {
             'output' => $output,
         ];
     }
-    public static function removeAnsiControlChars($text)
-    {
+
+    public static function removeAnsiControlChars($text) {
         return preg_replace('/\e[[][A-Za-z0-9.;?]*[a-zA-Z]/', '', $text);
     }
 }
