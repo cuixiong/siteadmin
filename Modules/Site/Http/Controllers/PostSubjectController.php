@@ -599,6 +599,9 @@ class PostSubjectController extends CrudController
             if ($isInsert || !empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = $isInsert ? time() : $lastPropagateTime;
+            }elseif(empty($lastPropagateTime)){
+                $recordUpdate['propagate_status'] = 0;
+                $recordUpdate['last_propagate_time'] = null;
             }
 
             // 更新领取人
