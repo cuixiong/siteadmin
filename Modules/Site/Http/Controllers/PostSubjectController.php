@@ -181,7 +181,7 @@ class PostSubjectController extends CrudController
 
         // 最后宣传时间
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
-        $temp_filter = $this->getAdvancedFiltersItem('propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($showData, $temp_filter);
 
 
@@ -395,23 +395,24 @@ class PostSubjectController extends CrudController
                     }
                 }
             }
+            $recordUpdate = [];
             if ($hasChild) {
                 // 如果有添加课题链接
-                $recordUpdate = [];
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = time();
-                $recordUpdate['accept_time'] = time();
-                if (!empty($input['accepter'])) {
-                    $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
-                    $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
-                } elseif (empty($input['accepter']) && isset($request->user->id)) {
-                    // 没有领取人则自己领取
-                    $recordUpdate['accepter'] = $request->user->id;
-                    $recordUpdate['accept_status'] = 1;
-                }
-
-                $res = $record->update($recordUpdate);
             }
+            // 新增的无论怎样都要领取
+            if (!empty($input['accepter'])) {
+                $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
+                $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
+                $recordUpdate['accept_time'] = $input['accepter'] != -1 ? time() : null;
+            } elseif (empty($input['accepter']) && isset($request->user->id)) {
+                // 没有领取人则自己领取
+                $recordUpdate['accepter'] = $request->user->id;
+                $recordUpdate['accept_status'] = 1;
+            }
+
+            $res = $record->update($recordUpdate);
 
             DB::commit();
 
@@ -588,29 +589,29 @@ class PostSubjectController extends CrudController
 
             // 帖子的变动需更新课题表的宣传状态等字段
             $recordUpdate = [];
+            
+            // 更新修改状态，在链接有变动时
             if ($isInsert || $isDelete) {
                 $recordUpdate['change_status'] = 0;
             }
+            
+            // 更新最后宣传时间
             if ($isInsert || !empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = $isInsert ? time() : $lastPropagateTime;
             }
+
+            // 更新领取人
             if (!empty($input['accepter'])) {
                 $recordUpdate['accept_time'] = time();
                 $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
                 $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
-            }
-            if ($isInsert && empty($input['accepter'])) {
-                $recordUpdate['accept_time'] = time();
+            }elseif (empty($input['accepter'])) {
                 // 没有领取人则自己领取
+                $recordUpdate['accept_time'] = time();
                 $recordUpdate['accepter'] = $request->user->id;
                 $recordUpdate['accept_status'] = 1;
-            } elseif (!$isInsert && (!$updateUrl || count($updateUrl) == 0)) {
-                $recordUpdate['accept_time'] = null;
-                $recordUpdate['accept_status'] = 0;
-                $recordUpdate['propagate_status'] = 0;
-                $recordUpdate['last_propagate_time'] = null;
-            }
+            } 
             if (count($recordUpdate) > 0) {
                 $res = $model->update($recordUpdate);
             }

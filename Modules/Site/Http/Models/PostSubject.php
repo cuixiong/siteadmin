@@ -316,6 +316,16 @@ class PostSubject extends Base
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.name', $searchItem['content']);
             // return $query->dd();
         }
+        // 报告ID
+        if (!empty($search['product_id']) && !empty($search['product_id']['content'])) {
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['product_id'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.product_id', $searchItem['content']);
+        }
+
         // 行业
         if (!empty($search['product_category_id']) && isset($search['product_category_id']['content']) && count($search['product_category_id']['content']) > 0) {
             $condition = self::CONDITION_IN;
@@ -388,13 +398,13 @@ class PostSubject extends Base
         }
 
         // 最后宣传时间
-        if (!empty($search['propagate_time']) && isset($search['propagate_time']['content'])) {
+        if (!empty($search['last_propagate_time']) && isset($search['last_propagate_time']['content'])) {
             $condition = self::CONDITION_TIME_BETWEEN;
-            $searchItem = $search['propagate_time'];
+            $searchItem = $search['last_propagate_time'];
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.propagate_time', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.last_propagate_time', $searchItem['content']);
         }
 
         // 领取人
