@@ -600,6 +600,7 @@ class SyncThirdProductController extends CrudController {
                  */
                 if (!empty($product)) {
                     //新增字段 初始化一个浏览次数和下载次数,存在则不修改
+                    $forProductId = $product['id'];
                     $item['hits'] = mt_rand(100, 500);
                     $item['downloads'] = mt_rand(10, 99);
                     $itemDescription['product_id'] = $product['id'];
@@ -667,6 +668,7 @@ class SyncThirdProductController extends CrudController {
                 } else {
                     //新增报告
                     $product = Products::create($item);
+                    $forProductId = $product['id'];
                     //新增报告详情
                     $newProductDescription = (new ProductsDescription($newYear));
                     $itemDescription['product_id'] = $product['id'];
@@ -675,7 +677,7 @@ class SyncThirdProductController extends CrudController {
                     $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
                 }
                 //执行到这里算是操作成功的
-                array_push($succIdList, $row['id']);
+                array_push($succIdList, $forProductId);
 //                if (!empty($row['id'])) {
 //                    //维护xunSearch索引, 队列执行
 //                    $this->pushSyncSphinxQueue($row['id'], $site);
