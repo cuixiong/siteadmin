@@ -1,5 +1,4 @@
 <?php
-
 /**
  * SyncThirdProductController.php UTF-8
  * 同步第三方报告控制器
@@ -33,8 +32,7 @@ use Modules\Site\Http\Models\SyncLog;
 use Modules\Site\Http\Models\SyncPublisher;
 use Modules\Site\Http\Models\SystemValue;
 
-class SyncThirdProductController extends CrudController
-{
+class SyncThirdProductController extends CrudController {
     public        $site                   = '';
     public        $productCategory        = [];
     public        $regionList             = [];
@@ -49,8 +47,7 @@ class SyncThirdProductController extends CrudController
     public static $closeAutoSyncData      = 0;
     public        $syncConfig             = [];
 
-    public function searchDroplist(Request $request)
-    {
+    public function searchDroplist(Request $request) {
         try {
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
@@ -74,8 +71,7 @@ class SyncThirdProductController extends CrudController
         }
     }
 
-    public function changeAutoSyncStatus(Request $request)
-    {
+    public function changeAutoSyncStatus(Request $request) {
         try {
             if (!isset($request->status)) {
                 ReturnJson(false, '状态异常');
@@ -106,8 +102,7 @@ class SyncThirdProductController extends CrudController
      *
      * @param $ids 主键ID
      */
-    protected function destroy(Request $request)
-    {
+    protected function destroy(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
@@ -132,8 +127,7 @@ class SyncThirdProductController extends CrudController
      *
      * @param $request 请求信息
      */
-    protected function form(Request $request)
-    {
+    protected function form(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = new SyncLog();
@@ -152,8 +146,7 @@ class SyncThirdProductController extends CrudController
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    protected function list(Request $request)
-    {
+    protected function list(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = new SyncLog();
@@ -190,8 +183,7 @@ class SyncThirdProductController extends CrudController
         }
     }
 
-    public function sync(Request $request)
-    {
+    public function sync(Request $request) {
         try {
             //5s内只能点击一次
             currentLimit($request, 5);
@@ -212,8 +204,7 @@ class SyncThirdProductController extends CrudController
      *
      * @return mixed|true
      */
-    public function handlerSyncDataJob()
-    {
+    public function handlerSyncDataJob() {
         try {
             $respData = $this->pullProductData(true);
 
@@ -224,8 +215,7 @@ class SyncThirdProductController extends CrudController
         }
     }
 
-    public function newHandlerRespData($respDataList, $site)
-    {
+    public function newHandlerRespData($respDataList, $site) {
         if (empty($respDataList)) {
             \Log::error('拉取北京数据本次为空');
             throw new \Exception('本次拉取数据为空');
@@ -252,10 +242,10 @@ class SyncThirdProductController extends CrudController
         Products::unsetEventDispatcher();
         //获取敏感词列表
         $this->senWords = SensitiveWords::query()->where("status", 1)
-            ->pluck("word")->toArray();
+                                        ->pluck("word")->toArray();
         //获取报告分类列表
         $this->productCategory = ProductsCategory::query()->where("status", 1)
-            ->pluck("id", "name")->toArray();
+                                                 ->pluck("id", "name")->toArray();
         //获取地区列表
         $this->regionList = Region::query()->pluck("id", "name")->toArray();
         //出版商映射关系
@@ -295,8 +285,10 @@ class SyncThirdProductController extends CrudController
                     && in_array($forParamsData['author'], $authorCheck)
                 ) {
                     $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['name']]['id']};【{$forParamsData['name']}】"
-                        . ($uniqueDataList[$forParamsData['name']]['author']) . '-' . trans('lang.author_level')
-                        . ($forParamsData['author']) . "\r\n";
+                                      .($uniqueDataList[$forParamsData['name']]['author']).'-'.trans(
+                                          'lang.author_level'
+                                      )
+                                      .($forParamsData['author'])."\r\n";
                     $ingoreCount++;
                     array_push($errIdList, $uniqueDataList[$forParamsData['name']]['id']);
                     $uniqueDataList[$forParamsData['name']] = $forParamsData;
@@ -305,15 +297,19 @@ class SyncThirdProductController extends CrudController
                     && $forParamsData['author'] == '已售报告'
                 ) {
                     $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['name']]['id']};【{$forParamsData['name']}】"
-                        . ($uniqueDataList[$forParamsData['name']]['author']) . '-' . trans('lang.author_level')
-                        . ($forParamsData['author']) . "\r\n";
+                                      .($uniqueDataList[$forParamsData['name']]['author']).'-'.trans(
+                                          'lang.author_level'
+                                      )
+                                      .($forParamsData['author'])."\r\n";
                     $ingoreCount++;
                     array_push($errIdList, $uniqueDataList[$forParamsData['name']]['id']);
                     $uniqueDataList[$forParamsData['name']] = $forParamsData;
                 } elseif ($uniqueDataList[$forParamsData['name']]['author'] == $forParamsData['author']) {
                     $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['name']]['id']};【{$forParamsData['name']}】"
-                        . ($uniqueDataList[$forParamsData['name']]['author']) . '-' . trans('lang.author_level')
-                        . ($forParamsData['author']) . "\r\n";
+                                      .($uniqueDataList[$forParamsData['name']]['author']).'-'.trans(
+                                          'lang.author_level'
+                                      )
+                                      .($forParamsData['author'])."\r\n";
                     $ingoreCount++;
                     array_push($errIdList, $uniqueDataList[$forParamsData['name']]['id']);
                     $uniqueDataList[$forParamsData['name']] = $forParamsData;
@@ -345,7 +341,6 @@ class SyncThirdProductController extends CrudController
             }
             $product_model = new Products();
             foreach ($uniqueDataList as &$row) {
-
                 $productChange = false; // 报告的类型、应用、企业等数据是否有变化
                 // 表头
                 $item = [];
@@ -373,8 +368,8 @@ class SyncThirdProductController extends CrudController
                                 && $row['author'] != '完成报告'))
                     ) {
                         $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"
-                            . ($row['author']) . '-' . trans('lang.author_level')
-                            . ($product['author']) . "\r\n";
+                                          .($row['author']).'-'.trans('lang.author_level')
+                                          .($product['author'])."\r\n";
                         $ingoreCount++;
                         array_push($errIdList, $row['id']);
                         continue;
@@ -385,7 +380,7 @@ class SyncThirdProductController extends CrudController
                 //校验报告名称
                 $checkMsg = $this->checkProductName($item['name']);
                 if ($checkMsg) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:  " . $checkMsg;
+                    $details .= "【错误】编号:{$item['third_sync_id']}:  ".$checkMsg;
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -408,9 +403,9 @@ class SyncThirdProductController extends CrudController
                 $item['price'] = $row['price'] ?? 0;
                 // 忽略基础价为空的数据
                 if (empty($item['price'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . trans(
-                        'lang.price_empty'
-                    ) . "\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans(
+                            'lang.price_empty'
+                        )."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -419,9 +414,9 @@ class SyncThirdProductController extends CrudController
                 $item['published_date'] = strtotime($row['published_date']);
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name'] ?? '') . '】' . trans(
-                        'lang.published_date_empty'
-                    ) . "\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name'] ?? '').'】'.trans(
+                            'lang.published_date_empty'
+                        )."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -435,9 +430,9 @@ class SyncThirdProductController extends CrudController
                 $item['category_id'] = intval($tempCategoryId);
                 // 忽略分类为空的数据
                 if (empty($item['category_id'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . $tempCateName . '-'
-                        . trans('lang.category_empty')
-                        . "\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$tempCateName.'-'
+                                .trans('lang.category_empty')
+                                ."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -455,9 +450,9 @@ class SyncThirdProductController extends CrudController
                 $item['keywords'] = $row['keywords'] ?? '';
                 // 忽略关键词为空的数据
                 if (empty($item['keywords'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . trans(
-                        'lang.keywords_empty'
-                    ) . "\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans(
+                            'lang.keywords_empty'
+                        )."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -477,8 +472,8 @@ class SyncThirdProductController extends CrudController
                 $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . trans('lang.url_empty')
-                        . "\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans('lang.url_empty')
+                                ."\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -487,7 +482,7 @@ class SyncThirdProductController extends CrudController
                 $matchSenWord = $this->checkFitter($item['url']);
                 if (!empty($matchSenWord)) {
                     $details .= "【错误】编号:{$item['third_sync_id']}:   "
-                        . "该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                                ."该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
                     array_push($errIdList, $row['id']);
                     $errorCount++;
                     continue;
@@ -613,25 +608,23 @@ class SyncThirdProductController extends CrudController
                     $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
                     $product_model = $product_model->where("id", $product['id'])->first();
                     // $originalAttributes = $product_model->getAttributes();
-
                     // 属性是否有变动
                     if (
-                        $product_model && (
-                            $product_model->classification != $row['classification'] ||
-                            $product_model->application != $row['application'] ||
-                            $product_model->cagr != $row['cagr'] ||
-                            $product_model->last_scale != $row['last_scale'] ||
-                            $product_model->current_scale != $row['current_scale'] ||
-                            $product_model->future_scale != $row['future_scale']
+                        $product_model
+                        && (
+                            $product_model->classification != $row['classification']
+                            || $product_model->application != $row['application']
+                            || $product_model->cagr != $row['cagr']
+                            || $product_model->last_scale != $row['last_scale']
+                            || $product_model->current_scale != $row['current_scale']
+                            || $product_model->future_scale != $row['future_scale']
                         )
                     ) {
                         $productChange = true;
                     }
-
                     //更新报告
                     $product_model->update($item);
                     // $changedAttributes = $product_model->getDirty();
-
                     $newProductDescription = (new ProductsDescription($newYear));
                     //出版时间年份更改
                     if ($oldYear != $newYear) {
@@ -642,7 +635,9 @@ class SyncThirdProductController extends CrudController
                                 $product['id']
                             )->first();
                             // 属性是否有变动
-                            if ($oldProductDescription && $oldProductDescription['companies_mentioned'] == $itemDescription['companies_mentioned']) {
+                            if ($oldProductDescription
+                                && $oldProductDescription['companies_mentioned']
+                                   == $itemDescription['companies_mentioned']) {
                                 $productChange = true;
                             }
                             if ($oldProductDescription) {
@@ -654,20 +649,21 @@ class SyncThirdProductController extends CrudController
                     } else {
                         //直接更新
                         $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product['id'])
-                            ->first();
+                                                                             ->first();
                         if ($newProductDescriptionUpdate) {
                             $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
                         } else {
                             $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                         }
-
                         // 属性是否有变动
-                        if ($newProductDescriptionUpdate && $newProductDescriptionUpdate['companies_mentioned'] == $itemDescription['companies_mentioned']) {
+                        if ($newProductDescriptionUpdate
+                            && $newProductDescriptionUpdate['companies_mentioned']
+                               == $itemDescription['companies_mentioned']) {
                             $productChange = true;
                         }
                     }
                     $updateCount++;
-                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】" . "\r\n";
+                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
                 } else {
                     //新增报告
                     $product = Products::create($item);
@@ -676,14 +672,14 @@ class SyncThirdProductController extends CrudController
                     $itemDescription['product_id'] = $product['id'];
                     $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     $insertCount++;
-                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】" . "\r\n";
+                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
                 }
                 //执行到这里算是操作成功的
                 array_push($succIdList, $row['id']);
-                if (!empty($row['id'])) {
-                    //维护xunSearch索引, 队列执行
-                    $this->pushSyncSphinxQueue($row['id'], $site);
-                }
+//                if (!empty($row['id'])) {
+//                    //维护xunSearch索引, 队列执行
+//                    $this->pushSyncSphinxQueue($row['id'], $site);
+//                }
                 // 发帖课题
                 if (!empty($product['id'])) {
                     try {
@@ -700,7 +696,6 @@ class SyncThirdProductController extends CrudController
                             if ($productChange) {
                                 $postSubjectUpdate['change_status'] = 1;
                             }
-
                             postSubject::query()->where('product_id', $product['id'])->update($postSubjectUpdate);
                         } else {
                             postSubject::create($postSubjectUpdate);
@@ -711,7 +706,7 @@ class SyncThirdProductController extends CrudController
             }
         } catch (\Throwable $th) {
             //throw $th;
-            $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($item['name']) . '】' . $th->getMessage() . "\r\n";
+            $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($item['name']).'】'.$th->getMessage()."\r\n";
             // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
             // $details = json_encode($row) . "\r\n";
             $errorCount++;
@@ -719,6 +714,8 @@ class SyncThirdProductController extends CrudController
         }
         //恢复监听
         Products::setEventDispatcher($dispatcher);
+        //批量推送sphinx索引
+        $this->PushSphinxQueueByIdList($succIdList, $site);
         // 记录日志
         $logModel = new SyncLog();
         $logData = [
@@ -738,8 +735,25 @@ class SyncThirdProductController extends CrudController
         $this->notifyThirdRes($succIdList, $errIdList);
     }
 
-    public function notifyThirdRes($sucIdList, $errIdList)
-    {
+    /**
+     *  推送sphinx队列
+     */
+    public function PushSphinxQueueByIdList($product_id_list, $site) {
+        if (empty($product_id_list)) {
+            return false;
+        }
+        $product_id_list = array_unique($product_id_list);
+        $data = [
+            'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
+            'method' => 'SyncSphinxByIdList',
+            'site'   => $site,
+            'data'   => $product_id_list,
+        ];
+        $data = json_encode($data);
+        SyncSphinxIndex::dispatch($data)->onQueue(QueueConst::SYNC_SPGINX_INDEX);
+    }
+
+    public function notifyThirdRes($sucIdList, $errIdList) {
         //调用接口反馈成功, 失败问题
         $url = $this->syncConfig[$this->notifyDataResUrlKey];
         $token = $this->syncConfig[$this->notifyDataSyncTokenKey];
@@ -784,7 +798,7 @@ class SyncThirdProductController extends CrudController
             if (!empty($respData) && !empty($respData['errcode']) && $respData['errcode'] == 1) {
                 return true;
             } else {
-                \Log::error('请求接口失败,请联系管理员:' . json_encode([$url, $token, $respData]));
+                \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));
                 throw new \Exception('请求通知接口失败,请联系管理员');
             }
         } catch (Exception $e) {
@@ -793,11 +807,10 @@ class SyncThirdProductController extends CrudController
         }
     }
 
-    public function checkProductName($productName)
-    {
+    public function checkProductName($productName) {
         // 忽略报告名为空的数据
         if (empty($productName)) {
-            return trans('lang.product_name_empty') . "\r\n";
+            return trans('lang.product_name_empty')."\r\n";
         }
         // 含有敏感词的报告需要过滤
         //        $matchSenWord = $this->checkFitter($productName);
@@ -813,8 +826,7 @@ class SyncThirdProductController extends CrudController
      * @param       $name
      *
      */
-    private function checkFitter($name)
-    {
+    private function checkFitter($name) {
         $checkRes = false;
         foreach ($this->senWords as $fillterRules) {
             //if (mb_strpos($name, $fillterRules) !== false) { //中文比对
@@ -827,16 +839,14 @@ class SyncThirdProductController extends CrudController
         return $checkRes;
     }
 
-    public function isDecimalString($str)
-    {
+    public function isDecimalString($str) {
         // 允许小数点和小数点后的数字
         $pattern = '/^\d+(\.\d+)?%$/';
 
         return preg_match($pattern, $str) === 1;
     }
 
-    public function pushSyncSphinxQueue($productId, $site)
-    {
+    public function pushSyncSphinxQueue($productId, $site) {
         $data = [
             'class'  => 'Modules\Site\Http\Controllers\ProductsUploadLogController',
             'method' => 'xsSyncProductIndex',
@@ -852,8 +862,7 @@ class SyncThirdProductController extends CrudController
      *
      * @return mixed
      */
-    private function pullProductData($isCrontab = false)
-    {
+    private function pullProductData($isCrontab = false) {
         try {
             //兼容site
             $site = request()->header('Site');
@@ -870,8 +879,8 @@ class SyncThirdProductController extends CrudController
             //如果来自定时任务那一端, 需要判断是否开启自动同步开关
             if ($isCrontab) {
                 $autoSyncDataVal = SystemValue::query()
-                    ->where("key", $this->autoSyncDataKey)
-                    ->value('value');
+                                              ->where("key", $this->autoSyncDataKey)
+                                              ->value('value');
                 //如果没有开启自动同步开关, 那么直接退出
                 if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
                     throw new \Exception("no open auto sync data config");
@@ -915,7 +924,7 @@ class SyncThirdProductController extends CrudController
                 \Log::error('同步完成');
             } else {
                 throw new \Exception("请求接口失败,请联系管理员");
-                \Log::error('请求接口失败,请联系管理员:' . json_encode([$url, $token, $respData]));
+                \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));
             }
 
             return true;

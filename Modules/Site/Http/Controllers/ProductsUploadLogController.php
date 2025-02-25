@@ -1196,7 +1196,7 @@ class ProductsUploadLogController extends CrudController {
         try {
             (new Products())->excuteSphinxReq($dataId, 'update', $params['site']);
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
+            \Log::error('返回结果数据:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         }
 
         //(new Products())->excuteXs($params['site'], 'update', $handlerData);
