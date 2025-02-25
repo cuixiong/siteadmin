@@ -15,6 +15,8 @@ use Modules\Site\Http\Models\PostSubjectLink;
 use Modules\Site\Http\Models\PostSubjectLog;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class PostSubjectController extends CrudController
 {
@@ -457,12 +459,12 @@ class PostSubjectController extends CrudController
                 DB::rollBack();
                 ReturnJson(FALSE, trans('lang.update_error'));
             }
-
+            $space = '    ';
             $changeData = PostSubject::getAttributesChange($originalAttributes, $changedAttributes);
             if ($changeData && count($changeData) > 0) {
                 $string = '';
                 foreach ($changeData as $key => $value) {
-                    $string .= '    【' .$value['label'] . '】从【' . $value['before'] . '】修改成【' . $value['after'] . "】\n";
+                    $string .= $space . '【' . $value['label'] . '】从【' . $value['before'] . '】修改成【' . $value['after'] . "】\n";
                 }
                 $details .= $string;
             }
@@ -510,7 +512,7 @@ class PostSubjectController extends CrudController
                 $isDelete = PostSubjectLink::query()->whereIn('id', $deleteIds)->delete();
                 $isDelete = $isDelete > 0 ? true : false;
                 if ($isDelete) {
-                    $details = '    删除了' . $isDelete . '个链接' . "\n";
+                    $details = $space . '删除了' . $isDelete . '个链接' . "\n";
                 }
                 // $deleteRecord = PostSubjectLink::query()->whereIn('id', $deletedIds)->update(['status' => 0]);
             }
@@ -534,11 +536,11 @@ class PostSubjectController extends CrudController
                             }
                         }
                     } else {
-                        ReturnJson(false, trans('lang.update_error'), '平台列表没有数据');
+                        ReturnJson(false, '没有平台数据');
                         continue;
                     }
                     if (!isset($postPlatformId) || empty($postPlatformId)) {
-                        ReturnJson(false, trans('lang.update_error'), $urlItem . ' 没有对应平台');
+                        ReturnJson(false, '【' . $urlItem . '】 没有对应平台');
                         continue;
                     }
 
@@ -565,7 +567,7 @@ class PostSubjectController extends CrudController
                 }
                 if ($isInsert) {
 
-                    $details = '    新增了' . $insertCount . '个链接' . "\n";
+                    $details = $space . '新增了' . $insertCount . '个链接' . "\n";
                 }
             }
 
@@ -586,10 +588,12 @@ class PostSubjectController extends CrudController
 
             // 帖子的变动需更新课题表的宣传状态等字段
             $recordUpdate = [];
+            if ($isInsert || $isDelete) {
+                $recordUpdate['change_status'] = 0;
+            }
             if ($isInsert || !empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = $isInsert ? time() : $lastPropagateTime;
-                $recordUpdate['change_status'] = 0;
             }
             if (!empty($input['accepter'])) {
                 $recordUpdate['accept_time'] = time();
@@ -862,9 +866,9 @@ class PostSubjectController extends CrudController
             //     $logDataChild['type'] = PostSubjectLog::POST_SUBJECT_ACCEPT;
             //     $logDataChild['post_subject_id'] = $id;
             //     if ($isOwn) {
-            //         $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $accepterName . '】领取了课题';
+            //         $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $accepterName . '】领取了课题';
             //     } else {
-            //         $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】将课题分配给【' . $accepterName . '】';
+            //         $logDataChild['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】将课题分配给【' . $accepterName . '】';
             //     }
             //     $logDataChild['created_by']= $logDataChild['updated_by'] = $request->user->id;
             //     $logDataChild['created_at'] = $logDataChild['updated_at'] = time();
@@ -883,9 +887,9 @@ class PostSubjectController extends CrudController
             $logData['ingore_count'] = 0;
             // $logData['post_subject_id'] = ;
             if ($isOwn) {
-                $details[] = date('Y-m-d H:i:s', time()) . ' 【' . $accepterName . '】领取了' . $acceptCount . '个课题';
+                $details[] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $accepterName . '】领取了' . $acceptCount . '个课题';
             } else {
-                $details[] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】将' . $acceptCount . '个课题分配给【' . $accepterName . '】';
+                $details[] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】将' . $acceptCount . '个课题分配给【' . $accepterName . '】';
             }
             foreach ($postSubjectData as $key => $value) {
                 $details[] = '【编号' . $value['id'] . '】' . $value['name'];
@@ -948,35 +952,85 @@ class PostSubjectController extends CrudController
             '发贴链接',
         ];
 
-        $writer = WriterEntityFactory::createXLSXWriter();
-        $writer->openToBrowser('export-topic-' . count($subjectData) . '-' . $date . '.xlsx'); // 将文件输出到浏览器并下载
+        // $writer = WriterEntityFactory::createXLSXWriter();
+        // $writer->openToBrowser('export-topic-' . count($subjectData) . '-' . $date . '.xlsx'); // 将文件输出到浏览器并下载
 
+        // $accepter = $subjectData[0]['accepter'] ?? 0;
+        // if (!empty($accepter)) {
+        //     $sheetName = User::query()->where('id', $accepter)->value('nickname') ?? 'Sheet1';
+        // } else {
+        //     $sheetName = $request->user->nickname ?? 'Sheet1';
+        // }
+        // $writer->getCurrentSheet()->setName($sheetName);
+
+        // // 添加标题
+        // $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
+        // $writer->addRow($rowData);
+
+        // $details = [];
+        // foreach ($subjectData as $key => $subject) {
+        //     $rowData = [];
+        //     $rowData[] = $subject['name'];
+        //     $rowData[] = $subject['version'];
+        //     $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+        //     $rowData[] = '';
+
+        //     $rowData = WriterEntityFactory::createRowFromArray($rowData);
+        //     $writer->addRow($rowData);
+        //     $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
+        // }
+        // $writer->close();
+
+        // 创建 Spreadsheet 对象
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // 设置 Sheet 名称
         $accepter = $subjectData[0]['accepter'] ?? 0;
         if (!empty($accepter)) {
             $sheetName = User::query()->where('id', $accepter)->value('nickname') ?? 'Sheet1';
         } else {
             $sheetName = $request->user->nickname ?? 'Sheet1';
         }
-        $writer->getCurrentSheet()->setName($sheetName);
+        $sheet->setTitle($sheetName);
 
-        // 添加标题
-        $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
-        $writer->addRow($rowData);
+        // 设置标题行
+        $sheet->fromArray([$excelHeader], null, 'A1');
 
-        $details = [];
-        foreach ($subjectData as $key => $subject) {
-            $rowData = [];
-            $rowData[] = $subject['name'];
-            $rowData[] = $subject['version'];
-            // https://siteadmin.marketmonitorglobal.com.cn/#/gircn/products/fastList?type=id&keyword=2124513
-            $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
-            $rowData[] = '';
+        // 填充数据
+        $rowIndex = 2;
+        $sheet->getColumnDimension('A')->setWidth(55);  // 设置 A 列宽度
+        $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
+        $sheet->getColumnDimension('C')->setWidth(80);  // 设置 C 列宽度
+        $sheet->getColumnDimension('D')->setWidth(80);  // 设置 D 列宽度
 
-            $rowData = WriterEntityFactory::createRowFromArray($rowData);
-            $writer->addRow($rowData);
+        foreach ($subjectData as $subject) {
+            $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+
+            $sheet->setCellValue([1, $rowIndex], $subject['name']);
+            $sheet->setCellValue([2, $rowIndex], $subject['version']);
+
+            // 设置超链接
+            $sheet->setCellValue([3, $rowIndex], $url);
+            $sheet->getCell([3, $rowIndex])->getHyperlink()->setUrl($url);
+            $sheet->getStyle([3, $rowIndex])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+
+            $sheet->setCellValue([4, $rowIndex], ''); // 额外空白列
+
+            $rowIndex++;
             $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
         }
-        $writer->close();
+
+        // 设置 HTTP 头部并导出文件
+        $date = date('Ymd');
+        $filename = 'export-topic-' . count($subjectData) . '-' . $date . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
 
         // exit;
         $exportCount = count($subjectData);
@@ -987,8 +1041,7 @@ class PostSubjectController extends CrudController
             $logData['success_count'] = $exportCount;
             $logData['ingore_count'] = 0;
             // $logData['post_subject_id'] = ;
-            $logData['details'] = date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】导出了' . $exportCount . '个课题' . "\n" . (implode("\n", $details));
-            $logData['details'] .= implode("\n", $details);
+            $logData['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】导出了' . $exportCount . '个课题' . "\n" . (implode("\n", $details));
             PostSubjectLog::create($logData);
         }
         exit;
@@ -1066,7 +1119,7 @@ class PostSubjectController extends CrudController
             }
             $subjectGroup[$subjectAccepterId][] = $item;
         }
-
+        // ReturnJson(TRUE, trans('lang.request_success'), $subjectGroup);
 
         // 领取人列表
         $accepterIds = array_column($subjectData, 'accepter');
@@ -1076,8 +1129,6 @@ class PostSubjectController extends CrudController
         $domain = env('APP_DOMAIN');
         $site = request()->header("Site");
         $date = date('Ymd', time());
-        $writer = WriterEntityFactory::createXLSXWriter();
-        $writer->openToBrowser('import-posts-' . count($subjectData) . '-' . $date . '.xlsx'); // 将文件输出到浏览器并下载
 
         // 循环课题，输出excel
         $excelHeader = [
@@ -1092,58 +1143,169 @@ class PostSubjectController extends CrudController
         $subjectFail = 0;
         $subjectLinkFail = 0;
         $firstSheetName = '';
+        $space = '    ';
+        // $writer = WriterEntityFactory::createXLSXWriter();
+        // $writer->openToBrowser('export-posts-' . count($subjectData) . '-' . $date . '.xlsx'); // 将文件输出到浏览器并下载
+        // foreach ($subjectGroup as $groupAccepterId => $subjectGroupItem) {
+        //     // 按每个领取人分不同的工作簿
+        //     $sheetName = $accepterList[$groupAccepterId] ?? '';
+        //     if (empty($sheetName)) {
+        //         $subjectFail++;
+        //         $subjectLinkFail += count($subjectGroupItem);
+        //         $details[] = '【领取人ID' . $groupAccepterId . '不存在】';
+        //         foreach ($subjectGroupItem as $key => $value) {
+        //             $details[] = '--【编号' . $value['id'] . '】' . $value['name'];
+        //         }
+        //         continue;
+        //     }
+        //     // 确认是否第一个工作簿
+        //     if (empty($firstSheetName)) {
+        //         $firstSheetName = $sheetName;
+        //     }
+        //     if ($firstSheetName == $sheetName) {
+        //         $writer->getCurrentSheet()->setName($sheetName);
+        //     } else {
+        //         $writer->addNewSheetAndMakeItCurrent()->setName($sheetName);
+        //     }
+
+        //     // 添加标题
+        //     $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
+        //     $writer->addRow($rowData);
+        //     foreach ($subjectGroupItem as $key => $subject) {
+
+        //         $rowData = [];
+        //         $rowData[] = $subject['name'];
+        //         $rowData[] = $subject['version'];
+        //         // https://siteadmin.marketmonitorglobal.com.cn/#/gircn/products/fastList?type=id&keyword=2124513
+        //         $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+        //         if (isset($subjectLinkGroup[$subject['id']]) && is_array($subjectLinkGroup[$subject['id']]) && count($subjectLinkGroup[$subject['id']]) > 0) {
+        //             $subjectSuccess++;
+        //             foreach ($subjectLinkGroup[$subject['id']] as $LinkIndex => $linkValue) {
+        //                 $tempRowData = $rowData;
+        //                 if ($LinkIndex != 0) {
+        //                     $tempRowData = array_map(function ($item) {
+        //                         return "";
+        //                     }, $tempRowData);
+        //                 }
+        //                 $tempRowData[] = !empty($linkValue) ? $linkValue : "";
+        //                 $tempRowData = WriterEntityFactory::createRowFromArray($tempRowData);
+        //                 $writer->addRow($tempRowData);
+        //                 $subjectLinkSuccess++;
+        //             }
+        //         }
+        //     }
+        // }
+        // // return json_encode($a);
+
+        // $writer->close();
+        // 创建 Spreadsheet 对象
+        $spreadsheet = new Spreadsheet();
+
+        // 设置文件名
+        $date = date('Ymd');
+        $filename = 'export-posts-' . count($subjectData) . '-' . $date . '.xlsx';
+
+        // 遍历每个领取人的数据
+        $firstSheetName = '';
         foreach ($subjectGroup as $groupAccepterId => $subjectGroupItem) {
-            // 按每个领取人分不同的工作簿
             $sheetName = $accepterList[$groupAccepterId] ?? '';
+
             if (empty($sheetName)) {
-                $subjectFail++;
-                $subjectLinkFail += count($subjectGroupItem);
-                $details[] = '【领取人ID' . $groupAccepterId . '不存在】';
-                foreach ($subjectGroupItem as $key => $value) {
-                    $details[] = '--【编号' . $value['id'] . '】' . $value['name'];
+                // 处理找不到领取人的情况
+                $subjectFail += count($subjectGroupItem);
+                $details[] = $groupAccepterId == 0 ? $space . '【错误: 领取人为公客】' : $space . '【错误: 领取人ID' . $groupAccepterId . '不存在】';
+                foreach ($subjectGroupItem as $subject) {
+                    $details[] = $space . $space . '--【编号' . $subject['id'] . '】' . $subject['name'];
+                    if (count($details) > 50) {
+                        $details[] = $space . $space . '-- ...';
+                        break;
+                    }
                 }
                 continue;
             }
-            // 确认是否第一个工作簿
+
+            // 确定工作簿是否为第一个工作簿
             if (empty($firstSheetName)) {
                 $firstSheetName = $sheetName;
             }
+
+            // 添加新工作表
             if ($firstSheetName == $sheetName) {
-                $writer->getCurrentSheet()->setName($sheetName);
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->setTitle($sheetName);
             } else {
-                $writer->addNewSheetAndMakeItCurrent()->setName($sheetName);
+                $sheet = $spreadsheet->createSheet();
+                $sheet->setTitle($sheetName);
             }
 
-            // 添加标题
-            $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
-            $writer->addRow($rowData);
-            foreach ($subjectGroupItem as $key => $subject) {
+            $sheet->getColumnDimension('A')->setWidth(55);  // 设置 A 列宽度
+            $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
+            $sheet->getColumnDimension('C')->setWidth(80);  // 设置 C 列宽度
+            $sheet->getColumnDimension('D')->setWidth(80);  // 设置 D 列宽度
 
-                $rowData = [];
-                $rowData[] = $subject['name'];
-                $rowData[] = $subject['version'];
-                // https://siteadmin.marketmonitorglobal.com.cn/#/gircn/products/fastList?type=id&keyword=2124513
-                $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+            // 添加标题行
+            $sheet->fromArray($excelHeader, null, 'A1');
+
+            // 填充数据
+            $rowIndex = 1;
+            foreach ($subjectGroupItem as $subject) {
+
+                // 发帖链接
                 if (isset($subjectLinkGroup[$subject['id']]) && is_array($subjectLinkGroup[$subject['id']]) && count($subjectLinkGroup[$subject['id']]) > 0) {
                     $subjectSuccess++;
-                    foreach ($subjectLinkGroup[$subject['id']] as $LinkIndex => $linkValue) {
-                        $tempRowData = $rowData;
-                        if ($LinkIndex != 0) {
-                            $tempRowData = array_map(function ($item) {
-                                return "";
-                            }, $tempRowData);
+                    foreach ($subjectLinkGroup[$subject['id']] as $linkIndex => $linkValue) {
+                        $linkValue = !empty($linkValue) ? $linkValue : "";
+
+                        if ($linkIndex != 0) {
+                            // 名称
+                            $sheet->setCellValue([0 + 1, $rowIndex + 1], '');
+                            // 版本
+                            $sheet->setCellValue([1 + 1, $rowIndex + 1], '');
+                            // 搜索链接
+                            $sheet->setCellValue([2 + 1, $rowIndex + 1], '');
+                        } else {
+                            $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                            // 名称
+                            $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
+                            // 版本
+                            $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
+                            // 搜索链接
+                            $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                            $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                            $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                         }
-                        $tempRowData[] = !empty($linkValue) ? $linkValue : "";
-                        $tempRowData = WriterEntityFactory::createRowFromArray($tempRowData);
-                        $writer->addRow($tempRowData);
+                        // 发帖链接
+                        $sheet->setCellValue([3 + 1, $rowIndex + 1], $linkValue);
+                        $sheet->getCell([3 + 1, $rowIndex + 1])->getHyperlink()->setUrl($linkValue);
+                        $sheet->getStyle([3 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+
                         $subjectLinkSuccess++;
+                        $rowIndex++;
                     }
+                } elseif (!isset($subjectLinkGroup[$subject['id']]) && $subject) {
+                    // 没有宣传链接也要把课题写入文件
+                    $subjectSuccess++;
+                    $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                    // 名称
+                    $sheet->setCellValue([0 + 1, $rowIndex], $subject['name']);
+                    // 版本
+                    $sheet->setCellValue([1 + 1, $rowIndex], $subject['version']);
+                    // 搜索链接
+                    $sheet->setCellValue([2 + 1, $rowIndex], $url);
+                    $sheet->getCell([2 + 1, $rowIndex])->getHyperlink()->setUrl($url);
+                    $sheet->getStyle([2 + 1, $rowIndex])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                    $rowIndex++;
                 }
             }
         }
-        // return json_encode($a);
 
-        $writer->close();
+        // 设置 HTTP 头部并输出文件
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
 
         $exportCount = count($subjectData);
         if ($exportCount) {
@@ -1153,9 +1315,8 @@ class PostSubjectController extends CrudController
             $logData['success_count'] = $subjectSuccess;
             $logData['ingore_count'] = $subjectFail;
             $logData['details'] = '';
-            $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】';
-            $logData['details'] .= '成功导出' . $subjectSuccess . '个课题, ' . $subjectLinkSuccess . '个链接, ';
-            $logData['details'] .= '有' . $subjectFail . '个课题, ' . $subjectLinkFail . '个链接导出失败' . "\n";
+            $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】-' . "\n";
+            $logData['details'] .= $space . '成功导出' . $subjectSuccess . '个课题, ' . $subjectLinkSuccess . '个链接, ' . '有' . $subjectFail . '个课题导出失败' . "\n";
             $logData['details'] .= implode("\n", $details);
             PostSubjectLog::create($logData);
         }
@@ -1253,14 +1414,25 @@ class PostSubjectController extends CrudController
         }
         // ReturnJson(true, trans('lang.request_error'),  microtime(true)- $time1);
 
-        $reader = ReaderEntityFactory::createXLSXReader($excelPath);
-        $reader->setShouldPreserveEmptyRows(false);
-        $reader->setShouldFormatDates(true);
-        $reader->open($excelPath);
         $excelData = [];
-
         $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
 
+        // $reader = ReaderEntityFactory::createXLSXReader($excelPath);
+        // $reader->setShouldPreserveEmptyRows(false);
+        // $reader->setShouldFormatDates(true);
+        // $reader->open($excelPath);
+
+        //读取excel数据
+        \PhpOffice\PhpSpreadsheet\Settings::setLibXmlLoaderOptions(LIBXML_COMPACT | LIBXML_PARSEHUGE | LIBXML_BIGLINES | LIBXML_DTDLOAD | LIBXML_DTDATTR);
+
+        $filetype = \PhpOffice\PhpSpreadsheet\IOFactory::identify($excelPath); // 自动识别上传的Excel文件类型
+        $xlsReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($filetype);
+        // $xlsReader->setReadDataOnly(true);
+        $xlsReader->setLoadSheetsOnly(true);
+        $spreadsheet = $xlsReader->load($excelPath); //载入excel表格
+
+
+        $space = '    ';
         $details = [];
         $failDetails = [];
         $subjectSuccess = 0;
@@ -1268,40 +1440,58 @@ class PostSubjectController extends CrudController
         $subjectFail = 0;
         // $subjectLinkFail = 0;
 
-        foreach ($reader->getSheetIterator() as $sheetKey => $sheet) {
-            $sheetName = $sheet->getName();
+        // 获取所有工作表的名称
+        $sheetNames = $spreadsheet->getSheetNames();
+
+        foreach ($sheetNames as $sheetIndex => $sheetName) {
+
+            $sheet = $spreadsheet->getSheet($sheetIndex);
             // 查询用户
             $accepter = User::query()->where('nickname', $sheetName)->value('id');
             if (!$accepter) {
                 // $subjectFail++;
-                $failDetails[] = '【' . $sheetName . '】领取人' . $sheetName . '不存在';
+                $failDetails[] = $space . '【' . $sheetName . '】领取人' . $sheetName . '不存在';
                 // 
-                $subjectFail += iterator_count($sheet->getRowIterator()) ?? 0;
+                $sheetData = $sheet->toArray();
+                $subjectFail += count($sheetData) ?? 0;
                 continue;
             }
             $excelData[$sheetName] = [];
             $prevProductId = 0;
-            foreach ($sheet->getRowIterator() as $rowKey => $sheetRow) {
+            // 原始数据
+            $sheetData = $sheet->toArray();
+            foreach ($sheetData as $rowKey => $sheetRow) {
 
-                if ($rowKey == 1) {
+                if ($rowKey == 0) {
                     continue;
                 }
-                $tempRow = $sheetRow->toArray();
-                $fastLink = $tempRow[2] ?? '';
-                $postLink = $tempRow[3] ?? '';
-
+                // 读取第三列提取报告id
+                $fastLink = $sheetRow[2] ?? '';
+                $productId = 0;
                 if (empty($fastLink) && !empty($prevProductId)) {
+                    // 空行沿用上一行的数据
                     $productId = $prevProductId;
-                } elseif (!empty($fastLink) && preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
+                } elseif (!empty($fastLink) && is_int($fastLink)) {
+                    $productId = $prevProductId = $fastLink;
+                } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)|[?&]keyword=([^&]+)/', $fastLink, $matches)) {
                     $productId = $prevProductId = $matches[1];
                 } else {
                     $subjectFail++;
-                    $failDetails[] = '【' . $sheetName . '】第' . $rowKey . '行，缺少快速搜索链接';
+                    $failDetails[] = $space . '【' . $sheetName . '】第' . ($rowKey + 1) . '行，缺少快速搜索链接或者无法提取报告id';
                     continue;
                 }
-                if (empty($productId) || empty($postLink)) {
+
+                // 读取第四列判断是否为超链接
+                $postLink = $sheet->getCell([3 + 1, $rowKey + 1])->getHyperlink();
+                if ($postLink !== null) {
+                    $postLink = $postLink->getUrl() ?? '';
+                } else {
+                    $postLink = $sheetRow[3] ?? '';
+                }
+
+                if (empty($postLink)) {
                     $subjectFail++;
-                    $failDetails[] = '【' . $sheetName . '】第' . $rowKey . '行，无法提取报告id或发帖链接未填写';
+                    $failDetails[] = $space . '【' . $sheetName . '】第' . $rowKey . '行，发帖链接未填写';
                     continue;
                 }
 
@@ -1319,13 +1509,13 @@ class PostSubjectController extends CrudController
                 if (!$postSubjectData) {
                     // 查不到该课题,跳过
                     $subjectFail += count($postLinkGroup);
-                    $failDetails[] = '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
+                    $failDetails[] = $space . '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
                     continue;
                 }
                 if ($accepter != $postSubjectData['accepter']) {
                     // 领取人不一致,跳过
                     $subjectFail += count($postLinkGroup);
-                    $failDetails[] = '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】课题领取者不一致';
+                    $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】课题领取者不一致';
                     continue;
                 }
 
@@ -1336,7 +1526,7 @@ class PostSubjectController extends CrudController
                     if (in_array($postLinkValue, $urlData)) {
                         // 链接一致不变动
                         $subjectFail++;
-                        $failDetails[] = '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】' . $postLinkValue . ' 链接已存在';
+                        $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】' . $postLinkValue . ' 链接已存在';
                         continue;
                     } else {
                         // 获取平台id
@@ -1352,7 +1542,7 @@ class PostSubjectController extends CrudController
                         }
                         if (!isset($postPlatformId) || empty($postPlatformId)) {
                             $subjectFail++;
-                            $failDetails[] = '【' . $sheetName . '】【课题id' . $postSubjectData['id'] . '】' . $postLinkValue . ' 没有对应平台';
+                            $failDetails[] = $space . '【' . $sheetName . '】【课题id' . $postSubjectData['id'] . '】' . $postLinkValue . ' 没有对应平台';
                             continue;
                         }
                         // 新增
@@ -1390,9 +1580,8 @@ class PostSubjectController extends CrudController
         $logData['success_count'] = $subjectSuccess;
         $logData['ingore_count'] = $subjectFail;
         $logData['details'] = '';
-        $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 【' . $request->user->nickname . '】';
-        $logData['details'] .= '成功导入' . $subjectSuccess . '个链接';
-        $logData['details'] .= '，有' . $subjectFail . '个链接导入失败' . "\n";
+        $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】' . "\n";
+        $logData['details'] .= '-- 成功导入' . $subjectSuccess . '个链接,有' . $subjectFail . '个链接导入失败' . "\n";
         $logData['details'] .= implode("\n", $failDetails);
         PostSubjectLog::create($logData);
 
