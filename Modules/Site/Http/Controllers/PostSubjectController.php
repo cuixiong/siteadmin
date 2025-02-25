@@ -589,12 +589,12 @@ class PostSubjectController extends CrudController
 
             // 帖子的变动需更新课题表的宣传状态等字段
             $recordUpdate = [];
-            
+
             // 更新修改状态，在链接有变动时
             if ($isInsert || $isDelete) {
                 $recordUpdate['change_status'] = 0;
             }
-            
+
             // 更新最后宣传时间
             if ($isInsert || !empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 1;
@@ -606,12 +606,12 @@ class PostSubjectController extends CrudController
                 $recordUpdate['accept_time'] = time();
                 $recordUpdate['accepter'] = $input['accepter'] != -1 ? $input['accepter'] : null;
                 $recordUpdate['accept_status'] = $input['accepter'] != -1 ? 1 : 0;
-            }elseif (empty($input['accepter'])) {
+            } elseif (empty($input['accepter'])) {
                 // 没有领取人则自己领取
                 $recordUpdate['accept_time'] = time();
                 $recordUpdate['accepter'] = $request->user->id;
                 $recordUpdate['accept_status'] = 1;
-            } 
+            }
             if (count($recordUpdate) > 0) {
                 $res = $model->update($recordUpdate);
             }
@@ -999,7 +999,7 @@ class PostSubjectController extends CrudController
         $sheet->fromArray([$excelHeader], null, 'A1');
 
         // 填充数据
-        $rowIndex = 2;
+        $rowIndex = 1;
         $sheet->getColumnDimension('A')->setWidth(55);  // 设置 A 列宽度
         $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
         $sheet->getColumnDimension('C')->setWidth(80);  // 设置 C 列宽度
@@ -1008,15 +1008,15 @@ class PostSubjectController extends CrudController
         foreach ($subjectData as $subject) {
             $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
 
-            $sheet->setCellValue([1, $rowIndex], $subject['name']);
-            $sheet->setCellValue([2, $rowIndex], $subject['version']);
+            $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
+            $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
 
             // 设置超链接
-            $sheet->setCellValue([3, $rowIndex], $url);
-            $sheet->getCell([3, $rowIndex])->getHyperlink()->setUrl($url);
-            $sheet->getStyle([3, $rowIndex])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+            $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+            $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+            $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
 
-            $sheet->setCellValue([4, $rowIndex], ''); // 额外空白列
+            $sheet->setCellValue([3 + 1, $rowIndex + 1], ''); // 额外空白列
 
             $rowIndex++;
             $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
@@ -1288,13 +1288,13 @@ class PostSubjectController extends CrudController
                     $subjectSuccess++;
                     $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
                     // 名称
-                    $sheet->setCellValue([0 + 1, $rowIndex], $subject['name']);
+                    $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                     // 版本
-                    $sheet->setCellValue([1 + 1, $rowIndex], $subject['version']);
+                    $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
                     // 搜索链接
-                    $sheet->setCellValue([2 + 1, $rowIndex], $url);
-                    $sheet->getCell([2 + 1, $rowIndex])->getHyperlink()->setUrl($url);
-                    $sheet->getStyle([2 + 1, $rowIndex])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                    $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                    $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                    $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                     $rowIndex++;
                 }
             }
@@ -1474,9 +1474,10 @@ class PostSubjectController extends CrudController
                     $productId = $prevProductId;
                 } elseif (!empty($fastLink) && is_int($fastLink)) {
                     $productId = $prevProductId = $fastLink;
-                } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)|[?&]keyword=([^&]+)/', $fastLink, $matches)) {
+                } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) || preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
                     $productId = $prevProductId = $matches[1];
-                } else {
+                }
+                if (!empty($productId)) {
                     $subjectFail++;
                     $failDetails[] = $space . '【' . $sheetName . '】第' . ($rowKey + 1) . '行，缺少快速搜索链接或者无法提取报告id';
                     continue;
