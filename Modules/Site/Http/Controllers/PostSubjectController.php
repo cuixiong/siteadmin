@@ -1480,7 +1480,7 @@ class PostSubjectController extends CrudController
                 } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) || preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
                     $productId = $prevProductId = $matches[1];
                 }
-                if (!empty($productId)) {
+                if (empty($productId)) {
                     $subjectFail++;
                     $failDetails[] = $space . '【' . $sheetName . '】第' . ($rowKey + 1) . '行，缺少快速搜索链接或者无法提取报告id';
                     continue;
