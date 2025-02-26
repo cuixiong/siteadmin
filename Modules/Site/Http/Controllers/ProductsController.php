@@ -32,6 +32,7 @@ use Modules\Site\Http\Models\ProductsExportLog;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
@@ -432,6 +433,19 @@ class ProductsController extends CrudController {
             DB::commit();
             // 创建完成后同步到xunsearch
             $this->ModelInstance()->syncSearchIndex($record->id, 'add');
+
+            $postSubjectData = [];
+            $postSubjectData['name'] = $record['name'];
+            $postSubjectData['product_id'] = $record['id'];
+            $postSubjectData['product_category_id'] = $record['category_id'];
+            $postSubjectData['version'] = intval($record['price'] ?? 0);
+            $postSubjectData['analyst'] = $record['author'];
+            // 没有领取人则自己领取
+            $postSubjectData['accepter'] = $request->user->id;
+            $postSubjectData['accept_status'] = 1;
+            $postSubjectData['accept_time'] = time();
+            postSubject::create($postSubjectData);
+
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务

@@ -40,6 +40,8 @@ class PostSubjectController extends CrudController
                 // ReturnJson(true, trans('lang.request_success'), $model);
             }
             if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                $model = $model->whereNull('accepter');
+            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                 $model = $model->where('accepter', $request->user->id);
             }
             // 总数量
@@ -599,7 +601,7 @@ class PostSubjectController extends CrudController
             if ($isInsert || !empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 1;
                 $recordUpdate['last_propagate_time'] = $isInsert ? time() : $lastPropagateTime;
-            }elseif(empty($lastPropagateTime)){
+            } elseif (empty($lastPropagateTime)) {
                 $recordUpdate['propagate_status'] = 0;
                 $recordUpdate['last_propagate_time'] = null;
             }
@@ -858,7 +860,7 @@ class PostSubjectController extends CrudController
             // 领取操作
             $updateData = [
                 'accepter' => $accepter != -1 ? $accepter : null,
-                'accept_time' => time(),
+                'accept_time' => $accepter != -1 ? time() : null,
                 'accept_status' => $accepter != -1 ? 1 : 0,
                 'updated_by' => $request->user->id,
             ];
