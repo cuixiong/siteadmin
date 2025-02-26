@@ -1450,7 +1450,7 @@ class PostSubjectController extends CrudController
 
         // 获取所有工作表的名称
         $sheetNames = $spreadsheet->getSheetNames();
-
+        $accepter = $request->user->id;
         foreach ($sheetNames as $sheetIndex => $sheetName) {
 
             $sheet = $spreadsheet->getSheet($sheetIndex);
@@ -1515,70 +1515,138 @@ class PostSubjectController extends CrudController
 
                 $postSubjectData = PostSubject::query()->select(['id', 'accepter'])->where("product_id", $productId)->first()?->toArray();
 
-                if (!$postSubjectData) {
-                    // 查不到该课题,跳过
-                    $subjectFail += count($postLinkGroup);
-                    $failDetails[] = $space . '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
-                    continue;
-                }
-                if ($accepter != $postSubjectData['accepter']) {
-                    // 领取人不一致,跳过
-                    $subjectFail += count($postLinkGroup);
-                    $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】课题领取者不一致';
-                    continue;
-                }
-
-                $urlData = [];
-                $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
-                $isUpdate = false;
-                foreach ($postLinkGroup as $postLinkValue) {
-                    if (in_array($postLinkValue, $urlData)) {
-                        // 链接一致不变动
-                        $subjectFail++;
-                        $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】' . $postLinkValue . ' 链接已存在';
+                // if (!$postSubjectData) {
+                //     // 查不到该课题,跳过
+                //     $subjectFail += count($postLinkGroup);
+                //     $failDetails[] = $space . '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
+                //     continue;
+                // }
+                if ($postSubjectData) {
+                    if (empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
+                        // 存在领取人的情况下，领取人不一致,跳过
+                        $subjectFail += count($postLinkGroup);
+                        $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】课题领取者不一致';
                         continue;
-                    } else {
-                        // 获取平台id
-                        if ($postPlatformData) {
-                            foreach ($postPlatformData as $postPlatformItem) {
-                                if (strpos($postLinkValue, $postPlatformItem['keywords'])) {
-                                    $postPlatformId = $postPlatformItem['id'];
-                                    break;
-                                }
-                            }
-                        } else {
-                            continue;
-                        }
-                        if (!isset($postPlatformId) || empty($postPlatformId)) {
+                    }
+
+                    $urlData = [];
+                    $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
+                    $isUpdate = false;
+                    foreach ($postLinkGroup as $postLinkValue) {
+                        if (in_array($postLinkValue, $urlData)) {
+                            // 链接一致不变动
                             $subjectFail++;
-                            $failDetails[] = $space . '【' . $sheetName . '】【课题id' . $postSubjectData['id'] . '】' . $postLinkValue . ' 没有对应平台';
+                            $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】' . $postLinkValue . ' 链接已存在';
                             continue;
-                        }
-                        // 新增
-                        $insertChild = [];
-                        $insertChild['post_subject_id'] = $postSubjectData['id'];
-                        $insertChild['link'] = $postLinkValue;
-                        $insertChild['post_platform_id'] = $postPlatformId;
-                        $insertChild['status'] = 1;
-                        $insertChild['sort'] = 100;
-                        $postSubjectLinkModel = new PostSubjectLink();
-                        $recordChild = $postSubjectLinkModel->create($insertChild);
-                        if ($recordChild) {
-                            $subjectSuccess++;
-                            $isUpdate = true;
+                        } else {
+                            // 获取平台id
+                            if ($postPlatformData) {
+                                foreach ($postPlatformData as $postPlatformItem) {
+                                    if (strpos($postLinkValue, $postPlatformItem['keywords'])) {
+                                        $postPlatformId = $postPlatformItem['id'];
+                                        break;
+                                    }
+                                }
+                            } else {
+                                continue;
+                            }
+                            if (!isset($postPlatformId) || empty($postPlatformId)) {
+                                $subjectFail++;
+                                $failDetails[] = $space . '【' . $sheetName . '】【课题id' . $postSubjectData['id'] . '】' . $postLinkValue . ' 没有对应平台';
+                                continue;
+                            }
+                            // 新增
+                            $insertChild = [];
+                            $insertChild['post_subject_id'] = $postSubjectData['id'];
+                            $insertChild['link'] = $postLinkValue;
+                            $insertChild['post_platform_id'] = $postPlatformId;
+                            $insertChild['status'] = 1;
+                            $insertChild['sort'] = 100;
+                            $postSubjectLinkModel = new PostSubjectLink();
+                            $recordChild = $postSubjectLinkModel->create($insertChild);
+                            if ($recordChild) {
+                                $subjectSuccess++;
+                                $isUpdate = true;
+                            }
                         }
                     }
-                }
-                // 如果新增了链接，更新课题时间
-                if ($isUpdate) {
-                    $recordUpdate = [];
-                    $recordUpdate['propagate_status'] = 1;
-                    $recordUpdate['last_propagate_time'] = time();
-                    $recordUpdate['accept_time'] = time();
-                    $recordUpdate['accept_status'] = 1;
-                    $recordUpdate['accepter'] = $accepter;
-                    $recordUpdate['change_status'] = 0;
-                    PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
+                    // 如果新增了链接，更新课题时间
+                    if ($isUpdate) {
+                        $recordUpdate = [];
+                        $recordUpdate['propagate_status'] = 1;
+                        $recordUpdate['last_propagate_time'] = time();
+                        $recordUpdate['accept_time'] = time();
+                        $recordUpdate['accept_status'] = 1;
+                        $recordUpdate['accepter'] = $accepter;
+                        $recordUpdate['change_status'] = 0;
+                        PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
+                    }
+                } else {
+                    // 查不到该课题，查询报告存在并新增
+                    $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author'])->where("product_id", $productId)->first()?->toArray();
+                    if ($productData) {
+                        $isInsert = false;
+                        //新增课题
+                        $recordInsert = [];
+                        $recordInsert['product_id'] = $productData['id'];
+                        $recordInsert['name'] = $productData['name'];
+                        $recordInsert['product_category_id'] = $productData['category_id'];
+                        $recordInsert['version'] =  intval($productData['category_id'] ?? 0);
+                        $recordInsert['analyst'] =  $productData['author'];
+                        $recordInsert['accepter'] = $accepter;
+                        $recordInsert['accept_time'] = time();
+                        $recordInsert['accept_status'] = 1;
+                        $postSubjectData = PostSubject::create($recordInsert);
+
+                        //处理链接
+                        foreach ($postLinkGroup as $postLinkValue) {
+                            // 获取平台id
+                            if ($postPlatformData) {
+                                foreach ($postPlatformData as $postPlatformItem) {
+                                    if (strpos($postLinkValue, $postPlatformItem['keywords'])) {
+                                        $postPlatformId = $postPlatformItem['id'];
+                                        break;
+                                    }
+                                }
+                            } else {
+                                continue;
+                            }
+                            if (!isset($postPlatformId) || empty($postPlatformId)) {
+                                $subjectFail++;
+                                $failDetails[] = $space . '【' . $sheetName . '】【课题id' . $postSubjectData['id'] . '】' . $postLinkValue . ' 没有对应平台';
+                                continue;
+                            }
+                            // 新增
+                            $insertChild = [];
+                            $insertChild['post_subject_id'] = $postSubjectData['id'];
+                            $insertChild['link'] = $postLinkValue;
+                            $insertChild['post_platform_id'] = $postPlatformId;
+                            $insertChild['status'] = 1;
+                            $insertChild['sort'] = 100;
+                            $postSubjectLinkModel = new PostSubjectLink();
+                            $recordChild = $postSubjectLinkModel->create($insertChild);
+                            if ($recordChild) {
+                                $subjectSuccess++;
+                                $isUpdate = true;
+                            }
+                        }
+
+                        if ($isInsert) {
+
+                            $recordInsert = [];
+                            $recordInsert['propagate_status'] = 1;
+                            $recordInsert['last_propagate_time'] = time();
+                            // $recordInsert['accept_time'] = time();
+                            // $recordInsert['accept_status'] = 1;
+                            // $recordInsert['accepter'] = $accepter;
+                            $recordInsert['change_status'] = 0;
+                        }
+                    } else {
+                        // 查不到该报告,跳过
+                        $subjectFail++;
+                        $failDetails[] = $space . '【' . $sheetName . '】查不到报告id为' . $productId . '的报告，无法新增课题';
+                        continue;
+                    }
                 }
             }
         }
