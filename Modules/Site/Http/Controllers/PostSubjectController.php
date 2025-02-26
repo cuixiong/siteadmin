@@ -174,7 +174,7 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($showData, $temp_filter);
 
-        
+
         // 宣传平台
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EXISTS_IN, PostSubject::CONDITION_EXISTS_NOT_IN);
         $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->get()->toArray();
@@ -188,11 +188,11 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('change_status', '修改状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
 
-        
+
         /**
          * 隐藏条件
          */
-        
+
         // id
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
@@ -764,19 +764,18 @@ class PostSubjectController extends CrudController
                 ReturnJson(true, trans('lang.request_success'), $data);
             } else {
 
+                //查询出涉及的id
+                $postSubjectData = $model->select(['id', 'name'])->get()->toArray();
+                $idsData = array_column($postSubjectData, 'id');
+
                 DB::beginTransaction();
-                $record = $this->ModelInstance()->query();
-                $ids = $request->ids;
-                if (!is_array($ids)) {
-                    $ids = explode(",", $ids);
-                }
-                $rs = $record->whereIn('id', $ids)->delete();
+                $rs = PostSubject::whereIn('id', $idsData)->delete();
                 if (!$rs) {
                     DB::rollBack();
                     ReturnJson(FALSE, trans('lang.delete_error'));
                 }
                 //删除子项
-                PostSubjectLink::whereIn('post_subject_id', $ids)->delete();
+                PostSubjectLink::whereIn('post_subject_id', $idsData)->delete();
 
                 DB::commit();
                 ReturnJson(TRUE, trans('lang.delete_success'));
@@ -1455,16 +1454,16 @@ class PostSubjectController extends CrudController
         foreach ($sheetNames as $sheetIndex => $sheetName) {
 
             $sheet = $spreadsheet->getSheet($sheetIndex);
-            // 查询用户
-            $accepter = User::query()->where('nickname', $sheetName)->value('id');
-            if (!$accepter) {
-                // $subjectFail++;
-                $failDetails[] = $space . '【' . $sheetName . '】领取人' . $sheetName . '不存在';
-                // 
-                $sheetData = $sheet->toArray();
-                $subjectFail += count($sheetData) ?? 0;
-                continue;
-            }
+            // // 查询用户
+            // $accepter = User::query()->where('nickname', $sheetName)->value('id');
+            // if (!$accepter) {
+            //     // $subjectFail++;
+            //     $failDetails[] = $space . '【' . $sheetName . '】领取人' . $sheetName . '不存在';
+            //     // 
+            //     $sheetData = $sheet->toArray();
+            //     $subjectFail += count($sheetData) ?? 0;
+            //     continue;
+            // }
             $excelData[$sheetName] = [];
             $prevProductId = 0;
             // 原始数据
