@@ -196,29 +196,29 @@ class PostSubjectController extends CrudController
         // id
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
+        array_push($hiddenData, $temp_filter);
 
         // product_id
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
+        array_push($hiddenData, $temp_filter);
 
 
         // 分析师
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
         $temp_filter = $this->getAdvancedFiltersItem('analyst', '分析师', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
+        array_push($hiddenData, $temp_filter);
 
         // 版本
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
         $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
+        array_push($hiddenData, $temp_filter);
 
         // 宣传状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
-        array_push($showData, $temp_filter);
+        array_push($hiddenData, $temp_filter);
 
 
         // 状态
