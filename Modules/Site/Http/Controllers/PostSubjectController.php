@@ -374,7 +374,7 @@ class PostSubjectController extends CrudController
                     if ($postPlatformData) {
 
                         foreach ($postPlatformData as $postPlatformItem) {
-                            if (strpos($urlItem['link'], $postPlatformItem['keywords'])) {
+                            if (strpos($urlItem['link'], $postPlatformItem['keywords']) !== false) {
                                 $postPlatformId = $postPlatformItem['id'];
                                 break;
                             }
@@ -1479,7 +1479,7 @@ class PostSubjectController extends CrudController
                 if (empty($fastLink) && !empty($prevProductId)) {
                     // 空行沿用上一行的数据
                     $productId = $prevProductId;
-                } elseif (!empty($fastLink) && is_int($fastLink)) {
+                } elseif (!empty($fastLink) && is_numeric($fastLink)) {
                     $productId = $prevProductId = $fastLink;
                 } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) || preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
                     $productId = $prevProductId = $matches[1];
@@ -1491,10 +1491,8 @@ class PostSubjectController extends CrudController
                 }
 
                 // 读取第四列判断是否为超链接
-                $postLink = $sheet->getCell([3 + 1, $rowKey + 1])->getHyperlink();
-                if ($postLink !== null) {
-                    $postLink = $postLink->getUrl() ?? '';
-                } else {
+                $postLink = $sheet->getCell([3 + 1, $rowKey + 1])->getHyperlink()->getUrl();
+                if (empty($postLink)) {
                     $postLink = $sheetRow[3] ?? '';
                 }
 
@@ -1542,7 +1540,7 @@ class PostSubjectController extends CrudController
                             // 获取平台id
                             if ($postPlatformData) {
                                 foreach ($postPlatformData as $postPlatformItem) {
-                                    if (strpos($postLinkValue, $postPlatformItem['keywords'])) {
+                                    if (strpos($postLinkValue, $postPlatformItem['keywords']) !== false) {
                                         $postPlatformId = $postPlatformItem['id'];
                                         break;
                                     }
@@ -1603,7 +1601,7 @@ class PostSubjectController extends CrudController
                             // 获取平台id
                             if ($postPlatformData) {
                                 foreach ($postPlatformData as $postPlatformItem) {
-                                    if (strpos($postLinkValue, $postPlatformItem['keywords'])) {
+                                    if (strpos($postLinkValue, $postPlatformItem['keywords']) !== false) {
                                         $postPlatformId = $postPlatformItem['id'];
                                         break;
                                     }
