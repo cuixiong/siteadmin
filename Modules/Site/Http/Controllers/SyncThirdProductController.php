@@ -259,6 +259,7 @@ class SyncThirdProductController extends CrudController {
         }
         $errIdList = [];
         $succIdList = [];
+        $thirdIdList = [];
         // 从数组中提取出需要排序的列
         $idsSort = array_column($respDataList, 'id');
         // 使用 array_multisort 对原数组进行升序排序
@@ -678,6 +679,7 @@ class SyncThirdProductController extends CrudController {
                 }
                 //执行到这里算是操作成功的
                 array_push($succIdList, $forProductId);
+                array_push($thirdIdList, $row['id']);
 //                if (!empty($row['id'])) {
 //                    //维护xunSearch索引, 队列执行
 //                    $this->pushSyncSphinxQueue($row['id'], $site);
@@ -734,7 +736,7 @@ class SyncThirdProductController extends CrudController {
             'updated_at'    => time(),
         ];
         $logModel->insert($logData);
-        $this->notifyThirdRes($succIdList, $errIdList);
+        $this->notifyThirdRes($thirdIdList, $errIdList);
     }
 
     /**
@@ -798,12 +800,14 @@ class SyncThirdProductController extends CrudController {
             $responseBody = $response->getBody()->getContents();
             $respData = json_decode($responseBody, true);
             if (!empty($respData) && !empty($respData['errcode']) && $respData['errcode'] == 1) {
+                \Log::error('返回结果数据:'.json_encode([$respData]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
                 return true;
             } else {
                 \Log::error('请求接口失败,请联系管理员:'.json_encode([$url, $token, $respData]));
                 throw new \Exception('请求通知接口失败,请联系管理员');
             }
         } catch (Exception $e) {
+            \Log::error('返回结果数据:'.$e->getMessage().'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
             // 处理异常
             throw $e;
         }
