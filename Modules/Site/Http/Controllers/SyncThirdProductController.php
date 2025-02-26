@@ -697,7 +697,7 @@ class SyncThirdProductController extends CrudController {
                         $postSubjectUpdate['analyst'] = $item['author'];
                         if ($postSubject) {
                             // 需比对类型、应用、企业是否有变化，有则打开修改状态
-                            if ($productChange) {
+                            if ($productChange && !empty($postSubject->propagate_status)) {
                                 $postSubjectUpdate['change_status'] = 1;
                             }
                             postSubject::query()->where('product_id', $product['id'])->update($postSubjectUpdate);

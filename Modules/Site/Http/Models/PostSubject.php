@@ -227,7 +227,6 @@ class PostSubject extends Base
                     $query->whereIn($fields, $content);
                 }
             });
-            $query->whereIn($fields, $content);
         } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_NOT_IN) {
             // 下拉-多选-排除
             $query->whereNotIn($fields, $content);

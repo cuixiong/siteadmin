@@ -221,7 +221,6 @@ class PostSubjectController extends CrudController
         array_push($showData, $temp_filter);
 
 
-
         // 状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
