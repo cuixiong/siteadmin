@@ -138,19 +138,9 @@ class PostSubjectController extends CrudController
         // // $nextDayDate = date("D M d Y H:i:s \G\M\TO \(中国标准时间\)",$nextDayTimestamp);
         // // return [$currentDayDate,$nextDayDate];
 
-        // id
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
-
         // 报告名称
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
         $temp_filter = $this->getAdvancedFiltersItem('name', '报告名称', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
-
-        // product_id
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
         array_push($showData, $temp_filter);
 
         // 行业
@@ -158,34 +148,6 @@ class PostSubjectController extends CrudController
         $options = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
         $temp_filter = $this->getAdvancedFiltersItem('product_category_id', '行业', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
         array_push($showData, $temp_filter);
-
-        // 分析师
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
-        $temp_filter = $this->getAdvancedFiltersItem('analyst', '分析师', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
-
-        // 版本
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
-        $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
-
-        // 宣传平台
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EXISTS_IN, PostSubject::CONDITION_EXISTS_NOT_IN);
-        $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->get()->toArray();
-        $temp_filter = $this->getAdvancedFiltersItem('post_platform_id', '宣传平台', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
-        array_push($showData, $temp_filter);
-
-        // 宣传状态
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
-        $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
-        array_push($showData, $temp_filter);
-
-        // 最后宣传时间
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
-        $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
-        array_push($showData, $temp_filter);
-
 
         // 领取人/发帖用户
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_IN, PostSubject::CONDITION_NOT_IN);
@@ -207,6 +169,18 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('accept_time', '领取时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($showData, $temp_filter);
 
+        // 最后宣传时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($showData, $temp_filter);
+
+        
+        // 宣传平台
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EXISTS_IN, PostSubject::CONDITION_EXISTS_NOT_IN);
+        $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->get()->toArray();
+        $temp_filter = $this->getAdvancedFiltersItem('post_platform_id', '宣传平台', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
+        array_push($showData, $temp_filter);
+
 
         // 修改状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
@@ -214,10 +188,40 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('change_status', '修改状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
 
-
+        
         /**
          * 隐藏条件
          */
+        
+        // id
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // product_id
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+
+        // 分析师
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('analyst', '分析师', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // 版本
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // 宣传状态
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($showData, $temp_filter);
+
+
+
         // 状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']);
