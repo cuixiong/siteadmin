@@ -1590,7 +1590,7 @@ class PostSubjectController extends CrudController
                         $recordInsert['product_id'] = $productData['id'];
                         $recordInsert['name'] = $productData['name'];
                         $recordInsert['product_category_id'] = $productData['category_id'];
-                        $recordInsert['version'] =  intval($productData['category_id'] ?? 0);
+                        $recordInsert['version'] =  intval($productData['price'] ?? 0);
                         $recordInsert['analyst'] =  $productData['author'];
                         $recordInsert['accepter'] = $accepter;
                         $recordInsert['accept_time'] = time();
