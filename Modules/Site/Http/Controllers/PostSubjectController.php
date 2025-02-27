@@ -415,6 +415,7 @@ class PostSubjectController extends CrudController
                 // 没有领取人则自己领取
                 $recordUpdate['accepter'] = $request->user->id;
                 $recordUpdate['accept_status'] = 1;
+                $recordUpdate['accept_time'] = time();
             }
 
             $res = $record->update($recordUpdate);
