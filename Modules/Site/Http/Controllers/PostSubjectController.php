@@ -1582,7 +1582,7 @@ class PostSubjectController extends CrudController
                     }
                 } else {
                     // 查不到该课题，查询报告存在并新增
-                    $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author'])->where("product_id", $productId)->first()?->toArray();
+                    $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author'])->where("id", $productId)->first()?->toArray();
                     if ($productData) {
                         $isInsert = false;
                         //新增课题
