@@ -1521,7 +1521,7 @@ class PostSubjectController extends CrudController
                 //     continue;
                 // }
                 if ($postSubjectData) {
-                    if (empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
+                    if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
                         // 存在领取人的情况下，领取人不一致,跳过
                         $subjectFail += count($postLinkGroup);
                         $failDetails[] = $space . '【' . $sheetName . '】【课题id-' . $postSubjectData['id'] . '】课题领取者不一致';
