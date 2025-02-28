@@ -535,6 +535,7 @@ class PostSubjectController extends CrudController
                         continue;
                     }
                     // 获取平台id
+                    $postPlatformId = 0;
                     if ($postPlatformData) {
                         foreach ($postPlatformData as $postPlatformItem) {
                             if (strpos($urlItem, $postPlatformItem['keywords']) !== false) {
@@ -1667,6 +1668,7 @@ class PostSubjectController extends CrudController
                         //处理链接
                         foreach ($linkData as $postLinkValue) {
                             // 获取平台id
+                            $postPlatformId = 0;
                             if ($postPlatformData) {
                                 foreach ($postPlatformData as $postPlatformItem) {
                                     if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
