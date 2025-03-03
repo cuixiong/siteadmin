@@ -1508,9 +1508,11 @@ class PostSubjectController extends CrudController
                 } elseif (!empty($fastLink) && is_numeric($fastLink)) {
                     // 第三列直接给出了报告ID
                     $productId = $prevProductId = $fastLink;
+                    $prevNewName  = $newsName;
                 } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) || preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
                     // 第三列是官网链接或者后台搜索链接
                     $productId = $prevProductId = $matches[1];
+                    $prevNewName  = $newsName;
                 }
 
                 if (empty($productId)) {
@@ -1567,6 +1569,7 @@ class PostSubjectController extends CrudController
                     // 数据库存在标题且报告id不一致
                     $subjectFail += count($linkData);
                     $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-标题【' . $newsName . '】数据库已存在';
+                    continue;
                 }
 
                 $postSubjectData = PostSubject::query()->select(['id', 'accepter', 'name'])->where("product_id", $productId)->first()?->toArray();
@@ -1695,19 +1698,21 @@ class PostSubjectController extends CrudController
                             $recordChild = $postSubjectLinkModel->create($insertChild);
                             if ($recordChild) {
                                 $subjectSuccess++;
-                                $isUpdate = true;
+                                $isInsert = true;
                             }
                         }
 
+                        $recordInsert = [];
                         if ($isInsert) {
-
-                            $recordInsert = [];
                             $recordInsert['propagate_status'] = 1;
                             $recordInsert['last_propagate_time'] = time();
                             // $recordInsert['accept_time'] = time();
                             // $recordInsert['accept_status'] = 1;
                             // $recordInsert['accepter'] = $accepter;
                             $recordInsert['change_status'] = 0;
+                        }
+                        if (count($recordInsert) > 0) {
+                            PostSubject::query()->where("id", $postSubjectData['id'])->update($recordInsert);
                         }
                     } else {
                         // 查不到该报告,跳过
