@@ -349,11 +349,20 @@ class ProductsController extends CrudController {
             $query = $query->where($type, 'BETWEEN', [intval($start_time), intval($end_time)]);
         } else if ($type == 'name') {
             //中文搜索, 测试明确 需要精确搜索
-            $val = '"'.$keyword.'"';
-            $query = $query->match($type, $val, true);
+            $keyWordArraySphinx = explode(" ", $keyword);
+            if (count($keyWordArraySphinx) > 0) {
+                foreach ($keyWordArraySphinx as  $val) {
+                    $query->match($type, '"'.$val.'"', true);
+                }
+            }
         } elseif ($type == 'english_name') {
             //英文搜索, 需要精确搜索
-            $query = $query->match($type, $keyword);
+            $keyWordArraySphinx = explode(" ", $keyword);
+            if (count($keyWordArraySphinx) > 0) {
+                foreach ($keyWordArraySphinx as  $val) {
+                    $query->match($type, '"'.$val.'"', true);
+                }
+            }
         }
         if ($type != 'status') {
             $query = $query->where('status', '=', 1);
