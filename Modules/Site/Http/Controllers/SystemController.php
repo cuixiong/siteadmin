@@ -69,7 +69,7 @@ class SystemController extends CrudController {
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
-            $this->syncSiteCache($record);
+            //$this->syncSiteCache($record);
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -91,7 +91,7 @@ class SystemController extends CrudController {
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            $this->syncSiteCache($record);
+            //$this->syncSiteCache($record);
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -204,12 +204,12 @@ class SystemController extends CrudController {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            if ($record->hidden == 1) {
-                $type = 'update';
-            } else {
-                $type = 'delete';
-            }
-            $this->syncSiteCache($record, $type);
+//            if ($record->hidden == 1) {
+//                $type = 'update';
+//            } else {
+//                $type = 'delete';
+//            }
+//            $this->syncSiteCache($record, $type);
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -221,6 +221,7 @@ class SystemController extends CrudController {
      *
      */
     private function syncSiteCache($record, $type = 'update') {
+        return true;
         $keyList = ['is_open_check_security', 'white_ip_security_check', 'ip_white_rules', 'req_limit', 'window_time', 'is_open_limit_req'];
         $key = $record['key'];
         $value = $record['value'];
@@ -268,6 +269,27 @@ class SystemController extends CrudController {
     }
 
     /**
+     * AJax单个更新
+     *
+     * @param $request 请求信息
+     */
+    protected function update(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            $status = $request->status;
+            $this->updChildListStatus($record->id, $status);
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      * 修改状态
      *
      * @param $request 请求信息
@@ -284,29 +306,36 @@ class SystemController extends CrudController {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            //下面的子级全部变为隐藏状态
-            $systemValueModel = new SystemValue();
-            $childList = $systemValueModel->where('parent_id', $record->id)
-                                          ->select(['id', 'key', 'value'])
-                                          ->get()
-                                          ->toArray();
-//            if($status == 1){
-//                $type = 'update';
-//            }else{
-//                $type = 'delete';
-//            }
-            foreach ($childList as $childinfo) {
-                $updData = ['hidden' => $status, 'status' => $status];
-                $rs = $systemValueModel->where('id', $childinfo['id'])->update($updData);
-                if ($rs) {
-                    $childinfo['hidden'] = $status;
-                    $childinfo['status'] = $status;
-                    $this->syncSiteCache($childinfo);
-                }
-            }
+            $this->updChildListStatus($record->id, $status);
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
+
+    /**
+     * 修改子级状态
+     * @param       $parent_id
+     * @param mixed $status
+     *
+     */
+    private function updChildListStatus($parent_id, mixed $status) {
+        //下面的子级全部变为隐藏状态
+        $systemValueModel = new SystemValue();
+        $childList = $systemValueModel->where('parent_id', $parent_id)
+                                      ->select(['id', 'key', 'value'])
+                                      ->get()
+                                      ->toArray();
+        foreach ($childList as $childinfo) {
+            $updData = ['hidden' => $status, 'status' => $status];
+            $rs = $systemValueModel->where('id', $childinfo['id'])->update($updData);
+//            if ($rs) {
+//                $childinfo['hidden'] = $status;
+//                $childinfo['status'] = $status;
+//                $this->syncSiteCache($childinfo);
+//            }
         }
     }
 }
