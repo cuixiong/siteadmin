@@ -42,7 +42,7 @@ class PostSubjectController extends CrudController
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                 $subjectOwnId = $request->user->id;
             }
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -756,9 +756,9 @@ class PostSubjectController extends CrudController
 
                 $subjectOwnId = NULL;
                 if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
-                    $subjectOwnId = [-1];
+                    $subjectOwnId = -1;
                 } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
-                    $subjectOwnId = [$request->user->id];
+                    $subjectOwnId = $request->user->id;
                 }
                 $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
             }
@@ -852,7 +852,13 @@ class PostSubjectController extends CrudController
         } else {
             //筛选
             $searchJson = $request->input('search');
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
+            $subjectOwnId = NULL;
+            if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                $subjectOwnId = -1;
+            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
+                $subjectOwnId = $request->user->id;
+            }
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
         }
 
         $data = [];
@@ -938,9 +944,9 @@ class PostSubjectController extends CrudController
 
             $subjectOwnId = NULL;
             if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
-                $subjectOwnId = [-1];
+                $subjectOwnId = -1;
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
-                $subjectOwnId = [$request->user->id];
+                $subjectOwnId = $request->user->id;
             }
             $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
         }
@@ -1092,9 +1098,9 @@ class PostSubjectController extends CrudController
 
             $subjectOwnId = NULL;
             if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
-                $subjectOwnId = [-1];
+                $subjectOwnId = -1;
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
-                $subjectOwnId = [$request->user->id];
+                $subjectOwnId = $request->user->id;
             }
             $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
         }
