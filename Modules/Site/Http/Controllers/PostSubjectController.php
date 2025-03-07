@@ -35,15 +35,14 @@ class PostSubjectController extends CrudController
             $this->ValidateInstance($request);
             $model = PostSubject::from('post_subject as ps');
             $searchJson = $request->input('search');
-            if (!empty($searchJson)) {
-                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
-                // ReturnJson(true, trans('lang.request_success'), $model);
-            }
+
+            $subjectOwnId = NULL;
             if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
-                $model = $model->whereNull('accepter');
+                $subjectOwnId = [-1];
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
-                $model = $model->where('accepter', $request->user->id);
+                $subjectOwnId = [$request->user->id];
             }
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -558,9 +557,6 @@ class PostSubjectController extends CrudController
                     $inputChild['post_platform_id'] = $postPlatformId;
                     $inputChild['status'] = 1;
                     $inputChild['sort'] = 100;
-                    $inputChild['sort'] = 100;
-                    $inputChild['success_count'] = 1;
-                    $inputChild['ingore_count'] = 0;
                     $postSubjectLinkModel = new PostSubjectLink();
                     $recordChild = $postSubjectLinkModel->create($inputChild);
                     if ($recordChild) {
@@ -757,7 +753,14 @@ class PostSubjectController extends CrudController
             } else {
                 //筛选
                 $searchJson = $request->input('search');
-                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
+
+                $subjectOwnId = NULL;
+                if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                    $subjectOwnId = [-1];
+                } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
+                    $subjectOwnId = [$request->user->id];
+                }
+                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
             }
             $data = [];
             if ($type == 1) {
@@ -919,9 +922,6 @@ class PostSubjectController extends CrudController
 
         $input = $request->all();
         $ids = $input['ids'] ?? '';
-
-        $input = $request->all();
-        $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
 
         $model = PostSubject::from('post_subject as ps');
@@ -935,7 +935,14 @@ class PostSubjectController extends CrudController
         } else {
             //筛选
             $searchJson = $request->input('search');
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
+
+            $subjectOwnId = NULL;
+            if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                $subjectOwnId = [-1];
+            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
+                $subjectOwnId = [$request->user->id];
+            }
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
         }
 
         $data = [];
@@ -1082,7 +1089,14 @@ class PostSubjectController extends CrudController
         } else {
             //筛选
             $searchJson = $request->input('search');
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson);
+
+            $subjectOwnId = NULL;
+            if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                $subjectOwnId = [-1];
+            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
+                $subjectOwnId = [$request->user->id];
+            }
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
         }
 
         $data = [];
@@ -1098,7 +1112,6 @@ class PostSubjectController extends CrudController
                 ReturnJson(true, trans('lang.data_empty'));
             }
         }
-
 
         // 查询帖子
         $subjectIds = array_column($subjectData, 'id');

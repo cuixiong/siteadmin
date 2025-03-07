@@ -413,7 +413,11 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', $searchItem['content']);
+            if ($requesterOwn) {
+                $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', [$requesterOwn]);
+            } else {
+                $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', $searchItem['content']);
+            }
         }
 
         // 领取状态

@@ -620,12 +620,12 @@ class ProductsController extends CrudController {
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
             }
-//            if (empty($input['hits'])) {
-//                $input['hits'] = rand(500, 1000);
-//            }
-//            if (empty($input['downloads'])) {
-//                $input['downloads'] = rand(100, 300);
-//            }
+            // if (empty($input['hits'])) {
+            //     $input['hits'] = rand(500, 1000);
+            // }
+            // if (empty($input['downloads'])) {
+            //     $input['downloads'] = rand(100, 300);
+            // }
             //兼容操作日志
             $valuesFields = ['thumb', 'cagr', 'last_scale', 'current_scale', 'future_scale'];
             foreach ($input as $forKey => $forValue) {
@@ -639,6 +639,24 @@ class ProductsController extends CrudController {
                     }
                 }
             }
+
+            $productChange = false; // 报告的类型、应用、企业等数据是否有变化
+
+            // 属性是否有变动
+            if (
+                $record
+                && (
+                    $record->classification != $input['classification']
+                    || $record->application != $input['application']
+                    || $record->cagr != $input['cagr']
+                    || $record->last_scale != $input['last_scale']
+                    || $record->current_scale != $input['current_scale']
+                    || $record->future_scale != $input['future_scale']
+                )
+            ) {
+                $productChange = true;
+            }
+
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
             }
@@ -649,7 +667,12 @@ class ProductsController extends CrudController {
                 //删除旧详情
                 if ($oldYear) {
                     $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $record->id)
-                                                                                ->first();
+                        ->first();
+
+                    // 属性是否有变动
+                    if ($oldProductDescription&& $oldProductDescription['companies_mentioned']== $input['companies_mentioned']) {
+                        $productChange = true;
+                    }
                     $oldProductDescription->delete();
                 }
                 //然后新增
@@ -663,6 +686,10 @@ class ProductsController extends CrudController {
                     //不存在新增
                     $descriptionRecord = (new ProductsDescription($newYear))->saveWithAttributes($input);
                 }
+                // 属性是否有变动
+                if ($newProductDescription && $newProductDescription['companies_mentioned'] == $newProductDescription['companies_mentioned']) {
+                    $productChange = true;
+                }
             }
             if (!$descriptionRecord) {
                 throw new \Exception(trans('lang.update_error'));
@@ -671,6 +698,30 @@ class ProductsController extends CrudController {
             // 更新完成后同步到xunsearch
             $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
+            
+                // 发帖课题
+                if (!empty($record['id'])) {
+                    try {
+                        // 修改课题
+                        $postSubject = postSubject::query()->where('product_id', $record->id)->first();
+                        $postSubjectUpdate = [];
+                        $postSubjectUpdate['name'] = $record->name;
+                        $postSubjectUpdate['product_id'] =  $record->id;
+                        $postSubjectUpdate['product_category_id'] =  $record->category_id;
+                        $postSubjectUpdate['version'] = intval($record->price ?? 0);
+                        $postSubjectUpdate['analyst'] = $record->author;
+                        if ($postSubject) {
+                            // 需比对类型、应用、企业是否有变化，有则打开修改状态
+                            if ($productChange && !empty($postSubject->propagate_status)) {
+                                $postSubjectUpdate['change_status'] = 1;
+                            }
+                            postSubject::query()->where('product_id', $record->id)->update($postSubjectUpdate);
+                        } else {
+                            postSubject::create($postSubjectUpdate);
+                        }
+                    } catch (\Throwable $psth) {
+                    }
+                }
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
