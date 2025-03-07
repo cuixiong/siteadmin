@@ -288,7 +288,7 @@ class PostSubject extends Base
         if (!empty($search)) {
             $search = array_column($search, null, 'keyword');
         } else {
-            return $query;
+            // return $query;
         }
         // return $search;
         /*
@@ -407,17 +407,15 @@ class PostSubject extends Base
         }
 
         // 领取人
-        if (!empty($search['accepter']) && isset($search['accepter']['content']) && count($search['accepter']['content']) > 0) {
+        if ($requesterOwn) {
+            $query = self::getFiltersConditionQuery($query, self::CONDITION_IN, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', [$requesterOwn]);
+        } elseif (!empty($search['accepter']) && isset($search['accepter']['content']) && count($search['accepter']['content']) > 0) {
             $condition = self::CONDITION_IN;
             $searchItem = $search['accepter'];
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            if ($requesterOwn) {
-                $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', [$requesterOwn]);
-            } else {
-                $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', $searchItem['content']);
-            }
+            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', $searchItem['content']);
         }
 
         // 领取状态

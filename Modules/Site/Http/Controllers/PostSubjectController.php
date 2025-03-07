@@ -38,9 +38,9 @@ class PostSubjectController extends CrudController
 
             $subjectOwnId = NULL;
             if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
-                $subjectOwnId = [-1];
+                $subjectOwnId = -1;
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
-                $subjectOwnId = [$request->user->id];
+                $subjectOwnId = $request->user->id;
             }
             $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
             // 总数量
