@@ -40,6 +40,13 @@ class CheckNginxLoadCommand extends Command {
             exec($script_path, $load_os_arr);
             $load_os_data = current($load_os_arr);
             $load_os_val = explode(":", $load_os_data)[1] ?? 0;
+
+            //获取宽带使用率
+            $net_usage_rate_script_path = 'sh /www/wwwroot/bandwidth_util.sh';
+            exec($net_usage_rate_script_path, $load_net_usage);
+            $load_net_usage_data = current($load_net_usage);
+            $net_usage_val = explode(":", $load_net_usage_data)[1] ?? 0;
+
 //            $siteNameList = Site::query()->where("status", 1)
 //                                ->where("is_loc!al", 1)
 //                                ->pluck("name");
@@ -54,9 +61,10 @@ class CheckNginxLoadCommand extends Command {
                 $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
                 $check_max_load = $sysValList['check_max_load'] ?? 80;
                 $check_min_load = $sysValList['check_min_load'] ?? 60;
+                $net_usage_rate = $sysValList['net_usage_rate'] ?? 90;
                 echo "当前时间:".date("Y-m-d H:i:s")
-                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}".PHP_EOL;
-                if ($load_os_val >= $check_max_load) {
+                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}".PHP_EOL;
+                if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
                     \Log::error(
                         "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
@@ -285,13 +293,13 @@ class CheckNginxLoadCommand extends Command {
      *
      */
     private function writeNginxConf(string $banStr, $siteNginxConfInfo) {
-        $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
-        if (empty($temp_content)) {
-            return false;
-        }
-        $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
-        $new_file_path = $siteNginxConfInfo['conf_real_path'];
-        file_put_contents($new_file_path, $modifiedString);
+//        $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
+//        if (empty($temp_content)) {
+//            return false;
+//        }
+//        $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
+        $new_file_path = $siteNginxConfInfo['conf_temp_path'];
+        file_put_contents($new_file_path, $banStr);
     }
 
     public function reloadNginxBySite($siteName) {
@@ -328,21 +336,16 @@ class CheckNginxLoadCommand extends Command {
                 ];
             }
             $ssh->setTimeout(600);
-            $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
-            if (empty($temp_content)) {
-                return false;
-            }
+//            $temp_content = file_get_contents($siteNginxConfInfo['conf_temp_path']);
+//            if (empty($temp_content)) {
+//                return false;
+//            }
             //$banStr = '#czx';
-            $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
-            $temp_file_path = "/www/wwwroot/nginx_shell/temp_site_{$site}_nginx.conf";
-            file_put_contents($temp_file_path, $modifiedString);
-            $new_file_path = $siteNginxConfInfo['conf_real_path'];
-            //$modifiedString = escapeshellarg($modifiedString);
-            //$commands = "echo $modifiedString > $new_file_path";
-            $commands = "mv {$temp_file_path} {$new_file_path}";
-            $execute_res = $this->executeCommands($ssh, $commands);
-            \Log::error('执行命令:'.$commands.'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
-            \Log::error('执行结果:'.json_encode([$execute_res]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+//            $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
+            $temp_file_path = $siteNginxConfInfo['conf_temp_path'];
+            //$temp_file_path = "/www/wwwroot/nginx_shell/temp_site_{$site}_nginx.conf";
+            file_put_contents($temp_file_path, $banStr);
+
             //$this->reloadNginx();
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
             $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);

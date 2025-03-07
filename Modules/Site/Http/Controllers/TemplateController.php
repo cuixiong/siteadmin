@@ -52,8 +52,9 @@ class TemplateController extends CrudController {
                 $isExistRule = true;
             }
             if(!$isExistRule) {
-                $postUsrList = $this->getSitePostUser();
-                $userIds = array_column($postUsrList, 'value');
+//                $postUsrList = $this->getSitePostUser();
+//                $userIds = array_column($postUsrList, 'value');
+                $userIds = [$request->user->id];
                 $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
                 $model = $model->whereIn("id", $tempIdList);
             }
