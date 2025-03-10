@@ -42,7 +42,7 @@ class PostSubjectController extends CrudController
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                 $subjectOwnId = $request->user->id;
             }
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -760,7 +760,7 @@ class PostSubjectController extends CrudController
                 } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                     $subjectOwnId = $request->user->id;
                 }
-                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
+                $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
             }
             $data = [];
             if ($type == 1) {
@@ -858,7 +858,7 @@ class PostSubjectController extends CrudController
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                 $subjectOwnId = $request->user->id;
             }
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
         }
 
         $data = [];
@@ -948,7 +948,7 @@ class PostSubjectController extends CrudController
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                 $subjectOwnId = $request->user->id;
             }
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
         }
 
         $data = [];
@@ -1102,7 +1102,7 @@ class PostSubjectController extends CrudController
             } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
                 $subjectOwnId = $request->user->id;
             }
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson,$subjectOwnId);
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
         }
 
         $data = [];
@@ -1611,10 +1611,17 @@ class PostSubjectController extends CrudController
 
                     $urlData = [];
                     $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
+                    if ($urlData) {
+                        $urlData = array_map(function ($urlItem) {
+                            $urlItem = trim(trim(trim($urlItem, 'https://'), 'http://'), '/');
+                            return $urlItem;
+                        }, $urlData);
+                    }
                     $isUpdate = false;
                     foreach ($linkData as $postLinkValue) {
-                        if (in_array($postLinkValue['link'], $urlData)) {
-                            // 链接一致不变动
+                        // 链接一致不变动 新：要求有协议没协议要视为同一个
+                        $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                        if (in_array($removeProtocolLink, $urlData)) {
                             $subjectFail++;
                             $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 链接已存在';
                             continue;
@@ -1757,9 +1764,9 @@ class PostSubjectController extends CrudController
         PostSubjectLog::create($logData);
 
         if (!$excelData || count($excelData) < 1) {
-            ReturnJson(FALSE, trans('lang.data_empty'), '没数据');
+            ReturnJson(FALSE, trans('lang.data_empty'), '上传失败,没数据');
         }
-        ReturnJson(true, trans('lang.request_success'));
+        ReturnJson(true, trans('lang.request_success'), explode("\n", $logData['details']));
     }
 
 
