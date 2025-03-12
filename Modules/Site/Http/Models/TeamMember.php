@@ -18,7 +18,8 @@ class TeamMember extends Base
         'experience',
         'custom',
         'industry_id',
-        'is_analyst'
+        'is_analyst',
+        'attention_level'
         ];
     protected $appends = [
         'industry_name'
