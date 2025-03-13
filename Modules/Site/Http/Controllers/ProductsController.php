@@ -339,7 +339,7 @@ class ProductsController extends CrudController {
                   )
         ) {
             $query = $query->where($type, intval($keyword));
-        } elseif (filled($keyword) && in_array($type, ['author'])
+        } elseif (filled($keyword) && in_array($type, ['author' , 'keywords'])
         ) {
             $query = $query->where($type, $keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
@@ -707,7 +707,7 @@ class ProductsController extends CrudController {
             // 更新完成后同步到xunsearch
             $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
-            
+
                 // 发帖课题
                 if (!empty($record['id'])) {
                     try {
