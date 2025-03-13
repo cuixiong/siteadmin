@@ -279,6 +279,16 @@ class SyncThirdProductController extends CrudController {
         $authorCheck = ['已售报告', '完成报告'];
         foreach ($respDataList as $forParamsData) {
             $count++;
+            
+            //校验报告名称
+            $checkMsg = $this->checkProductName($forParamsData['name']);
+            if ($checkMsg) {
+                $details .= "【错误】编号:{$forParamsData['id']}:  ".$checkMsg;
+                $errorCount++;
+                array_push($errIdList, $forParamsData['id']);
+                continue;
+            }
+            
             //已售报告>完成报告>人名作者
             if (!empty($uniqueDataList[$forParamsData['name']])) {
                 if (
