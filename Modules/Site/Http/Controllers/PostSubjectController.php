@@ -1024,7 +1024,7 @@ class PostSubjectController extends CrudController
             $sheet->setCellValue([3 + 1, $rowIndex + 1], ''); // 额外空白列
 
             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
-            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? 1 : 0); // 是否有数据
+            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
 
             $rowIndex++;
             $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
@@ -1294,7 +1294,7 @@ class PostSubjectController extends CrudController
                             $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
 
                             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
-                            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? 1 : 0); // 是否有数据
+                            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
                         }
                         // 发帖链接
                         $sheet->setCellValue([3 + 1, $rowIndex + 1], $linkValue);
@@ -1315,7 +1315,7 @@ class PostSubjectController extends CrudController
                     // 关键词
                     $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']);
                     // 是否有数据
-                    $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? 1 : 0);
+                    $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否');
                     // 搜索链接
                     $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
                     $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
