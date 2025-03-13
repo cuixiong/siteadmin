@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 use Modules\Admin\Http\Models\City;
-use Modules\Admin\Http\Models\Country;
+use Modules\Site\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Site\Http\Models\UserAddress;
