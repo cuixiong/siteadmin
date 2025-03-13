@@ -785,7 +785,7 @@ Route::middleware([
         Route::post('export-subject', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubject'])->name('发帖课题:导出课题');
         Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubjectLink'])->name('发帖课题:导出日志');
         Route::post('upload-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLink'])->name('发帖课题:上传日志');
-        
+
         Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('报告管理:操作日志');
     });
 
@@ -794,6 +794,42 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'list'])->name('发帖操作记录:数据列表');
         Route::post('destory', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'destory'])->name('发帖操作记录:数据删除');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'searchDroplist'])->name('发帖操作记录:搜索下拉列表数据');
+    });
+
+    // CaseShare 案例分享
+    Route::prefix('case-share')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\CaseShareController::class, 'list'])->name('案例分享:数据列表');
+        Route::post('store', [Modules\Site\Http\Controllers\CaseShareController::class, 'store'])->name('案例分享:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\CaseShareController::class, 'update'])->name('案例分享:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CaseShareController::class, 'destroy'])->name('案例分享:数据删除');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\CaseShareController::class, 'searchDroplist'])->name('案例分享:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CaseShareController::class, 'changeStatus'])->name('案例分享:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\CaseShareController::class, 'changeSort'])->name('案例分享:排序修改');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\CaseShareController::class, 'form'])->name('案例分享:数据单查');
+    });
+
+    // Questions 常见问题
+    Route::prefix('questions')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\QuestionsController::class, 'list'])->name('常见问题:数据列表');
+        Route::post('store', [Modules\Site\Http\Controllers\QuestionsController::class, 'store'])->name('常见问题:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\QuestionsController::class, 'update'])->name('常见问题:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\QuestionsController::class, 'destroy'])->name('常见问题:数据删除');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\QuestionsController::class, 'searchDroplist'])->name('常见问题:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\QuestionsController::class, 'changeStatus'])->name('常见问题:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\QuestionsController::class, 'changeSort'])->name('常见问题:排序修改');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\QuestionsController::class, 'form'])->name('常见问题:数据单查');
+    });
+
+    // Answers 答案模块
+    Route::prefix('answers')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\AnswersController::class, 'list'])->name('答案模块:数据列表');
+        Route::post('store', [Modules\Site\Http\Controllers\AnswersController::class, 'store'])->name('答案模块:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\AnswersController::class, 'update'])->name('答案模块:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\AnswersController::class, 'destroy'])->name('答案模块:数据删除');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\AnswersController::class, 'searchDroplist'])->name('答案模块:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\AnswersController::class, 'changeStatus'])->name('答案模块:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\AnswersController::class, 'changeSort'])->name('答案模块:排序修改');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\AnswersController::class, 'form'])->name('答案模块:数据单查');
     });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
