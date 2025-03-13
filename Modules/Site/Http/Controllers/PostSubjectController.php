@@ -72,6 +72,8 @@ class PostSubjectController extends CrudController
                 'accept_time',
                 'accept_status',
                 'change_status',
+                'keywords',
+                'has_cagr',
             ];
             $model = $model->select($fields);
             // 数据排序
@@ -212,6 +214,12 @@ class PostSubjectController extends CrudController
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
         $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
         array_push($hiddenData, $temp_filter);
+
+
+        // 关键词
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('keywords', '关键词', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
 
         // 宣传状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
@@ -959,7 +967,7 @@ class PostSubjectController extends CrudController
         } else {
             // //查询出涉及的id
             // $idsData = $model->select('id')->pluck('id')->toArray();
-            $subjectData = $model->select(['id', 'name', 'product_id', 'version', 'accepter'])->get()->toArray();
+            $subjectData = $model->select(['id', 'name', 'product_id', 'version', 'accepter', 'keywords', 'has_cagr'])->get()->toArray();
             if (!(count($subjectData) > 0)) {
                 ReturnJson(true, trans('lang.data_empty'));
             }
@@ -973,36 +981,9 @@ class PostSubjectController extends CrudController
             '版本',
             '快速搜索链接',
             '发贴链接',
+            '关键词',
+            '是否有数据',
         ];
-
-        // $writer = WriterEntityFactory::createXLSXWriter();
-        // $writer->openToBrowser('export-topic-' . count($subjectData) . '-' . $date . '.xlsx'); // 将文件输出到浏览器并下载
-
-        // $accepter = $subjectData[0]['accepter'] ?? 0;
-        // if (!empty($accepter)) {
-        //     $sheetName = User::query()->where('id', $accepter)->value('nickname') ?? 'Sheet1';
-        // } else {
-        //     $sheetName = $request->user->nickname ?? 'Sheet1';
-        // }
-        // $writer->getCurrentSheet()->setName($sheetName);
-
-        // // 添加标题
-        // $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
-        // $writer->addRow($rowData);
-
-        // $details = [];
-        // foreach ($subjectData as $key => $subject) {
-        //     $rowData = [];
-        //     $rowData[] = $subject['name'];
-        //     $rowData[] = $subject['version'];
-        //     $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
-        //     $rowData[] = '';
-
-        //     $rowData = WriterEntityFactory::createRowFromArray($rowData);
-        //     $writer->addRow($rowData);
-        //     $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
-        // }
-        // $writer->close();
 
         // 创建 Spreadsheet 对象
         $spreadsheet = new Spreadsheet();
@@ -1026,6 +1007,8 @@ class PostSubjectController extends CrudController
         $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
         $sheet->getColumnDimension('C')->setWidth(80);  // 设置 C 列宽度
         $sheet->getColumnDimension('D')->setWidth(80);  // 设置 D 列宽度
+        $sheet->getColumnDimension('E')->setWidth(20);  // 设置 E 列宽度
+        $sheet->getColumnDimension('F')->setWidth(20);  // 设置 F 列宽度
 
         foreach ($subjectData as $subject) {
             $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
@@ -1039,6 +1022,9 @@ class PostSubjectController extends CrudController
             $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
 
             $sheet->setCellValue([3 + 1, $rowIndex + 1], ''); // 额外空白列
+
+            $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
+            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
 
             $rowIndex++;
             $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
@@ -1113,7 +1099,7 @@ class PostSubjectController extends CrudController
         } else {
             // //查询出涉及的id
             // $idsData = $model->select('id')->pluck('id')->toArray();
-            $subjectData = $model->select(['id', 'name', 'product_id', 'version', 'accepter'])->get()->toArray();
+            $subjectData = $model->select(['id', 'name', 'product_id', 'version', 'accepter', 'keywords', 'has_cagr'])->get()->toArray();
             if (!(count($subjectData) > 0)) {
                 ReturnJson(true, trans('lang.data_empty'));
             }
@@ -1165,6 +1151,8 @@ class PostSubjectController extends CrudController
             '版本',
             '快速搜索链接',
             '发贴链接',
+            '关键词',
+            '是否有数据',
         ];
         $details = [];
         $subjectSuccess = 0;
@@ -1271,6 +1259,8 @@ class PostSubjectController extends CrudController
             $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
             $sheet->getColumnDimension('C')->setWidth(80);  // 设置 C 列宽度
             $sheet->getColumnDimension('D')->setWidth(80);  // 设置 D 列宽度
+            $sheet->getColumnDimension('E')->setWidth(20);  // 设置 E 列宽度
+            $sheet->getColumnDimension('F')->setWidth(20);  // 设置 F 列宽度
 
             // 添加标题行
             $sheet->fromArray($excelHeader, null, 'A1');
@@ -1302,6 +1292,9 @@ class PostSubjectController extends CrudController
                             $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
                             $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
                             $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+
+                            $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
+                            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
                         }
                         // 发帖链接
                         $sheet->setCellValue([3 + 1, $rowIndex + 1], $linkValue);
@@ -1319,6 +1312,10 @@ class PostSubjectController extends CrudController
                     $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                     // 版本
                     $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
+                    // 关键词
+                    $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']);
+                    // 是否有数据
+                    $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否');
                     // 搜索链接
                     $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
                     $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
@@ -1679,7 +1676,7 @@ class PostSubjectController extends CrudController
                     }
                 } else {
                     // 查不到该课题，查询报告存在并新增
-                    $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author'])->where("id", $productId)->first()?->toArray();
+                    $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])->where("id", $productId)->first()?->toArray();
                     if ($productData) {
                         $isInsert = false;
                         //新增课题
@@ -1692,6 +1689,8 @@ class PostSubjectController extends CrudController
                         $recordInsert['accepter'] = $accepter;
                         $recordInsert['accept_time'] = time();
                         $recordInsert['accept_status'] = 1;
+                        $recordInsert['keywords'] = $productData['keywords'];
+                        $recordInsert['has_cagr'] = !empty($productData['cagr']) ? 1 : 0;
                         $postSubjectData = PostSubject::create($recordInsert);
 
                         //处理链接
