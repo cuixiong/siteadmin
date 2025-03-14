@@ -449,6 +449,8 @@ class ProductsController extends CrudController {
             $postSubjectData['product_category_id'] = $record['category_id'];
             $postSubjectData['version'] = intval($record['price'] ?? 0);
             $postSubjectData['analyst'] = $record['author'];
+            $postSubjectData['keywords'] = $record['keywords'];
+            $postSubjectData['has_cagr'] = !empty($record['cagr'])?1:0;
             // 没有领取人则自己领取
             $postSubjectData['accepter'] = $request->user->id;
             $postSubjectData['accept_status'] = 1;
@@ -719,6 +721,8 @@ class ProductsController extends CrudController {
                         $postSubjectUpdate['product_category_id'] =  $record->category_id;
                         $postSubjectUpdate['version'] = intval($record->price ?? 0);
                         $postSubjectUpdate['analyst'] = $record->author;
+                        $postSubjectUpdate['keywords'] = $record->keywords;
+                        $postSubjectUpdate['has_cagr'] = !empty($record->cagr)?1:0;
                         if ($postSubject) {
                             // 需比对类型、应用、企业是否有变化，有则打开修改状态
                             if ($productChange && !empty($postSubject->propagate_status)) {

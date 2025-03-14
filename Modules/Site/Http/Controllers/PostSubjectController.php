@@ -15,6 +15,7 @@ use Modules\Site\Http\Models\PostSubjectLink;
 use Modules\Site\Http\Models\PostSubjectLog;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
+use Modules\Site\Http\Requests\ProductsCategoryRequest;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -326,6 +327,9 @@ class PostSubjectController extends CrudController
             // 宣传状态
             $data['propagate_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
 
+            // 是否有cagr数据
+            $data['propagate_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
+            
             // 领取人/发帖用户
             $data['accepter_list'] = (new TemplateController())->getSitePostUser();
             if (count($data['accepter_list']) > 0) {
@@ -358,6 +362,14 @@ class PostSubjectController extends CrudController
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
             }
+
+            $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
+            if ($cagr && !empty($cagr)) {
+                $input['has_cagr'] = 1;
+            } else {
+                $input['has_cagr'] = 0;
+            }
+
             // 开启事务
             DB::beginTransaction();
 
@@ -455,6 +467,13 @@ class PostSubjectController extends CrudController
             }
 
             $details = '';
+
+            $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
+            if ($cagr && !empty($cagr)) {
+                $input['has_cagr'] = 1;
+            } else {
+                $input['has_cagr'] = 0;
+            }
 
             // 开启事务
             DB::beginTransaction();
@@ -682,6 +701,8 @@ class PostSubjectController extends CrudController
                 'category_id as product_category_id',
                 'author as analyst',
                 'price as version',
+                'keywords',
+                'cagr',
             ])
                 ->where(['name' => trim($product_name)])
                 ->first();
@@ -704,6 +725,7 @@ class PostSubjectController extends CrudController
         }
 
         $data['version'] = floatval($data['version']);
+        $data['has_cagr'] = !empty($data['cagr']) ? 1 : 0;
         ReturnJson(true, trans('lang.request_success'), $data);
     }
 
