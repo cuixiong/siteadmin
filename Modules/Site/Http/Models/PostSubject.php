@@ -26,6 +26,8 @@ class PostSubject extends Base
         'updated_by',
         'created_by',
         'change_status',
+        'keywords',
+        'has_cagr'
     ];
 
     protected $attributes = [
