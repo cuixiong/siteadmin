@@ -687,6 +687,8 @@ class PostSubjectController extends CrudController
                 'category_id as product_category_id',
                 'author as analyst',
                 'price as version',
+                'keywords',
+                'cagr',
             ])
                 ->where(['id' => $product_id])
                 ->first();
