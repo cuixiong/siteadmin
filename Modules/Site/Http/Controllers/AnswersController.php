@@ -4,6 +4,7 @@ namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\Questions;
 use Modules\Site\Http\Models\User;
 
 class AnswersController extends CrudController {
@@ -49,7 +50,9 @@ class AnswersController extends CrudController {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
+            $question = [];
             if (!empty($request->question_id)) {
+                $question = Questions::query()->where('id', $request->question_id)->firstOrFail();
                 $model = $model->where('question_id', $request->question_id);
             }
             $model = $ModelInstance->HandleWhere($model, $request);
@@ -73,8 +76,9 @@ class AnswersController extends CrudController {
             }
             $record = $model->get();
             $data = [
-                'total' => $total,
-                'list'  => $record
+                'total'    => $total,
+                'list'     => $record,
+                'question' => $question,
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {

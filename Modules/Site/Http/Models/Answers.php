@@ -18,7 +18,7 @@ class Answers extends Base {
         = ['id', 'question_id', 'content', 'sort', 'status', 'created_by', 'created_at', 'updated_by', 'updated_at',
            'user_id', 'answer_at'];
 
-    protected $appends = ['user_name' , 'answer_at_str'];
+    protected $appends = ['user_name' , 'answer_at_str' , 'question_title'];
 
     public function getUserNameAttribute()
     {
@@ -30,4 +30,8 @@ class Answers extends Base {
         return date('Y-m-d H:i:s', $this->attributes['answer_at']);
     }
 
+    public function getQuestionTitleAttribute()
+    {
+        return $this->belongsTo(Questions::class, 'question_id', 'id')->value('title');
+    }
 }
