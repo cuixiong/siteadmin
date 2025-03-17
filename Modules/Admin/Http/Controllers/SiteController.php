@@ -470,39 +470,39 @@ class SiteController extends CrudController {
             $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get();
             //查询后的数据处理
             if ($record && count($record) > 0) {
-                foreach ($record as $key => $item) {
-                    //获取服务器配置
-                    $server = Server::find($item->server_id);
-                    //获取当前站点仓库的版本hash值
-                    $currentHashData = '';
-                    if (isset($server->ip)) {
-                        $currentHashData = Site::executeRemoteCommand($item, 'current_hash', $server);
-                    }
-                    $record[$key]['hash'] = '';
-                    $record[$key]['hash_sample'] = '';
-                    if (isset($currentHashData) && isset($currentHashData['result'])) {
-                        $temp_array = explode("\n", $currentHashData['output']);
-                        $record[$key]['hash'] = $temp_array[0];
-                        $record[$key]['hash_sample'] = $temp_array[1];
-                    }
-                    //是否可更新
-                    $record[$key]['available_pull'] = false;
-                    // $availablePullData = Site::executeRemoteCommand($item['id'], 'available_pull');
-                    // $record[$key]['available_pull'] = $availablePullData['result'];
-                    //最新一条站点更新记录
-                    $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(
-                        ['exec_status', 'updated_at', 'hash', 'hash_sample', 'message', 'output']
-                    )->orderBy('id', 'desc')->first();
-                    if ($siteUpdateLog) {
-                        $siteUpdateLog = $siteUpdateLog->toArray();
-                    }
-                    $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status_text'] ?? '';
-                    $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at'] ?? '';
-                    $record[$key]['log_updated_hash'] = $siteUpdateLog['hash'] ?? '';
-                    $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample'] ?? '';
-                    $record[$key]['log_message'] = $siteUpdateLog['message'] ?? '';
-                    $record[$key]['log_output'] = $siteUpdateLog['output'] ?? '';
-                }
+                // foreach ($record as $key => $item) {
+                //     //获取服务器配置
+                //     $server = Server::find($item->server_id);
+                //     //获取当前站点仓库的版本hash值
+                //     $currentHashData = '';
+                //     if (isset($server->ip)) {
+                //         $currentHashData = Site::executeRemoteCommand($item, 'current_hash', $server);
+                //     }
+                //     $record[$key]['hash'] = '';
+                //     $record[$key]['hash_sample'] = '';
+                //     if (isset($currentHashData) && isset($currentHashData['result'])) {
+                //         $temp_array = explode("\n", $currentHashData['output']);
+                //         $record[$key]['hash'] = $temp_array[0];
+                //         $record[$key]['hash_sample'] = $temp_array[1];
+                //     }
+                //     //是否可更新
+                //     $record[$key]['available_pull'] = false;
+                //     // $availablePullData = Site::executeRemoteCommand($item['id'], 'available_pull');
+                //     // $record[$key]['available_pull'] = $availablePullData['result'];
+                //     //最新一条站点更新记录
+                //     $siteUpdateLog = SiteUpdateLog::where('site_id', $item['id'])->select(
+                //         ['exec_status', 'updated_at', 'hash', 'hash_sample', 'message', 'output']
+                //     )->orderBy('id', 'desc')->first();
+                //     if ($siteUpdateLog) {
+                //         $siteUpdateLog = $siteUpdateLog->toArray();
+                //     }
+                //     $record[$key]['log_exec_status'] = $siteUpdateLog['exec_status_text'] ?? '';
+                //     $record[$key]['log_updated_at'] = $siteUpdateLog['updated_at'] ?? '';
+                //     $record[$key]['log_updated_hash'] = $siteUpdateLog['hash'] ?? '';
+                //     $record[$key]['log_updated_hash_sample'] = $siteUpdateLog['hash_sample'] ?? '';
+                //     $record[$key]['log_message'] = $siteUpdateLog['message'] ?? '';
+                //     $record[$key]['log_output'] = $siteUpdateLog['output'] ?? '';
+                // }
             }
             //表头排序
             $headerTitle = (new ListStyle())->getHeaderTitle(class_basename($ModelInstance::class), $request->user->id);
