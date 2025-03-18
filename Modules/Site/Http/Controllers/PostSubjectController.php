@@ -958,6 +958,8 @@ class PostSubjectController extends CrudController
     public function exportSubject(Request $request)
     {
 
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '-1'); // 不限制内存
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
@@ -1087,6 +1089,9 @@ class PostSubjectController extends CrudController
     public function exportSubjectLink(Request $request)
     {
 
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '-1'); // 不限制内存
+
         $input = $request->all();
         $ids = $input['ids'] ?? '';
 
@@ -1185,58 +1190,6 @@ class PostSubjectController extends CrudController
         $subjectLinkFail = 0;
         $firstSheetName = '';
         $space = '    ';
-        // $writer = WriterEntityFactory::createXLSXWriter();
-        // $writer->openToBrowser('export-posts-' . count($subjectData) . '-' . $date . '.xlsx'); // 将文件输出到浏览器并下载
-        // foreach ($subjectGroup as $groupAccepterId => $subjectGroupItem) {
-        //     // 按每个领取人分不同的工作簿
-        //     $sheetName = $accepterList[$groupAccepterId] ?? '';
-        //     if (empty($sheetName)) {
-        //         $subjectFail++;
-        //         $subjectLinkFail += count($subjectGroupItem);
-        //         $details[] = '【领取人ID' . $groupAccepterId . '不存在】';
-        //         foreach ($subjectGroupItem as $key => $value) {
-        //             $details[] = '--【编号' . $value['id'] . '】' . $value['name'];
-        //         }
-        //         continue;
-        //     }
-        //     // 确认是否第一个工作簿
-        //     if (empty($firstSheetName)) {
-        //         $firstSheetName = $sheetName;
-        //     }
-        //     if ($firstSheetName == $sheetName) {
-        //         $writer->getCurrentSheet()->setName($sheetName);
-        //     } else {
-        //         $writer->addNewSheetAndMakeItCurrent()->setName($sheetName);
-        //     }
-
-        //     // 添加标题
-        //     $rowData = WriterEntityFactory::createRowFromArray($excelHeader);
-        //     $writer->addRow($rowData);
-        //     foreach ($subjectGroupItem as $key => $subject) {
-
-        //         $rowData = [];
-        //         $rowData[] = $subject['name'];
-        //         $rowData[] = $subject['version'];
-        //         // https://siteadmin.marketmonitorglobal.com.cn/#/gircn/products/fastList?type=id&keyword=2124513
-        //         $rowData[] = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
-        //         if (isset($subjectLinkGroup[$subject['id']]) && is_array($subjectLinkGroup[$subject['id']]) && count($subjectLinkGroup[$subject['id']]) > 0) {
-        //             $subjectSuccess++;
-        //             foreach ($subjectLinkGroup[$subject['id']] as $LinkIndex => $linkValue) {
-        //                 $tempRowData = $rowData;
-        //                 if ($LinkIndex != 0) {
-        //                     $tempRowData = array_map(function ($item) {
-        //                         return "";
-        //                     }, $tempRowData);
-        //                 }
-        //                 $tempRowData[] = !empty($linkValue) ? $linkValue : "";
-        //                 $tempRowData = WriterEntityFactory::createRowFromArray($tempRowData);
-        //                 $writer->addRow($tempRowData);
-        //                 $subjectLinkSuccess++;
-        //             }
-        //         }
-        //     }
-        // }
-        // // return json_encode($a);
 
         // $writer->close();
         // 创建 Spreadsheet 对象
