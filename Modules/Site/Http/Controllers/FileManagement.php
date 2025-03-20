@@ -89,8 +89,8 @@ class FileManagement extends Controller {
                     $info['orignal_path'] = $path . $v;
                     if ($info['type'] == 'image') {
                         $ImageSize = getimagesize($filename . '/' . $v);
-                        $info['width'] = $ImageSize[0] . ' px';
-                        $info['height'] = $ImageSize[1] . ' px';
+                        $info['width'] = $ImageSize[0] ?? 0 . ' px';
+                        $info['height'] = $ImageSize[1] ?? 0 . ' px';
                     }
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
