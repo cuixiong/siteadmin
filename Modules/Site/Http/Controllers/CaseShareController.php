@@ -79,4 +79,45 @@ class CaseShareController extends CrudController {
         }
     }
 
+
+    /**
+     * 单个新增
+     *
+     * @param $request 请求信息
+     */
+    protected function store(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $input['path'] = json_encode($input['path']);
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                ReturnJson(false, trans('lang.add_error'));
+            }
+            ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+    /**
+     * AJax单个更新
+     *
+     * @param $request 请求信息
+     */
+    protected function update(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $input['path'] = json_encode($input['path']);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
 }
