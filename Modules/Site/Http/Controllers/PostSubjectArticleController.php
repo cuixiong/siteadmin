@@ -287,7 +287,7 @@ class PostSubjectArticleController extends CrudController
             $data['propagate_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
 
             // 是否有cagr数据
-            $data['propagate_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
+            // $data['propagate_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
 
             // 领取人/发帖用户
             $data['accepter_list'] = (new TemplateController())->getSitePostUser();
@@ -900,7 +900,7 @@ class PostSubjectArticleController extends CrudController
         } else {
             // //查询出涉及的id
             // $idsData = $model->select('id')->pluck('id')->toArray();
-            $subjectData = $model->select(['id', 'name', 'product_id', 'version', 'accepter', 'keywords', 'has_cagr'])->get()->toArray();
+            $subjectData = $model->select(['id', 'name',  'accepter', 'keywords',])->get()->toArray();
             if (!(count($subjectData) > 0)) {
                 ReturnJson(true, trans('lang.data_empty'));
             }
@@ -1043,7 +1043,7 @@ class PostSubjectArticleController extends CrudController
                             $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
 
                             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
-                            $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
+                            // $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
                         }
                         // 发帖链接
                         $sheet->setCellValue([3 + 1, $rowIndex + 1], $linkValue);
@@ -1064,7 +1064,7 @@ class PostSubjectArticleController extends CrudController
                     // 关键词
                     $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']);
                     // 是否有数据
-                    $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否');
+                    // $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否');
                     // 搜索链接
                     $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
                     $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);

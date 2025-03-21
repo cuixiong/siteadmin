@@ -147,6 +147,11 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('name', '报告名称', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
         array_push($showData, $temp_filter);
 
+        // 关键词
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $temp_filter = $this->getAdvancedFiltersItem('keywords', '关键词', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
         // 行业
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_IN, PostSubject::CONDITION_NOT_IN);
         $options = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid', ['status' => 1]);
@@ -219,17 +224,18 @@ class PostSubjectController extends CrudController
         array_push($hiddenData, $temp_filter);
 
 
-        // 关键词
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
-        $temp_filter = $this->getAdvancedFiltersItem('keywords', '关键词', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($showData, $temp_filter);
-
         // 宣传状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
 
+
+        // 是否有数据
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('has_cagr', '是否有数据', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($hiddenData, $temp_filter);
 
         // 状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
