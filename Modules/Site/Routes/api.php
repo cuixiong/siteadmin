@@ -803,6 +803,7 @@ Route::middleware([
         Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'accept'])->name('观点文章:领取/分配');
         Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'exportSubjectLink'])->name('观点文章:导出日志');
         Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('观点文章:操作日志');
+        
     });
 
     // PostSubjectLog 发帖课题操作记录
