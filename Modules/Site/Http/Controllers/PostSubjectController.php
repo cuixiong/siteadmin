@@ -1593,7 +1593,7 @@ class PostSubjectController extends CrudController
                     if ($isExistProductId && $productId != $isExistProductId) {
                         // 数据库存在标题且报告id不一致
                         $subjectFail += count($linkData);
-                        $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-标题【' . $newsName . '】数据库已存在';
+                        $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-标题【' . $newsName . '】数据库存在其他课题使用一样的名称,报告id为【' . $isExistProductId . '】';
                         continue;
                     }
 
@@ -1611,7 +1611,7 @@ class PostSubjectController extends CrudController
                         if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
                             // 存在领取人的情况下，领取人不一致,跳过
                             $subjectFail += count($linkData);
-                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】领取者不一致';
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId .'】领取者不一致';
                             continue;
                         }
 
@@ -1619,17 +1619,17 @@ class PostSubjectController extends CrudController
                         $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
                         if ($urlData) {
                             $urlData = array_map(function ($urlItem) {
-                                $urlItem = trim(trim(trim($urlItem, 'https://'), 'http://'), '/');
+                                $urlItem = trim(trim(trim(trim($urlItem), 'https://'), 'http://'), '/');
                                 return $urlItem;
                             }, $urlData);
                         }
                         $isUpdate = false;
                         foreach ($linkData as $postLinkValue) {
                             // 链接一致不变动 新：要求有协议没协议要视为同一个
-                            $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                            $removeProtocolLink = trim(trim(trim(trim($postLinkValue['link']), 'https://'), 'http://'), '/');
                             if (in_array($removeProtocolLink, $urlData)) {
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 链接已存在';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 链接已存在';
                                 continue;
                             } else {
                                 // 获取平台id
@@ -1646,7 +1646,7 @@ class PostSubjectController extends CrudController
                                 }
                                 if (!isset($postPlatformId) || empty($postPlatformId)) {
                                     $subjectFail++;
-                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                     continue;
                                 }
                                 // 新增
@@ -1678,7 +1678,7 @@ class PostSubjectController extends CrudController
                         // 标题不存在，更新标题
                         if (empty($isExistProductId)) {
                             $recordUpdate['name'] = $newsName;
-                            $details[] = $space . $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】课题名称从【' . $postSubjectData['name'] . '】修改成【' . $newsName . '】';
+                            $details[] = $space . $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】课题名称从【' . $postSubjectData['name'] . '】修改成【' . $newsName . '】';
                         }
                         if (count($recordUpdate) > 0) {
                             PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
@@ -1718,7 +1718,7 @@ class PostSubjectController extends CrudController
                                 }
                                 if (!isset($postPlatformId) || empty($postPlatformId)) {
                                     $subjectFail++;
-                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                     continue;
                                 }
                                 // 新增
@@ -1780,7 +1780,7 @@ class PostSubjectController extends CrudController
                         $urlData = PostSubjectArticleLink::query()->select(['link'])->where('post_subject_id',$postSubjectData['id'])->pluck('link')?->toArray()??[];
                         if ($urlData) {
                             $urlData = array_map(function ($urlItem) {
-                                $urlItem = trim(trim(trim($urlItem, 'https://'), 'http://'), '/');
+                                $urlItem = trim(trim(trim(trim($urlItem), 'https://'), 'http://'), '/');
                                 return $urlItem;
                             }, $urlData);
                         }
@@ -1789,9 +1789,10 @@ class PostSubjectController extends CrudController
 
                         foreach ($linkData as $postLinkValue) {
                             // 链接一致不变动; 新：要求有协议没协议要视为同一个
-                            $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                            $removeProtocolLink = trim(trim(trim(trim($postLinkValue['link']), 'https://'), 'http://'), '/');
                             if (in_array($removeProtocolLink, $existLinkBySubject)) {
                                 //单个课题中链接重复
+                                $subjectFail++;
                                 $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
                                 continue;
                             }
@@ -1873,7 +1874,7 @@ class PostSubjectController extends CrudController
                         foreach ($linkData as $postLinkValue) {
 
                             // 链接一致不变动; 新：要求有协议没协议要视为同一个
-                            $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                            $removeProtocolLink = trim(trim(trim(trim($postLinkValue['link']), 'https://'), 'http://'), '/');
                             if (in_array($removeProtocolLink, $existLinkBySubject)) {
                                 //单个课题中链接重复
                                 $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';

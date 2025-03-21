@@ -775,7 +775,7 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\PostSubjectController::class, 'update'])->name('发帖课题:数据更新');
         Route::post('destory', [Modules\Site\Http\Controllers\PostSubjectController::class, 'destory'])->name('发帖课题:数据删除');
         Route::get('get-product-info', [Modules\Site\Http\Controllers\PostSubjectController::class, 'getProductInfo'])->name('发帖课题:查询报告');
-        Route::get('form/{id}', [Modules\Site\Http\Controllers\PostSubjectController::class, 'form'])->name('报告管理:报告单查');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\PostSubjectController::class, 'form'])->name('发帖课题:报告单查');
         Route::get('list', [Modules\Site\Http\Controllers\PostSubjectController::class, 'list'])->name('发帖课题:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectController::class, 'changeStatus'])->name('发帖课题:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectController::class, 'searchDroplist'])->name('发帖课题:搜索下拉列表数据');
@@ -786,7 +786,23 @@ Route::middleware([
         Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubjectLink'])->name('发帖课题:导出日志');
         Route::post('upload-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLink'])->name('发帖课题:上传日志');
 
-        Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('报告管理:操作日志');
+        Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('发帖课题:操作日志');
+    });
+    
+    // PostSubjectArticle 观点文章
+    Route::prefix('post-subject-article')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'store'])->name('观点文章:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'update'])->name('观点文章:数据更新');
+        Route::post('destory', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'destory'])->name('观点文章:数据删除');
+        Route::get('get-product-info', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'getProductInfo'])->name('观点文章:是否重复');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'form'])->name('观点文章:报告单查');
+        Route::get('list', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'list'])->name('观点文章:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'changeStatus'])->name('观点文章:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'searchDroplist'])->name('观点文章:搜索下拉列表数据');
+        Route::get('advanced-filters', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'advancedFilters'])->name('观点文章:高级筛选数据');
+        Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'accept'])->name('观点文章:领取/分配');
+        Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'exportSubjectLink'])->name('观点文章:导出日志');
+        Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('观点文章:操作日志');
     });
 
     // PostSubjectLog 发帖课题操作记录
