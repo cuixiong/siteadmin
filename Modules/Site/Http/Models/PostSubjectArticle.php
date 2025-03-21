@@ -5,17 +5,13 @@ namespace Modules\Site\Http\Models;
 use Illuminate\Support\Facades\DB;
 use Modules\Site\Http\Models\Base;
 
-class PostSubject extends Base
+class PostSubjectArticle extends Base
 {
-    protected $table = 'post_subject';
+    protected $table = 'post_subject_article';
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
         'name',
-        'product_id',
-        'product_category_id',
-        'analyst',
-        'version',
         'propagate_status',
         'last_propagate_time',
         'accepter',
@@ -25,102 +21,13 @@ class PostSubject extends Base
         'sort',
         'updated_by',
         'created_by',
-        'change_status',
         'keywords',
-        'has_cagr'
     ];
 
     protected $attributes = [
         'status' => 1,
         'sort' => 100,
     ];
-
-    /**
-     * 处理查询列表条件数组
-     * @param use Illuminate\Http\Request;
-     */
-    public function HandleWhere($model, $request)
-    {
-        $search = json_decode($request->input('search'));
-        //id 
-        if (isset($search->id) && !empty($search->id)) {
-            $model = $model->where('id', $search->id);
-        }
-
-        //name
-        if (isset($search->name) && !empty($search->name)) {
-            $model = $model->where('name', 'like', '%' . $search->name . '%');
-        }
-
-        //product_category_id
-        if (isset($search->product_category_id) && !empty($search->product_category_id)) {
-            $model = $model->where('product_category_id', $search->product_category_id);
-        }
-        //analyst
-        if (isset($search->analyst) && !empty($search->analyst)) {
-            $model = $model->where('analyst', 'like', '%' . $search->analyst . '%');
-        }
-        // propagate_status 宣传状态
-        if (isset($search->propagate_status) && !empty($search->propagate_status)) {
-            $model = $model->where('propagate_status', $search->propagate_status);
-        }
-
-        // accepter 领取者
-        if (isset($search->accepter) && !empty($search->accepter)) {
-            $model = $model->where('accepter', $search->accepter);
-        }
-        // accept_status 领取状态
-        if (isset($search->accept_status) && $search->accept_status != '') {
-            $model = $model->where('accept_status ', $search->accept_status);
-        }
-
-        // change_status 修改状态
-        if (isset($search->change_status) && $search->change_status != '') {
-            $model = $model->where('change_status ', $search->change_status);
-        }
-
-
-        //sort
-        if (isset($search->sort) && !empty($search->sort)) {
-            $model = $model->where('sort', $search->sort);
-        }
-
-        //status 状态
-        if (isset($search->status) && $search->status != '') {
-            $model = $model->where('status', $search->status);
-        }
-
-        //时间为数组形式
-        //创建时间
-        if (isset($search->created_at) && !empty($search->created_at)) {
-            $createTime = $search->created_at;
-            $model = $model->where('created_at', '>=', $createTime[0]);
-            $model = $model->where('created_at', '<=', $createTime[1]);
-        }
-
-        //更新时间
-        if (isset($search->updated_at) && !empty($search->updated_at)) {
-            $updateTime = $search->updated_at;
-            $model = $model->where('updated_at', '>=', $updateTime[0]);
-            $model = $model->where('updated_at', '<=', $updateTime[1]);
-        }
-
-        // 领取时间
-        if (isset($search->accept_time) && !empty($search->accept_time)) {
-            $acceptTime = $search->accept_time;
-            $model = $model->where('accept_time', '>=', $acceptTime[0]);
-            $model = $model->where('accept_time', '<=', $acceptTime[1]);
-        }
-
-        //最后宣传时间
-        if (isset($search->last_propagate_time) && !empty($search->last_propagate_time)) {
-            $lastTime = $search->last_propagate_time;
-            $model = $model->where('last_propagate_time', '>=', $lastTime[0]);
-            $model = $model->where('last_propagate_time', '<=', $lastTime[1]);
-        }
-        return $model;
-    }
-
 
     //前端高级筛选不同控件类型
     const ADVANCED_FILTERS_TYPE_TEXT = 1; //普通输入框
@@ -317,7 +224,7 @@ class PostSubject extends Base
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.name', $searchItem['content']);
             // return $query->dd();
         }
-        
+
         // 关键词
         if (!empty($search['keywords']) && !empty($search['keywords']['content'])) {
             $condition = self::CONDITION_CONTAIN;
@@ -327,46 +234,6 @@ class PostSubject extends Base
             }
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.keywords', $searchItem['content']);
             // return $query->dd();
-        }
-
-        // 报告ID
-        if (!empty($search['product_id']) && !empty($search['product_id']['content'])) {
-            $condition = self::CONDITION_EQUAL;
-            $searchItem = $search['product_id'];
-            if (isset($searchItem['condition'])) {
-                $condition = $searchItem['condition'];
-            }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.product_id', $searchItem['content']);
-        }
-
-        // 行业
-        if (!empty($search['product_category_id']) && isset($search['product_category_id']['content']) && count($search['product_category_id']['content']) > 0) {
-            $condition = self::CONDITION_IN;
-            $searchItem = $search['product_category_id'];
-            if (isset($searchItem['condition'])) {
-                $condition = $searchItem['condition'];
-            }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.product_category_id', $searchItem['content']);
-        }
-
-        // 分析师
-        if (!empty($search['analyst']) && !empty($search['analyst']['content'])) {
-            $condition = self::CONDITION_CONTAIN;
-            $searchItem = $search['analyst'];
-            if (isset($searchItem['condition'])) {
-                $condition = $searchItem['condition'];
-            }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.analyst', $searchItem['content']);
-        }
-
-        // 版本
-        if (!empty($search['version']) && !empty($search['version']['content'])) {
-            $condition = self::CONDITION_CONTAIN;
-            $searchItem = $search['version'];
-            if (isset($searchItem['condition'])) {
-                $condition = $searchItem['condition'];
-            }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.version', $searchItem['content']);
         }
 
         // 状态
@@ -559,20 +426,8 @@ class PostSubject extends Base
                 'label' => '课题名称',
                 'model' => '',
             ],
-            'product_id' => [
-                'label' => '报告id',
-                'model' => '',
-            ],
-            'product_category_id' => [
-                'label' => '行业',
-                'model' => 'Modules\Site\Http\Models\ProductsCategory',
-            ],
-            'analyst' => [
-                'label' => '分析师',
-                'model' => '',
-            ],
-            'version' => [
-                'label' => '版本',
+            'keywords' => [
+                'label' => '关键词',
                 'model' => '',
             ],
             'accepter' => [

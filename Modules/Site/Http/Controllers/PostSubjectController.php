@@ -11,6 +11,8 @@ use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Site\Http\Models\PostPlatform;
 use Modules\Site\Http\Models\PostSubject;
+use Modules\Site\Http\Models\PostSubjectArticle;
+use Modules\Site\Http\Models\PostSubjectArticleLink;
 use Modules\Site\Http\Models\PostSubjectLink;
 use Modules\Site\Http\Models\PostSubjectLog;
 use Modules\Site\Http\Models\Products;
@@ -329,7 +331,7 @@ class PostSubjectController extends CrudController
 
             // 是否有cagr数据
             $data['propagate_status'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
-            
+
             // 领取人/发帖用户
             $data['accepter_list'] = (new TemplateController())->getSitePostUser();
             if (count($data['accepter_list']) > 0) {
@@ -1480,6 +1482,8 @@ class PostSubjectController extends CrudController
                 if (empty($postLink)) {
                     $postLink = $sheetRow[3] ?? '';
                 }
+                // 第五列keywords
+                $keywords = $sheetRow[4] ?? '';
                 // 过滤-空行
                 if (empty($newsName) && empty($fastLink) && empty($postLink)) {
                     continue;
@@ -1493,19 +1497,48 @@ class PostSubjectController extends CrudController
                 }
 
                 $productId = 0;
-                if (empty($newsName) && empty($fastLink) && !empty($prevProductId)) {
-                    // 观点文章没写报告ID容易导致混乱,因此需判断第一列标题为空
-                    // 只填了发帖链接，其它列没填，则报告ID沿用上一行的数据
-                    $productId = $prevProductId;
-                    $newsName  = $prevNewName;
-                } elseif (!empty($fastLink) && is_numeric($fastLink)) {
-                    // 第三列直接给出了报告ID
-                    $productId = $prevProductId = $fastLink;
+                // 多种情况
+                // 1、有标题、有链接、有报告id - 普通课题
+                if (!empty($newsName) && !empty($postLink) && !empty($fastLink)) {
+                    if (is_numeric($fastLink)) {
+                        $productId = $fastLink;
+                        $prevNewName  = $newsName;
+                    } elseif (
+                        preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) ||
+                        preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches) ||
+                        preg_match('/ProductsSearch%5Bname%5D=([^&]*)/', $fastLink, $matches)
+                    ) {
+                        $productId = $matches[1];
+                    } else {
+                        $subjectFail++;
+                        $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】无法提取报告id';
+                        continue;
+                    }
+                    // 记录该条记录，可能下一条记录为同一组课题
+                    $prevProductId = $productId;
                     $prevNewName  = $newsName;
-                } elseif (!empty($fastLink) && preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) || preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches)) {
-                    // 第三列是官网链接或者后台搜索链接
-                    $productId = $prevProductId = $matches[1];
+                } elseif (!empty($newsName) && !empty($postLink) && empty($fastLink)) {
+                    // 2、有标题、有链接、没有报告id - 观点文章
+                    if (!isset($excelDataArticle[$sheetName][$newsName])) {
+                        $excelDataArticle[$sheetName][$newsName] = [];
+                        $articleNameArray[] = $newsName;
+                    }
+                    $excelDataArticle[$sheetName][$newsName][] = ['rowKey' => $rowKey + 1, 'keywords' => $keywords, 'link' => $postLink];
+                    // 记录该条记录，可能下一条记录为同一组课题
+                    $prevProductId = 0; // 没有报告id，重置为0，以此表示为观点文章
                     $prevNewName  = $newsName;
+                    continue;
+                } elseif (empty($newsName) && empty($fastLink) && !empty($postLink)) {
+                    // 3、只有链接
+                    // 判断上一条是普通课题还是观点文章
+                    if (!empty($prevProductId) && !empty($prevNewName)) {
+                        $productId = $prevProductId;
+                        $newsName  = $prevNewName;
+                    } elseif ($prevProductId == 0 && !empty($prevNewName)) {
+                        $excelDataArticle[$sheetName][$prevNewName][] = ['rowKey' => $rowKey + 1, 'link' => $postLink];
+                        continue;
+                    }
+                } else {
                 }
 
                 if (empty($productId)) {
@@ -1544,134 +1577,309 @@ class PostSubjectController extends CrudController
                 // 查看目前课题是否存在这些标题以及所对应的报告id
                 $isExistNewsNameArray = PostSubject::query()->select(['product_id', 'name'])->whereIn("name", $newsNameArray)->get()?->toArray();
                 $isExistNewsNameArray = $isExistNewsNameArray ? array_column($isExistNewsNameArray, 'product_id', 'name') : [];
-            }
 
-            // 处理每个工作簿的数据
-            foreach ($excelData[$sheetName] as $productId => $postLinkGroup) {
-                // if (!$postLinkGroup || count($postLinkGroup) == 0) {
-                //     // 没有链接数据,跳过
-                //     continue;
-                // }
+                // 处理每个工作簿的数据
+                foreach ($excelData[$sheetName] as $productId => $postLinkGroup) {
+                    // if (!$postLinkGroup || count($postLinkGroup) == 0) {
+                    //     // 没有链接数据,跳过
+                    //     continue;
+                    // }
 
-                $linkData = $postLinkGroup['data'];
-                $newsName = $postLinkGroup['newsName'];
+                    $linkData = $postLinkGroup['data'];
+                    $newsName = $postLinkGroup['newsName'];
 
-                // 过滤数据库已存在的标题
-                $isExistProductId = $isExistNewsNameArray[$newsName] ?? null;
-                if ($isExistProductId && $productId != $isExistProductId) {
-                    // 数据库存在标题且报告id不一致
-                    $subjectFail += count($linkData);
-                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-标题【' . $newsName . '】数据库已存在';
-                    continue;
-                }
-
-                $postSubjectData = PostSubject::query()->select(['id', 'accepter', 'name'])->where("product_id", $productId)->first()?->toArray();
-
-                // if (!$postSubjectData) {
-                //     // 查不到该课题,跳过
-                //     $subjectFail += count($postLinkGroup);
-                //     $failDetails[] = $space . '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
-                //     continue;
-                // }
-
-                if ($postSubjectData) {
-
-                    if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
-                        // 存在领取人的情况下，领取人不一致,跳过
+                    // 过滤数据库已存在的标题
+                    $isExistProductId = $isExistNewsNameArray[$newsName] ?? null;
+                    if ($isExistProductId && $productId != $isExistProductId) {
+                        // 数据库存在标题且报告id不一致
                         $subjectFail += count($linkData);
-                        $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】领取者不一致';
+                        $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-标题【' . $newsName . '】数据库已存在';
                         continue;
                     }
 
-                    $urlData = [];
-                    $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
-                    if ($urlData) {
-                        $urlData = array_map(function ($urlItem) {
-                            $urlItem = trim(trim(trim($urlItem, 'https://'), 'http://'), '/');
-                            return $urlItem;
-                        }, $urlData);
-                    }
-                    $isUpdate = false;
-                    foreach ($linkData as $postLinkValue) {
-                        // 链接一致不变动 新：要求有协议没协议要视为同一个
-                        $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
-                        if (in_array($removeProtocolLink, $urlData)) {
-                            $subjectFail++;
-                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 链接已存在';
+                    $postSubjectData = PostSubject::query()->select(['id', 'accepter', 'name'])->where("product_id", $productId)->first()?->toArray();
+
+                    // if (!$postSubjectData) {
+                    //     // 查不到该课题,跳过
+                    //     $subjectFail += count($postLinkGroup);
+                    //     $failDetails[] = $space . '【' . $sheetName . '】查不到报告id为' . $productId . '的课题';
+                    //     continue;
+                    // }
+
+                    if ($postSubjectData) {
+
+                        if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
+                            // 存在领取人的情况下，领取人不一致,跳过
+                            $subjectFail += count($linkData);
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】领取者不一致';
                             continue;
-                        } else {
-                            // 获取平台id
-                            $postPlatformId = 0;
-                            if ($postPlatformData) {
-                                foreach ($postPlatformData as $postPlatformItem) {
-                                    if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
-                                        $postPlatformId = $postPlatformItem['id'];
-                                        break;
-                                    }
-                                }
-                            } else {
-                                continue;
-                            }
-                            if (!isset($postPlatformId) || empty($postPlatformId)) {
+                        }
+
+                        $urlData = [];
+                        $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectData['id']])->pluck('link')?->toArray() ?? [];
+                        if ($urlData) {
+                            $urlData = array_map(function ($urlItem) {
+                                $urlItem = trim(trim(trim($urlItem, 'https://'), 'http://'), '/');
+                                return $urlItem;
+                            }, $urlData);
+                        }
+                        $isUpdate = false;
+                        foreach ($linkData as $postLinkValue) {
+                            // 链接一致不变动 新：要求有协议没协议要视为同一个
+                            $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                            if (in_array($removeProtocolLink, $urlData)) {
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 链接已存在';
                                 continue;
-                            }
-                            // 新增
-                            $insertChild = [];
-                            $insertChild['post_subject_id'] = $postSubjectData['id'];
-                            $insertChild['link'] = $postLinkValue['link'];
-                            $insertChild['post_platform_id'] = $postPlatformId;
-                            $insertChild['status'] = 1;
-                            $insertChild['sort'] = 100;
-                            $postSubjectLinkModel = new PostSubjectLink();
-                            $recordChild = $postSubjectLinkModel->create($insertChild);
-                            if ($recordChild) {
-                                $subjectSuccess++;
-                                $isUpdate = true;
+                            } else {
+                                // 获取平台id
+                                $postPlatformId = 0;
+                                if ($postPlatformData) {
+                                    foreach ($postPlatformData as $postPlatformItem) {
+                                        if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
+                                            $postPlatformId = $postPlatformItem['id'];
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    continue;
+                                }
+                                if (!isset($postPlatformId) || empty($postPlatformId)) {
+                                    $subjectFail++;
+                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                    continue;
+                                }
+                                // 新增
+                                $insertChild = [];
+                                $insertChild['post_subject_id'] = $postSubjectData['id'];
+                                $insertChild['link'] = $postLinkValue['link'];
+                                $insertChild['post_platform_id'] = $postPlatformId;
+                                $insertChild['status'] = 1;
+                                $insertChild['sort'] = 100;
+                                $postSubjectLinkModel = new PostSubjectLink();
+                                $recordChild = $postSubjectLinkModel->create($insertChild);
+                                if ($recordChild) {
+                                    $subjectSuccess++;
+                                    $isUpdate = true;
+                                }
                             }
                         }
-                    }
 
-                    $recordUpdate = [];
-                    // 如果新增了链接，更新课题时间
-                    if ($isUpdate) {
-                        $recordUpdate['propagate_status'] = 1;
-                        $recordUpdate['last_propagate_time'] = time();
-                        $recordUpdate['accept_time'] = time();
-                        $recordUpdate['accept_status'] = 1;
-                        $recordUpdate['accepter'] = $accepter;
-                        $recordUpdate['change_status'] = 0;
+                        $recordUpdate = [];
+                        // 如果新增了链接，更新课题时间
+                        if ($isUpdate) {
+                            $recordUpdate['propagate_status'] = 1;
+                            $recordUpdate['last_propagate_time'] = time();
+                            $recordUpdate['accept_time'] = time();
+                            $recordUpdate['accept_status'] = 1;
+                            $recordUpdate['accepter'] = $accepter;
+                            $recordUpdate['change_status'] = 0;
+                        }
+                        // 标题不存在，更新标题
+                        if (empty($isExistProductId)) {
+                            $recordUpdate['name'] = $newsName;
+                            $details[] = $space . $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】课题名称从【' . $postSubjectData['name'] . '】修改成【' . $newsName . '】';
+                        }
+                        if (count($recordUpdate) > 0) {
+                            PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
+                        }
+                    } else {
+                        // 查不到该课题，查询报告存在并新增
+                        $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])->where("id", $productId)->first()?->toArray();
+                        if ($productData) {
+                            $isInsert = false;
+                            //新增课题
+                            $recordInsert = [];
+                            $recordInsert['product_id'] = $productData['id'];
+                            $recordInsert['name'] = $newsName;
+                            $recordInsert['product_category_id'] = $productData['category_id'];
+                            $recordInsert['version'] =  intval($productData['price'] ?? 0);
+                            $recordInsert['analyst'] =  $productData['author'];
+                            $recordInsert['accepter'] = $accepter;
+                            $recordInsert['accept_time'] = time();
+                            $recordInsert['accept_status'] = 1;
+                            $recordInsert['keywords'] = $productData['keywords'];
+                            $recordInsert['has_cagr'] = !empty($productData['cagr']) ? 1 : 0;
+                            $postSubjectData = PostSubject::create($recordInsert);
+
+                            //处理链接
+                            foreach ($linkData as $postLinkValue) {
+                                // 获取平台id
+                                $postPlatformId = 0;
+                                if ($postPlatformData) {
+                                    foreach ($postPlatformData as $postPlatformItem) {
+                                        if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
+                                            $postPlatformId = $postPlatformItem['id'];
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    continue;
+                                }
+                                if (!isset($postPlatformId) || empty($postPlatformId)) {
+                                    $subjectFail++;
+                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                    continue;
+                                }
+                                // 新增
+                                $insertChild = [];
+                                $insertChild['post_subject_id'] = $postSubjectData['id'];
+                                $insertChild['link'] = $postLinkValue['link'];
+                                $insertChild['post_platform_id'] = $postPlatformId;
+                                $insertChild['status'] = 1;
+                                $insertChild['sort'] = 100;
+                                $postSubjectLinkModel = new PostSubjectLink();
+                                $recordChild = $postSubjectLinkModel->create($insertChild);
+                                if ($recordChild) {
+                                    $subjectSuccess++;
+                                    $isInsert = true;
+                                }
+                            }
+
+                            $recordInsert = [];
+                            if ($isInsert) {
+                                $recordInsert['propagate_status'] = 1;
+                                $recordInsert['last_propagate_time'] = time();
+                                // $recordInsert['accept_time'] = time();
+                                // $recordInsert['accept_status'] = 1;
+                                // $recordInsert['accepter'] = $accepter;
+                                $recordInsert['change_status'] = 0;
+                            }
+                            if (count($recordInsert) > 0) {
+                                PostSubject::query()->where("id", $postSubjectData['id'])->update($recordInsert);
+                            }
+                        } else {
+                            // 查不到该报告,跳过
+                            $subjectFail += count($linkData);
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】查不到报告id为' . $productId . '的报告，无法新增课题';
+                            continue;
+                        }
                     }
-                    // 标题不存在，更新标题
-                    if (empty($isExistProductId)) {
-                        $recordUpdate['name'] = $newsName;
-                        $details[] = $space . $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】课题名称从【' . $postSubjectData['name'] . '】修改成【' . $newsName . '】';
-                    }
-                    if (count($recordUpdate) > 0) {
-                        PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
-                    }
-                } else {
-                    // 查不到该课题，查询报告存在并新增
-                    $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])->where("id", $productId)->first()?->toArray();
-                    if ($productData) {
-                        $isInsert = false;
-                        //新增课题
+                }
+            }
+            $isExistArticleNameArray = [];
+            if (count($excelDataArticle[$sheetName]) > 0) {
+                // 查看目前观点文章是否存在这些标题
+                $articleNameArray = array_keys($excelDataArticle[$sheetName]);
+                $isExistArticleNameArray = PostSubjectArticle::query()->select(['id', 'name', 'accepter'])->whereIn('name', $articleNameArray)->get()?->toArray()??[];
+                $isExistArticleNameArray = $isExistArticleNameArray ? array_column($isExistArticleNameArray, null, 'name') : [];
+
+                foreach ($excelDataArticle[$sheetName] as $articleName => $linkData) {
+
+                    if (isset($isExistArticleNameArray[$articleName])) {
+                        $postSubjectData = $isExistArticleNameArray[$articleName];
+
+                        if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
+                            // 存在领取人的情况下，领取人不一致,跳过
+                            $subjectFail += count($linkData);
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】- 观点文章已存在，检测到领取者不一致';
+                            continue;
+                        }
+
+                        $urlData = [];
+                        $urlData = PostSubjectArticleLink::query()->select(['link'])->where('post_subject_id',$postSubjectData['id'])->pluck('link')?->toArray()??[];
+                        if ($urlData) {
+                            $urlData = array_map(function ($urlItem) {
+                                $urlItem = trim(trim(trim($urlItem, 'https://'), 'http://'), '/');
+                                return $urlItem;
+                            }, $urlData);
+                        }
+                        $isUpdate = false;
+                        $existLinkBySubject = []; //单个课题中链接重复
+
+                        foreach ($linkData as $postLinkValue) {
+                            // 链接一致不变动; 新：要求有协议没协议要视为同一个
+                            $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                            if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                                //单个课题中链接重复
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                                continue;
+                            }
+                            $existLinkBySubject[] = $removeProtocolLink;
+                            if (in_array($removeProtocolLink, $urlData)) {
+                                $subjectFail++;
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 链接已存在';
+                                continue;
+                            } else {
+                                // 获取平台id
+                                $postPlatformId = 0;
+                                if ($postPlatformData) {
+                                    foreach ($postPlatformData as $postPlatformItem) {
+                                        if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
+                                            $postPlatformId = $postPlatformItem['id'];
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    continue;
+                                }
+                                if (!isset($postPlatformId) || empty($postPlatformId)) {
+                                    $subjectFail++;
+                                    $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                    continue;
+                                }
+                                
+                                // 新增
+                                $insertChild = [];
+                                $insertChild['post_subject_id'] = $postSubjectData['id'];
+                                $insertChild['link'] = $postLinkValue['link'];
+                                $insertChild['post_platform_id'] = $postPlatformId;
+                                $insertChild['status'] = 1;
+                                $insertChild['sort'] = 100;
+                                $postSubjectLinkModel = new PostSubjectArticleLink();
+                                $recordChild = $postSubjectLinkModel->create($insertChild);
+
+                                if ($recordChild) {
+                                    $subjectSuccess++;
+                                    $isUpdate = true;
+                                }
+                            }
+                        }
+
+                        $recordUpdate = [];
+                        // 如果新增了链接，更新课题时间
+                        if ($isUpdate) {
+                            $recordUpdate['propagate_status'] = 1;
+                            $recordUpdate['last_propagate_time'] = time();
+                            $recordUpdate['accept_time'] = time();
+                            $recordUpdate['accept_status'] = 1;
+                            $recordUpdate['accepter'] = $accepter;
+                            if (isset($linkData[0]['keywords']) && !empty($linkData[0]['keywords'])) {
+                                $recordUpdate['keywords'] = $linkData[0]['keywords'] ?? '';
+                            }
+                        }
+                        if (count($recordUpdate) > 0) {
+                            PostSubjectArticle::updateAll($recordUpdate, ['id' => $postSubjectData['id']]);
+                        }
+                    } else {
+
+                        if (!isset($linkData[0]['keywords']) || empty($linkData[0]['keywords'])) {
+                            $subjectFail += count($linkData);
+                            //单个课题中链接重复
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . (($linkData[0]['rowKey'] + 1) ?? '??') . '行】' . $linkData[0]['link'] . ' 缺少关键词';
+                            continue;
+                        }
+                        //新增观点文章
                         $recordInsert = [];
-                        $recordInsert['product_id'] = $productData['id'];
-                        $recordInsert['name'] = $newsName;
-                        $recordInsert['product_category_id'] = $productData['category_id'];
-                        $recordInsert['version'] =  intval($productData['price'] ?? 0);
-                        $recordInsert['analyst'] =  $productData['author'];
+                        $recordInsert['name'] = $articleName;
+                        $recordInsert['keywords'] =  $linkData[0]['keywords'] ?? '';
                         $recordInsert['accepter'] = $accepter;
                         $recordInsert['accept_time'] = time();
                         $recordInsert['accept_status'] = 1;
-                        $recordInsert['keywords'] = $productData['keywords'];
-                        $recordInsert['has_cagr'] = !empty($productData['cagr']) ? 1 : 0;
-                        $postSubjectData = PostSubject::create($recordInsert);
+                        $postSubjectData = PostSubjectArticle::create($recordInsert);
 
                         //处理链接
+                        $existLinkBySubject = []; //单个课题中链接重复
                         foreach ($linkData as $postLinkValue) {
+
+                            // 链接一致不变动; 新：要求有协议没协议要视为同一个
+                            $removeProtocolLink = trim(trim(trim($postLinkValue['link'], 'https://'), 'http://'), '/');
+                            if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                                //单个课题中链接重复
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                                continue;
+                            }
+                            $existLinkBySubject[] = $removeProtocolLink;
                             // 获取平台id
                             $postPlatformId = 0;
                             if ($postPlatformData) {
@@ -1686,18 +1894,20 @@ class PostSubjectController extends CrudController
                             }
                             if (!isset($postPlatformId) || empty($postPlatformId)) {
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                 continue;
                             }
-                            // 新增
-                            $insertChild = [];
-                            $insertChild['post_subject_id'] = $postSubjectData['id'];
-                            $insertChild['link'] = $postLinkValue['link'];
-                            $insertChild['post_platform_id'] = $postPlatformId;
-                            $insertChild['status'] = 1;
-                            $insertChild['sort'] = 100;
-                            $postSubjectLinkModel = new PostSubjectLink();
-                            $recordChild = $postSubjectLinkModel->create($insertChild);
+                            
+                                // 新增
+                                $insertChild = [];
+                                $insertChild['post_subject_id'] = $postSubjectData['id'];
+                                $insertChild['link'] = $postLinkValue['link'];
+                                $insertChild['post_platform_id'] = $postPlatformId;
+                                $insertChild['status'] = 1;
+                                $insertChild['sort'] = 100;
+                                $postSubjectLinkModel = new PostSubjectArticleLink();
+                                $recordChild = $postSubjectLinkModel->create($insertChild);
+                                
                             if ($recordChild) {
                                 $subjectSuccess++;
                                 $isInsert = true;
@@ -1708,19 +1918,10 @@ class PostSubjectController extends CrudController
                         if ($isInsert) {
                             $recordInsert['propagate_status'] = 1;
                             $recordInsert['last_propagate_time'] = time();
-                            // $recordInsert['accept_time'] = time();
-                            // $recordInsert['accept_status'] = 1;
-                            // $recordInsert['accepter'] = $accepter;
-                            $recordInsert['change_status'] = 0;
                         }
                         if (count($recordInsert) > 0) {
-                            PostSubject::query()->where("id", $postSubjectData['id'])->update($recordInsert);
+                            PostSubjectArticle::query()->where("id", $postSubjectData['id'])->update($recordInsert);
                         }
-                    } else {
-                        // 查不到该报告,跳过
-                        $subjectFail += count($linkData);
-                        $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】查不到报告id为' . $productId . '的报告，无法新增课题';
-                        continue;
                     }
                 }
             }
