@@ -462,6 +462,16 @@ class PostSubject extends Base
             $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.change_status', $searchItem['content']);
         }
 
+        // 是否有数据
+        if (!empty($search['has_cagr']) && !empty($search['has_cagr']['content'])) {
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['has_cagr'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.has_cagr', $searchItem['content']);
+        }
+
         // 平台-子查询
         if (!empty($search['post_platform_id']) && isset($search['post_platform_id']['content']) && count($search['post_platform_id']['content']) > 0) {
 

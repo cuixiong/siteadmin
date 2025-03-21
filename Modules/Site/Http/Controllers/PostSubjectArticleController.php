@@ -66,6 +66,7 @@ class PostSubjectArticleController extends CrudController
                 'accepter',
                 'accept_time',
                 'accept_status',
+                'keywords',
             ];
             $model = $model->select($fields);
             // 数据排序
@@ -621,7 +622,7 @@ class PostSubjectArticleController extends CrudController
         $input = $request->all();
         $id = $input['id'] ?? '';
         $name = $input['name'] ?? '';
-        if (!empty($product_name)) {
+        if (!empty($name)) {
 
             $query = PostSubjectArticle::query()->where('name', trim($name));
             if (!empty($id)) {
@@ -629,7 +630,7 @@ class PostSubjectArticleController extends CrudController
             }
             $data  = $query->value('id');
 
-            ReturnJson(true, trans('lang.request_success'), $data);
+            ReturnJson(true, trans('lang.request_success'), $data ?? 0);
         }
         ReturnJson(true, trans('lang.request_success'), 0);
     }
