@@ -1036,7 +1036,7 @@ class PostSubjectArticleController extends CrudController
                             // 名称
                             $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                             // 版本
-                            $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
+                            // $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
                             // 搜索链接
                             // $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
                             // $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
@@ -1060,7 +1060,7 @@ class PostSubjectArticleController extends CrudController
                     // 名称
                     $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                     // 版本
-                    $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
+                    // $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
                     // 关键词
                     $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']);
                     // 是否有数据
