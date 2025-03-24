@@ -386,22 +386,29 @@ class PostSubjectController extends CrudController
                 DB::rollBack();
                 ReturnJson(false, trans('lang.add_error'));
             }
+
+
             // 新增子项
             $hasChild = false;
             if ($urlData && is_array($urlData) && count($urlData) > 0) {
+
+                $urlData = array_map(function ($item) {
+                    return trim($item['link'] ?? '');
+                }, $urlData);
+
                 $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
 
+                $existLinkBySubject = [];
                 foreach ($urlData as $key => $urlItem) {
 
                     // 没填跳过
-                    if (empty(trim($urlItem['link'] ?? ''))) {
+                    if (empty(trim($urlItem ?? ''))) {
                         continue;
                     }
 
                     if ($postPlatformData) {
-
                         foreach ($postPlatformData as $postPlatformItem) {
-                            if (strpos($urlItem['link'], $postPlatformItem['keywords']) !== false) {
+                            if (strpos($urlItem, $postPlatformItem['keywords']) !== false) {
                                 $postPlatformId = $postPlatformItem['id'];
                                 break;
                             }
@@ -413,9 +420,15 @@ class PostSubjectController extends CrudController
                         continue;
                     }
 
+                    $removeProtocolLink = trim(trim(trim(trim($urlItem), 'https://'), 'http://'), '/');
+                    if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                        continue;
+                    }
+                    $existLinkBySubject[] = $removeProtocolLink;
+
                     $inputChild = [];
                     $inputChild['post_subject_id'] = $record->id;
-                    $inputChild['link'] = $urlItem['link'];
+                    $inputChild['link'] = $urlItem;
                     $inputChild['post_platform_id'] = $postPlatformId;
                     $inputChild['status'] = 1;
                     $inputChild['sort'] = 100;
@@ -563,6 +576,7 @@ class PostSubjectController extends CrudController
                 $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
                 // 新增子项
                 $insertCount = 0;
+                $existLinkBySubject = [];
                 foreach ($insertUrl as $urlItem) {
                     // 没填跳过
                     if (empty(trim($urlItem ?? ''))) {
@@ -585,6 +599,12 @@ class PostSubjectController extends CrudController
                         ReturnJson(false, '【' . $urlItem . '】 没有对应平台');
                         continue;
                     }
+
+                    $removeProtocolLink = trim(trim(trim(trim($urlItem), 'https://'), 'http://'), '/');
+                    if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                        continue;
+                    }
+                    $existLinkBySubject[] = $removeProtocolLink;
 
                     $inputChild = [];
                     $inputChild['post_subject_id'] = $model->id;
@@ -1620,7 +1640,7 @@ class PostSubjectController extends CrudController
                         if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
                             // 存在领取人的情况下，领取人不一致,跳过
                             $subjectFail += count($linkData);
-                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId .'】领取者不一致';
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】领取者不一致';
                             continue;
                         }
 
@@ -1770,7 +1790,7 @@ class PostSubjectController extends CrudController
             if (count($excelDataArticle[$sheetName]) > 0) {
                 // 查看目前观点文章是否存在这些标题
                 $articleNameArray = array_keys($excelDataArticle[$sheetName]);
-                $isExistArticleNameArray = PostSubjectArticle::query()->select(['id', 'name', 'accepter'])->whereIn('name', $articleNameArray)->get()?->toArray()??[];
+                $isExistArticleNameArray = PostSubjectArticle::query()->select(['id', 'name', 'accepter'])->whereIn('name', $articleNameArray)->get()?->toArray() ?? [];
                 $isExistArticleNameArray = $isExistArticleNameArray ? array_column($isExistArticleNameArray, null, 'name') : [];
 
                 foreach ($excelDataArticle[$sheetName] as $articleName => $linkData) {
@@ -1786,7 +1806,7 @@ class PostSubjectController extends CrudController
                         }
 
                         $urlData = [];
-                        $urlData = PostSubjectArticleLink::query()->select(['link'])->where('post_subject_id',$postSubjectData['id'])->pluck('link')?->toArray()??[];
+                        $urlData = PostSubjectArticleLink::query()->select(['link'])->where('post_subject_id', $postSubjectData['id'])->pluck('link')?->toArray() ?? [];
                         if ($urlData) {
                             $urlData = array_map(function ($urlItem) {
                                 $urlItem = trim(trim(trim(trim($urlItem), 'https://'), 'http://'), '/');
@@ -1828,7 +1848,7 @@ class PostSubjectController extends CrudController
                                     $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                     continue;
                                 }
-                                
+
                                 // 新增
                                 $insertChild = [];
                                 $insertChild['post_subject_id'] = $postSubjectData['id'];
@@ -1907,17 +1927,17 @@ class PostSubjectController extends CrudController
                                 $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                 continue;
                             }
-                            
-                                // 新增
-                                $insertChild = [];
-                                $insertChild['post_subject_id'] = $postSubjectData['id'];
-                                $insertChild['link'] = $postLinkValue['link'];
-                                $insertChild['post_platform_id'] = $postPlatformId;
-                                $insertChild['status'] = 1;
-                                $insertChild['sort'] = 100;
-                                $postSubjectLinkModel = new PostSubjectArticleLink();
-                                $recordChild = $postSubjectLinkModel->create($insertChild);
-                                
+
+                            // 新增
+                            $insertChild = [];
+                            $insertChild['post_subject_id'] = $postSubjectData['id'];
+                            $insertChild['link'] = $postLinkValue['link'];
+                            $insertChild['post_platform_id'] = $postPlatformId;
+                            $insertChild['status'] = 1;
+                            $insertChild['sort'] = 100;
+                            $postSubjectLinkModel = new PostSubjectArticleLink();
+                            $recordChild = $postSubjectLinkModel->create($insertChild);
+
                             if ($recordChild) {
                                 $subjectSuccess++;
                                 $isInsert = true;
