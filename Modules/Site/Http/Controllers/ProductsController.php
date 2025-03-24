@@ -1955,15 +1955,15 @@ class ProductsController extends CrudController {
                     foreach ($matchWordsList as $matchWordsFor) {
                         $pattern = preg_quote($matchWordsFor, '/');
                         $pattern = '/'.$pattern.'/';
-                        if (!preg_match($pattern, $description)) {
-                            $matchRes = false;
+                        if (preg_match($pattern, $description)) {
+                            $matchRes = true;
                             break;
                         } else {
-                            $matchRes = true;
+                            $matchRes = false;
                         }
                     }
                     if ($matchRes) {
-                        //所有关键词匹配 , 放入数组
+                        // 2025-03-24新需求：改为任一关键词匹配
                         $templateCateList[] = $tcInfo;
                     }
                 }
