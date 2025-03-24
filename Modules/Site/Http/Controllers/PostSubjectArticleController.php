@@ -1032,15 +1032,15 @@ class PostSubjectArticleController extends CrudController
                             // 搜索链接
                             $sheet->setCellValue([2 + 1, $rowIndex + 1], '');
                         } else {
-                            $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                            // $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
                             // 名称
                             $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                             // 版本
                             $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
                             // 搜索链接
-                            $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
-                            $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
-                            $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                            // $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                            // $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                            // $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
 
                             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
                             // $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
@@ -1056,7 +1056,7 @@ class PostSubjectArticleController extends CrudController
                 } elseif (!isset($subjectLinkGroup[$subject['id']]) && $subject) {
                     // 没有宣传链接也要把课题写入文件
                     $subjectSuccess++;
-                    $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                    // $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
                     // 名称
                     $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                     // 版本
@@ -1066,9 +1066,9 @@ class PostSubjectArticleController extends CrudController
                     // 是否有数据
                     // $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否');
                     // 搜索链接
-                    $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
-                    $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
-                    $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                    // $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                    // $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                    // $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                     $rowIndex++;
                 }
             }
