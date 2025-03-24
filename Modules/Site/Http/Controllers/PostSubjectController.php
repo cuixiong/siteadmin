@@ -1455,6 +1455,7 @@ class PostSubjectController extends CrudController
         $sheetNames = $spreadsheet->getSheetNames();
         $accepter = $request->user->id;
         $excelData = [];
+        $excelDataArticle = [];
         foreach ($sheetNames as $sheetIndex => $sheetName) {
 
             $sheet = $spreadsheet->getSheet($sheetIndex);
@@ -1471,7 +1472,9 @@ class PostSubjectController extends CrudController
             $prevProductId = 0;
             $prevNewName = '';
             $excelData[$sheetName] = [];
+            $excelDataArticle[$sheetName] = [];
             $newsNameArray = [];
+            $articleNameArray = [];
             // 原始数据
             $sheetData = $sheet->toArray();
             foreach ($sheetData as $rowKey => $sheetRow) {
