@@ -1653,9 +1653,19 @@ class PostSubjectController extends CrudController
                             }, $urlData);
                         }
                         $isUpdate = false;
+                        $existLinkBySubject = [];
                         foreach ($linkData as $postLinkValue) {
                             // 链接一致不变动 新：要求有协议没协议要视为同一个
                             $removeProtocolLink = trim(trim(trim(trim($postLinkValue['link']), 'https://'), 'http://'), '/');
+                            
+                            if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                                //单个课题中链接重复
+                                $subjectFail++;
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                                continue;
+                            }
+                            $existLinkBySubject[] = $removeProtocolLink;
+
                             if (in_array($removeProtocolLink, $urlData)) {
                                 $subjectFail++;
                                 $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 链接已存在';
