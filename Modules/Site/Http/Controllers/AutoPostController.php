@@ -62,7 +62,7 @@ class AutoPostController extends CrudController {
         $productCategoryData = ProductsCategory::query()->pluck('name', 'id')->toArray();
         $productCategoryIds = explode(',', $autoPostConfig['product_category_ids']);
         // 定位要发帖的报告
-        $productOrginData = Products::query()->select(['id', 'keywords', 'published_date', 'category_id'])
+        $productOrginData = Products::query()->select(['id', 'keywords', 'name', 'published_date', 'category_id'])
                                     ->where('status', 1)
                                     ->whereIn('category_id', $productCategoryIds)
                                     ->where('id', '>', $autoPostConfig['start_product_id'])
@@ -70,16 +70,18 @@ class AutoPostController extends CrudController {
                                     ->orderBy('id', 'asc')
                                     ->get()->toArray();
         if (empty($productOrginData)) {
+            echo '没有数据'.PHP_EOL;
             return false;
         }
         // 检查是否存在重复记录
-        $keywordArray = array_values(array_unique(array_column($productOrginData, 'keywords')));
+        $productNameArray = array_values(array_unique(array_column($productOrginData, 'name')));
         $mysql = $this->useRemoteDb($autoPostConfig);
         $existKeywordArray = DB::connection($mysql)->table('wp_posts')
-                               ->whereIn("post_name", $keywordArray)->pluck('post_name')->toArray();
+                               ->whereIn("post_name", $productNameArray)->pluck('post_name')->toArray();
         $this->uselocalDb($defaultDbConfig);
+        $handlerProductList = [];
         foreach ($productOrginData as $key => &$item) {
-            if (in_array($item['keywords'], $existKeywordArray)) {
+            if (in_array($item['name'], $existKeywordArray)) {
                 // 数据库去重
                 $this->insertAutoPostLog(
                     $autoPostConfig['code'], $item['id'], AutoPostLog::POST_STATUS_EXIST, '数据库已存在'
@@ -88,20 +90,21 @@ class AutoPostController extends CrudController {
             }
             //行业转换
             $item['wp_category_id'] = $wpCategoryColumn[$productCategoryData[$item['category_id']]] ?? 1;
+            $handlerProductList[] = $item;
         }
-        // 修改起始id
-        $lastProductId = $productOrginData[count($productOrginData) - 1]['id'];
-        AutoPostConfig::query()->where('id', $autoPostConfig['id'])
-                      ->update(['start_product_id' => $lastProductId]);
-        if (!empty($productOrginData)) {
-            $productArray = array_chunk($productOrginData, 10);
+        if (!empty($handlerProductList)) {
+            $productArray = array_chunk($handlerProductList, 100);
             foreach ($productArray as $key => $group) {
                 $this->insertWpPost($group, $autoPostConfig, $defaultDbConfig);
             }
-            echo '加入队列成功';
+            echo '加入队列成功'.PHP_EOL;
         } else {
-            echo '没有数据';
+            echo '过滤重名报告后无数据'.PHP_EOL;
         }
+        // 修改起始id
+        $lastProductId = end($productOrginData)['id'];
+        AutoPostConfig::query()->where('id', $autoPostConfig['id'])
+                      ->update(['start_product_id' => $lastProductId]);
     }
 
     private function useRemoteDb($autoPostConfig): string {
@@ -207,6 +210,7 @@ class AutoPostController extends CrudController {
         $productData = Products::query()->select([
                                                      'id',
                                                      'category_id',
+                                                     'name',
                                                      'keywords',
                                                      'url',
                                                      'published_date',
@@ -238,7 +242,7 @@ class AutoPostController extends CrudController {
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '缺少详情数据');
                     continue;
                 }
-                $productDescription =  json_decode(json_encode($productDescription), true);
+                $productDescription = json_decode(json_encode($productDescription), true);
                 $product = array_merge($item, $productDescription ?? []);
                 $templateCategoryId = $this->getTemplateCategoryId($wordCategory, $product['description']);
                 $product['titleTemplate'] = [];
@@ -286,16 +290,14 @@ class AutoPostController extends CrudController {
                                                                                                   - 1]['id'];
                 $product['contentTemplate']['content'] = $newContentTemplateArray[$templateCategoryId][$tempContentNum
                                                                                                        - 1]['content'];
-
-
                 //计算获取文章信息
                 $articleInfo = $this->articleInfo(
                     $product['titleTemplate']['content'], $product['contentTemplate']['content'], $product
                 );
-
                 $timestamp = time();
                 $time = date('Y-m-d H:i:s', $timestamp);
-                $articleKeyword = $articleInfo['keyword'];
+                //$articleKeyword = $articleInfo['keyword'];
+                $productName = $item['name'];
                 $articleTitle = $articleInfo['title'];
                 $articleContent = $articleInfo['content'];
                 $articleDescription = $articleInfo['description'];
@@ -315,7 +317,7 @@ class AutoPostController extends CrudController {
                     'post_date_gmt'         => $time,
                     'post_content'          => $articleContent,
                     'post_title'            => $articleTitle,
-                    'post_name'             => $articleKeyword,
+                    'post_name'             => $productName,
                     'post_modified'         => $time,
                     'post_modified_gmt'     => $time,
                 ];
@@ -392,7 +394,6 @@ class AutoPostController extends CrudController {
                     $product['contentTemplate']['id']
                 );
             } catch (\Exception $e) {
-                dd($e->getMessage());
                 $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_ERROR, $e->getMessage());
             }
         }
@@ -441,7 +442,6 @@ class AutoPostController extends CrudController {
         $toc = $product['table_of_content'];
         $toc = str_replace("\r\n", "\n", $toc);
         //$toc = $this->tocHandle($toc);
-
         $definition = $product['definition'];
         $overview = $product['overview'];
         // 类型
