@@ -27,6 +27,14 @@ class PostSubjectLogController extends CrudController
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
+
+            // $subjectOwnId = NULL;
+            if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                // $subjectOwnId = -1;
+            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
+                $model = $model->where('created_by', $request->user->id);
+            }
+
             $model = $ModelInstance->HandleWhere($model, $request);
             // 总数量
             $total = $model->count();
@@ -81,10 +89,10 @@ class PostSubjectLogController extends CrudController
             foreach ($logType as $key => $value) {
                 $data['type'][] = ['label' => $value, 'value' => $key];
             }
-            
+
             $createrIds = PostSubjectLog::query()->distinct()->select('created_by')->pluck('created_by');
             $data['created_by'] = $createrIds;
-        
+
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
