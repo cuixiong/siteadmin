@@ -340,12 +340,12 @@ class CheckNginxLoadCommand extends Command {
 //            if (empty($temp_content)) {
 //                return false;
 //            }
-            //$banStr = '#czx';
 //            $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
-            $temp_file_path = $siteNginxConfInfo['conf_temp_path'];
             //$temp_file_path = "/www/wwwroot/nginx_shell/temp_site_{$site}_nginx.conf";
-            file_put_contents($temp_file_path, $banStr);
-
+            //file_put_contents($temp_file_path, $banStr);
+            $temp_file_path = $siteNginxConfInfo['conf_temp_path'];
+            $echo_sh_commands = "echo '{$banStr}' > {$temp_file_path}";
+            $execute_reload_res = $this->executeCommands($ssh, $echo_sh_commands);
             //$this->reloadNginx();
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
             $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);
