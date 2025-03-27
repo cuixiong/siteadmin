@@ -319,6 +319,14 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '@@@@', $productArrData['keywords']);
         // 处理模板变量   keywords 兼容@@@@
         $tempContent = $this->writeTempWord($tempContent, '{{keywords}}', $productArrData['keywords']);
+        
+        // 处理模板变量   五种语言 keywords
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_cn}}', $productArrData['keywords_cn']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_en}}', $productArrData['keywords_en']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_jp}}', $productArrData['keywords_jp']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_kr}}', $productArrData['keywords_kr']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_de}}', $productArrData['keywords_de']);
+
         // 处理模板变量  {{id}}
         $tempContent = $this->writeTempWord($tempContent, '{{id}}', $productId);
         // 处理模板变量  {{title_en}}
