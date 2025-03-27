@@ -436,6 +436,36 @@ EOF;
         } else {
             $productArrData['keywords'] = '';
         }
+        //关键字(中)
+        if (isset($product->keywords_cn)) {
+            $productArrData['keywords_cn'] = $product->keywords_cn;
+        } else {
+            $productArrData['keywords_cn'] = '';
+        }
+        //关键字(英)
+        if (isset($product->keywords_en)) {
+            $productArrData['keywords_en'] = $product->keywords_en;
+        } else {
+            $productArrData['keywords_en'] = '';
+        }
+        //关键字(日)
+        if (isset($product->keywords_jp)) {
+            $productArrData['keywords_jp'] = $product->keywords_jp;
+        } else {
+            $productArrData['keywords_jp'] = '';
+        }
+        //关键字(韩)
+        if (isset($product->keywords_kr)) {
+            $productArrData['keywords_kr'] = $product->keywords_kr;
+        } else {
+            $productArrData['keywords_kr'] = '';
+        }
+        //关键字(德)
+        if (isset($product->keywords_de)) {
+            $productArrData['keywords_de'] = $product->keywords_de;
+        } else {
+            $productArrData['keywords_de'] = '';
+        }
         //类型
         if (!empty($product->classification)) {
             $productArrData['classification'] = $product->classification;

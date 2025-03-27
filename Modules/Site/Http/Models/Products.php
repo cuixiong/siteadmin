@@ -28,6 +28,11 @@ class Products extends Base {
             'price',    //基础价
             'status',   //状态
             'keywords',  //关键词
+            'keywords_cn',
+            'keywords_en',
+            'keywords_jp',
+            'keywords_kr',
+            'keywords_de',
             'url',  //自定义链接
             'published_date', //出版日期
             'sort', //排序
@@ -116,6 +121,26 @@ class Products extends Base {
         // keywords
         if (isset($search->keywords) && !empty($search->keywords)) {
             $model = $model->where('keywords', 'like', '%'.$search->keywords.'%');
+        }
+        // keywords_cn
+        if (isset($search->keywords_cn) && !empty($search->keywords_cn)) {
+            $model = $model->where('keywords_cn', 'like', '%'.$search->keywords_cn.'%');
+        }
+        // keywords_en
+        if (isset($search->keywords_en) && !empty($search->keywords_en)) {
+            $model = $model->where('keywords_en', 'like', '%'.$search->keywords_en.'%');
+        }
+        // keywords_jp
+        if (isset($search->keywords_jp) && !empty($search->keywords_jp)) {
+            $model = $model->where('keywords_jp', 'like', '%'.$search->keywords_jp.'%');
+        }
+        // keywords_kr
+        if (isset($search->keywords_kr) && !empty($search->keywords_kr)) {
+            $model = $model->where('keywords_kr', 'like', '%'.$search->keywords_kr.'%');
+        }
+        // keywords_de
+        if (isset($search->keywords_de) && !empty($search->keywords_de)) {
+            $model = $model->where('keywords_de', 'like', '%'.$search->keywords_de.'%');
         }
         // url
         if (isset($search->url) && !empty($search->url)) {
@@ -249,6 +274,26 @@ class Products extends Base {
         // keywords
         if (isset($search->keywords) && !empty($search->keywords)) {
             $model = $model->where('keywords', 'like', '%'.$search->keywords.'%');
+        }
+        // keywords_cn
+        if (isset($search->keywords_cn) && !empty($search->keywords_cn)) {
+            $model = $model->where('keywords_cn', 'like', '%'.$search->keywords_cn.'%');
+        }
+        // keywords_en
+        if (isset($search->keywords_en) && !empty($search->keywords_en)) {
+            $model = $model->where('keywords_en', 'like', '%'.$search->keywords_en.'%');
+        }
+        // keywords_jp
+        if (isset($search->keywords_jp) && !empty($search->keywords_jp)) {
+            $model = $model->where('keywords_jp', 'like', '%'.$search->keywords_jp.'%');
+        }
+        // keywords_kr
+        if (isset($search->keywords_kr) && !empty($search->keywords_kr)) {
+            $model = $model->where('keywords_kr', 'like', '%'.$search->keywords_kr.'%');
+        }
+        // keywords_de
+        if (isset($search->keywords_de) && !empty($search->keywords_de)) {
+            $model = $model->where('keywords_de', 'like', '%'.$search->keywords_de.'%');
         }
         // url
         if (isset($search->url) && !empty($search->url)) {

@@ -226,7 +226,7 @@ class SyncThirdProductController extends CrudController {
         $publisherIds = Site::where('name', $site)->value('publisher_id');
         $publisherIdArray = explode(',', $publisherIds);
         $defaultPublisherId = $publisherIdArray[0];
-        $syncFieldList = SyncField::query()->where("status", 1)->get()->keyBy('name')->toArray();
+        $syncFieldList = SyncField::query()->where("status", 1)->get()->toArray();
         $count = 0;
         $start_time = time();
         $insertCount = 0;
@@ -264,20 +264,37 @@ class SyncThirdProductController extends CrudController {
         $idsSort = array_column($respDataList, 'id');
         // 使用 array_multisort 对原数组进行升序排序
         array_multisort($idsSort, SORT_ASC, $respDataList);
-        foreach ($respDataList as &$respData) {
-            //字段转换
-            foreach ($respData as $fieldKey => $fieldVal) {
-                if (!empty($syncFieldList[$fieldKey])) {
-                    $realKey = $syncFieldList[$fieldKey]['as_name'];
-                    $respData[$realKey] = $fieldVal;
-                    unset($respData[$fieldKey]);
+
+        // 字段转换，要求北京的字段可以重复利用
+        $productData = [];
+        foreach ($respDataList as $respData) {
+            $temp = [];
+            foreach ($syncFieldList as $syncFieldItem) {
+                
+                if (isset($respData[$syncFieldItem['name']]) && !empty($respData[$syncFieldItem['name']])) {
+                    $temp[$syncFieldItem['as_name']] = $respData[$syncFieldItem['name']];
                 }
             }
+            $temp['id'] = $respData['id'];// 此id是北京数据的id
+            $productData[] = $temp;
         }
+        // 
+        // foreach ($respDataList as &$respData) {
+        //     //字段转换
+        //     foreach ($respData as $fieldKey => $fieldVal) {
+        //         if (!empty($syncFieldList[$fieldKey])) {
+        //             $realKey = $syncFieldList[$fieldKey]['as_name'];
+        //             $respData[$realKey] = $fieldVal;
+        //             unset($respData[$fieldKey]);
+        //         }
+        //     }
+        // }
+
+
         //昵称去重
         $uniqueDataList = [];
         $authorCheck = ['已售报告', '完成报告'];
-        foreach ($respDataList as $forParamsData) {
+        foreach ($productData as $forParamsData) {
             $count++;
             
             //校验报告名称
@@ -379,8 +396,8 @@ class SyncThirdProductController extends CrudController {
                                 && $row['author'] != '完成报告'))
                     ) {
                         $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"
-                                          .($row['author']).'-'.trans('lang.author_level')
-                                          .($product['author'])."\r\n";
+                            . ($row['author']) . '-' . trans('lang.author_level')
+                            . ($product['author']) . "\r\n";
                         $ingoreCount++;
                         array_push($errIdList, $row['id']);
                         continue;
@@ -391,7 +408,7 @@ class SyncThirdProductController extends CrudController {
                 //校验报告名称
                 $checkMsg = $this->checkProductName($item['name']);
                 if ($checkMsg) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:  ".$checkMsg;
+                    $details .= "【错误】编号:{$item['third_sync_id']}:  " . $checkMsg;
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -414,9 +431,9 @@ class SyncThirdProductController extends CrudController {
                 $item['price'] = $row['price'] ?? 0;
                 // 忽略基础价为空的数据
                 if (empty($item['price'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans(
-                            'lang.price_empty'
-                        )."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . trans(
+                        'lang.price_empty'
+                    ) . "\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -425,9 +442,9 @@ class SyncThirdProductController extends CrudController {
                 $item['published_date'] = strtotime($row['published_date']);
                 // 忽略出版时间为空或转化失败的数据
                 if (empty($item['published_date']) || $item['published_date'] < 0) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name'] ?? '').'】'.trans(
-                            'lang.published_date_empty'
-                        )."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name'] ?? '') . '】' . trans(
+                        'lang.published_date_empty'
+                    ) . "\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -441,9 +458,9 @@ class SyncThirdProductController extends CrudController {
                 $item['category_id'] = intval($tempCategoryId);
                 // 忽略分类为空的数据
                 if (empty($item['category_id'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.$tempCateName.'-'
-                                .trans('lang.category_empty')
-                                ."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . $tempCateName . '-'
+                        . trans('lang.category_empty')
+                        . "\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -461,9 +478,9 @@ class SyncThirdProductController extends CrudController {
                 $item['keywords'] = $row['keywords'] ?? '';
                 // 忽略关键词为空的数据
                 if (empty($item['keywords'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans(
-                            'lang.keywords_empty'
-                        )."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . trans(
+                        'lang.keywords_empty'
+                    ) . "\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -483,8 +500,8 @@ class SyncThirdProductController extends CrudController {
                 $item['url'] = trim($item['url'], '-'); //左右可能有多余的横杠
                 // 忽略url为空的数据
                 if (empty($item['url'])) {
-                    $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($row['name']).'】'.trans('lang.url_empty')
-                                ."\r\n";
+                    $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($row['name']) . '】' . trans('lang.url_empty')
+                        . "\r\n";
                     $errorCount++;
                     array_push($errIdList, $row['id']);
                     continue;
@@ -493,11 +510,18 @@ class SyncThirdProductController extends CrudController {
                 $matchSenWord = $this->checkFitter($item['url']);
                 if (!empty($matchSenWord)) {
                     $details .= "【错误】编号:{$item['third_sync_id']}:   "
-                                ."该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
+                        . "该报告名称{$item['name']} , url: {$item['url']} ,含有 {$matchSenWord} 敏感词,请检查\r\n";
                     array_push($errIdList, $row['id']);
                     $errorCount++;
                     continue;
                 }
+
+                $item['keywords_cn'] = $row['keywords_cn'] ?? '';
+                $item['keywords_en'] = $row['keywords_en'] ?? '';
+                $item['keywords_jp'] = isset($row['keywords_jp']) && $row['keywords_jp'] != $item['keywords_en'] ? $row['keywords_jp'] : '';
+                $item['keywords_kr'] = isset($row['keywords_kr']) && $row['keywords_kr'] != $item['keywords_en'] ? $row['keywords_jp'] : '';
+                $item['keywords_de'] = isset($row['keywords_de']) && $row['keywords_de'] != $item['keywords_en'] ? $row['keywords_jp'] : '';
+
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
@@ -647,9 +671,11 @@ class SyncThirdProductController extends CrudController {
                                 $product['id']
                             )->first();
                             // 属性是否有变动
-                            if ($oldProductDescription
+                            if (
+                                $oldProductDescription
                                 && $oldProductDescription['companies_mentioned']
-                                   == $itemDescription['companies_mentioned']) {
+                                == $itemDescription['companies_mentioned']
+                            ) {
                                 $productChange = true;
                             }
                             if ($oldProductDescription) {
@@ -661,21 +687,23 @@ class SyncThirdProductController extends CrudController {
                     } else {
                         //直接更新
                         $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product['id'])
-                                                                             ->first();
+                            ->first();
                         if ($newProductDescriptionUpdate) {
                             $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
                         } else {
                             $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                         }
                         // 属性是否有变动
-                        if ($newProductDescriptionUpdate
+                        if (
+                            $newProductDescriptionUpdate
                             && $newProductDescriptionUpdate['companies_mentioned']
-                               == $itemDescription['companies_mentioned']) {
+                            == $itemDescription['companies_mentioned']
+                        ) {
                             $productChange = true;
                         }
                     }
                     $updateCount++;
-                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
+                    $updateDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】" . "\r\n";
                 } else {
                     //新增报告
                     $product = Products::create($item);
@@ -685,15 +713,15 @@ class SyncThirdProductController extends CrudController {
                     $itemDescription['product_id'] = $product['id'];
                     $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                     $insertCount++;
-                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"."\r\n";
+                    $insertDetail .= "编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】" . "\r\n";
                 }
                 //执行到这里算是操作成功的
                 array_push($succIdList, $forProductId);
                 array_push($thirdIdList, $row['id']);
-//                if (!empty($row['id'])) {
-//                    //维护xunSearch索引, 队列执行
-//                    $this->pushSyncSphinxQueue($row['id'], $site);
-//                }
+                //                if (!empty($row['id'])) {
+                //                    //维护xunSearch索引, 队列执行
+                //                    $this->pushSyncSphinxQueue($row['id'], $site);
+                //                }
                 // 发帖课题
                 if (!empty($product['id'])) {
                     try {
@@ -722,7 +750,7 @@ class SyncThirdProductController extends CrudController {
             }
         } catch (\Throwable $th) {
             //throw $th;
-            $details .= "【错误】编号:{$item['third_sync_id']}:   ".'【'.($item['name']).'】'.$th->getMessage()."\r\n";
+            $details .= "【错误】编号:{$item['third_sync_id']}:   " . '【' . ($item['name']) . '】' . $th->getMessage() . "\r\n";
             // $details = $th->getLine().$th->getMessage().$th->getTraceAsString() . "\r\n";
             // $details = json_encode($row) . "\r\n";
             $errorCount++;
