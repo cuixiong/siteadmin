@@ -788,7 +788,7 @@ Route::middleware([
 
         Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('发帖课题:操作日志');
     });
-    
+
     // PostSubjectArticle 观点文章
     Route::prefix('post-subject-article')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'store'])->name('观点文章:数据新增');
@@ -803,7 +803,7 @@ Route::middleware([
         Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'accept'])->name('观点文章:领取/分配');
         Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'exportSubjectLink'])->name('观点文章:导出日志');
         Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectArticleController::class, 'postSubjectLog'])->name('观点文章:操作日志');
-        
+
     });
 
     // PostSubjectLog 发帖课题操作记录
@@ -847,6 +847,25 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\AnswersController::class, 'changeStatus'])->name('答案模块:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\AnswersController::class, 'changeSort'])->name('答案模块:排序修改');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\AnswersController::class, 'form'])->name('答案模块:数据单查');
+    });
+
+    //自动发帖
+    Route::prefix('auto-post')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'list'])->name('自动发帖:数据列表');
+        Route::post('store', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'store'])->name('自动发帖:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'update'])->name('自动发帖:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'destroy'])->name('自动发帖:数据删除');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'searchDroplist'])->name('自动发帖:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'changeStatus'])->name('自动发帖:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'changeSort'])->name('自动发帖:排序修改');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\AutoPostConfigController::class, 'form'])->name('自动发帖:数据单查');
+    });
+
+    //发帖日志
+    Route::prefix('auto-post-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\AutoPostLogController::class, 'list'])->name('自动发帖日志:数据列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\AutoPostLogController::class, 'searchDroplist'])->name('自动发帖日志:搜索下拉列表数据');
+        Route::post('destroy', [Modules\Site\Http\Controllers\AutoPostLogController::class, 'destroy'])->name('自动发帖日志:数据删除');
     });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
