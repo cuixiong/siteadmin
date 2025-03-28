@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Modules\Admin\Http\Models\Role;
@@ -17,6 +18,7 @@ use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 use Modules\Site\Http\Models\TemplateUse;
+use Modules\Site\Services\SphinxService;
 
 class TemplateController extends CrudController {
     public $classificationSubCode = 'classificationSubRules';
@@ -33,36 +35,30 @@ class TemplateController extends CrudController {
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
-
-
             //use_name_id
             $searchStr = $request->input('search');
             $search = @json_decode($searchStr, true);
-            if(!empty($search['use_name_id'] )){
-                $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")->toArray();
+            if (!empty($search['use_name_id'])) {
+                $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")
+                                         ->toArray();
                 $model = $model->whereIn("id", $tempIdList);
             }
-
-
             //不是超级管理员, 只展示当前角色已分配的模版
             $type = $request->type ?? 1;
             if (!$request->user->is_super) {
-                $isExistRule = $this->checkEditRule($type , $request->user);
-            }else{
+                $isExistRule = $this->checkEditRule($type, $request->user);
+            } else {
                 $isExistRule = true;
             }
-            if(!$isExistRule) {
+            if (!$isExistRule) {
 //                $postUsrList = $this->getSitePostUser();
 //                $userIds = array_column($postUsrList, 'value');
                 $userIds = [$request->user->id];
                 $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
                 $model = $model->whereIn("id", $tempIdList);
             }
-
-
             // 总数量
             $total = $model->count();
-
             // 查询偏移量
             if (!empty($request->pageNum) && !empty($request->pageSize)) {
                 $model->offset(($request->pageNum - 1) * $request->pageSize);
@@ -133,25 +129,25 @@ class TemplateController extends CrudController {
      *
      */
     public function checkEditRule($type, $user) {
-        if($type == 1){
+        if ($type == 1) {
             $rule_perm = 'products:template:normaledit';
-        }else{
+        } else {
             $rule_perm = 'products:title:normaledit';
         }
-        $rule_id = Rule::query()->where("perm" , $rule_perm)->value("id");
+        $rule_id = Rule::query()->where("perm", $rule_perm)->value("id");
         $role_ids = $user->role_id;
-        $role_id_list = explode("," , $role_ids);
-        $rule_id_list = Role::query()->whereIn("id" , $role_id_list)->pluck('site_rule_id')->toArray();
+        $role_id_list = explode(",", $role_ids);
+        $rule_id_list = Role::query()->whereIn("id", $role_id_list)->pluck('site_rule_id')->toArray();
         $merge_rule_id_list = [];
         foreach ($rule_id_list as $forIdList) {
             $merge_rule_id_list = array_merge($merge_rule_id_list, $forIdList);
         }
         $merge_rule_id_list = array_unique($merge_rule_id_list);
-        if(!in_array($rule_id , $merge_rule_id_list)){
+        if (!in_array($rule_id, $merge_rule_id_list)) {
             return false;
         }
-        return true;
 
+        return true;
     }
 
     /**
@@ -288,45 +284,68 @@ class TemplateController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             $templateId = $input['templateId'];
-            $template = Template::findOrFail($templateId);
             $productId = $input['productId'];
-            $product = Products::findOrFail($productId);
-            $templateWords = $this->templateWirteData($template, $product);
+            $templateWords = $this->getTempContent($templateId, $productId);
             ReturnJson(true, trans('lang.copy_success'), ['words' => $templateWords]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
     }
 
-    public function templateWirteData($template, $product) {
-        //查询模板描述数据
-        $productId = $product->id;
-        $year = date("Y", $product->published_date);
-        $pdModel = new ProductsDescription($year);
-        $pdObj = $pdModel->where("product_id", $productId)->first();
+    /**
+     *
+     * @param $template  object 模版对象
+     * @param $product  object 报告对象
+     * @param $pdObj   object 报告详情对象
+     *
+     * @return array|string|string[]
+     */
+    public function templateWirteData($template, $product, $pdObj) {
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
-        $tempContent = $template->content;
+        $tempContent = $template['content'];
         //过滤模版标签的换行
         $tempContent = preg_replace('/(<\/[a-zA-Z][a-zA-Z0-9]*>)\r?\n/', '$1', $tempContent);
         // 处理模板变量   {{year}}
         $tempContent = $this->writeTempWord($tempContent, '{{year}}', date("Y"));
         // 处理模板变量   {{month}}
-        $tempContent = $this->writeTempWord($tempContent, '{{month}}', date("m"));
+        $tempContent = $this->writeTempWord($tempContent, '{{month}}', date("n"));
+        // 处理模板变量   {{month_en}}
+        $tempContent = $this->writeTempWord($tempContent, '{{month_en}}', date("M"));
         // 处理模板变量   {{day}}
-        $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("d"));
+        $tempContent = $this->writeTempWord($tempContent, '{{day}}', date("j"));
         // 处理模板变量   @@@@
         $tempContent = $this->writeTempWord($tempContent, '@@@@', $productArrData['keywords']);
         // 处理模板变量   keywords 兼容@@@@
         $tempContent = $this->writeTempWord($tempContent, '{{keywords}}', $productArrData['keywords']);
-        
         // 处理模板变量   五种语言 keywords
-        $tempContent = $this->writeTempWord($tempContent, '{{keywords_cn}}', $productArrData['keywords_cn']);
-        $tempContent = $this->writeTempWord($tempContent, '{{keywords_en}}', $productArrData['keywords_en']);
-        $tempContent = $this->writeTempWord($tempContent, '{{keywords_jp}}', $productArrData['keywords_jp']);
-        $tempContent = $this->writeTempWord($tempContent, '{{keywords_kr}}', $productArrData['keywords_kr']);
-        $tempContent = $this->writeTempWord($tempContent, '{{keywords_de}}', $productArrData['keywords_de']);
-
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_cn}}', $product['keywords_cn']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_en}}', $product['keywords_en']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_jp}}', $product['keywords_jp']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_kr}}', $product['keywords_kr']);
+        $tempContent = $this->writeTempWord($tempContent, '{{keywords_de}}', $product['keywords_de']);
+        //页数,图表
+        $tempContent = $this->writeTempWord($tempContent, '{{pages}}', $product['pages']);
+        $tempContent = $this->writeTempWord($tempContent, '{{tables}}', $product['tables']);
+        //规模等数据
+        $tempContent = $this->writeTempWord($tempContent, '{{cagr}}', $product['cagr']);
+        $tempContent = $this->writeTempWord($tempContent, '{{last_year}}', $product['last_scale']);
+        $tempContent = $this->writeTempWord($tempContent, '{{this_year}}', $product['current_scale']);
+        $tempContent = $this->writeTempWord($tempContent, '{{six_year}}', $product['future_scale']);
+        //跳转A标签(左右)
+        $prourl = $this->handlerUrl($product);
+        $tempContent = $this->writeTempWord(
+            $tempContent, '{{link_tag_left}}', "<a href='{$prourl}' target='_blank'>"
+        );
+        $tempContent = $this->writeTempWord($tempContent, '{{link_tag_right}}', "<a/>");
+        //特殊站点独有标签
+        $scopeText = $this->handlerSpecialLabels('{{scope}}', $pdObj->description);
+        $tempContent = $this->writeTempWord($tempContent, '{{scope}}', $scopeText);
+        $keyFeaturesText = $this->handlerSpecialLabels('{{key_features}}', $pdObj->description);
+        $tempContent = $this->writeTempWord($tempContent, '{{key_features}}', $keyFeaturesText);
+        //处理相关报告标签
+        $productId = $product->id;
+        $tempContent = $this->handlerRelatedReport($tempContent, $product);
         // 处理模板变量  {{id}}
         $tempContent = $this->writeTempWord($tempContent, '{{id}}', $productId);
         // 处理模板变量  {{title_en}}
@@ -383,6 +402,12 @@ class TemplateController extends CrudController {
         if (!isset($replaceWords)) {
             $replaceWords = '';
         }
+        if (in_array($templateVar, ['@@@@', '{{keywords}}', '{{keywords_cn}}', '{{keywords_jp}}', '{{keywords_en}}',
+                                    '{{keywords_kr}}', '{{keywords_de}}'])) {
+            if (empty($replaceWords)) {
+                return str_replace($templateVar, '', $sourceContent);
+            }
+        }
 
         return preg_replace($pattern, $replaceWords, $sourceContent);
     }
@@ -416,18 +441,24 @@ class TemplateController extends CrudController {
         return str_replace("\n", "<br/>", $sourceStr);
     }
 
-    public function getReportUrl($product) {
+    public function handlerUrl($product) {
         $domain = getSiteDomain();
         if (!empty($product->url)) {
             $url = $domain."/reports/{$product->id}/$product->url";
         } else {
             $url = $domain."/reports/{$product->id}";
         }
-        $url = <<<EOF
+
+        return $url;
+    }
+
+    public function getReportUrl($product) {
+        $url = $this->handlerUrl($product);
+        $reportUrl = <<<EOF
 <a style="word-wrap:break-word;word-break:break-all;" href="{$url}" target="_blank" rel="noopener noreferrer nofollow">{$url}</a>
 EOF;
 
-        return $url;
+        return $reportUrl;
     }
 
     public function handlerData($product, $pdObj) {
@@ -588,6 +619,87 @@ EOF;
         return implode("\n", $result);
     }
 
+    /**
+     *
+     * @param $label       string 标签名
+     * @param $description string 描述
+     * @param $siteName    string 站点名称(保留字段)
+     *
+     */
+    public function handlerSpecialLabels($label, $description, $siteName = '') {
+        $descriptionSpilt = explode("\n", $description);
+        $descText = $descriptionSpilt ? (($descriptionSpilt[0] ?? '').($descriptionSpilt[1] ?? '')) : '';
+        if ($label == '{{scope}}') {
+            //截取Report Scope的部分
+            $strposWord = "Report Scope";
+            $position = strpos($description, $strposWord);
+            if ($position !== false) {
+                // 截取关键词之前的部分
+                $descText = substr($description, 0, $position);
+            }
+        } elseif ($label == '{{key_features}}') {
+            $strposWord = "Key Features";
+            $position = strpos($description, $strposWord);
+            if ($position !== false) {
+                // 截取关键词之前的部分
+                $descText = substr($description, 0, $position);
+            } else {
+                $strposWord = "Highlights and key features of thestudy";
+                $position = strpos($description, $strposWord);
+                if ($position !== false) {
+                    // 截取关键词之前的部分
+                    $descText = substr($description, 0, $position);
+                }
+            }
+        }
+
+        return $this->addChangeLineStr($descText);
+    }
+
+    /**
+     * 相关报告
+     *
+     * @param $tempContent      string  模版内容
+     * @param $productArrData   array   报告对象
+     *
+     */
+    public function handlerRelatedReport($tempContent, $productArrData) {
+        //判断是否有这个标签
+        if (strpos($tempContent, '{{related_reports}}') !== false) {
+            if (!empty($productArrData['keywords'])) {
+                $conn = (new SphinxService())->getConnection();
+                $query = (new SphinxQL($conn))->select('*')
+                                              ->from('products_rt')
+                                              ->orderBy('sort', 'asc')
+                                              ->orderBy('year', 'desc')
+                                              ->orderBy('degree_keyword', 'asc')
+                                              ->orderBy('published_date', 'desc')
+                                              ->orderBy('id', 'desc');
+                $query = $query->where('status', '=', 1);
+                $query = $query->where("published_date", "<", time());
+                $query = $query->where("id", "<>", $productArrData['id']);
+                $query = $query->match('name', $productArrData['keywords'], true);
+                $query = $query->limit(0, 20);
+                $query = $query->option('max_matches', 40);
+                $query = $query->setSelect('*');
+                $result = $query->execute();
+                $product_list = $result->fetchAllAssoc();
+                $related_reports = '';
+                $domain = getSiteDomain();
+                foreach ($product_list as $productInfo) {
+                    $productLink = $domain.'/reports/'.$productInfo['id'].'/'.$productInfo['url'];
+                    $related_reports .= '<a href="'.$productLink.'"  title="'.$productInfo['name'].'" target="blank">'
+                                        .$productInfo['name'].'</a>'.'<br />';
+                }
+                if (!empty($related_reports)) {
+                    $tempContent = $this->writeTempWord($tempContent, '{{related_reports}}', $related_reports);
+                }
+            }
+        }
+
+        return $tempContent;
+    }
+
     public function getSitePostUser() {
         //当前站点, 所有的使用者
         $siteName = getSiteName();
@@ -605,7 +717,7 @@ EOF;
             }
         }
         $userList = [];
-        if(!empty($afterRoleIdList )) {
+        if (!empty($afterRoleIdList)) {
             $userList = User::query()
                             ->where("status", 1)
                             ->where(function ($query) use ($afterRoleIdList) {
@@ -669,13 +781,12 @@ EOF;
         if (!empty($input['use_user_ids'])) {
             $use_user_ids = $input['use_user_ids'];
             $use_user_ids = explode(",", $use_user_ids);
-        }else{
+        } else {
             $use_user_ids = [];
-            if(!$isEdit) {
+            if (!$isEdit) {
                 $use_user_ids[] = request()->user->id;
             }
         }
-
         foreach ($use_user_ids as $user_id) {
             $temp_use_data = [
                 'temp_id' => $tempId,
@@ -683,6 +794,31 @@ EOF;
             ];
             TemplateUse::query()->create($temp_use_data);
         }
+    }
 
+    /**
+     *
+     * @param mixed $templateId
+     * @param mixed $productId
+     *
+     * @return array|string|string[]
+     */
+    private function getTempContent(mixed $templateId, mixed $productId) {
+        if (empty($templateId) || empty($productId)) {
+            return '';
+        }
+        $template = Template::query()->find($templateId);
+        $product = Products::query()->find($productId);
+        if (empty($template) || empty($product)) {
+            return '';
+        }
+
+        //查询模板描述数据
+        $productId = $product['id'];
+        $year = date("Y", $product['published_date']);
+        $pdModel = new ProductsDescription($year);
+        $pdObj = $pdModel->where("product_id", $productId)->first();
+
+        return $this->templateWirteData($template, $product, $pdObj);
     }
 }

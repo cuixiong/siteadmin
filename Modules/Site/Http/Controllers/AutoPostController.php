@@ -71,6 +71,7 @@ class AutoPostController extends CrudController {
                                     ->get()->toArray();
         if (empty($productOrginData)) {
             echo '没有数据'.PHP_EOL;
+
             return false;
         }
         // 检查是否存在重复记录
@@ -207,22 +208,23 @@ class AutoPostController extends CrudController {
         // 数据查询
         $data = array_column($productList, null, 'id');
         $productIds = array_keys($data);
-        $productData = Products::query()->select([
-                                                     'id',
-                                                     'category_id',
-                                                     'name',
-                                                     'keywords',
-                                                     'url',
-                                                     'published_date',
-                                                     'classification',
-                                                     'application',
-                                                     'cagr',
-                                                     'last_scale',
-                                                     'current_scale',
-                                                     'future_scale'
-                                                 ])
+        $productData = Products::query()
+//                               ->select([
+//                                                     'id',
+//                                                     'category_id',
+//                                                     'name',
+//                                                     'keywords',
+//                                                     'url',
+//                                                     'published_date',
+//                                                     'classification',
+//                                                     'application',
+//                                                     'cagr',
+//                                                     'last_scale',
+//                                                     'current_scale',
+//                                                     'future_scale'
+//                                                 ])
                                ->whereIn('id', $productIds)
-                               ->get()->toArray();
+                               ->get();
         $code = $autoPostConf['code'];
         foreach ($productData as $key => $item) {
             try {
@@ -291,8 +293,11 @@ class AutoPostController extends CrudController {
                 $product['contentTemplate']['content'] = $newContentTemplateArray[$templateCategoryId][$tempContentNum
                                                                                                        - 1]['content'];
                 //计算获取文章信息
-                $articleInfo = $this->articleInfo(
-                    $product['titleTemplate']['content'], $product['contentTemplate']['content'], $product
+//                $articleInfo = $this->articleInfo(
+//                    $product['titleTemplate']['content'], $product['contentTemplate']['content'], $product
+//                );
+                $articleInfo = $this->newarticleInfo(
+                    $product['titleTemplate'], $product['contentTemplate'], $item, $productDescription
                 );
                 $timestamp = time();
                 $time = date('Y-m-d H:i:s', $timestamp);
@@ -424,6 +429,27 @@ class AutoPostController extends CrudController {
         }
 
         return $defaultWordCategory;
+    }
+
+    private function newarticleInfo($titleTemplate, $contentTemplate, $product, $productDesc) {
+        $temolateController = new TemplateController();
+        $keyword = $product['keywords'];
+        $title = $temolateController->templateWirteData($titleTemplate, $product, $productDesc);
+        $content = $temolateController->templateWirteData($contentTemplate, $product, $productDesc);
+        //描述第一段
+        $description = $productDesc->description;
+        $reg = "/<\/?[a-z]+( [^>]*)?>/";
+        $description = preg_replace($reg, "", $description);
+        $descriptionSpilt = explode("\n", $description);
+        $seo_description = $descriptionSpilt ? ($descriptionSpilt[0] ?? '') : '';
+        $content = str_replace('{{seo_description}}', $seo_description, $content);
+
+        return [
+            'keyword'     => $keyword,
+            'title'       => $title,
+            'content'     => $content,
+            'description' => $seo_description,
+        ];
     }
 
     // 返回发帖标题、内容等信息
