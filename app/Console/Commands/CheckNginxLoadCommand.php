@@ -210,7 +210,7 @@ class CheckNginxLoadCommand extends Command {
     public function getBlackBanNginxStr($sysValList) {
         //查询超过N次的IP
         $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
-        $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
+        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
                                       ->where("status", 1)
                                       ->groupBy('ban_str')
                                       ->having('cnt', '>=', $black_ban_cnt)
@@ -227,7 +227,7 @@ class CheckNginxLoadCommand extends Command {
             $banStr = implode('', $banIpStrList);
         }
         //查询超过N次的UA
-        $banUaStrList = NginxBanList::query()->where("ban_type", 2)
+        $banUaStrList = BlackBanList::query()->where("ban_type", 2)
                                     ->where("status", 1)
                                     ->groupBy('ban_str')
                                     ->having('cnt', '>=', $black_ban_cnt)
