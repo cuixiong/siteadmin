@@ -61,15 +61,19 @@ class CheckNginxLoadCommand extends Command {
                 $check_max_load = $sysValList['check_max_load'] ?? 80;
                 $check_min_load = $sysValList['check_min_load'] ?? 60;
                 $net_usage_rate = $sysValList['net_usage_rate'] ?? 90;
+
+
+                $net_usage_val = rtrim($net_usage_val , '%');
                 echo "当前时间:".date("Y-m-d H:i:s")
                      ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}".PHP_EOL;
+
                 if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
                     \Log::error(
                         "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
                         .__LINE__
                     );
-                    echo $banStr.PHP_EOL;
+                    echo "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                     $this->reloadNginx();
                 } elseif ($load_os_val < $check_min_load) {
