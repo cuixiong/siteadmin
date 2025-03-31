@@ -18,7 +18,6 @@ use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\SiteNginxConf;
 use Modules\Site\Http\Controllers\SiteCrontabController;
 use Modules\Site\Http\Models\AccessLog;
-use Modules\Site\Http\Models\BlackBanList;
 use Modules\Site\Http\Models\NginxBanList;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Admin\Http\Models\SystemValue as AdminSystemValue;
@@ -77,7 +76,7 @@ class CheckNginxLoadCommand extends Command {
                     //小于最低负载
                     //恢复nginx配置
                     $banStr = $this->getBlackBanNginxStr($sysValList);
-                    echo $banStr.PHP_EOL;
+                    echo '黑名单封禁:'.$banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                     $this->reloadNginx();
                 }
@@ -210,7 +209,7 @@ class CheckNginxLoadCommand extends Command {
     public function getBlackBanNginxStr($sysValList) {
         //查询超过N次的IP
         $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
-        $cntBlackIpList = BlackBanList::query()->where("ban_type", 1)
+        $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
                                       ->where("status", 1)
                                       ->groupBy('ban_str')
                                       ->having('cnt', '>=', $black_ban_cnt)
@@ -227,7 +226,7 @@ class CheckNginxLoadCommand extends Command {
             $banStr = implode('', $banIpStrList);
         }
         //查询超过N次的UA
-        $banUaStrList = BlackBanList::query()->where("ban_type", 2)
+        $banUaStrList = NginxBanList::query()->where("ban_type", 2)
                                     ->where("status", 1)
                                     ->groupBy('ban_str')
                                     ->having('cnt', '>=', $black_ban_cnt)
