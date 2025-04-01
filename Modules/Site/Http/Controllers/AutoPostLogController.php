@@ -29,6 +29,11 @@ class AutoPostLogController extends CrudController {
             $auto_post_config_list = AutoPostConfig::query()->where("status" , 1)->selectRaw('id as value , code as label')->get()->toArray();
             $data['auto_post_config_list'] = $auto_post_config_list;
 
+            $data['title_temp_list'] = (new Template)->GetListLabel(['id as value', 'name as label'], false, '',
+                                                                    ['status' => 1, 'type' => 2]);
+            $data['conent_temp_list'] = (new Template)->GetListLabel(['id as value', 'name as label'], false, '',
+                                                                     ['status' => 1, 'type' => 1]);
+
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());

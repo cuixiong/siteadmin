@@ -337,7 +337,7 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord(
             $tempContent, '{{link_tag_left}}', "<a href='{$prourl}' target='_blank'>"
         );
-        $tempContent = $this->writeTempWord($tempContent, '{{link_tag_right}}', "<a/>");
+        $tempContent = $this->writeTempWord($tempContent, '{{link_tag_right}}', "</a>");
         //特殊站点独有标签
         $scopeText = $this->handlerSpecialLabels('{{scope}}', $pdObj->description);
         $tempContent = $this->writeTempWord($tempContent, '{{scope}}', $scopeText);
@@ -644,7 +644,7 @@ EOF;
                 // 截取关键词之前的部分
                 $descText = substr($description, 0, $position);
             } else {
-                $strposWord = "Highlights and key features of thestudy";
+                $strposWord = "Highlights and key features of the study";
                 $position = strpos($description, $strposWord);
                 if ($position !== false) {
                     // 截取关键词之前的部分
@@ -660,7 +660,7 @@ EOF;
      * 相关报告
      *
      * @param $tempContent      string  模版内容
-     * @param $productArrData   array   报告对象
+     * @param $productArrData   mixed   报告对象
      *
      */
     public function handlerRelatedReport($tempContent, $productArrData) {
@@ -691,9 +691,9 @@ EOF;
                     $related_reports .= '<a href="'.$productLink.'"  title="'.$productInfo['name'].'" target="blank">'
                                         .$productInfo['name'].'</a>'.'<br />';
                 }
-                if (!empty($related_reports)) {
-                    $tempContent = $this->writeTempWord($tempContent, '{{related_reports}}', $related_reports);
-                }
+                //if (!empty($related_reports)) {
+                $tempContent = $this->writeTempWord($tempContent, '{{related_reports}}', $related_reports);
+                //}
             }
         }
 
