@@ -67,12 +67,13 @@ class AutoPostLogController extends CrudController {
             }
             $model = $model->select($ModelInstance->ListSelect);
             // 数据排序
-            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
-            } else {
-                $model = $model->orderBy('created_at', 'DESC');
-            }
+            $model = $model->orderBy('id', 'DESC');
+//            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+//            if (!empty($request->order)) {
+//                $model = $model->orderBy($request->order, $sort);
+//            } else {
+//                $model = $model->orderBy('created_at', 'DESC');
+//            }
             $record = $model->get()->toArray();
             $product_id_list = array_column($record, 'product_id');
             $productList = Products::query()->whereIn('id', $product_id_list)->select(['id', 'name' , 'url'])->get()->keyBy('id')->toArray();

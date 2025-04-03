@@ -297,10 +297,10 @@ class TemplateController extends CrudController {
      * @param $template  object 模版对象
      * @param $product  object 报告对象
      * @param $pdObj   object 报告详情对象
-     *
+     * @param $is_auto_post bool 是否自动发帖
      * @return array|string|string[]
      */
-    public function templateWirteData($template, $product, $pdObj) {
+    public function templateWirteData($template, $product, $pdObj, $is_auto_post = false) {
         list($productArrData, $pdArrData) = $this->handlerData($product, $pdObj);
         // TODO List 处理所有模板变量
         $tempContent = $template['content'];
@@ -384,7 +384,10 @@ class TemplateController extends CrudController {
         // 处理模板变量  {{link}}
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
         $tempContent = $this->handlerMuchLine($tempContent);
-        $tempContent = str_replace(' ', '&nbsp;', $tempContent);
+
+        if(!$is_auto_post) {
+            $tempContent = str_replace(' ', '&nbsp;', $tempContent);
+        }
 
         return $tempContent;
     }

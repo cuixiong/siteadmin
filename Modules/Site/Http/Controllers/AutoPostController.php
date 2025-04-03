@@ -42,6 +42,7 @@ class AutoPostController extends CrudController {
     }
 
     public function handService($autoPostConfig, $site) {
+        request()->headers->set('Site', $site); // 设置请求头
         //判断参数
         if (empty(
             $autoPostConfig['title_template_ids'] || empty($autoPostConfig['content_template_ids'])
@@ -232,20 +233,21 @@ class AutoPostController extends CrudController {
                 $this->uselocalDb($defaultDbConfig);
                 $suffix = date('Y', $item['published_date']);
                 $productDescription = (new ProductsDescription($suffix))->where('product_id', $item['id'])
-                                                                        ->select([
-                                                                                     'description',
-                                                                                     'table_of_content',
-                                                                                     'companies_mentioned',
-                                                                                     'definition',
-                                                                                     'overview'
-                                                                                 ])
+//                                                                        ->select([
+//                                                                                     'description',
+//                                                                                     'table_of_content',
+//                                                                                     'companies_mentioned',
+//                                                                                     'definition',
+//                                                                                     'overview'
+//                                                                                 ])
                                                                         ->first();
                 if (empty($item) || empty($productDescription)) {
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '缺少详情数据');
                     continue;
                 }
-                $productDescription = json_decode(json_encode($productDescription), true);
-                $product = array_merge($item, $productDescription ?? []);
+                $productArr = json_decode(json_encode($productDescription), true) ?? [];
+                $itemArr = json_decode(json_encode($item), true) ?? [];
+                $product = array_merge($itemArr, $productArr);
                 $templateCategoryId = $this->getTemplateCategoryId($wordCategory, $product['description']);
                 $product['titleTemplate'] = [];
                 if (!isset($newTitleTemplateArray[$templateCategoryId])
@@ -434,8 +436,8 @@ class AutoPostController extends CrudController {
     private function newarticleInfo($titleTemplate, $contentTemplate, $product, $productDesc) {
         $temolateController = new TemplateController();
         $keyword = $product['keywords'];
-        $title = $temolateController->templateWirteData($titleTemplate, $product, $productDesc);
-        $content = $temolateController->templateWirteData($contentTemplate, $product, $productDesc);
+        $title = $temolateController->templateWirteData($titleTemplate, $product, $productDesc, true);
+        $content = $temolateController->templateWirteData($contentTemplate, $product, $productDesc, true);
         //描述第一段
         $description = $productDesc->description;
         $reg = "/<\/?[a-z]+( [^>]*)?>/";
