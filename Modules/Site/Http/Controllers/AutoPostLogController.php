@@ -29,6 +29,11 @@ class AutoPostLogController extends CrudController {
             $auto_post_config_list = AutoPostConfig::query()->where("status" , 1)->selectRaw('id as value , code as label')->get()->toArray();
             $data['auto_post_config_list'] = $auto_post_config_list;
 
+            $data['title_temp_list'] = (new Template)->GetListLabel(['id as value', 'name as label'], false, '',
+                                                                    ['status' => 1, 'type' => 2]);
+            $data['conent_temp_list'] = (new Template)->GetListLabel(['id as value', 'name as label'], false, '',
+                                                                     ['status' => 1, 'type' => 1]);
+
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -62,12 +67,13 @@ class AutoPostLogController extends CrudController {
             }
             $model = $model->select($ModelInstance->ListSelect);
             // 数据排序
-            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
-            if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
-            } else {
-                $model = $model->orderBy('created_at', 'DESC');
-            }
+            $model = $model->orderBy('id', 'DESC');
+//            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+//            if (!empty($request->order)) {
+//                $model = $model->orderBy($request->order, $sort);
+//            } else {
+//                $model = $model->orderBy('created_at', 'DESC');
+//            }
             $record = $model->get()->toArray();
             $product_id_list = array_column($record, 'product_id');
             $productList = Products::query()->whereIn('id', $product_id_list)->select(['id', 'name' , 'url'])->get()->keyBy('id')->toArray();

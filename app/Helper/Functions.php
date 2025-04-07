@@ -63,25 +63,17 @@ function convertToFormData($list) {
 }
 
 function getSiteName() {
-    if (php_sapi_name() === 'cli') {
-        return false;
-    } else {
-        return request()->header("Site");
-    }
+    return request()->header("Site" , '');
 }
 
 function getSiteDomain() {
-    if (php_sapi_name() === 'cli') {
-        return false;
-    } else {
-        $siteName = getSiteName();
-        $domain = Site::query()->where('name', $siteName)->value("domain");
-        if (strpos($domain, '://') === false) {
-            $domain = 'https://'.$domain;
-        }
-
-        return $domain;
+    $siteName = getSiteName();
+    $domain = Site::query()->where('name', $siteName)->value("domain");
+    if (strpos($domain, '://') === false) {
+        $domain = 'https://'.$domain;
     }
+
+    return $domain;
 }
 
 function getReportUrl($product) {

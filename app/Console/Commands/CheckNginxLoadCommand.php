@@ -18,7 +18,6 @@ use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\SiteNginxConf;
 use Modules\Site\Http\Controllers\SiteCrontabController;
 use Modules\Site\Http\Models\AccessLog;
-use Modules\Site\Http\Models\BlackBanList;
 use Modules\Site\Http\Models\NginxBanList;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Admin\Http\Models\SystemValue as AdminSystemValue;
@@ -62,22 +61,26 @@ class CheckNginxLoadCommand extends Command {
                 $check_max_load = $sysValList['check_max_load'] ?? 80;
                 $check_min_load = $sysValList['check_min_load'] ?? 60;
                 $net_usage_rate = $sysValList['net_usage_rate'] ?? 90;
+
+
+                $net_usage_val = rtrim($net_usage_val , '%');
                 echo "当前时间:".date("Y-m-d H:i:s")
                      ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}".PHP_EOL;
+
                 if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
                     \Log::error(
                         "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
                         .__LINE__
                     );
-                    echo $banStr.PHP_EOL;
+                    echo "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                     $this->reloadNginx();
                 } elseif ($load_os_val < $check_min_load) {
                     //小于最低负载
                     //恢复nginx配置
                     $banStr = $this->getBlackBanNginxStr($sysValList);
-                    echo $banStr.PHP_EOL;
+                    echo '黑名单封禁:'.$banStr.PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                     $this->reloadNginx();
                 }
@@ -340,12 +343,12 @@ class CheckNginxLoadCommand extends Command {
 //            if (empty($temp_content)) {
 //                return false;
 //            }
-            //$banStr = '#czx';
 //            $modifiedString = str_replace("#DynamicBanSet", $banStr, $temp_content);
-            $temp_file_path = $siteNginxConfInfo['conf_temp_path'];
             //$temp_file_path = "/www/wwwroot/nginx_shell/temp_site_{$site}_nginx.conf";
-            file_put_contents($temp_file_path, $banStr);
-
+            //file_put_contents($temp_file_path, $banStr);
+            $temp_file_path = $siteNginxConfInfo['conf_temp_path'];
+            $echo_sh_commands = "echo '{$banStr}' > {$temp_file_path}";
+            $execute_reload_res = $this->executeCommands($ssh, $echo_sh_commands);
             //$this->reloadNginx();
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
             $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);
