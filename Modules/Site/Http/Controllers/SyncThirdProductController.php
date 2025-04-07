@@ -271,8 +271,8 @@ class SyncThirdProductController extends CrudController {
             $temp = [];
             foreach ($syncFieldList as $syncFieldItem) {
                 
-                if (isset($respData[$syncFieldItem['name']]) && !empty($respData[$syncFieldItem['name']])) {
-                    $temp[$syncFieldItem['as_name']] = $respData[$syncFieldItem['name']];
+                if (isset($respData[$syncFieldItem['name']])) {
+                    $temp[$syncFieldItem['as_name']] = $respData[$syncFieldItem['name']]??'';
                 }
             }
             $temp['id'] = $respData['id'];// 此id是北京数据的id
