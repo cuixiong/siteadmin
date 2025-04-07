@@ -2007,7 +2007,7 @@ class PostSubjectController extends CrudController
     {
         $readColumn = [];
         array_push($readColumn, ['title' => 2, 'link' => 3]);
-        return $this->UploadSubjectByName($request, $readColumn);
+        return $this->UploadSubjectByName($request, $readColumn, PostSubjectLog::POST_SUBJECT_LINK_UPLOAD_OLD1);
     }
 
     /**
@@ -2019,7 +2019,7 @@ class PostSubjectController extends CrudController
         array_push($readColumn, ['title' => 1, 'link' => 2]);
         array_push($readColumn, ['title' => 3, 'link' => 4]);
         array_push($readColumn, ['title' => 5, 'link' => 6]);
-        return $this->UploadSubjectByName($request, $readColumn);
+        return $this->UploadSubjectByName($request, $readColumn, PostSubjectLog::POST_SUBJECT_LINK_UPLOAD_OLD2);
     }
 
     function generateColumnMap()
@@ -2043,7 +2043,7 @@ class PostSubjectController extends CrudController
         return $columns;
     }
 
-    public function UploadSubjectByName(Request $request, $readColumn = [])
+    public function UploadSubjectByName(Request $request, $readColumn = [], $logType = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD)
     {
 
         // $time1 = microtime(true);
@@ -2160,16 +2160,21 @@ class PostSubjectController extends CrudController
                     // 读取BC两列
 
                     // 帖子标题
-                    $subjectName = $sheetRow[$subjectNameColumn] ?? '';
+                    $subjectName = $sheetRow[$subjectNameColumn-1] ?? '';
                     // 帖子链接
                     $postLink = $sheet->getCell([$subjectLinkColumn, $rowKey + 1])->getHyperlink()->getUrl();
                     if (empty($postLink)) {
                         // 是否超链接,否则直接读取文本
-                        $postLink = $sheetRow[$subjectLinkColumn] ?? '';
+                        $postLink = $sheetRow[$subjectLinkColumn-1] ?? '';
                     }
 
                     $subjectName = trim($subjectName);
                     $postLink = trim($postLink);
+                    if(empty($subjectName) && empty($postLink)){
+                        // 算空行跳过
+                        continue;
+
+                    }
 
                     if (empty($subjectName)) {
                         $subjectFail++;
@@ -2188,27 +2193,31 @@ class PostSubjectController extends CrudController
                     //     continue;
                     // }
 
-                    $excelData[$sheetName][$subjectName] = [];
                     if (!isset($excelData[$sheetName][$subjectName])) {
                         $excelData[$sheetName][$subjectName] = [];
-                        // $subjectNameArray[] = $subjectName;
+                        $subjectNameArray[] = $subjectName;
                     }
                     $excelData[$sheetName][$subjectName][] = [
-                        'titleColumn' => $columnMap[$subjectNameColumn] . ($rowKey + 1), 
-                        'linkColumn' => $columnMap[$subjectLinkColumn] . ($rowKey + 1), 
-                        'rowKey' => $rowKey + 1, 
+                        'titleColumn' => $columnMap[$subjectNameColumn] . ($rowKey + 1),
+                        'linkColumn' => $columnMap[$subjectLinkColumn] . ($rowKey + 1),
+                        'rowKey' => $rowKey + 1,
                         'link' => $postLink
                     ];
                 }
             }
+            if (count($subjectNameArray) == 0) {
+                continue;
+            }
 
             // 根据课题标题名称(报告名称)获取报告id
             $query = (new SphinxQL($conn))->select('id')->from('products_rt')->where('name', 'IN', $subjectNameArray);
+            // $productsQueryResult = $query->compile()->getCompiled();
             $productsQueryResult = $query->execute();
             $productIds = $productsQueryResult->fetchAllAssoc();
             $productData = [];
             $isExistSubjectArray = [];
             if ($productIds) {
+                $productIds = array_column($productIds, 'id');
                 // 报告数据
                 $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])
                     ->whereIn("id", $productIds)
@@ -2218,7 +2227,7 @@ class PostSubjectController extends CrudController
 
                 // 课题数据
                 $isExistSubjectArray = PostSubject::query()->select(['id', 'product_id', 'accepter'])->whereIn("product_id", $productIds)->get()?->toArray();
-                $isExistSubjectArray = $isExistSubjectArray ? array_column($isExistSubjectArray, 'product_id') : [];
+                $isExistSubjectArray = $isExistSubjectArray ? array_column($isExistSubjectArray, null,'product_id') : [];
             }
 
             foreach ($excelData[$sheetName] as $subjectNameKey => $postLinkGroup) {
@@ -2399,7 +2408,7 @@ class PostSubjectController extends CrudController
 
 
         $logData = [];
-        $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD;
+        $logData['type'] = $logType;
         // $logData['post_subject_id'] = ;
         $logData['success_count'] = $subjectSuccess;
         $logData['ingore_count'] = $subjectFail;
