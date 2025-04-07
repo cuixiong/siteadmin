@@ -785,6 +785,8 @@ Route::middleware([
         Route::post('export-subject', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubject'])->name('发帖课题:导出课题');
         Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubjectLink'])->name('发帖课题:导出日志');
         Route::post('upload-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLink'])->name('发帖课题:上传日志');
+        Route::post('upload-subject-link-old1', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLinkOld1'])->name('发帖课题:上传旧日志gircn1');
+        Route::post('upload-subject-link-old2', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLinkOld2'])->name('发帖课题:上传旧日志gircn2');
 
         Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('发帖课题:操作日志');
     });

@@ -20,6 +20,8 @@ use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Requests\ProductsCategoryRequest;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Foolz\SphinxQL\SphinxQL;
+use Modules\Site\Services\SphinxService;
 
 class PostSubjectController extends CrudController
 {
@@ -1978,6 +1980,423 @@ class PostSubjectController extends CrudController
                 }
             }
         }
+
+        $logData = [];
+        $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD;
+        // $logData['post_subject_id'] = ;
+        $logData['success_count'] = $subjectSuccess;
+        $logData['ingore_count'] = $subjectFail;
+        $logData['details'] = '';
+        $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】' . "\n";
+        $logData['details'] .= '-- 成功导入' . $subjectSuccess . '个链接' . "\n";
+        $logData['details'] .= implode("\n", $details) . "\n";
+        $logData['details'] .= '-- 有' . $subjectFail . '个链接导入失败' . "\n";
+        $logData['details'] .= implode("\n", $failDetails) . "\n";
+        PostSubjectLog::create($logData);
+
+        if (!$excelData || count($excelData) < 1) {
+            ReturnJson(FALSE, trans('lang.data_empty'), '上传失败,没数据');
+        }
+        ReturnJson(true, trans('lang.request_success'), explode("\n", $logData['details']));
+    }
+
+    /**
+     * 上传日志(帖子) -BC列
+     */
+    public function uploadSubjectLinkOld1(Request $request)
+    {
+        $readColumn = [];
+        array_push($readColumn, ['title' => 2, 'link' => 3]);
+        return $this->UploadSubjectByName($request, $readColumn);
+    }
+
+    /**
+     * 上传日志(帖子) -AB列-CD列-DE列
+     */
+    public function uploadSubjectLinkOld2(Request $request)
+    {
+        $readColumn = [];
+        array_push($readColumn, ['title' => 1, 'link' => 2]);
+        array_push($readColumn, ['title' => 3, 'link' => 4]);
+        array_push($readColumn, ['title' => 5, 'link' => 6]);
+        return $this->UploadSubjectByName($request, $readColumn);
+    }
+
+    function generateColumnMap()
+    {
+        $columns = [];
+        $index = 1;
+
+        // 生成 A-Z
+        for ($i = ord('A'); $i <= ord('Z'); $i++) {
+            $columns[$index] = chr($i);
+            $index++;
+        }
+
+        // 生成 AA-ZZ
+        for ($j = ord('A'); $j <= ord('Z'); $j++) {
+            for ($k = ord('A'); $k <= ord('Z'); $k++) {
+                $columns[$index] = chr($j) . chr($k);
+                $index++;
+            }
+        }
+        return $columns;
+    }
+
+    public function UploadSubjectByName(Request $request, $readColumn = [])
+    {
+
+        // $time1 = microtime(true);
+        $file_temp_name = $_POST['file_temp_name'] ?? null; //随机数，用于建立临时文件夹
+        $chunks = $_POST['totalNo'] ?? null; //切片总数
+        $currentChunk = $_POST['no'] ?? null; //当前切片
+        $blob = $_FILES['file'] ?? null; //二进制数据
+
+        if ($file_temp_name === null) {
+            ReturnJson(FALSE, trans('lang.param_empty'), '缺少随机数');
+        } elseif ($chunks === null) {
+            ReturnJson(FALSE, trans('lang.param_empty'), '缺少切片总数');
+        } elseif ($currentChunk === null) {
+            ReturnJson(FALSE, trans('lang.param_empty'), '缺少当前切片序号');
+        } elseif ($blob === null) {
+            ReturnJson(FALSE, trans('lang.param_empty'), '缺少blob数据');
+        }
+
+        $blob = $_FILES['file'];
+        $basePath = public_path();
+        $dir = $basePath . '/site/' . $request->header('Site') . '/post-subject/';
+        $dirtemp = $basePath . '/site/' . $request->header('Site') . '/post-subject/temp/'; // 保存分片文件的目录
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        if (!is_dir($dirtemp)) {
+            mkdir($dirtemp, 0777, true);
+        }
+
+        $dirtempfile = $dirtemp . $file_temp_name;
+
+        if (!is_dir($dirtempfile)) {
+            mkdir($dirtempfile, 0777, true);
+        }
+
+        $baseFileName = $dirtempfile . '/' . $file_temp_name;
+
+        move_uploaded_file($blob['tmp_name'], $baseFileName . '_' . $currentChunk);
+
+        // sleep(mt_rand(1, 3)); // 随机暂停，方式上传速度过快无法合并文件
+
+        if (count(glob($baseFileName . '_*')) != $chunks) {
+            ReturnJson(true, trans('lang.request_success'), 'success');
+            // return 'success';
+        }
+        // sleep(mt_rand(1, 3)); // 随机暂停，方式上传速度过快无法合并文件
+
+        // 合并文件
+        $file_real_name = $file_temp_name . '-' . time();
+        $excelPath = $dir . '/' . $file_real_name;
+        $butffer = '';
+        for ($i = 1; $i <= $chunks; $i++) {
+            $sliceFileName = $baseFileName . '_' . $i;
+            if (!is_file($sliceFileName)) {
+                ReturnJson(FALSE, trans('lang.request_error'), '切片文件缺失导致合并失败');
+            }
+            // $butffer = file_get_contents($sliceFileName); // 这种每次读取后就立即写入文件，速度慢一点，但内存消耗更少
+            // file_put_contents($excelPath, $butffer, FILE_APPEND);
+            $butffer .= file_get_contents($sliceFileName); // 这种一次读取完然后再写入文件速度快一点，但更消耗内存
+        }
+        file_put_contents($excelPath, $butffer); // 这种一次读取完然后再写入文件速度快一点，但更消耗内存
+        // 删除分片文件和文件夹
+        array_map('unlink', glob($dirtempfile . '/*'));
+        rmdir($dirtempfile);
+
+        //读取excel数据
+        \PhpOffice\PhpSpreadsheet\Settings::setLibXmlLoaderOptions(LIBXML_COMPACT | LIBXML_PARSEHUGE | LIBXML_BIGLINES | LIBXML_DTDLOAD | LIBXML_DTDATTR);
+
+        $filetype = \PhpOffice\PhpSpreadsheet\IOFactory::identify($excelPath); // 自动识别上传的Excel文件类型
+        $xlsReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($filetype);
+        // $xlsReader->setReadDataOnly(true);
+        $xlsReader->setLoadSheetsOnly(true);
+        $spreadsheet = $xlsReader->load($excelPath); //载入excel表格
+
+
+        // 使用sphinx加快速度
+        $conn = null;
+        try {
+            $conn = (new SphinxService())->getConnection();
+        } catch (\Throwable $th) {
+            ReturnJson(FALSE, 'sphinx未启动或连接失败', $th->getMessage());
+        }
+
+        // 平台信息
+        $postPlatformData = PostPlatform::query()->select(['id', 'name', 'keywords'])->where('status', 1)->get()->toArray();
+        // 获取所有工作表的名称
+        $sheetNames = $spreadsheet->getSheetNames();
+        $accepter = $request->user->id;
+        $excelData = [];
+        $space = '    ';
+        $details = [];
+        $failDetails = [];
+        $subjectSuccess = 0;
+        $subjectFail = 0;
+        $columnMap = $this->generateColumnMap();
+        foreach ($sheetNames as $sheetIndex => $sheetName) {
+
+            $sheet = $spreadsheet->getSheet($sheetIndex);
+
+            $excelData[$sheetName] = [];
+            $subjectNameArray = []; // 记录所有课题名称
+            // $existPostLinkArray = []; // 记录所有链接
+            // 原始数据
+            $sheetData = $sheet->toArray();
+            foreach ($readColumn as $columnItem) {
+
+                $subjectNameColumn = $columnItem['title'] ?? '';
+                $subjectLinkColumn = $columnItem['link'] ?? '';
+                if (empty($subjectNameColumn) || empty($subjectLinkColumn)) {
+                    break;
+                }
+                foreach ($sheetData as $rowKey => $sheetRow) {
+                    // 读取BC两列
+
+                    // 帖子标题
+                    $subjectName = $sheetRow[$subjectNameColumn] ?? '';
+                    // 帖子链接
+                    $postLink = $sheet->getCell([$subjectLinkColumn, $rowKey + 1])->getHyperlink()->getUrl();
+                    if (empty($postLink)) {
+                        // 是否超链接,否则直接读取文本
+                        $postLink = $sheetRow[$subjectLinkColumn] ?? '';
+                    }
+
+                    $subjectName = trim($subjectName);
+                    $postLink = trim($postLink);
+
+                    if (empty($subjectName)) {
+                        $subjectFail++;
+                        $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . $columnMap[$subjectNameColumn] . ($rowKey + 1) . '】标题没有填写';
+                        continue;
+                    }
+
+                    if (empty($postLink)) {
+                        $subjectFail++;
+                        $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . $columnMap[$subjectLinkColumn] . ($rowKey + 1) . '】链接没有填写';
+                        continue;
+                    }
+                    // if (in_array($postLink, $existPostLinkArray)) {
+                    //     $subjectFail++;
+                    //     $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】链接内部重复';
+                    //     continue;
+                    // }
+
+                    $excelData[$sheetName][$subjectName] = [];
+                    if (!isset($excelData[$sheetName][$subjectName])) {
+                        $excelData[$sheetName][$subjectName] = [];
+                        // $subjectNameArray[] = $subjectName;
+                    }
+                    $excelData[$sheetName][$subjectName][] = [
+                        'titleColumn' => $columnMap[$subjectNameColumn] . ($rowKey + 1), 
+                        'linkColumn' => $columnMap[$subjectLinkColumn] . ($rowKey + 1), 
+                        'rowKey' => $rowKey + 1, 
+                        'link' => $postLink
+                    ];
+                }
+            }
+
+            // 根据课题标题名称(报告名称)获取报告id
+            $query = (new SphinxQL($conn))->select('id')->from('products_rt')->where('name', 'IN', $subjectNameArray);
+            $productsQueryResult = $query->execute();
+            $productIds = $productsQueryResult->fetchAllAssoc();
+            $productData = [];
+            $isExistSubjectArray = [];
+            if ($productIds) {
+                // 报告数据
+                $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])
+                    ->whereIn("id", $productIds)
+                    ->get()?->toArray() ?? [];
+                $productData = array_column($productData, null, 'name');
+                $productIds = array_column($productData, 'id');
+
+                // 课题数据
+                $isExistSubjectArray = PostSubject::query()->select(['id', 'product_id', 'accepter'])->whereIn("product_id", $productIds)->get()?->toArray();
+                $isExistSubjectArray = $isExistSubjectArray ? array_column($isExistSubjectArray, 'product_id') : [];
+            }
+
+            foreach ($excelData[$sheetName] as $subjectNameKey => $postLinkGroup) {
+
+                $titlePositionString = implode(',', array_column($postLinkGroup, 'titleColumn') ?? []);
+                $linkPositionString = implode(',', array_column($postLinkGroup, 'linkColumn') ?? []);
+                // 报告是否存在
+                $product = $productData[$subjectNameKey] ?? null;
+                if (!$product) {
+                    $subjectFail++;
+                    $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . $titlePositionString . '】找不到相关报告数据';
+                    continue;
+                }
+                $productId = $product['id'];
+                // 课题是否存在
+                $postSubjectData = $isExistSubjectArray[$productId] ?? null;
+
+                if ($postSubjectData) {
+                    $postSubjectId = $postSubjectData['id'];
+                    if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
+                        // 存在领取人的情况下，领取人不一致,跳过
+                        $subjectFail += count($postLinkGroup);
+                        $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . $titlePositionString . '】-课题id【' . $postSubjectId . '】-报告id【' . $productId . '】领取者不一致';
+                        continue;
+                    }
+
+                    $urlData = [];
+                    $urlData = PostSubjectLink::query()->select(['link'])->where(['post_subject_id' => $postSubjectId])->pluck('link')?->toArray() ?? [];
+                    if ($urlData) {
+                        $urlData = array_map(function ($urlItem) {
+                            $urlItem = trim(trim(trim(trim($urlItem), 'https://'), 'http://'), '/');
+                            return $urlItem;
+                        }, $urlData);
+                    }
+                    $isUpdate = false;
+                    $existLinkBySubject = [];
+                    foreach ($postLinkGroup as $postLinkValue) {
+                        // 链接一致不变动 新：要求有协议没协议要视为同一个
+                        $removeProtocolLink = trim(trim(trim(trim($postLinkValue['link']), 'https://'), 'http://'), '/');
+
+                        if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                            //单个课题中链接重复
+                            $subjectFail++;
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['linkColumn'] ?? '??') . '】-课题id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                            continue;
+                        }
+                        $existLinkBySubject[] = $removeProtocolLink;
+
+                        if (in_array($removeProtocolLink, $urlData)) {
+                            $subjectFail++;
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['linkColumn'] ?? '??') . '】-课题id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 链接已存在';
+                            continue;
+                        } else {
+                            // 获取平台id
+                            $postPlatformId = 0;
+                            if ($postPlatformData) {
+                                foreach ($postPlatformData as $postPlatformItem) {
+                                    if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
+                                        $postPlatformId = $postPlatformItem['id'];
+                                        break;
+                                    }
+                                }
+                            } else {
+                                continue;
+                            }
+                            if (!isset($postPlatformId) || empty($postPlatformId)) {
+                                $subjectFail++;
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['linkColumn'] ?? '??') . '】-课题id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                continue;
+                            }
+                            // 新增
+                            $insertChild = [];
+                            $insertChild['post_subject_id'] = $postSubjectId;
+                            $insertChild['link'] = $postLinkValue['link'];
+                            $insertChild['post_platform_id'] = $postPlatformId;
+                            $insertChild['status'] = 1;
+                            $insertChild['sort'] = 100;
+                            $postSubjectLinkModel = new PostSubjectLink();
+                            $recordChild = $postSubjectLinkModel->create($insertChild);
+                            if ($recordChild) {
+                                $subjectSuccess++;
+                                $isUpdate = true;
+                            }
+                        }
+                    }
+
+                    $recordUpdate = [];
+                    // 如果新增了链接，更新课题时间
+                    if ($isUpdate) {
+                        $recordUpdate['propagate_status'] = 1;
+                        $recordUpdate['last_propagate_time'] = time();
+                        $recordUpdate['accept_time'] = time();
+                        $recordUpdate['accept_status'] = 1;
+                        $recordUpdate['accepter'] = $accepter;
+                        $recordUpdate['change_status'] = 0;
+                    }
+                    if (count($recordUpdate) > 0) {
+                        PostSubject::query()->where("id", $postSubjectId)->update($recordUpdate);
+                    }
+                } else {
+                    // 没有则新增课题
+                    $isInsert = false;
+                    $recordInsert = [];
+                    $recordInsert['product_id'] = $productId;
+                    $recordInsert['name'] = $subjectNameKey;
+                    $recordInsert['product_category_id'] = $product['category_id'];
+                    $recordInsert['version'] =  intval($product['price'] ?? 0);
+                    $recordInsert['analyst'] =  $product['author'];
+                    $recordInsert['accepter'] = $accepter;
+                    $recordInsert['accept_time'] = time();
+                    $recordInsert['accept_status'] = 1;
+                    $recordInsert['keywords'] = $product['keywords'];
+                    $recordInsert['has_cagr'] = !empty($product['cagr']) ? 1 : 0;
+                    $postSubjectData = PostSubject::create($recordInsert);
+                    $postSubjectId = $postSubjectData['id'];
+
+                    //处理链接
+                    $existLinkBySubject = [];
+                    foreach ($postLinkGroup as $postLinkValue) {
+
+                        // 链接一致不变动; 新：要求有协议没协议要视为同一个
+                        $removeProtocolLink = trim(trim(trim(trim($postLinkValue['link']), 'https://'), 'http://'), '/');
+                        if (in_array($removeProtocolLink, $existLinkBySubject)) {
+                            //单个课题中链接重复
+                            $subjectFail++;
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['linkColumn'] ?? '??') . '】-课题id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                            continue;
+                        }
+                        $existLinkBySubject[] = $removeProtocolLink;
+
+                        // 获取平台id
+                        $postPlatformId = 0;
+                        if ($postPlatformData) {
+                            foreach ($postPlatformData as $postPlatformItem) {
+                                if (strpos($postLinkValue['link'], $postPlatformItem['keywords']) !== false) {
+                                    $postPlatformId = $postPlatformItem['id'];
+                                    break;
+                                }
+                            }
+                        } else {
+                            continue;
+                        }
+                        if (!isset($postPlatformId) || empty($postPlatformId)) {
+                            $subjectFail++;
+                            $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['linkColumn'] ?? '??') . '】-课题id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                            continue;
+                        }
+                        // 新增
+                        $insertChild = [];
+                        $insertChild['post_subject_id'] = $postSubjectData['id'];
+                        $insertChild['link'] = $postLinkValue['link'];
+                        $insertChild['post_platform_id'] = $postPlatformId;
+                        $insertChild['status'] = 1;
+                        $insertChild['sort'] = 100;
+                        $postSubjectLinkModel = new PostSubjectLink();
+                        $recordChild = $postSubjectLinkModel->create($insertChild);
+                        if ($recordChild) {
+                            $subjectSuccess++;
+                            $isInsert = true;
+                        }
+                    }
+
+                    $recordInsert = [];
+                    if ($isInsert) {
+                        $recordInsert['propagate_status'] = 1;
+                        $recordInsert['last_propagate_time'] = time();
+                        // $recordInsert['accept_time'] = time();
+                        // $recordInsert['accept_status'] = 1;
+                        // $recordInsert['accepter'] = $accepter;
+                        $recordInsert['change_status'] = 0;
+                    }
+                    if (count($recordInsert) > 0) {
+                        PostSubject::query()->where("id", $postSubjectData['id'])->update($recordInsert);
+                    }
+                }
+            }
+        }
+
 
         $logData = [];
         $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD;
