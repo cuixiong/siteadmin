@@ -23,10 +23,7 @@ class PostSubjectLog extends Base
     const POST_SUBJECT_EXPORT = 3; // 导出课题
     const POST_SUBJECT_LINK_EXPORT = 4; // 导出日志(链接)
     const POST_SUBJECT_LINK_UPLOAD = 5; // 上传日志
-    const POST_SUBJECT_ARTICLE_CURD = 6; // 观点文章修改
-
-    const POST_SUBJECT_LINK_UPLOAD_OLD1 = 7; // 旧课题上传
-    const POST_SUBJECT_LINK_UPLOAD_OLD2 = 8; // 旧课题上传
+    const POST_SUBJECT_LINK_UPLOAD_OLD = 6; // 旧课题上传
 
     public static function getLogTypeList()
     {
@@ -36,10 +33,7 @@ class PostSubjectLog extends Base
             self::POST_SUBJECT_EXPORT => '导出课题',
             self::POST_SUBJECT_LINK_EXPORT => '导出日志',
             self::POST_SUBJECT_LINK_UPLOAD => '上传日志',
-            self::POST_SUBJECT_ARTICLE_CURD => '观点文章修改',
-
-            self::POST_SUBJECT_LINK_UPLOAD_OLD1 => '旧课题上传-B&C列',
-            self::POST_SUBJECT_LINK_UPLOAD_OLD2 => '旧课题上传-A&B列-C&D列-D&E列',
+            self::POST_SUBJECT_LINK_UPLOAD_OLD => '旧课题上传',
         ];
     }
 

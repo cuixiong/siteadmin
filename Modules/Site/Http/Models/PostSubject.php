@@ -12,6 +12,7 @@ class PostSubject extends Base
     // 设置允许入库字段,数组形式
     protected $fillable = [
         'name',
+        'type',
         'product_id',
         'product_category_id',
         'analyst',
@@ -34,6 +35,17 @@ class PostSubject extends Base
         'status' => 1,
         'sort' => 100,
     ];
+
+    const TYPE_POST_SUBJECT = 1;
+    const TYPE_POST_ARTICLE = 2; 
+
+    public static function getTypeList()
+    {
+        return [
+            self::TYPE_POST_SUBJECT => '课题',
+            self::TYPE_POST_ARTICLE => '观点',
+        ];
+    }
 
     /**
      * 处理查询列表条件数组
