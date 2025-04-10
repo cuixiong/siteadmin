@@ -1942,11 +1942,15 @@ class PostSubjectController extends CrudController
                         $recordInsert = [];
                         $recordInsert['name'] = $articleName;
                         $recordInsert['type'] = PostSubject::TYPE_POST_ARTICLE;
+                        $recordInsert['product_id'] = 0;
                         $recordInsert['keywords'] =  $linkData[0]['keywords'] ?? '';
                         $recordInsert['accepter'] = $accepter;
                         $recordInsert['accept_time'] = time();
                         $recordInsert['accept_status'] = 1;
+                        $recordInsert['change_status'] = 0;
+                        $recordInsert['has_cagr'] = 0;
                         $postSubjectData = PostSubject::create($recordInsert);
+                        
 
                         //处理链接
                         $existLinkBySubject = []; //单个课题中链接重复
@@ -2019,9 +2023,11 @@ class PostSubjectController extends CrudController
         $logData['details'] .= '成功导入' . $subjectSuccess . '个链接' . "\n";
         $logData['details'] .= implode("\n", $details) . "\n";
         
-        $logData['ingore_details'] .= '忽略' . $subjectFail . '条数据' . "\n";
-        $logData['ingore_details'] .= implode("\n", $failDetails) . "\n";
+        $logData['ingore_details'] = '';
+        $logData['ingore_details'] .= '忽略' . $subjectIngore . '条数据' . "\n";
+        $logData['ingore_details'] .= implode("\n", $ingoreDetails) . "\n";
 
+        $logData['error_details'] = '';
         $logData['error_details'] .= '共计' . $subjectFail . '个链接导入失败' . "\n";
         $logData['error_details'] .= implode("\n", $failDetails) . "\n";
         PostSubjectLog::create($logData);
@@ -2029,7 +2035,7 @@ class PostSubjectController extends CrudController
         if (!$excelData || count($excelData) < 1) {
             ReturnJson(FALSE, trans('lang.data_empty'), '上传失败,没数据');
         }
-        ReturnJson(true, trans('lang.request_success'), explode("\n", $logData['details']));
+        ReturnJson(true, trans('lang.request_success'), explode("\n", $logData['details'].$logData['error_details']));
     }
 
     /**

@@ -1,0 +1,11 @@
+
+ALTER TABLE `post_subject`
+    ADD COLUMN `type` tinyint(1) DEFAULT NULL COMMENT '类型' AFTER `name`;
+
+
+ALTER TABLE `post_subject_log`
+    ADD COLUMN `error_count` int(11) DEFAULT NULL COMMENT '错误数量' AFTER `success_count`,
+    -- CHANGE COLUMN `details` `error_details` longtext,
+    ADD COLUMN `error_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '错误详情' AFTER `details`;
+    ADD COLUMN `ignore_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '忽略详情' AFTER `error_details`;
+    
