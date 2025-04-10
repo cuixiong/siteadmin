@@ -10,7 +10,17 @@ class PostSubjectLog extends Base
     protected $table = 'post_subject_log';
 
     // 设置允许入库字段,数组形式
-    protected $fillable = ['type', 'details', 'post_subject_id', 'success_count', 'ingore_count', 'created_by', 'updated_by',];
+    protected $fillable = [
+        'type', 
+        'error_details', 
+        'ingore_details', 
+        'post_subject_id', 
+        'success_count', 
+        'ingore_count', 
+        'error_count', 
+        'created_by', 
+        'updated_by',
+    ];
 
 
     protected $attributes = [
@@ -67,6 +77,10 @@ class PostSubjectLog extends Base
         // ingore_count
         if (isset($search->ingore_count) && !empty($search->ingore_count)) {
             $model = $model->where('ingore_count', $search->ingore_count);
+        }
+
+        if (isset($search->error_count) && !empty($search->error_count)) {
+            $model = $model->where('error_count', $search->error_count);
         }
         
         if (isset($search->created_by) && !empty($search->created_by)) {

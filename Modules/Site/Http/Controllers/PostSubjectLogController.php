@@ -56,7 +56,9 @@ class PostSubjectLogController extends CrudController
             }
             $record = $model->get()?->toArray() ?? [];
             foreach ($record as $key => $item) {
-                $record[$key]['details'] = !empty($item['details']) ? explode("\n", $item['details']) : [];
+                // $record[$key]['details'] = !empty($item['details']) ? explode("\n", $item['details']) : [];
+                $record[$key]['ingore_details'] = !empty($item['ingore_details']) ? explode("\n", $item['ingore_details']) : [];
+                $record[$key]['error_details'] = !empty($item['error_details']) ? explode("\n", $item['error_details']) : [];
                 $record[$key]['type_name'] = PostSubjectLog::getLogTypeList()[$record[$key]['type']] ?? '';
             }
             $data = [

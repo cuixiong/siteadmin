@@ -445,6 +445,7 @@ class ProductsController extends CrudController {
 
             $postSubjectData = [];
             $postSubjectData['name'] = $record['name'];
+            $postSubjectData['type'] = PostSubject::TYPE_POST_SUBJECT;
             $postSubjectData['product_id'] = $record['id'];
             $postSubjectData['product_category_id'] = $record['category_id'];
             $postSubjectData['version'] = intval($record['price'] ?? 0);
@@ -455,7 +456,7 @@ class ProductsController extends CrudController {
             $postSubjectData['accepter'] = $request->user->id;
             $postSubjectData['accept_status'] = 1;
             $postSubjectData['accept_time'] = time();
-            postSubject::create($postSubjectData);
+            PostSubject::create($postSubjectData);
 
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
@@ -714,9 +715,10 @@ class ProductsController extends CrudController {
                 if (!empty($record['id'])) {
                     try {
                         // 修改课题
-                        $postSubject = postSubject::query()->where('product_id', $record->id)->first();
+                        $postSubject = PostSubject::query()->where('product_id', $record->id)->first();
                         $postSubjectUpdate = [];
                         $postSubjectUpdate['name'] = $record->name;
+                        $postSubjectUpdate['type'] = PostSubject::TYPE_POST_SUBJECT;
                         $postSubjectUpdate['product_id'] =  $record->id;
                         $postSubjectUpdate['product_category_id'] =  $record->category_id;
                         $postSubjectUpdate['version'] = intval($record->price ?? 0);
@@ -728,9 +730,9 @@ class ProductsController extends CrudController {
                             if ($productChange && !empty($postSubject->propagate_status)) {
                                 $postSubjectUpdate['change_status'] = 1;
                             }
-                            postSubject::query()->where('product_id', $record->id)->update($postSubjectUpdate);
+                            PostSubject::query()->where('product_id', $record->id)->update($postSubjectUpdate);
                         } else {
-                            postSubject::create($postSubjectUpdate);
+                            PostSubject::create($postSubjectUpdate);
                         }
                     } catch (\Throwable $psth) {
                     }

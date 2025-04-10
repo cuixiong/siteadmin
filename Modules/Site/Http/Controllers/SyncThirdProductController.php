@@ -729,6 +729,7 @@ class SyncThirdProductController extends CrudController {
                         $postSubject = postSubject::query()->where('product_id', $product['id'])->first();
                         $postSubjectUpdate = [];
                         $postSubjectUpdate['name'] = $item['name'];
+                        $postSubjectUpdate['type'] = postSubject::TYPE_POST_SUBJECT;
                         $postSubjectUpdate['product_id'] = $product['id'];
                         $postSubjectUpdate['product_category_id'] = $item['category_id'];
                         $postSubjectUpdate['version'] = intval($item['price'] ?? 0);
