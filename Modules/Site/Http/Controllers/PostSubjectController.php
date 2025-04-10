@@ -1058,7 +1058,7 @@ class PostSubjectController extends CrudController
             if (!(count($ids) > 0)) {
                 ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
-            $model = $model->whereIn('id', $ids);
+            $model = $model->whereIn('ps.id', $ids);
         } else {
             //筛选
             $searchJson = $request->input('search');
@@ -1095,7 +1095,7 @@ class PostSubjectController extends CrudController
                 'p.keywords_de',
             ])
                 // ->from($model->getTable() . ' as ps')
-                ->leftJoin(Products::getTable() . ' as p', function ($join) {
+                ->leftJoin((new Products)->getTable() . ' as p', function ($join) {
                     $join->on('p.id', '=', 'ps.product_id');
                 })
                 ->get()->toArray();
@@ -1152,7 +1152,11 @@ class PostSubjectController extends CrudController
         $sheet->getColumnDimension('K')->setWidth(15);  // 设置 K 列宽度
 
         foreach ($subjectData as $subject) {
-            $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+            if(!empty($subject['product_id'])){
+                $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+            }else{
+                $url = '';
+            }
 
             $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
             $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
@@ -1227,7 +1231,7 @@ class PostSubjectController extends CrudController
             if (!(count($ids) > 0)) {
                 ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
-            $model = $model->whereIn('id', $ids);
+            $model = $model->whereIn('ps.id', $ids);
         } else {
             //筛选
             $searchJson = $request->input('search');
@@ -1264,7 +1268,7 @@ class PostSubjectController extends CrudController
                 'p.keywords_de',
             ])
                 // ->from($model->getTable() . ' as ps')
-                ->leftJoin(Products::getTable() . ' as p', function ($join) {
+                ->leftJoin((new Products)->getTable() . ' as p', function ($join) {
                     $join->on('p.id', '=', 'ps.product_id');
                 })
                 ->get()->toArray();
@@ -1409,7 +1413,11 @@ class PostSubjectController extends CrudController
                             // 搜索链接
                             $sheet->setCellValue([2 + 1, $rowIndex + 1], '');
                         } else {
-                            $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                            if(!empty($subject['product_id'])){
+                                $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                            }else{
+                                $url = '';
+                            }
                             // 名称
                             $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                             // 版本
@@ -1439,7 +1447,11 @@ class PostSubjectController extends CrudController
                 } elseif (!isset($subjectLinkGroup[$subject['id']]) && $subject) {
                     // 没有宣传链接也要把课题写入文件
                     $subjectSuccess++;
-                    $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                    if(!empty($subject['product_id'])){
+                        $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
+                    }else{
+                        $url = '';
+                    }
                     // 名称
                     $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                     // 版本

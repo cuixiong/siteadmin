@@ -234,10 +234,30 @@ class PostSubject extends Base
         // 
         if ($condition == self::CONDITION_EQUAL) {
             // 文本-等于
-            $query->where($fields, '=', $content);
+
+            if (!empty($joinTable)) {
+
+                $query->whereExists(function ($query) use ($fields, $content, $joinTable, $on) {
+                    $query->select(DB::raw(1))
+                        ->from($joinTable)
+                        ->whereRaw($on)
+                        ->where($fields, $content);
+                });
+            } else {
+                $query->where($fields, '=', $content);
+            }
         } elseif ($condition == self::CONDITION_NOT_EQUAL) {
             // 文本-不等于
-            $query->where($fields, '<>', $content);
+            if (!empty($joinTable)) {
+                $query->whereExists(function ($query) use ($fields, $content, $joinTable, $on) {
+                    $query->select(DB::raw(1))
+                        ->from($joinTable)
+                        ->whereRaw($on)
+                        ->where($fields, '<>', $content);
+                });
+            } else {
+                $query->where($fields, '<>', $content);
+            }
         } elseif ($condition == self::CONDITION_CONTAIN) {
             // 文本-包含(模糊查询)
             $query->where($fields, 'like', "%{$content}%");
@@ -523,7 +543,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $joinTable = PostSubjectLink::getTable();
+            $joinTable = (new PostSubjectLink)->getTable();
             $query = self::getFiltersConditionQuery($query, $condition, $joinTable . '.post_platform_id', $searchItem['content'], $joinTable, $joinTable . '.post_subject_id = ps.id');
 
             // return $query->createCommand()->getRawSql();
@@ -538,18 +558,25 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            if (($search['keywords_cn']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
-                ($search['keywords_cn']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            if (($search['keywords_cn']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_cn']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
-                $condition = self::CONDITION_EQUAL;
-            } else {
                 $condition = self::CONDITION_NOT_EQUAL;
+            } else {
+                $condition = self::CONDITION_EQUAL;
             }
 
-            $joinTable = Products::getTable();
-            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_cn', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+            $joinTable = (new Products)->getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_cn', '', $joinTable, $joinTable . '.id = ps.product_id');
+            // $sql = $query->toSql();
+            // $bindings = $query->getBindings();
+
+            // // 手动替换绑定参数
+            // $sql = str_replace(['?'], ["'%s'"], $sql);
+            // $sql = vsprintf($sql, $bindings);
+            // return $sql;
         }
-        
+
         // 报告关键词(英)-子查询
         if (!empty($search['keywords_en']) && isset($search['keywords_en']['content'])) {
 
@@ -558,18 +585,18 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            if (($search['keywords_en']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
-                ($search['keywords_en']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            if (($search['keywords_en']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_en']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
                 $condition = self::CONDITION_EQUAL;
             } else {
                 $condition = self::CONDITION_NOT_EQUAL;
             }
 
-            $joinTable = Products::getTable();
-            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_en', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+            $joinTable = (new Products)->getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_en', '', $joinTable, $joinTable . '.id = ps.product_id');
         }
-        
+
         // 报告关键词(日)-子查询
         if (!empty($search['keywords_jp']) && isset($search['keywords_jp']['content'])) {
 
@@ -578,18 +605,18 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            if (($search['keywords_jp']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
-                ($search['keywords_jp']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            if (($search['keywords_jp']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_jp']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
                 $condition = self::CONDITION_EQUAL;
             } else {
                 $condition = self::CONDITION_NOT_EQUAL;
             }
 
-            $joinTable = Products::getTable();
-            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_jp', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+            $joinTable = (new Products)->getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_jp', '', $joinTable, $joinTable . '.id = ps.product_id');
         }
-        
+
         // 报告关键词(韩)-子查询
         if (!empty($search['keywords_kr']) && isset($search['keywords_kr']['content'])) {
 
@@ -598,18 +625,18 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            if (($search['keywords_kr']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
-                ($search['keywords_kr']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            if (($search['keywords_kr']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_kr']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
                 $condition = self::CONDITION_EQUAL;
             } else {
                 $condition = self::CONDITION_NOT_EQUAL;
             }
 
-            $joinTable = Products::getTable();
-            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_kr', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+            $joinTable = (new Products)->getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_kr', '', $joinTable, $joinTable . '.id = ps.product_id');
         }
-        
+
         // 报告关键词(德)-子查询
         if (!empty($search['keywords_de']) && isset($search['keywords_de']['content'])) {
 
@@ -618,16 +645,16 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            if (($search['keywords_de']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
-                ($search['keywords_de']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            if (($search['keywords_de']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_de']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
                 $condition = self::CONDITION_EQUAL;
             } else {
                 $condition = self::CONDITION_NOT_EQUAL;
             }
 
-            $joinTable = Products::getTable();
-            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_de', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+            $joinTable = (new Products)->getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_de', '', $joinTable, $joinTable . '.id = ps.product_id');
         }
 
         // //创建者
