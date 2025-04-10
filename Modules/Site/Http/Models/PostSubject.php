@@ -37,7 +37,7 @@ class PostSubject extends Base
     ];
 
     const TYPE_POST_SUBJECT = 1;
-    const TYPE_POST_ARTICLE = 2; 
+    const TYPE_POST_ARTICLE = 2;
 
     public static function getTypeList()
     {
@@ -45,6 +45,18 @@ class PostSubject extends Base
             self::TYPE_POST_SUBJECT => '课题',
             self::TYPE_POST_ARTICLE => '观点',
         ];
+    }
+
+    public static function getTypeDropList()
+    {
+
+        $subjectTypeList = self::getTypeList();
+        $data = [];
+        foreach ($subjectTypeList as $key => $value) {
+            $data[] = ['value' => $key, 'label' => $value];
+        }
+
+        return $data;
     }
 
     /**
@@ -62,6 +74,11 @@ class PostSubject extends Base
         //name
         if (isset($search->name) && !empty($search->name)) {
             $model = $model->where('name', 'like', '%' . $search->name . '%');
+        }
+
+        //name
+        if (isset($search->type) && !empty($search->type)) {
+            $model = $model->where('type', $search->type);
         }
 
         //product_category_id
@@ -212,22 +229,22 @@ class PostSubject extends Base
      * @param string|array fields;
      * @param string|array content;
      */
-    public static function getFiltersConditionQuery($query, $condition, $type, $fields, $content)
+    public static function getFiltersConditionQuery($query, $condition, $fields, $content, $joinTable = '', $on = '')
     {
         // 
-        if ($type == self::ADVANCED_FILTERS_TYPE_TEXT && $condition == self::CONDITION_EQUAL) {
+        if ($condition == self::CONDITION_EQUAL) {
             // 文本-等于
             $query->where($fields, '=', $content);
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_TEXT && $condition == self::CONDITION_NOT_EQUAL) {
+        } elseif ($condition == self::CONDITION_NOT_EQUAL) {
             // 文本-不等于
             $query->where($fields, '<>', $content);
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_TEXT && $condition == self::CONDITION_CONTAIN) {
+        } elseif ($condition == self::CONDITION_CONTAIN) {
             // 文本-包含(模糊查询)
             $query->where($fields, 'like', "%{$content}%");
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_TEXT && $condition == self::CONDITION_NOT_CONTAIN) {
+        } elseif ($condition == self::CONDITION_NOT_CONTAIN) {
             // 文本-不包含(模糊查询)
             $query->where($fields, 'not like', "%{$content}%");
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_IN) {
+        } elseif ($condition == self::CONDITION_IN) {
             // 下拉-多选-任一
             $query->where(function ($query) use ($fields, $content) {
                 if (in_array('-1', $content)) {
@@ -241,10 +258,10 @@ class PostSubject extends Base
                     $query->whereIn($fields, $content);
                 }
             });
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_NOT_IN) {
+        } elseif ($condition == self::CONDITION_NOT_IN) {
             // 下拉-多选-排除
             $query->whereNotIn($fields, $content);
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_TIME && $condition == self::CONDITION_TIME_BETWEEN) {
+        } elseif ($condition == self::CONDITION_TIME_BETWEEN) {
             // 时间-区间
             // 检查 content 是否为数组且有两个有效的值
             if (is_array($content) && count($content) === 2 && isset($content[0]) && isset($content[1])) {
@@ -258,7 +275,7 @@ class PostSubject extends Base
                     $query->where($fields, '<=', $content[1]);
                 }
             }
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_TIME && $condition == self::CONDITION_TIME_NOT_BETWEEN) {
+        } elseif ($condition == self::CONDITION_TIME_NOT_BETWEEN) {
             // 时间-排除
             // 检查 content 是否为数组且有两个有效的值
             if (is_array($content) && count($content) === 2 && isset($content[0]) && isset($content[1])) {
@@ -274,22 +291,26 @@ class PostSubject extends Base
                     $query->where($fields, '>', $content[1]);
                 }
             }
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_EXISTS_IN) {
-            // 关联子表-存在
-            $query->whereExists(function ($query) use ($content) {
-                $query->select(DB::raw(1))
-                    ->from('post_subject_link as psl')
-                    ->whereRaw('psl.post_subject_id = ps.id')
-                    ->whereIn('post_platform_id', $content);
-            });
-        } elseif ($type == self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST && $condition == self::CONDITION_EXISTS_NOT_IN) {
-            // 关联子表-不存在
-            $query->whereNotExists(function ($query) use ($content) {
-                $query->select(DB::raw(1))
-                    ->from('post_subject_link as psl')
-                    ->whereRaw('psl.post_subject_id = ps.id')
-                    ->whereIn('post_platform_id', $content);
-            });
+        } elseif ($condition == self::CONDITION_EXISTS_IN) {
+            if (!empty($joinTable)) {
+                // 关联子表-存在
+                $query->whereExists(function ($query) use ($fields, $content, $joinTable, $on) {
+                    $query->select(DB::raw(1))
+                        ->from($joinTable)
+                        ->whereRaw($on)
+                        ->whereIn($fields, $content);
+                });
+            }
+        } elseif ($condition == self::CONDITION_EXISTS_NOT_IN) {
+            if (!empty($joinTable)) {
+                // 关联子表-不存在
+                $query->whereNotExists(function ($query) use ($fields, $content, $joinTable, $on) {
+                    $query->select(DB::raw(1))
+                        ->from($joinTable)
+                        ->whereRaw($on)
+                        ->whereIn($fields, $content);
+                });
+            }
         }
 
         return $query;
@@ -316,7 +337,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.id', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.id', $searchItem['content']);
         }
 
         // 课题名称
@@ -326,10 +347,10 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.name', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.name', $searchItem['content']);
             // return $query->dd();
         }
-        
+
         // 关键词
         if (!empty($search['keywords']) && !empty($search['keywords']['content'])) {
             $condition = self::CONDITION_CONTAIN;
@@ -337,8 +358,18 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.keywords', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.keywords', $searchItem['content']);
             // return $query->dd();
+        }
+
+        // 类型
+        if (!empty($search['type']) && !empty($search['type']['content'])) {
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['type'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.type', $searchItem['content']);
         }
 
         // 报告ID
@@ -348,7 +379,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.product_id', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.product_id', $searchItem['content']);
         }
 
         // 行业
@@ -358,7 +389,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.product_category_id', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.product_category_id', $searchItem['content']);
         }
 
         // 分析师
@@ -368,7 +399,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.analyst', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.analyst', $searchItem['content']);
         }
 
         // 版本
@@ -378,7 +409,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.version', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.version', $searchItem['content']);
         }
 
         // 状态
@@ -388,7 +419,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.status', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.status', $searchItem['content']);
         }
 
         // 创建时间
@@ -398,7 +429,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.created_at', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.created_at', $searchItem['content']);
         }
 
         // 修改时间
@@ -408,7 +439,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.updated_at', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.updated_at', $searchItem['content']);
         }
 
 
@@ -419,7 +450,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.propagate_status', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.propagate_status', $searchItem['content']);
         }
 
         // 最后宣传时间
@@ -429,19 +460,19 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.last_propagate_time', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.last_propagate_time', $searchItem['content']);
         }
 
         // 领取人
         if ($requesterOwn) {
-            $query = self::getFiltersConditionQuery($query, self::CONDITION_IN, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', [$requesterOwn]);
+            $query = self::getFiltersConditionQuery($query, self::CONDITION_IN,  'ps.accepter', [$requesterOwn]);
         } elseif (!empty($search['accepter']) && isset($search['accepter']['content']) && count($search['accepter']['content']) > 0) {
             $condition = self::CONDITION_IN;
             $searchItem = $search['accepter'];
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.accepter', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.accepter', $searchItem['content']);
         }
 
         // 领取状态
@@ -451,7 +482,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.accept_status', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.accept_status', $searchItem['content']);
         }
 
         // 领取时间
@@ -461,7 +492,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TIME, 'ps.accept_time', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.accept_time', $searchItem['content']);
         }
 
         // 修改状态
@@ -471,7 +502,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.change_status', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.change_status', $searchItem['content']);
         }
 
         // 是否有数据
@@ -481,7 +512,7 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_TEXT, 'ps.has_cagr', $searchItem['content']);
+            $query = self::getFiltersConditionQuery($query, $condition, 'ps.has_cagr', $searchItem['content']);
         }
 
         // 平台-子查询
@@ -492,11 +523,112 @@ class PostSubject extends Base
             if (isset($searchItem['condition'])) {
                 $condition = $searchItem['condition'];
             }
-            $query = self::getFiltersConditionQuery($query, $condition, self::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, 'ps.post_platform_id', $searchItem['content']);
+            $joinTable = PostSubjectLink::getTable();
+            $query = self::getFiltersConditionQuery($query, $condition, $joinTable . '.post_platform_id', $searchItem['content'], $joinTable, $joinTable . '.post_subject_id = ps.id');
 
             // return $query->createCommand()->getRawSql();
         }
 
+
+        // 报告关键词(中)-子查询
+        if (!empty($search['keywords_cn']) && isset($search['keywords_cn']['content'])) {
+
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['keywords_cn'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            if (($search['keywords_cn']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_cn']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            ) {
+                $condition = self::CONDITION_EQUAL;
+            } else {
+                $condition = self::CONDITION_NOT_EQUAL;
+            }
+
+            $joinTable = Products::getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_cn', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+        }
+        
+        // 报告关键词(英)-子查询
+        if (!empty($search['keywords_en']) && isset($search['keywords_en']['content'])) {
+
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['keywords_en'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            if (($search['keywords_en']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_en']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            ) {
+                $condition = self::CONDITION_EQUAL;
+            } else {
+                $condition = self::CONDITION_NOT_EQUAL;
+            }
+
+            $joinTable = Products::getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_en', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+        }
+        
+        // 报告关键词(日)-子查询
+        if (!empty($search['keywords_jp']) && isset($search['keywords_jp']['content'])) {
+
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['keywords_jp'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            if (($search['keywords_jp']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_jp']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            ) {
+                $condition = self::CONDITION_EQUAL;
+            } else {
+                $condition = self::CONDITION_NOT_EQUAL;
+            }
+
+            $joinTable = Products::getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_jp', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+        }
+        
+        // 报告关键词(韩)-子查询
+        if (!empty($search['keywords_kr']) && isset($search['keywords_kr']['content'])) {
+
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['keywords_kr'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            if (($search['keywords_kr']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_kr']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            ) {
+                $condition = self::CONDITION_EQUAL;
+            } else {
+                $condition = self::CONDITION_NOT_EQUAL;
+            }
+
+            $joinTable = Products::getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_kr', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+        }
+        
+        // 报告关键词(德)-子查询
+        if (!empty($search['keywords_de']) && isset($search['keywords_de']['content'])) {
+
+            $condition = self::CONDITION_EQUAL;
+            $searchItem = $search['keywords_de'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            if (($search['keywords_de']['content'] == 1 && $condition == self::CONDITION_EQUAL) ||
+                ($search['keywords_de']['content'] == 0 && $condition == self::CONDITION_NOT_EQUAL)
+            ) {
+                $condition = self::CONDITION_EQUAL;
+            } else {
+                $condition = self::CONDITION_NOT_EQUAL;
+            }
+
+            $joinTable = Products::getTable();
+            $query = self::getFiltersConditionQuery($query, $condition,   $joinTable . '.keywords_de', $searchItem['content'], $joinTable, $joinTable . '.id = ps.product_id');
+        }
 
         // //创建者
         // if (!empty($search['created_by']) && isset($search['created_by']['content'])) {
