@@ -109,6 +109,7 @@ class PostSubjectController extends CrudController
                         return $urlItem;
                     }, $urlData);
                     $record[$key]['url_data'] = $urlData;
+                    $record[$key]['type_name'] = PostSubject::getTypeList()[$record[$key]['type']];
                 }
             }
 
@@ -245,7 +246,7 @@ class PostSubjectController extends CrudController
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('has_cagr', '是否有数据', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
-        
+
         // 是否有关键词(中)
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
@@ -257,25 +258,25 @@ class PostSubjectController extends CrudController
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('keywords_en', '是否有关键词(英)', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
-        
+
         // 是否有关键词(日)
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('keywords_jp', '是否有关键词(日)', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
-        
+
         // 是否有关键词(韩)
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('keywords_kr', '是否有关键词(韩)', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
-        
+
         // 是否有关键词(德)
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
         $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
         $temp_filter = $this->getAdvancedFiltersItem('keywords_de', '是否有关键词(德)', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
-        
+
 
 
         // 状态
@@ -1152,19 +1153,21 @@ class PostSubjectController extends CrudController
         $sheet->getColumnDimension('K')->setWidth(15);  // 设置 K 列宽度
 
         foreach ($subjectData as $subject) {
-            if(!empty($subject['product_id'])){
+            if (!empty($subject['product_id'])) {
                 $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
-            }else{
+            } else {
                 $url = '';
             }
 
             $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
             $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
 
-            // 设置超链接
-            $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
-            $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
-            $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+            if (!empty($url)) {
+                // 设置超链接
+                $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+            }
 
             $sheet->setCellValue([3 + 1, $rowIndex + 1], ''); // 额外空白列
 
@@ -1413,19 +1416,21 @@ class PostSubjectController extends CrudController
                             // 搜索链接
                             $sheet->setCellValue([2 + 1, $rowIndex + 1], '');
                         } else {
-                            if(!empty($subject['product_id'])){
+                            if (!empty($subject['product_id'])) {
                                 $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
-                            }else{
+                            } else {
                                 $url = '';
                             }
                             // 名称
                             $sheet->setCellValue([0 + 1, $rowIndex + 1], $subject['name']);
                             // 版本
                             $sheet->setCellValue([1 + 1, $rowIndex + 1], $subject['version']);
-                            // 搜索链接
-                            $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
-                            $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
-                            $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                            if (!empty($url)) {
+                                // 搜索链接
+                                $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                                $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                                $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                            }
 
                             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
                             $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
@@ -1436,10 +1441,12 @@ class PostSubjectController extends CrudController
                             $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
                             $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
                         }
-                        // 发帖链接
-                        $sheet->setCellValue([3 + 1, $rowIndex + 1], $linkValue);
-                        $sheet->getCell([3 + 1, $rowIndex + 1])->getHyperlink()->setUrl($linkValue);
-                        $sheet->getStyle([3 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        if (!empty($linkValue)) {
+                            // 发帖链接
+                            $sheet->setCellValue([3 + 1, $rowIndex + 1], $linkValue);
+                            $sheet->getCell([3 + 1, $rowIndex + 1])->getHyperlink()->setUrl($linkValue);
+                            $sheet->getStyle([3 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        }
 
                         $subjectLinkSuccess++;
                         $rowIndex++;
@@ -1447,9 +1454,9 @@ class PostSubjectController extends CrudController
                 } elseif (!isset($subjectLinkGroup[$subject['id']]) && $subject) {
                     // 没有宣传链接也要把课题写入文件
                     $subjectSuccess++;
-                    if(!empty($subject['product_id'])){
+                    if (!empty($subject['product_id'])) {
                         $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
-                    }else{
+                    } else {
                         $url = '';
                     }
                     // 名称
@@ -1460,10 +1467,18 @@ class PostSubjectController extends CrudController
                     $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']);
                     // 是否有数据
                     $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否');
-                    // 搜索链接
-                    $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
-                    $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
-                    $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                    if (!empty($url)) {
+                        // 搜索链接
+                        $sheet->setCellValue([2 + 1, $rowIndex + 1], $url);
+                        $sheet->getCell([2 + 1, $rowIndex + 1])->getHyperlink()->setUrl($url);
+                        $sheet->getStyle([2 + 1, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                    }
+                    $sheet->setCellValue([6 + 1, $rowIndex + 1], $subject['keywords_cn'] ?? ''); // 关键词(中)
+                    $sheet->setCellValue([7 + 1, $rowIndex + 1], $subject['keywords_en'] ?? ''); // 关键词(英)
+                    $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
+                    $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
+                    $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
+                    
                     $rowIndex++;
                 }
             }
@@ -1525,7 +1540,6 @@ class PostSubjectController extends CrudController
             ReturnJson(FALSE, trans('lang.param_empty'), '缺少blob数据');
         }
 
-        $blob = $_FILES['file'];
         // /www/wwwroot/yadmin/admin/public/site/gircn/exportDir
         $basePath = public_path();
         $dir = $basePath . '/site/' . $request->header('Site') . '/post-subject/';
@@ -1648,7 +1662,7 @@ class PostSubjectController extends CrudController
                     $postLink = $sheetRow[3] ?? '';
                 }
 
-                if ($rowKey == 0 && (empty($postLink) || strpos($postLink, 'http') === false)) {
+                if ($rowKey == 0 && (empty($fastLink) || strpos($fastLink, 'http') === false) && (empty($postLink) || strpos($postLink, 'http') === false)) {
                     continue;
                 }
                 // 第五列keywords
@@ -1716,19 +1730,19 @@ class PostSubjectController extends CrudController
                     continue;
                 }
 
-                if (empty($newsName)) {
-                    $subjectFail++;
-                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】第一列缺少标题';
-                    continue;
-                }
+                // if (empty($newsName)) {
+                //     $subjectFail++;
+                //     $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】第一列缺少标题';
+                //     continue;
+                // }
 
-                if (in_array($newsName, $newsNameArray) && !isset($newsNameArray[$productId])) {
-                    $subjectFail++;
-                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】第一列标题内部重复';
-                    continue;
-                } elseif (!in_array($newsName, $newsNameArray) && !isset($newsNameArray[$productId])) {
-                    $newsNameArray[$productId] = $newsName;
-                }
+                // if (in_array($newsName, $newsNameArray) && !isset($newsNameArray[$productId])) {
+                //     $subjectFail++;
+                //     $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】第一列标题内部重复';
+                //     continue;
+                // } elseif (!in_array($newsName, $newsNameArray) && !isset($newsNameArray[$productId])) {
+                //     $newsNameArray[$productId] = $newsName;
+                // }
 
                 // 
                 if (!isset($excelData[$sheetName][$productId])) {
@@ -1741,11 +1755,7 @@ class PostSubjectController extends CrudController
                 $excelData[$sheetName][$productId]['data'][] = ['rowKey' => $rowKey + 1, 'link' => $postLink];
             }
 
-            $isExistNewsNameArray = [];
-            if (count($newsNameArray) > 0) {
-                // 查看目前课题是否存在这些标题以及所对应的报告id
-                $isExistNewsNameArray = PostSubject::query()->select(['product_id', 'name'])->whereIn("name", $newsNameArray)->where('type', PostSubject::TYPE_POST_SUBJECT)->get()?->toArray();
-                $isExistNewsNameArray = $isExistNewsNameArray ? array_column($isExistNewsNameArray, 'product_id', 'name') : [];
+            if (count($excelData[$sheetName]) > 0) {
 
                 // 处理每个工作簿的数据
                 foreach ($excelData[$sheetName] as $productId => $postLinkGroup) {
@@ -1757,7 +1767,7 @@ class PostSubjectController extends CrudController
                     $linkData = $postLinkGroup['data'];
                     $newsName = $postLinkGroup['newsName'];
 
-                    $postSubjectData = PostSubject::query()->select(['id', 'accepter', 'name'])->where("product_id", $productId)->first()?->toArray();
+                    $postSubjectData = PostSubject::query()->select(['id', 'accepter', 'name', 'keywords'])->where("product_id", $productId)->first()?->toArray();
 
                     // if (!$postSubjectData) {
                     //     // 查不到该课题,跳过
@@ -1773,12 +1783,12 @@ class PostSubjectController extends CrudController
                             // $subjectFail += count($linkData);
                             // $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】领取者不一致';
 
-                            if (isset($excelDataArticle[$sheetName][$newsName . '-' . $accepter])) {
-                                $excelDataArticle[$sheetName][$newsName . '-' . $accepter] = array_merge($excelDataArticle[$sheetName][$newsName . '-' . $accepter], $linkData);
+                            if (isset($excelDataArticle[$sheetName][$newsName])) {
+                                $excelDataArticle[$sheetName][$newsName] = array_merge($excelDataArticle[$sheetName][$newsName], $linkData);
                             } else {
                                 // return $postSubjectData;
-                                $excelDataArticle[$sheetName][$newsName . '-' . $accepter] = $linkData;
-                                $excelDataArticle[$sheetName][$newsName . '-' . $accepter][0]['keywords'] = $postSubjectData['keywords'];
+                                $excelDataArticle[$sheetName][$newsName] = $linkData;
+                                $excelDataArticle[$sheetName][$newsName][0]['keywords'] = $postSubjectData['keywords'];
                             }
                             continue;
                         }
@@ -1887,7 +1897,7 @@ class PostSubjectController extends CrudController
                                 if (in_array($removeProtocolLink, $existLinkBySubject)) {
                                     //单个课题中链接重复
                                     $subjectFail++;
-                                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
                                     continue;
                                 }
                                 $existLinkBySubject[] = $removeProtocolLink;
@@ -1949,23 +1959,18 @@ class PostSubjectController extends CrudController
             if (count($excelDataArticle[$sheetName]) > 0) {
                 // 查看目前观点文章是否存在这些标题
                 $articleNameArray = array_keys($excelDataArticle[$sheetName]);
-                $isExistArticleNameArray = PostSubject::query()->select(['id', 'name', 'accepter'])
+                $isExistArticleArray = PostSubject::query()->select(['id', 'name', 'accepter'])
                     ->whereIn('name', $articleNameArray)
                     ->where('type', PostSubject::TYPE_POST_ARTICLE)
                     ->get()?->toArray() ?? [];
-                $isExistArticleNameArray = $isExistArticleNameArray ? array_column($isExistArticleNameArray, null, 'name') : [];
+                foreach ($isExistArticleArray as $existArticleItem) {
+                    $isExistArticleNameArray[$existArticleItem['name'] . '-' . ($existArticleItem['accepter'] ?? '')] = $existArticleItem;
+                }
 
                 foreach ($excelDataArticle[$sheetName] as $articleName => $linkData) {
 
-                    if (isset($isExistArticleNameArray[$articleName])) {
-                        $postSubjectData = $isExistArticleNameArray[$articleName];
-
-                        if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
-                            // 存在领取人的情况下，领取人不一致,跳过
-                            $subjectFail += count($linkData);
-                            $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-观点文章id【' . $postSubjectData['id'] . '】- 观点文章已存在，检测到领取者不一致';
-                            continue;
-                        }
+                    if (isset($isExistArticleNameArray[$articleName . '-' . $accepter])) {
+                        $postSubjectData = $isExistArticleNameArray[$articleName . '-' . $accepter];
 
                         $urlData = [];
                         $urlData = PostSubjectLink::query()->select(['link'])->where('post_subject_id', $postSubjectData['id'])->pluck('link')?->toArray() ?? [];
@@ -2697,7 +2702,7 @@ class PostSubjectController extends CrudController
                             $recordUpdate['propagate_status'] = 1;
                             $recordUpdate['last_propagate_time'] = $postLinkGroup['time'];
                             $recordUpdate['type'] = $articleType;
-                            if (empty($postSubjectData['accepter'])) {
+                            if (empty($articleData['accepter'])) {
                                 $recordUpdate['accept_time'] = $postLinkGroup['time'];
                                 $recordUpdate['accept_status'] = 1;
                                 $recordUpdate['accepter'] = $accepter;
@@ -2705,7 +2710,7 @@ class PostSubjectController extends CrudController
                             $recordUpdate['change_status'] = 0;
                         }
                         if (count($recordUpdate) > 0) {
-                            PostSubject::query()->where("id", $postSubjectId)->update($recordUpdate);
+                            PostSubject::query()->where("id", $articleId)->update($recordUpdate);
                         }
                     } else {
                         // 没有则新增课题
@@ -2731,7 +2736,7 @@ class PostSubjectController extends CrudController
                             if (in_array($removeProtocolLink, $existLinkBySubject)) {
                                 //单个课题中链接重复
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $articleId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
                                 continue;
                             }
                             $existLinkBySubject[] = $removeProtocolLink;
@@ -2750,12 +2755,12 @@ class PostSubjectController extends CrudController
                             }
                             if (!isset($postPlatformId) || empty($postPlatformId)) {
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $postSubjectId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $articleId . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                 continue;
                             }
                             // 新增
                             $insertChild = [];
-                            $insertChild['post_subject_id'] = $postSubjectData['id'];
+                            $insertChild['post_subject_id'] = $articleData['id'];
                             $insertChild['link'] = $postLinkValue['link'];
                             $insertChild['post_platform_id'] = $postPlatformId;
                             $insertChild['status'] = 1;
@@ -2775,7 +2780,7 @@ class PostSubjectController extends CrudController
                             $recordInsert['change_status'] = 0;
                         }
                         if (count($recordInsert) > 0) {
-                            PostSubject::query()->where("id", $postSubjectData['id'])->update($recordInsert);
+                            PostSubject::query()->where("id", $articleData['id'])->update($recordInsert);
                         }
                     }
                 }
