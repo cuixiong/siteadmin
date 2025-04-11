@@ -2210,6 +2210,8 @@ class PostSubjectController extends CrudController
     public function UploadSubjectByName(Request $request, $readColumn = [], $logType = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD)
     {
 
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '-1'); // 不限制内存
         // $time1 = microtime(true);
         $file_temp_name = $_POST['file_temp_name'] ?? null; //随机数，用于建立临时文件夹
         $chunks = $_POST['totalNo'] ?? null; //切片总数
@@ -2341,7 +2343,7 @@ class PostSubjectController extends CrudController
                 }
                 foreach ($sheetData as $rowKey => $sheetRow) {
 
-                    // if($rowKey == 0){
+                    // if($rowKey > 1000){
                     //     continue;
                     // }
                     // 帖子标题
@@ -2410,10 +2412,20 @@ class PostSubjectController extends CrudController
             }
 
             // 根据课题标题名称(报告名称)获取报告id
-            $query = (new SphinxQL($conn))->select('id')->from('products_rt')->where('name', 'IN', $subjectNameArray);
-            // $productsQueryResult = $query->compile()->getCompiled();
-            $productsQueryResult = $query->execute();
-            $productIds = $productsQueryResult->fetchAllAssoc();
+            $productIds = [];
+            // foreach ($subjectNameArray as $subjectNameItem) {
+                // $query = (new SphinxQL($conn))->select('id')->from('products_rt')->where('name', $subjectNameItem);
+                // // $productsQueryResult = $query->compile()->getCompiled();
+                // $productsQueryResult = $query->execute();
+                // $productQueryData = $productsQueryResult->fetchAllAssoc();
+                // $productIds = array_merge($productIds,$productQueryData??[]);
+            // }
+            
+            $productIds = Products::query()->select(['id'])
+                ->whereIn("name", $subjectNameArray)
+                ->get()?->toArray() ?? [];
+            
+            // return $productIds;
             $productData = [];
             $subjectType = PostSubject::TYPE_POST_SUBJECT;
             $isExistSubjectArray = [];
@@ -2427,7 +2439,7 @@ class PostSubjectController extends CrudController
                 $productIds = array_column($productData, 'id');
 
                 // 课题数据
-                $isExistSubjectArray = PostSubject::query()->select(['id', 'product_id', 'accepter'])
+                $isExistSubjectArray = PostSubject::query()->select(['id', 'name','product_id', 'accepter'])
                     ->whereIn("product_id", $productIds)
                     ->where("type", $subjectType)
                     ->get()?->toArray();
@@ -2506,6 +2518,7 @@ class PostSubjectController extends CrudController
                                 $insertChild['post_platform_id'] = $postPlatformId;
                                 $insertChild['status'] = 1;
                                 $insertChild['sort'] = 100;
+                                $insertChild['created_by'] = $accepter;
                                 $postSubjectLinkModel = new PostSubjectLink();
                                 $recordChild = $postSubjectLinkModel->create($insertChild);
                                 if ($recordChild) {
@@ -2542,7 +2555,7 @@ class PostSubjectController extends CrudController
                         $recordInsert['version'] =  intval($product['price'] ?? 0);
                         $recordInsert['analyst'] =  $product['author'];
                         $recordInsert['accepter'] = $accepter;
-                        $recordInsert['accept_time'] = time();
+                        $recordInsert['accept_time'] = $postLinkGroup['time'];
                         $recordInsert['accept_status'] = 1;
                         $recordInsert['keywords'] = $product['keywords'];
                         $recordInsert['has_cagr'] = !empty($product['cagr']) ? 1 : 0;
@@ -2587,6 +2600,7 @@ class PostSubjectController extends CrudController
                             $insertChild['post_platform_id'] = $postPlatformId;
                             $insertChild['status'] = 1;
                             $insertChild['sort'] = 100;
+                            $insertChild['created_by'] = $accepter;
                             $postSubjectLinkModel = new PostSubjectLink();
                             $recordChild = $postSubjectLinkModel->create($insertChild);
                             if ($recordChild) {
@@ -2615,7 +2629,6 @@ class PostSubjectController extends CrudController
                     continue;
                 }
             }
-
             // 观点文处理
             if ($articleDataArray && count($articleDataArray) > 0) {
 
@@ -2625,12 +2638,15 @@ class PostSubjectController extends CrudController
                     ->whereIn("name", array_keys($articleDataArray))
                     ->where("type", $articleType)
                     ->get()?->toArray();
+                    
                 if ($isExistArticleArray) {
-                    $isExistSubjectArray = array_map(function ($item) {
-                        return $item['nameWithAccepter'] = $item['name'] . '-' . $item['accepter'];
-                    }, $isExistSubjectArray);
-                    $isExistSubjectArray = $isExistSubjectArray ? array_column($isExistSubjectArray, null, 'nameWithAccepter') : [];
+                    $isExistArticleArray = array_map(function ($item) {
+                        $item['nameWithAccepter'] = $item['name'] . '-' . $item['accepter'];
+                        return $item;
+                    }, $isExistArticleArray);
+                    $isExistArticleArray = $isExistArticleArray ? array_column($isExistArticleArray, null, 'nameWithAccepter') : [];
                 }
+            // return $isExistArticleArray;
                 foreach ($articleDataArray as $subjectNameKey => $postLinkGroup) {
                     $linkData = $postLinkGroup['data'];
                     $articleData = $isExistArticleArray[$subjectNameKey . '-' . $accepter] ?? null;
@@ -2653,14 +2669,14 @@ class PostSubjectController extends CrudController
                             if (in_array($removeProtocolLink, $existLinkBySubject)) {
                                 //单个课题中链接重复
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $articleId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $articleId . '】' . $postLinkValue['link'] . ' 文件内部同个课题存在一样的链接';
                                 continue;
                             }
                             $existLinkBySubject[] = $removeProtocolLink;
 
                             if (in_array($removeProtocolLink, $urlData)) {
                                 $subjectFail++;
-                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $articleId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 链接已存在';
+                                $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1) . '】-观点id【' . $articleId . '】' . $postLinkValue['link'] . ' 链接已存在';
                                 continue;
                             } else {
                                 // 获取平台id
@@ -2677,7 +2693,7 @@ class PostSubjectController extends CrudController
                                 }
                                 if (!isset($postPlatformId) || empty($postPlatformId)) {
                                     $subjectFail++;
-                                    $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1)  . '】-观点id【' . $articleId . '】-报告id【' . $productId . '】' . $postLinkValue['link'] . ' 没有对应平台';
+                                    $failDetails[] = $space . '【工作簿：' . $sheetName . '-' . ($postLinkValue['rowKey'] + 1)  . '】-观点id【' . $articleId . '】' . $postLinkValue['link'] . ' 没有对应平台';
                                     continue;
                                 }
                                 // 新增
@@ -2687,6 +2703,7 @@ class PostSubjectController extends CrudController
                                 $insertChild['post_platform_id'] = $postPlatformId;
                                 $insertChild['status'] = 1;
                                 $insertChild['sort'] = 100;
+                                $insertChild['created_by'] = $accepter;
                                 $postSubjectLinkModel = new PostSubjectLink();
                                 $recordChild = $postSubjectLinkModel->create($insertChild);
                                 if ($recordChild) {
@@ -2765,6 +2782,7 @@ class PostSubjectController extends CrudController
                             $insertChild['post_platform_id'] = $postPlatformId;
                             $insertChild['status'] = 1;
                             $insertChild['sort'] = 100;
+                            $insertChild['created_by'] = $accepter;
                             $postSubjectLinkModel = new PostSubjectLink();
                             $recordChild = $postSubjectLinkModel->create($insertChild);
                             if ($recordChild) {
