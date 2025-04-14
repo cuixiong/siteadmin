@@ -551,7 +551,7 @@ class PostSubject extends Base
 
 
         // 报告关键词(中)-子查询
-        if (!empty($search['keywords_cn']) && isset($search['keywords_cn']['content'])) {
+        if (!empty($search['keywords_cn']) && isset($search['keywords_cn']['content']) && count($search['keywords_cn']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_cn'];
@@ -578,7 +578,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(英)-子查询
-        if (!empty($search['keywords_en']) && isset($search['keywords_en']['content'])) {
+        if (!empty($search['keywords_en']) && isset($search['keywords_en']['content']) && count($search['keywords_en']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_en'];
@@ -588,9 +588,9 @@ class PostSubject extends Base
             if (($search['keywords_en']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
                 ($search['keywords_en']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
-                $condition = self::CONDITION_EQUAL;
-            } else {
                 $condition = self::CONDITION_NOT_EQUAL;
+            } else {
+                $condition = self::CONDITION_EQUAL;
             }
 
             $joinTable = (new Products)->getTable();
@@ -598,7 +598,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(日)-子查询
-        if (!empty($search['keywords_jp']) && isset($search['keywords_jp']['content'])) {
+        if (!empty($search['keywords_jp']) && isset($search['keywords_jp']['content'])&& count($search['keywords_jp']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_jp'];
@@ -608,9 +608,9 @@ class PostSubject extends Base
             if (($search['keywords_jp']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
                 ($search['keywords_jp']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
-                $condition = self::CONDITION_EQUAL;
-            } else {
                 $condition = self::CONDITION_NOT_EQUAL;
+            } else {
+                $condition = self::CONDITION_EQUAL;
             }
 
             $joinTable = (new Products)->getTable();
@@ -618,7 +618,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(韩)-子查询
-        if (!empty($search['keywords_kr']) && isset($search['keywords_kr']['content'])) {
+        if (!empty($search['keywords_kr']) && isset($search['keywords_kr']['content'])&& count($search['keywords_kr']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_kr'];
@@ -628,9 +628,9 @@ class PostSubject extends Base
             if (($search['keywords_kr']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
                 ($search['keywords_kr']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
-                $condition = self::CONDITION_EQUAL;
-            } else {
                 $condition = self::CONDITION_NOT_EQUAL;
+            } else {
+                $condition = self::CONDITION_EQUAL;
             }
 
             $joinTable = (new Products)->getTable();
@@ -638,7 +638,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(德)-子查询
-        if (!empty($search['keywords_de']) && isset($search['keywords_de']['content'])) {
+        if (!empty($search['keywords_de']) && isset($search['keywords_de']['content'])&& count($search['keywords_de']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_de'];
@@ -648,9 +648,9 @@ class PostSubject extends Base
             if (($search['keywords_de']['content'][0] == 1 && $condition == self::CONDITION_EQUAL) ||
                 ($search['keywords_de']['content'][0] == 0 && $condition == self::CONDITION_NOT_EQUAL)
             ) {
-                $condition = self::CONDITION_EQUAL;
-            } else {
                 $condition = self::CONDITION_NOT_EQUAL;
+            } else {
+                $condition = self::CONDITION_EQUAL;
             }
 
             $joinTable = (new Products)->getTable();

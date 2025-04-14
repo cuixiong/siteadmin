@@ -183,16 +183,6 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('accept_status', '领取状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
 
-        // 领取时间
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
-        $temp_filter = $this->getAdvancedFiltersItem('accept_time', '领取时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
-        array_push($showData, $temp_filter);
-
-        // 最后宣传时间
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
-        $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
-        array_push($showData, $temp_filter);
-
 
         // 宣传平台
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EXISTS_IN, PostSubject::CONDITION_EXISTS_NOT_IN);
@@ -201,26 +191,35 @@ class PostSubjectController extends CrudController
         array_push($showData, $temp_filter);
 
 
-        // 修改状态
+        // 宣传状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Change_State', 'status' => 1], ['sort' => 'ASC']);
-        $temp_filter = $this->getAdvancedFiltersItem('change_status', '修改状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($showData, $temp_filter);
+
+
+        // 是否有数据
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('has_cagr', '是否有数据', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        array_push($showData, $temp_filter);
+
+
+        // id
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
+        // product_id
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        array_push($showData, $temp_filter);
+
 
 
         /**
          * 隐藏条件
          */
-
-        // id
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $temp_filter = $this->getAdvancedFiltersItem('id', '课题ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($hiddenData, $temp_filter);
-
-        // product_id
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
-        array_push($hiddenData, $temp_filter);
 
 
         // 分析师
@@ -234,17 +233,10 @@ class PostSubjectController extends CrudController
         array_push($hiddenData, $temp_filter);
 
 
-        // 宣传状态
+        // 修改状态
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Propagate_State', 'status' => 1], ['sort' => 'ASC']);
-        $temp_filter = $this->getAdvancedFiltersItem('propagate_status', '宣传状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
-        array_push($hiddenData, $temp_filter);
-
-
-        // 是否有数据
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
-        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Has_Cagr', 'status' => 1], ['sort' => 'ASC']);
-        $temp_filter = $this->getAdvancedFiltersItem('has_cagr', '是否有数据', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
+        $options = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'Post_Subject_Change_State', 'status' => 1], ['sort' => 'ASC']);
+        $temp_filter = $this->getAdvancedFiltersItem('change_status', '修改状态', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
 
         // 是否有关键词(中)
@@ -293,6 +285,16 @@ class PostSubjectController extends CrudController
         // 修改时间
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
         $temp_filter = $this->getAdvancedFiltersItem('updated_at', '修改时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($hiddenData, $temp_filter);
+
+        // 领取时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('accept_time', '领取时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($hiddenData, $temp_filter);
+
+        // 最后宣传时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($hiddenData, $temp_filter);
 
 
@@ -1478,7 +1480,7 @@ class PostSubjectController extends CrudController
                     $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
                     $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
                     $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
-                    
+
                     $rowIndex++;
                 }
             }
@@ -1783,12 +1785,20 @@ class PostSubjectController extends CrudController
                             // $subjectFail += count($linkData);
                             // $failDetails[] = $space . '【工作簿：' . $sheetName . ' - 第' . ($linkData[0]['rowKey'] ?? '??') . '行】-课题id【' . $postSubjectData['id'] . '】-报告id【' . $productId . '】领取者不一致';
 
-                            if (isset($excelDataArticle[$sheetName][$newsName])) {
-                                $excelDataArticle[$sheetName][$newsName] = array_merge($excelDataArticle[$sheetName][$newsName], $linkData);
+                            $productData = Products::query()->select(['name', 'keywords'])->where("id", $productId)->first();
+                            $tempName = $newsName;
+                            $tempKeyword = $postSubjectData['keywords'];
+                            if ($productData) {
+                                $productData = $productData->toArray();
+                                $tempName = $productData['name'];
+                                $tempKeyword = $productData['keywords'];
+                            }
+                            if (isset($excelDataArticle[$sheetName][$tempName])) {
+                                $excelDataArticle[$sheetName][$tempName] = array_merge($excelDataArticle[$sheetName][$tempName], $linkData);
                             } else {
                                 // return $postSubjectData;
-                                $excelDataArticle[$sheetName][$newsName] = $linkData;
-                                $excelDataArticle[$sheetName][$newsName][0]['keywords'] = $postSubjectData['keywords'];
+                                $excelDataArticle[$sheetName][$tempName] = $linkData;
+                                $excelDataArticle[$sheetName][$tempName][0]['keywords'] = $tempKeyword;
                             }
                             continue;
                         }
@@ -2414,17 +2424,17 @@ class PostSubjectController extends CrudController
             // 根据课题标题名称(报告名称)获取报告id
             $productIds = [];
             // foreach ($subjectNameArray as $subjectNameItem) {
-                // $query = (new SphinxQL($conn))->select('id')->from('products_rt')->where('name', $subjectNameItem);
-                // // $productsQueryResult = $query->compile()->getCompiled();
-                // $productsQueryResult = $query->execute();
-                // $productQueryData = $productsQueryResult->fetchAllAssoc();
-                // $productIds = array_merge($productIds,$productQueryData??[]);
+            // $query = (new SphinxQL($conn))->select('id')->from('products_rt')->where('name', $subjectNameItem);
+            // // $productsQueryResult = $query->compile()->getCompiled();
+            // $productsQueryResult = $query->execute();
+            // $productQueryData = $productsQueryResult->fetchAllAssoc();
+            // $productIds = array_merge($productIds,$productQueryData??[]);
             // }
-            
+
             $productIds = Products::query()->select(['id'])
                 ->whereIn("name", $subjectNameArray)
                 ->get()?->toArray() ?? [];
-            
+
             // return $productIds;
             $productData = [];
             $subjectType = PostSubject::TYPE_POST_SUBJECT;
@@ -2439,7 +2449,7 @@ class PostSubjectController extends CrudController
                 $productIds = array_column($productData, 'id');
 
                 // 课题数据
-                $isExistSubjectArray = PostSubject::query()->select(['id', 'name','product_id', 'accepter'])
+                $isExistSubjectArray = PostSubject::query()->select(['id', 'name', 'product_id', 'accepter'])
                     ->whereIn("product_id", $productIds)
                     ->where("type", $subjectType)
                     ->get()?->toArray();
@@ -2638,7 +2648,7 @@ class PostSubjectController extends CrudController
                     ->whereIn("name", array_keys($articleDataArray))
                     ->where("type", $articleType)
                     ->get()?->toArray();
-                    
+
                 if ($isExistArticleArray) {
                     $isExistArticleArray = array_map(function ($item) {
                         $item['nameWithAccepter'] = $item['name'] . '-' . $item['accepter'];
@@ -2646,7 +2656,7 @@ class PostSubjectController extends CrudController
                     }, $isExistArticleArray);
                     $isExistArticleArray = $isExistArticleArray ? array_column($isExistArticleArray, null, 'nameWithAccepter') : [];
                 }
-            // return $isExistArticleArray;
+                // return $isExistArticleArray;
                 foreach ($articleDataArray as $subjectNameKey => $postLinkGroup) {
                     $linkData = $postLinkGroup['data'];
                     $articleData = $isExistArticleArray[$subjectNameKey . '-' . $accepter] ?? null;
