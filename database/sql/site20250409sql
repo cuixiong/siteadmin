@@ -6,5 +6,5 @@ ALTER TABLE `post_subject`
 ALTER TABLE `post_subject_log`
     ADD COLUMN `error_count` int(11) DEFAULT NULL COMMENT '错误数量' AFTER `success_count`,
     ADD COLUMN `error_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '错误详情' AFTER `details`,
-    ADD COLUMN `ignore_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '忽略详情' AFTER `error_details`;
+    ADD COLUMN `ingore_details` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '忽略详情' AFTER `error_details`;
     

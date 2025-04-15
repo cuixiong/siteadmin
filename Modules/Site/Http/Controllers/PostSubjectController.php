@@ -109,7 +109,7 @@ class PostSubjectController extends CrudController
                         return $urlItem;
                     }, $urlData);
                     $record[$key]['url_data'] = $urlData;
-                    $record[$key]['type_name'] = PostSubject::getTypeList()[$record[$key]['type']];
+                    $record[$key]['type_name'] = PostSubject::getTypeList()[$record[$key]['type']]??'';
                 }
             }
 
