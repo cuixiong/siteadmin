@@ -46,4 +46,62 @@ class OfficeController extends CrudController
         }
     }
 
+
+
+    /**
+     * 单个新增
+     *
+     * @param $request 请求信息
+     */
+    protected function store(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $time_zone = $input['time_zone'] ?? '';
+            if(empty($$time_zone )){
+                $timezone = date_default_timezone_get();
+            }
+            $tz = new \DateTimeZone($timezone);
+            // 当前时间的DateTime对象
+            $now = new \DateTime('now', $tz);
+            $input['time_zone_copy'] = $now->format('h:i a');
+
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                ReturnJson(false, trans('lang.add_error'));
+            }
+            ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+    /**
+     * AJax单个更新
+     *
+     * @param $request 请求信息
+     */
+    protected function update(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $time_zone = $input['time_zone'] ?? '';
+            if(empty($time_zone )){
+                $time_zone = date_default_timezone_get();
+            }
+            $tz = new \DateTimeZone($time_zone);
+            // 当前时间的DateTime对象
+            $now = new \DateTime('now', $tz);
+            $input['time_zone_copy'] = $now->format('h:i a');
+
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
 }

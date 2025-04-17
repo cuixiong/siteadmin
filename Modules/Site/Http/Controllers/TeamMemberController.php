@@ -41,6 +41,23 @@ class TeamMemberController extends CrudController
     }
 
 
+    // 修改分析师状态
+    public function changeShowProduct(Request $request){
+        try {
+            if (empty($request->id)) {
+                ReturnJson(FALSE, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->show_product = $request->show_product ?? 1;
+            if (!$record->save()) {
+                ReturnJson(FALSE, trans('lang.update_error'));
+            }
+            ReturnJson(TRUE, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(FALSE, $e->getMessage());
+        }
+    }
+
     /**
      * AJax单个更新
      *
