@@ -168,8 +168,11 @@ class LoginController extends Controller {
         if(!empty($user )){
             $tokenKey = 'login_token_'.$user->id;
             Redis::del($tokenKey);
-        }
 
+            //token置空
+            $user->token = '';
+            $user->save();
+        }
         auth('api')->logout();
         ReturnJson(true, trans('lang.request_success'));
     }

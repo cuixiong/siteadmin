@@ -270,7 +270,7 @@ class SyncThirdProductController extends CrudController {
         foreach ($respDataList as $respData) {
             $temp = [];
             foreach ($syncFieldList as $syncFieldItem) {
-                
+
                 if (isset($respData[$syncFieldItem['name']])) {
                     $temp[$syncFieldItem['as_name']] = $respData[$syncFieldItem['name']]??'';
                 }
@@ -278,7 +278,7 @@ class SyncThirdProductController extends CrudController {
             $temp['id'] = $respData['id'];// 此id是北京数据的id
             $productData[] = $temp;
         }
-        // 
+        //
         // foreach ($respDataList as &$respData) {
         //     //字段转换
         //     foreach ($respData as $fieldKey => $fieldVal) {
@@ -296,7 +296,7 @@ class SyncThirdProductController extends CrudController {
         $authorCheck = ['已售报告', '完成报告'];
         foreach ($productData as $forParamsData) {
             $count++;
-            
+
             //校验报告名称
             $checkMsg = $this->checkProductName($forParamsData['name']);
             if ($checkMsg) {
@@ -305,7 +305,7 @@ class SyncThirdProductController extends CrudController {
                 array_push($errIdList, $forParamsData['id']);
                 continue;
             }
-            
+
             //已售报告>完成报告>人名作者
             if (!empty($uniqueDataList[$forParamsData['name']])) {
                 if (

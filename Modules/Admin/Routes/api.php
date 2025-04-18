@@ -131,6 +131,7 @@ Route::middleware([
         Route::get('form/{id}', [Modules\Admin\Http\Controllers\DepartmentController::class, 'form'])->name('部门管理:部门单查');
         Route::get('options', [Modules\Admin\Http\Controllers\DepartmentController::class, 'options'])->name('部门管理:字典数据');
         Route::post('change-status', [Modules\Admin\Http\Controllers\DepartmentController::class, 'changeStatus'])->name('部门管理:修改状态');
+        Route::get('get-role-by-department', [Modules\Admin\Http\Controllers\DepartmentController::class, 'getRoleByDepartment'])->name('部门管理:通过部门获取角色');
     });
 
 

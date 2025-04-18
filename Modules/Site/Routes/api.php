@@ -482,6 +482,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\TeamMemberController::class, 'changeStatus'])->name('团队成员:状态修改');
         Route::get('options', [Modules\Site\Http\Controllers\TeamMemberController::class, 'options'])->name('团队成员:字典数据');
         Route::post('change-analyst', [Modules\Site\Http\Controllers\TeamMemberController::class, 'ChangeAnalyst'])->name('团队成员:分析师状态修改');
+        Route::post('change-show-product', [Modules\Site\Http\Controllers\TeamMemberController::class, 'changeShowProduct'])->name('团队成员:分析师报告显示修改');
     });
     // Office控制器
     Route::prefix('office')->group(function () {
@@ -491,6 +492,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\OfficeController::class, 'list'])->name('办公室列表:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeStatus'])->name('办公室列表:状态修改');
         Route::post('change-view-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeViewStatus'])->name('办公室列表:字段状态修改');
+        Route::any('options', [Modules\Site\Http\Controllers\OfficeController::class, 'options'])->name('办公室列表:下拉列表');
     });
     // Qualification控制器
     Route::prefix('qualification')->group(function () {

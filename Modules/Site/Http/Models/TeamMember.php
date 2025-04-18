@@ -14,6 +14,13 @@ class TeamMember extends Base
         'updated_by',
         'created_by',
         'describe',
+        'show_product',
+        'region_name',
+        'language',
+        'img2',
+        'phone',
+        'icon', //区域小图标
+        'national_flag', //国旗
         'area',
         'experience',
         'custom',
@@ -35,6 +42,41 @@ class TeamMember extends Base
         $value = $value ? explode(",",$value) : [];
         return $value;
     }
+
+
+    public function setImg2Attribute($value){
+        $value = $value && is_array($value) ? implode(",",$value) : "";
+        $this->attributes['img2'] = $value;
+        return $value;
+    }
+    public function getImg2Attribute($value){
+        $value = $value ? explode(",",$value) : [];
+        return $value;
+    }
+    // Image获取器
+    public function getIconAttribute($value){
+        $value = $value ? explode(",",$value) : [];
+        return $value;
+    }
+
+    public function setIconAttribute($value){
+        $value = $value && is_array($value) ? implode(",",$value) : "";
+        $this->attributes['icon'] = $value;
+        return $value;
+    }
+
+
+    public function getNationalFlagAttribute($value){
+        $value = $value ? explode(",",$value) : [];
+        return $value;
+    }
+
+    public function setNationalFlagAttribute($value){
+        $value = $value && is_array($value) ? implode(",",$value) : "";
+        $this->attributes['national_flag'] = $value;
+        return $value;
+    }
+
 
     /**
      * 行业ID获取器
