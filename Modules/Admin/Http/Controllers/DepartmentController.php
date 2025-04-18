@@ -112,7 +112,7 @@ class DepartmentController extends CrudController {
             $record = $this->ModelInstance()->findOrFail($request->id);
             $role_id_list = $record->default_role ?? '';
             if (!empty($role_id_list)) {
-                $data['role_name_list'] = Role::query()->whereIn('id', $role_id_list)->pluck('name')->toArray();
+                $data['role_name_list'] = Role::query()->whereIn('id', $role_id_list)->pluck('id')->toArray();
             } else {
                 $data['role_name_list'] = [];
             }
