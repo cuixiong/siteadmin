@@ -522,6 +522,18 @@ class SyncThirdProductController extends CrudController {
                 $item['keywords_kr'] = isset($row['keywords_kr']) && $row['keywords_kr'] != $item['keywords_en'] ? $row['keywords_kr'] : '';
                 $item['keywords_de'] = isset($row['keywords_de']) && $row['keywords_de'] != $item['keywords_en'] ? $row['keywords_de'] : '';
 
+                if (strpos($item['keywords_jp'], '产品') !== false || $item['keywords_jp'] == "0") {
+                    $item['keywords_jp'] = '';
+                }
+    
+                if (strpos($item['keywords_kr'], '产品') !== false || $item['keywords_kr'] == "0") {
+                    $item['keywords_kr'] = '';
+                }
+    
+                if (strpos($item['keywords_de'], '产品') !== false || $item['keywords_de'] == "0") {
+                    $item['keywords_de'] = '';
+                }
+                
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
