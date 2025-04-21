@@ -21,6 +21,7 @@ use Modules\Site\Http\Requests\ProductsCategoryRequest;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Foolz\SphinxQL\SphinxQL;
+use Modules\Site\Http\Models\PersonalSetting;
 use Modules\Site\Services\SphinxService;
 
 class PostSubjectController extends CrudController
@@ -109,7 +110,7 @@ class PostSubjectController extends CrudController
                         return $urlItem;
                     }, $urlData);
                     $record[$key]['url_data'] = $urlData;
-                    $record[$key]['type_name'] = PostSubject::getTypeList()[$record[$key]['type']]??'';
+                    $record[$key]['type_name'] = PostSubject::getTypeList()[$record[$key]['type']] ?? '';
                 }
             }
 
@@ -391,6 +392,21 @@ class PostSubjectController extends CrudController
                 array_unshift($data['accepter_list'], ['label' => '公客', 'value' => '-1']);
             }
 
+            $key = 'export_subject_extra_line';
+            $user_id = $request->user->id;
+            $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $key])->value('value');
+            if (!$exportSetting) {
+                $exportSetting = PersonalSetting::query()->select('value')->where(['key' => $key])->value('value');
+            }
+            if ($exportSetting) {
+                $data['export_setting'] = [
+                    $key => $exportSetting
+                ];
+            } else {
+                $data['export_setting'] = [
+                    $key => 0
+                ];
+            }
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -1154,6 +1170,15 @@ class PostSubjectController extends CrudController
         $sheet->getColumnDimension('J')->setWidth(15);  // 设置 J 列宽度
         $sheet->getColumnDimension('K')->setWidth(15);  // 设置 K 列宽度
 
+
+        
+        $key = 'export_subject_extra_line';
+        $user_id = $request->user->id;
+        $extraLine = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $key])->value('value');
+        if (!$extraLine) {
+            $extraLine = PersonalSetting::query()->select('value')->where(['key' => $key])->value('value');
+        }
+
         foreach ($subjectData as $subject) {
             if (!empty($subject['product_id'])) {
                 $url = $domain . '/#/' . $site . '/products/fastList?type=id&keyword=' . $subject['product_id'];
@@ -1183,6 +1208,7 @@ class PostSubjectController extends CrudController
             $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
 
             $rowIndex++;
+            $rowIndex += empty($extraLine) ? 0 : $extraLine;
             $details[] = '【课题编号' . $subject['id'] . '】' . $subject['name'];
         }
 
@@ -2853,5 +2879,45 @@ class PostSubjectController extends CrudController
             }
         }
         ReturnJson(true, trans('lang.request_success'), $data);
+    }
+
+    public function setExportBlankRow(Request $request)
+    {
+
+        $input = $request->all();
+        // ReturnJson(true, trans('lang.update_success'),$input);
+        if (!$input || !isset($input['value']) || $input['value'] === null) {
+            ReturnJson(false, trans('lang.param_empty'), 'value');
+        }
+        if (!$input || !$input['key']) {
+            ReturnJson(false, trans('lang.param_empty'), 'input');
+        }
+        if (is_numeric($input['value']) && intval($input['value']) >= 0) {
+            $key = $input['key'];
+            $value = intval($input['value']);
+            $user_id = $request->user->id;
+            try {
+                $record = PersonalSetting::query()->where(['user_id' => $user_id, 'key' => $key])->first();
+                if ($record) {
+                } else {
+                    $insert = [];
+                    $insert['key'] = $key;
+                    $insert['user_id'] = $user_id;
+                    $insert['value'] = 0;
+                    $record = PersonalSetting::create($insert);
+                }
+
+                $record->value = $value;
+
+                if (!$record->save()) {
+                    ReturnJson(false, trans('lang.update_error'));
+                }
+                ReturnJson(true, trans('lang.update_success'));
+            } catch (\Exception $e) { //$e->getCode()
+                ReturnJson(false, $e->getMessage());
+            }
+        } else {
+            ReturnJson(false, trans('lang.update_error'), '输入不是数字');
+        }
     }
 }

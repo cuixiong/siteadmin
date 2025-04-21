@@ -791,6 +791,8 @@ Route::middleware([
         Route::post('upload-subject-link-old2', [Modules\Site\Http\Controllers\PostSubjectController::class, 'uploadSubjectLinkOld2'])->name('发帖课题:上传旧日志gircn2');
 
         Route::get('post-subject-log', [Modules\Site\Http\Controllers\PostSubjectController::class, 'postSubjectLog'])->name('发帖课题:操作日志');
+
+        Route::post('set-export-blank-row', [Modules\Site\Http\Controllers\PostSubjectController::class, 'setExportBlankRow'])->name('发帖课题:导出课题设置');
     });
 
 
