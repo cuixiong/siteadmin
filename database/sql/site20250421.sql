@@ -10,4 +10,4 @@ CREATE TABLE `personal_setting` (
   `updated_at` int(11) DEFAULT '0' COMMENT '修改时间',
   `updated_by` mediumint(9) DEFAULT '0' COMMENT '修改者',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;

@@ -1171,12 +1171,12 @@ class PostSubjectController extends CrudController
         $sheet->getColumnDimension('K')->setWidth(15);  // 设置 K 列宽度
 
 
-        
+
         $key = 'export_subject_extra_line';
         $user_id = $request->user->id;
         $extraLine = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $key])->value('value');
         if (!$extraLine) {
-            $extraLine = PersonalSetting::query()->select('value')->where(['key' => $key])->value('value');
+            $extraLine = PersonalSetting::query()->select('value')->where(['key' => $key, 'user_id' => 0])->value('value');
         }
 
         foreach ($subjectData as $subject) {
