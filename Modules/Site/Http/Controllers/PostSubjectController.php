@@ -392,21 +392,21 @@ class PostSubjectController extends CrudController
                 array_unshift($data['accepter_list'], ['label' => '公客', 'value' => '-1']);
             }
 
-            $key = 'export_subject_extra_line';
+            $exportSettingKey = 'export_subject_extra_line';
             $user_id = $request->user->id;
-            $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $key])->value('value');
+            $data['export_setting'] = [];
+            $data['export_setting'][$exportSettingKey] = [
+                'key' => $exportSettingKey,
+                'value' => 0,
+            ];
+            $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $exportSettingKey])->value('value');
             if (!$exportSetting) {
-                $exportSetting = PersonalSetting::query()->select('value')->where(['key' => $key])->value('value');
+                $exportSetting = PersonalSetting::query()->select('value')->where(['key' => $exportSettingKey])->value('value');
             }
             if ($exportSetting) {
-                $data['export_setting'] = [
-                    $key => $exportSetting
-                ];
-            } else {
-                $data['export_setting'] = [
-                    $key => 0
-                ];
+                $data['export_setting'][$exportSettingKey]['value'] = $exportSetting;
             }
+            $data['export_setting'] = array_values($data['export_setting']);
 
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -434,19 +434,27 @@ class PostSubjectController extends CrudController
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
             }
+            if($input['type'] == PostSubject::TYPE_POST_SUBJECT){
 
-            if (!empty($input['product_id'])) {
-                $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
-
-                if ($cagr && !empty($cagr)) {
-                    $input['has_cagr'] = 1;
+                if (!empty($input['product_id'])) {
+                    $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
+    
+                    if ($cagr && !empty($cagr)) {
+                        $input['has_cagr'] = 1;
+                    } else {
+                        $input['has_cagr'] = 0;
+                    }
                 } else {
                     $input['has_cagr'] = 0;
                 }
-                $input['type'] = PostSubject::TYPE_POST_SUBJECT;
-            } else {
+            }elseif($input['type'] == PostSubject::TYPE_POST_ARTICLE){
                 $input['has_cagr'] = 0;
-                $input['type'] = PostSubject::TYPE_POST_ARTICLE;
+                $input['product_id'] = 0;
+                $input['product_category_id'] = 0;
+                $input['analyst'] = '';
+                $input['version'] = '';
+            }else{
+                ReturnJson(false, trans('lang.add_error'),'未知课题类型');
             }
 
             // 开启事务
@@ -560,18 +568,32 @@ class PostSubjectController extends CrudController
 
             $details = '';
 
-            if (!empty($input['product_id'])) {
-                $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
+            
+            if($input['type'] == PostSubject::TYPE_POST_SUBJECT){
 
-                if ($cagr && !empty($cagr)) {
-                    $input['has_cagr'] = 1;
+                if (!empty($input['product_id'])) {
+                    $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
+    
+                    if ($cagr && !empty($cagr)) {
+                        $input['has_cagr'] = 1;
+                    } else {
+                        $input['has_cagr'] = 0;
+                    }
                 } else {
                     $input['has_cagr'] = 0;
                 }
-                $input['type'] = PostSubject::TYPE_POST_SUBJECT;
-            } else {
+            }elseif($input['type'] == PostSubject::TYPE_POST_ARTICLE){
+                if(empty(trim($input['keywords']))){
+                    ReturnJson(false, trans('lang.param_empty'),'观点文关键词不能为空');
+                }
+                
                 $input['has_cagr'] = 0;
-                $input['type'] = PostSubject::TYPE_POST_ARTICLE;
+                $input['product_id'] = 0;
+                $input['product_category_id'] = 0;
+                $input['analyst'] = '';
+                $input['version'] = '';
+            }else{
+                ReturnJson(false, trans('lang.param_empty'),'未知课题类型');
             }
 
             // 开启事务
@@ -751,6 +773,7 @@ class PostSubjectController extends CrudController
                 $recordUpdate['accepter'] = $request->user->id;
                 $recordUpdate['accept_status'] = 1;
             }
+            
             if (count($recordUpdate) > 0) {
                 $res = $model->update($recordUpdate);
             }
@@ -785,56 +808,113 @@ class PostSubjectController extends CrudController
         $id = $input['id'] ?? '';
         $product_id = $input['product_id'] ?? '';
         $product_name = $input['name'] ?? '';
-        $data = [];
-        if (!empty($product_id)) {
-            $query = Products::query()->select([
-                'id as product_id',
-                'name',
-                'category_id as product_category_id',
-                'author as analyst',
-                'price as version',
-                'keywords',
-                'cagr',
-            ])
-                ->where(['id' => $product_id])
-                ->first();
-            if ($query) {
-                $data = $query->makeHidden((new Products())->getAppends())->toArray();
-            }
-        } elseif (!empty($product_name)) {
-
-            $query = Products::query()->select([
-                'id as product_id',
-                'name',
-                'category_id as product_category_id',
-                'author as analyst',
-                'price as version',
-                'keywords',
-                'cagr',
-            ])
-                ->where(['name' => trim($product_name)])
-                ->first();
-            if ($query) {
-                $data = $query->makeHidden((new Products())->getAppends())->toArray();
-            }
+        $type = $input['type'] ?? null;
+        if (empty($type)) {
+            ReturnJson(false, trans('lang.param_empty'), '缺少课题类型');
         }
-        // 查看是否已有课题
-        if ($data && $data['product_id']) {
-            $postSubject = PostSubject::select([
-                'id',
-            ])
-                ->where(['product_id' => $data['product_id']])
-                ->first();
-            if ($postSubject) {
-                ReturnJson(true, trans('lang.request_success'), $postSubject);
+        $result = [];
+        if ($type == PostSubject::TYPE_POST_SUBJECT) {
+
+            $productQueryWhere = [];
+
+            $isExist = null;
+            $isExistQuery = PostSubject::query()->where('type', $type);
+            if (!empty($product_id)) {
+                $productQueryWhere = ['id' => $product_id]; // 给后面查报告信息
+                $isExistQuery->where('product_id', $product_id);
+                if ($id) {
+                    $isExistQuery->where('id', '<>', $id);
+                }
+
+                $isExist = $isExistQuery->first();
+            } elseif (!empty($product_name)) {
+                $productQueryWhere = ['name' => trim($product_name)]; // 给后面查报告信息
+                $isExistQuery->where('name', trim($product_name));
+                if ($id) {
+                    $isExistQuery->where('id', '<>', $id);
+                }
+                $isExist = $isExistQuery->first();
+            } else {
+                ReturnJson(false, trans('lang.param_empty'), '缺少参数-报告id或者课题名称');
             }
+
+
+            $productQuery = Products::query()->select([
+                'id as product_id',
+                'name',
+                'category_id as product_category_id',
+                'author as analyst',
+                'price as version',
+                'keywords',
+                'cagr',
+            ]);
+
+            if ($isExist) {
+                $result = [
+                    'data' => [
+                        'id' => $isExist->id,
+                    ],
+                    'redirect' => true,
+                    'msg' => '已存在相关的课题,不可用此课题名称或报告id',
+                ];
+            } else {
+                // 不存在冲突课题,查询报告信息，返回给前端填充
+                $productData = $productQuery->where($productQueryWhere)->first()?->makeHidden((new Products())->getAppends())->toArray() ?? null;
+                if ($productData) {
+
+                    $productData['version'] = floatval($productData['version']);
+                    $productData['has_cagr'] = !empty($productData['cagr']) ? 1 : 0;
+                    $result = [
+                        'data' => $productData,
+                        'redirect' => false,
+                        'msg' => '可以新增修改',
+                    ];
+                } else {
+
+                    $result = [
+                        'data' => [],
+                        'redirect' => false,
+                        'msg' => '报告不存在',
+                    ];
+                }
+            }
+
+            ReturnJson(true, trans('lang.request_success'), $result);
+        } elseif ($type == PostSubject::TYPE_POST_ARTICLE) {
+
+            // 查询 类型为观点，课题名称+领取人的组合是否存在
+            $isExist = null;
+            $isExistQuery = PostSubject::query()->where('type', $type);
+            if (!empty($product_name)) {
+                $isExistQuery->where('name', trim($product_name));
+                $accepter = $request->user->id;
+                $isExistQuery->where('accepter', $accepter);
+                if ($id) {
+                    $isExistQuery->where('id', '<>', $id);
+                }
+                $isExist = $isExistQuery->first();
+            } else {
+                ReturnJson(false, trans('lang.param_empty'), '缺少参数-课题名称');
+            }
+            if ($isExist) {
+                $result = [
+                    'data' => [
+                        'id' => $isExist->id,
+                    ],
+                    'redirect' => true,
+                    'msg' => '已存在相关的观点文章,不可用此名称',
+                ];
+            } else {
+                $result = [
+                    'data' => [],
+                    'redirect' => false,
+                    'msg' => '观点可以新增修改',
+                ];
+            }
+            ReturnJson(true, trans('lang.request_success'), $result);
         } else {
-            ReturnJson(true, trans('lang.data_empty'), false); // 报告不存在
+            ReturnJson(false, trans('lang.param_empty'), '未知课题类型');
         }
-
-        $data['version'] = floatval($data['version']);
-        $data['has_cagr'] = !empty($data['cagr']) ? 1 : 0;
-        ReturnJson(true, trans('lang.request_success'), $data);
     }
 
 
