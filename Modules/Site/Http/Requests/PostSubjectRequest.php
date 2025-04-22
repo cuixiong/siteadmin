@@ -17,7 +17,6 @@ class PostSubjectRequest extends BaseRequest
         ];
         $message = [
             'name.required' => '名称不能为空',
-            'product_id.required'   => '报告不能为空',
             'product_id.unique'   => '报告不能重复',
         ];
         return $this->validateRequest($request, $rules,$message);
@@ -43,7 +42,6 @@ class PostSubjectRequest extends BaseRequest
         $message = [
             'id' => 'required',
             'name.required' => '名称不能为空',
-            'product_id.required'   => '报告不能为空',
             'product_id.unique'   => '报告不能重复'.$request->input('id'),
         ];
         return $this->validateRequest($request, $rules,$message);
