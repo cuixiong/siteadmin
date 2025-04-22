@@ -565,6 +565,7 @@ Route::middleware([
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateParam'])->name('联系我们:批量修改参数');
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateOption'])->name('联系我们:批量修改参数子项');
         Route::post('batch-update', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdate'])->name('联系我们:批量修改');
+        Route::get('again-send-email', [Modules\Site\Http\Controllers\ContactUsController::class, 'againSendEmail'])->name('联系我们:重新发送邮件');
     });
 
     Route::prefix('message-language-version')->group(function () {
@@ -856,6 +857,19 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\AutoPostLogController::class, 'list'])->name('自动发帖日志:数据列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\AutoPostLogController::class, 'searchDroplist'])->name('自动发帖日志:搜索下拉列表数据');
         Route::post('destroy', [Modules\Site\Http\Controllers\AutoPostLogController::class, 'destroy'])->name('自动发帖日志:数据删除');
+    });
+
+
+    //站点地图
+    Route::prefix('site-map-conf')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'list'])->name('站点地图:数据列表');
+        Route::post('store', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'store'])->name('站点地图:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'update'])->name('站点地图:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'destroy'])->name('站点地图:数据删除');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'searchDroplist'])->name('站点地图:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'changeStatus'])->name('站点地图:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'changeSort'])->name('站点地图:排序修改');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'form'])->name('站点地图:数据单查');
     });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
