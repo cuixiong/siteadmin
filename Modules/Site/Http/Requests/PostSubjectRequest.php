@@ -1,6 +1,9 @@
 <?php
+
 namespace Modules\Site\Http\Requests;
+
 use Modules\Admin\Http\Requests\BaseRequest;
+use Modules\Site\Http\Rules\PostSubjectCheck;
 
 class PostSubjectRequest extends BaseRequest
 {
@@ -10,16 +13,21 @@ class PostSubjectRequest extends BaseRequest
      */
     public function store($request)
     {
-        $rules = [
-            // 'name' => ['required', 'unique:post_subject,name',],
-            'name' => 'required',
-            'product_id' => ['required', 'unique:post_subject,product_id'],
-        ];
-        $message = [
-            'name.required' => '名称不能为空',
-            'product_id.unique'   => '报告不能重复',
-        ];
-        return $this->validateRequest($request, $rules,$message);
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                new PostSubjectCheck(
+                    $request->type, 
+                    $request->id,
+                    $request->user->id // 传入当前用户ID
+                )
+            ],
+            'product_id' => [
+                new PostSubjectCheck($request->type, $request->id,$request->user->id)
+            ],
+        ]);
+        return $validated;
+
     }
     /**
      * 更新数据验证
@@ -27,23 +35,21 @@ class PostSubjectRequest extends BaseRequest
      */
     public function update($request)
     {
-        $rules = [
+
+        $validated = $request->validate([
             'id' => 'required',
-            // 'name'           => [
-            //     'required',
-            //     \Illuminate\Validation\Rule::unique('post_subject')->ignore($request->input('id')),
-            // ],
-            'name' => 'required',
-            'product_id'           => [
+            'name' => [
                 'required',
-                \Illuminate\Validation\Rule::unique('post_subject')->ignore($request->input('id')),
+                new PostSubjectCheck(
+                    $request->type, 
+                    $request->id,
+                    $request->user->id // 传入当前用户ID
+                )
             ],
-        ];
-        $message = [
-            'id' => 'required',
-            'name.required' => '名称不能为空',
-            'product_id.unique'   => '报告不能重复'.$request->input('id'),
-        ];
-        return $this->validateRequest($request, $rules,$message);
+            'product_id' => [
+                new PostSubjectCheck($request->type, $request->id,$request->user->id)
+            ],
+        ]);
+        return $validated;
     }
 }
