@@ -590,8 +590,8 @@ class PostSubjectController extends CrudController
                 $input['has_cagr'] = 0;
                 $input['product_id'] = 0;
                 $input['product_category_id'] = 0;
-                $input['analyst'] = '';
-                $input['version'] = '';
+                $input['analyst'] = null;
+                $input['version'] = null;
             }else{
                 ReturnJson(false, trans('lang.param_empty'),'未知课题类型');
             }
