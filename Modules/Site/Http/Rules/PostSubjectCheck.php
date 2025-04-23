@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Rules;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Http\Request;
 use Modules\Site\Http\Models\PostSubject;
+use Modules\Site\Http\Models\Products;
 
 class PostSubjectCheck implements Rule {
 
@@ -93,6 +94,14 @@ class PostSubjectCheck implements Rule {
 
         if ($query->exists()) {
             $this->customMessage = '已存在相同[报告ID]的[课题]';
+            return false;
+        }
+
+        
+        $query = Products::where('id', $productId);
+        
+        if (!$query->exists()) {
+            $this->customMessage = '该[报告ID]不存在';
             return false;
         }
 
