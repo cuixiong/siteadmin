@@ -49,7 +49,23 @@ class ProductsController extends CrudController {
     public $templateCateMappingList = [];
     public $templateList            = [];
     public $categpryName            = [];
-
+    
+    // 定义需要检测的字段，数据字段对应替换字段
+    public $titleHasField = [
+        'cagr' => '{{cagr}}',
+        'last_scale' => '{{last_year}}',
+        'current_scale' => '{{this_year}}',
+        'future_scale' => '{{six_year}}',
+    ];
+    public $contentHasField = [];
+    public $commomHasField = [
+        'keywords_cn' => '{{keywords_cn}}',
+        'keywords_en' => '{{keywords_en}}',
+        'keywords_jp' => '{{keywords_jp}}',
+        'keywords_kr' => '{{keywords_kr}}',
+        'keywords_de' => '{{keywords_de}}',
+    ];
+    
     /**
      * 查询列表页
      *
@@ -107,7 +123,8 @@ class ProductsController extends CrudController {
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    protected function QuickSearch(Request $request) {
+    protected function QuickSearch(Request $request)
+    {
         try {
             $data = $this->GetProductList($request);
             $record = $data['list'];
@@ -115,31 +132,49 @@ class ProductsController extends CrudController {
                 ReturnJson(true, trans('lang.request_success'), $data);
             }
             $product_id_list = array_column($record, 'id');
+
+            $templateTitleField = array_keys($this->titleHasField);
+            $templateContentField = array_keys($this->contentHasField);
+            $templateCommomField = array_keys($this->commomHasField);
+            $hasFieldArray = array_unique(
+                array_merge(
+                    $templateTitleField,
+                    $templateContentField,
+                    $templateCommomField,
+                    ['updated_at', 'updated_by', 'created_at', 'created_by', 'id']
+                )
+            );
+
             $productList = Products::query()->whereIn('id', $product_id_list)
-                                   ->select(['updated_at', 'updated_by', 'created_at', 'created_by', 'id'])
-                                   ->get()->keyBy('id')
-                                   ->toArray();
+                ->select($hasFieldArray)
+                ->get()->keyBy('id')
+                ->toArray();
             $total = $data['total'];
-            $type = '当前查询方式是：'.$data['type'];
+            $type = '当前查询方式是：' . $data['type'];
             $this->beforeMatchTemplateData();
             $domain = getSiteDomain();
+            $templateContentList = Template::query()->select(['id', 'content'])->where("status", 1)->get();
+            $templateContentList = $templateContentList ? array_column($templateContentList->toArray(), 'content', 'id') : [];
             foreach ($record as $key => $item) {
                 $productId = $item['id'];
-                $record[$key]['report_url'] = $domain."/reports/{$item['id']}/".$item['url'];
+                $record[$key]['report_url'] = $domain . "/reports/{$item['id']}/" . $item['url'];
                 $record[$key]['published_date'] = date('Y-m-d', $item['published_date']);
                 $record[$key]['category_name'] = $this->categpryName[$item['category_id']];
                 //$descriptionData = $productsModel->findDescCache($item['id']);
-                //根据描述匹配 模版分类
-                $year = date('Y', $item['published_date']);
-                $description = (new ProductsDescription($year))->where("product_id", $productId)->value('description');
-                //$description = $item['description'] ?? '';
-                $templateData = $this->matchTemplateData($description);
-                $record[$key]['template_data'] = $templateData;
+
                 $productFor = $productList[$productId] ?? [];
                 $record[$key]['updated_at'] = $productFor['updated_at'];
                 $record[$key]['created_at'] = $productFor['created_at'];
                 $record[$key]['created_by'] = $productFor['created_by'];
                 $record[$key]['updated_by'] = $productFor['updated_by'];
+
+                //根据描述匹配 模版分类
+                $year = date('Y', $item['published_date']);
+                $description = (new ProductsDescription($year))->where("product_id", $productId)->value('description');
+                //$description = $item['description'] ?? '';
+                $templateData = $this->matchTemplateData($description);
+                $templateData = $this->filterTemplateWithNoData($templateData, $templateContentList, $productFor);
+                $record[$key]['template_data'] = $templateData;
                 //删除描述
                 unset($record[$key]['description']);
             }
@@ -2034,6 +2069,70 @@ class ProductsController extends CrudController {
         $rdata['template_title_list'] = $template_title_list;
 
         return $rdata;
+    }
+
+
+    /**
+     * 标题模板与内容模板的部分替换字段如果不存在数据，则不返回该按钮 开始
+     *
+     * @param $templateData  matchTemplateData()函数返回的数组
+     * @param $templateContentData  templateData不含模板内容，时间有限，我另外查询
+     * @param $productData   报告数据,如涉及详情数据,$productData需包含详情数据
+     *
+     * @return array[]
+     */
+    public function filterTemplateWithNoData($templateData, $templateContentData, $productData)
+    {
+
+        $titleTemplateList = $templateData['template_title_list'];
+        $contentTemplateList = $templateData['template_content_list'];
+
+        $newTitleTemplateList = [];
+        $newContentTemplateList = [];
+
+        // 定义需要检测的字段，数据字段对应替换字段
+        $titleHasField = $this->titleHasField;
+        $contentHasField = $this->contentHasField;
+        $commomHasField = $this->commomHasField;
+
+        $titleHasField = array_merge($titleHasField, $commomHasField);
+        $contentHasField = array_merge($contentHasField, $commomHasField);
+
+        // 需要该模板不含有此替换字段，或者存在此替换字段并且该字段有数据，方可显示
+        foreach ($titleTemplateList as $key => $template) {
+            $isShow = true;
+            foreach ($titleHasField as $field => $replaceField) {
+                if (!isset($templateContentData[$template['id']])) {
+                    continue;
+                }
+                if (strpos($templateContentData[$template['id']], $replaceField) !== false && (!isset($productData[$field]) || empty($productData[$field]))) {
+                    $isShow = false;
+                    continue;
+                }
+            }
+            if ($isShow) {
+                $newTitleTemplateList[] = $template;
+            }
+        }
+        // 需要该模板不含有此替换字段，或者存在此替换字段并且该字段有数据，方可显示
+        foreach ($contentTemplateList as $key => $template) {
+            $isShow = true;
+            foreach ($contentHasField as $field => $replaceField) {
+                if (!isset($templateContentData[$template['id']])) {
+                    continue;
+                }
+                if (strpos($templateContentData[$template['id']], $replaceField) !== false && (!isset($productData[$field]) || empty($productData[$field]))) {
+                    $isShow = false;
+                    continue;
+                }
+            }
+            if ($isShow) {
+                $newContentTemplateList[] = $template;
+            }
+        }
+        $templateData['template_title_list'] = $newTitleTemplateList;
+        $templateData['template_content_list'] = $newContentTemplateList;
+        return $templateData;
     }
 
     public
