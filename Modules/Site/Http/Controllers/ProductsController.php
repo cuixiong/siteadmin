@@ -49,23 +49,24 @@ class ProductsController extends CrudController {
     public $templateCateMappingList = [];
     public $templateList            = [];
     public $categpryName            = [];
-    
     // 定义需要检测的字段，数据字段对应替换字段
-    public $titleHasField = [
-        'cagr' => '{{cagr}}',
-        'last_scale' => '{{last_year}}',
-        'current_scale' => '{{this_year}}',
-        'future_scale' => '{{six_year}}',
-    ];
+    public $titleHasField
+                            = [
+            'cagr'          => '{{cagr}}',
+            'last_scale'    => '{{last_year}}',
+            'current_scale' => '{{this_year}}',
+            'future_scale'  => '{{six_year}}',
+        ];
     public $contentHasField = [];
-    public $commomHasField = [
-        'keywords_cn' => '{{keywords_cn}}',
-        'keywords_en' => '{{keywords_en}}',
-        'keywords_jp' => '{{keywords_jp}}',
-        'keywords_kr' => '{{keywords_kr}}',
-        'keywords_de' => '{{keywords_de}}',
-    ];
-    
+    public $commomHasField
+                            = [
+            'keywords_cn' => '{{keywords_cn}}',
+            'keywords_en' => '{{keywords_en}}',
+            'keywords_jp' => '{{keywords_jp}}',
+            'keywords_kr' => '{{keywords_kr}}',
+            'keywords_de' => '{{keywords_de}}',
+        ];
+
     /**
      * 查询列表页
      *
@@ -123,8 +124,7 @@ class ProductsController extends CrudController {
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    protected function QuickSearch(Request $request)
-    {
+    protected function QuickSearch(Request $request) {
         try {
             $data = $this->GetProductList($request);
             $record = $data['list'];
@@ -132,7 +132,6 @@ class ProductsController extends CrudController {
                 ReturnJson(true, trans('lang.request_success'), $data);
             }
             $product_id_list = array_column($record, 'id');
-
             $templateTitleField = array_keys($this->titleHasField);
             $templateContentField = array_keys($this->contentHasField);
             $templateCommomField = array_keys($this->commomHasField);
@@ -141,39 +140,53 @@ class ProductsController extends CrudController {
                     $templateTitleField,
                     $templateContentField,
                     $templateCommomField,
-                    ['updated_at', 'updated_by', 'created_at', 'created_by', 'id']
+                    ['classification', 'application', 'updated_at', 'updated_by', 'created_at',
+                     'created_by', 'id']
                 )
             );
 
             $productList = Products::query()->whereIn('id', $product_id_list)
-                ->select($hasFieldArray)
-                ->get()->keyBy('id')
-                ->toArray();
+                                   ->select($hasFieldArray)
+                                   ->get()->keyBy('id')
+                                   ->toArray();
             $total = $data['total'];
-            $type = '当前查询方式是：' . $data['type'];
+            $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
             $domain = getSiteDomain();
             $templateContentList = Template::query()->select(['id', 'content'])->where("status", 1)->get();
-            $templateContentList = $templateContentList ? array_column($templateContentList->toArray(), 'content', 'id') : [];
+            $templateContentList = $templateContentList ? array_column($templateContentList->toArray(), 'content', 'id')
+                : [];
             foreach ($record as $key => $item) {
                 $productId = $item['id'];
-                $record[$key]['report_url'] = $domain . "/reports/{$item['id']}/" . $item['url'];
+                $record[$key]['report_url'] = $domain."/reports/{$item['id']}/".$item['url'];
                 $record[$key]['published_date'] = date('Y-m-d', $item['published_date']);
                 $record[$key]['category_name'] = $this->categpryName[$item['category_id']];
                 //$descriptionData = $productsModel->findDescCache($item['id']);
-
+                //根据描述匹配 模版分类
+                $year = date('Y', $item['published_date']);
+                $desc_info = (new ProductsDescription($year))->where("product_id", $productId)->select(
+                    ['description', 'companies_mentioned']
+                )->first();
+                if (empty($desc_info)) {
+                    $description = '';
+                    $companies_mentioned = '';
+                } else {
+                    $description = $desc_info['description'];
+                    $companies_mentioned = $desc_info['companies_mentioned'];
+                }
                 $productFor = $productList[$productId] ?? [];
                 $record[$key]['updated_at'] = $productFor['updated_at'];
                 $record[$key]['created_at'] = $productFor['created_at'];
                 $record[$key]['created_by'] = $productFor['created_by'];
                 $record[$key]['updated_by'] = $productFor['updated_by'];
-
-                //根据描述匹配 模版分类
-                $year = date('Y', $item['published_date']);
-                $description = (new ProductsDescription($year))->where("product_id", $productId)->value('description');
+                $record[$key]['application'] = $productFor['application'];
+                $record[$key]['classification'] = $productFor['classification'];
+                $record[$key]['companies_mentioned'] = $companies_mentioned;
                 //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
-                $templateData = $this->filterTemplateWithNoData($templateData, $templateContentList, $productFor);
+                if (!request()->user->is_super) {
+                    $templateData = $this->filterTemplateWithNoData($templateData, $templateContentList, $productFor);
+                }
                 $record[$key]['template_data'] = $templateData;
                 //删除描述
                 unset($record[$key]['description']);
@@ -374,7 +387,7 @@ class ProductsController extends CrudController {
                   )
         ) {
             $query = $query->where($type, intval($keyword));
-        } elseif (filled($keyword) && in_array($type, ['author' , 'keywords'])
+        } elseif (filled($keyword) && in_array($type, ['author', 'keywords'])
         ) {
             $query = $query->where($type, $keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
@@ -386,7 +399,7 @@ class ProductsController extends CrudController {
             //中文搜索, 测试明确 需要精确搜索
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
-                foreach ($keyWordArraySphinx as  $val) {
+                foreach ($keyWordArraySphinx as $val) {
                     $query->match($type, '"'.$val.'"', true);
                 }
             }
@@ -394,7 +407,7 @@ class ProductsController extends CrudController {
             //英文搜索, 需要精确搜索
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
-                foreach ($keyWordArraySphinx as  $val) {
+                foreach ($keyWordArraySphinx as $val) {
                     $query->match($type, '"'.$val.'"', true);
                 }
             }
@@ -477,7 +490,6 @@ class ProductsController extends CrudController {
             DB::commit();
             // 创建完成后同步到xunsearch
             $this->ModelInstance()->syncSearchIndex($record->id, 'add');
-
             $postSubjectData = [];
             $postSubjectData['name'] = $record['name'];
             $postSubjectData['type'] = PostSubject::TYPE_POST_SUBJECT;
@@ -486,13 +498,12 @@ class ProductsController extends CrudController {
             $postSubjectData['version'] = intval($record['price'] ?? 0);
             $postSubjectData['analyst'] = $record['author'];
             $postSubjectData['keywords'] = $record['keywords'];
-            $postSubjectData['has_cagr'] = !empty($record['cagr'])?1:0;
+            $postSubjectData['has_cagr'] = !empty($record['cagr']) ? 1 : 0;
             // 没有领取人则自己领取
             $postSubjectData['accepter'] = $request->user->id;
             $postSubjectData['accept_status'] = 1;
             $postSubjectData['accept_time'] = time();
             PostSubject::create($postSubjectData);
-
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             // 回滚事务
@@ -686,9 +697,7 @@ class ProductsController extends CrudController {
                     }
                 }
             }
-
             $productChange = false; // 报告的类型、应用、企业等数据是否有变化
-
             // 属性是否有变动
             if (
                 $record
@@ -703,7 +712,6 @@ class ProductsController extends CrudController {
             ) {
                 $productChange = true;
             }
-
             if (!$record->update($input)) {
                 throw new \Exception(trans('lang.update_error'));
             }
@@ -714,10 +722,10 @@ class ProductsController extends CrudController {
                 //删除旧详情
                 if ($oldYear) {
                     $oldProductDescription = (new ProductsDescription($oldYear))->where('product_id', $record->id)
-                        ->first();
-
+                                                                                ->first();
                     // 属性是否有变动
-                    if ($oldProductDescription&& $oldProductDescription['companies_mentioned']== $input['companies_mentioned']) {
+                    if ($oldProductDescription
+                        && $oldProductDescription['companies_mentioned'] == $input['companies_mentioned']) {
                         $productChange = true;
                     }
                     $oldProductDescription->delete();
@@ -734,7 +742,8 @@ class ProductsController extends CrudController {
                     $descriptionRecord = (new ProductsDescription($newYear))->saveWithAttributes($input);
                 }
                 // 属性是否有变动
-                if ($newProductDescription && $newProductDescription['companies_mentioned'] == $newProductDescription['companies_mentioned']) {
+                if ($newProductDescription
+                    && $newProductDescription['companies_mentioned'] == $newProductDescription['companies_mentioned']) {
                     $productChange = true;
                 }
             }
@@ -745,33 +754,32 @@ class ProductsController extends CrudController {
             // 更新完成后同步到xunsearch
             $this->ModelInstance()->syncSearchIndex($record->id, 'update');
             // DB::connection($currentTenant->getConnectionName())->commit();
-
-                // 发帖课题
-                if (!empty($record['id'])) {
-                    try {
-                        // 修改课题
-                        $postSubject = PostSubject::query()->where('product_id', $record->id)->first();
-                        $postSubjectUpdate = [];
-                        $postSubjectUpdate['name'] = $record->name;
-                        $postSubjectUpdate['type'] = PostSubject::TYPE_POST_SUBJECT;
-                        $postSubjectUpdate['product_id'] =  $record->id;
-                        $postSubjectUpdate['product_category_id'] =  $record->category_id;
-                        $postSubjectUpdate['version'] = intval($record->price ?? 0);
-                        $postSubjectUpdate['analyst'] = $record->author;
-                        $postSubjectUpdate['keywords'] = $record->keywords;
-                        $postSubjectUpdate['has_cagr'] = !empty($record->cagr)?1:0;
-                        if ($postSubject) {
-                            // 需比对类型、应用、企业是否有变化，有则打开修改状态
-                            if ($productChange && !empty($postSubject->propagate_status)) {
-                                $postSubjectUpdate['change_status'] = 1;
-                            }
-                            PostSubject::query()->where('product_id', $record->id)->update($postSubjectUpdate);
-                        } else {
-                            PostSubject::create($postSubjectUpdate);
+            // 发帖课题
+            if (!empty($record['id'])) {
+                try {
+                    // 修改课题
+                    $postSubject = PostSubject::query()->where('product_id', $record->id)->first();
+                    $postSubjectUpdate = [];
+                    $postSubjectUpdate['name'] = $record->name;
+                    $postSubjectUpdate['type'] = PostSubject::TYPE_POST_SUBJECT;
+                    $postSubjectUpdate['product_id'] = $record->id;
+                    $postSubjectUpdate['product_category_id'] = $record->category_id;
+                    $postSubjectUpdate['version'] = intval($record->price ?? 0);
+                    $postSubjectUpdate['analyst'] = $record->author;
+                    $postSubjectUpdate['keywords'] = $record->keywords;
+                    $postSubjectUpdate['has_cagr'] = !empty($record->cagr) ? 1 : 0;
+                    if ($postSubject) {
+                        // 需比对类型、应用、企业是否有变化，有则打开修改状态
+                        if ($productChange && !empty($postSubject->propagate_status)) {
+                            $postSubjectUpdate['change_status'] = 1;
                         }
-                    } catch (\Throwable $psth) {
+                        PostSubject::query()->where('product_id', $record->id)->update($postSubjectUpdate);
+                    } else {
+                        PostSubject::create($postSubjectUpdate);
                     }
+                } catch (\Throwable $psth) {
                 }
+            }
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             // 回滚事务
@@ -1392,10 +1400,10 @@ class ProductsController extends CrudController {
                 $yearsList = array_keys($yearProIdList);
                 foreach ($yearsList as $foryear) {
                     $yearProIdData = $yearProIdList[$foryear];
-                    $forDescList = (new ProductsDescription($foryear))->whereIn("product_id", $yearProIdData)->get()->keyBy('product_id')->toArray();
+                    $forDescList = (new ProductsDescription($foryear))->whereIn("product_id", $yearProIdData)->get()
+                                                                      ->keyBy('product_id')->toArray();
                     $yearProIdDescList[$foryear] = $forDescList;
                 }
-
                 foreach ($groupArr as $key => $item) {
                     $year = date('Y', $item['published_date']);
                     if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
@@ -1473,7 +1481,6 @@ class ProductsController extends CrudController {
             $writer->openToFile($dirPath.'/'.$chip.'.xlsx');
             $regionList = Region::query()->pluck('name', 'id')->toArray();
             $productCateList = ProductsCategory::query()->pluck('name', 'id')->toArray();
-
             ##########
             $yearProIdDescList = [];
             $yearProIdList = [];
@@ -1483,11 +1490,11 @@ class ProductsController extends CrudController {
             $yearsList = array_keys($yearProIdList);
             foreach ($yearsList as $foryear) {
                 $yearProIdData = $yearProIdList[$foryear];
-                $forDescList = (new ProductsDescription($foryear))->whereIn("product_id", $yearProIdData)->get()->keyBy('product_id')->toArray();
+                $forDescList = (new ProductsDescription($foryear))->whereIn("product_id", $yearProIdData)->get()->keyBy(
+                    'product_id'
+                )->toArray();
                 $yearProIdDescList[$foryear] = $forDescList;
             }
-
-
             foreach ($record as $key => $item) {
                 $year = date('Y', $item['published_date']);
                 if (empty($year) || !is_numeric($year) || strlen($year) !== 4) {
@@ -1959,10 +1966,7 @@ class ProductsController extends CrudController {
      *
      * @return array[]
      */
-    public
-    function matchTemplateData(
-        $description
-    ) {
+    public function matchTemplateData($description) {
         //测试需求, 模板分类必须所有关键词匹配, 且报告可以匹配多个模板分类
         $rdata = [
             'template_cate_list'    => [],
@@ -2071,33 +2075,26 @@ class ProductsController extends CrudController {
         return $rdata;
     }
 
-
     /**
      * 标题模板与内容模板的部分替换字段如果不存在数据，则不返回该按钮 开始
      *
-     * @param $templateData  matchTemplateData()函数返回的数组
+     * @param $templateData         matchTemplateData()函数返回的数组
      * @param $templateContentData  templateData不含模板内容，时间有限，我另外查询
-     * @param $productData   报告数据,如涉及详情数据,$productData需包含详情数据
+     * @param $productData          报告数据,如涉及详情数据,$productData需包含详情数据
      *
      * @return array[]
      */
-    public function filterTemplateWithNoData($templateData, $templateContentData, $productData)
-    {
-
+    public function filterTemplateWithNoData($templateData, $templateContentData, $productData) {
         $titleTemplateList = $templateData['template_title_list'];
         $contentTemplateList = $templateData['template_content_list'];
-
         $newTitleTemplateList = [];
         $newContentTemplateList = [];
-
         // 定义需要检测的字段，数据字段对应替换字段
         $titleHasField = $this->titleHasField;
         $contentHasField = $this->contentHasField;
         $commomHasField = $this->commomHasField;
-
         $titleHasField = array_merge($titleHasField, $commomHasField);
         $contentHasField = array_merge($contentHasField, $commomHasField);
-
         // 需要该模板不含有此替换字段，或者存在此替换字段并且该字段有数据，方可显示
         foreach ($titleTemplateList as $key => $template) {
             $isShow = true;
@@ -2105,9 +2102,10 @@ class ProductsController extends CrudController {
                 if (!isset($templateContentData[$template['id']])) {
                     continue;
                 }
-                if (strpos($templateContentData[$template['id']], $replaceField) !== false && (!isset($productData[$field]) || empty($productData[$field]))) {
+                if (strpos($templateContentData[$template['id']], $replaceField) !== false
+                    && (!isset($productData[$field]) || empty($productData[$field]))) {
                     $isShow = false;
-                    continue;
+                    break;
                 }
             }
             if ($isShow) {
@@ -2121,9 +2119,10 @@ class ProductsController extends CrudController {
                 if (!isset($templateContentData[$template['id']])) {
                     continue;
                 }
-                if (strpos($templateContentData[$template['id']], $replaceField) !== false && (!isset($productData[$field]) || empty($productData[$field]))) {
+                if (strpos($templateContentData[$template['id']], $replaceField) !== false
+                    && (!isset($productData[$field]) || empty($productData[$field]))) {
                     $isShow = false;
-                    continue;
+                    break;
                 }
             }
             if ($isShow) {
@@ -2132,6 +2131,7 @@ class ProductsController extends CrudController {
         }
         $templateData['template_title_list'] = $newTitleTemplateList;
         $templateData['template_content_list'] = $newContentTemplateList;
+
         return $templateData;
     }
 
