@@ -297,10 +297,17 @@ class SyncThirdProductController extends CrudController {
         foreach ($productData as $forParamsData) {
             $count++;
 
+            if(empty($forParamsData['name'] )){
+                $details .= "【错误】编号:{$forParamsData['id']}:  ".trans('lang.product_name_empty')."\r\n";;
+                $errorCount++;
+                array_push($errIdList, $forParamsData['id']);
+                continue;
+            }
+
             //校验报告名称
             $checkMsg = $this->checkProductName($forParamsData['name']);
             if ($checkMsg) {
-                $details .= "【错误】编号:{$forParamsData['id']}:  ".$checkMsg;
+                $details .= "【错误】编号:{$forParamsData['id']}:  ".$checkMsg."\r\n";;
                 $errorCount++;
                 array_push($errIdList, $forParamsData['id']);
                 continue;
@@ -525,15 +532,15 @@ class SyncThirdProductController extends CrudController {
                 if (strpos($item['keywords_jp'], '产品') !== false || $item['keywords_jp'] == "0") {
                     $item['keywords_jp'] = '';
                 }
-    
+
                 if (strpos($item['keywords_kr'], '产品') !== false || $item['keywords_kr'] == "0") {
                     $item['keywords_kr'] = '';
                 }
-    
+
                 if (strpos($item['keywords_de'], '产品') !== false || $item['keywords_de'] == "0") {
                     $item['keywords_de'] = '';
                 }
-                
+
                 //新增其他扩展字段
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
