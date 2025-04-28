@@ -155,7 +155,7 @@ class RuleController extends CrudController
      */
     public function optionSite(Request $request)
     {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2,'status' => 1]);
+        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2,'status' => 1] , ['sort' => 'ASC' , 'created_at' => 'DESC']);
         ReturnJson(TRUE,trans('lang.request_success'),$list);
     }
 
