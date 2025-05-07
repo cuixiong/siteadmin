@@ -434,11 +434,11 @@ class PostSubjectController extends CrudController
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
             }
-            if($input['type'] == PostSubject::TYPE_POST_SUBJECT){
+            if ($input['type'] == PostSubject::TYPE_POST_SUBJECT) {
 
                 if (!empty($input['product_id'])) {
                     $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
-    
+
                     if ($cagr && !empty($cagr)) {
                         $input['has_cagr'] = 1;
                     } else {
@@ -447,14 +447,14 @@ class PostSubjectController extends CrudController
                 } else {
                     $input['has_cagr'] = 0;
                 }
-            }elseif($input['type'] == PostSubject::TYPE_POST_ARTICLE){
+            } elseif ($input['type'] == PostSubject::TYPE_POST_ARTICLE) {
                 $input['has_cagr'] = 0;
                 $input['product_id'] = 0;
                 $input['product_category_id'] = 0;
                 $input['analyst'] = null;
                 $input['version'] = null;
-            }else{
-                ReturnJson(false, trans('lang.add_error'),'未知课题类型');
+            } else {
+                ReturnJson(false, trans('lang.add_error'), '未知课题类型');
             }
 
             // 开启事务
@@ -568,12 +568,12 @@ class PostSubjectController extends CrudController
 
             $details = '';
 
-            
-            if($input['type'] == PostSubject::TYPE_POST_SUBJECT){
+
+            if ($input['type'] == PostSubject::TYPE_POST_SUBJECT) {
 
                 if (!empty($input['product_id'])) {
                     $cagr = Products::query()->where(['id' => $input['product_id']])->value('cagr');
-    
+
                     if ($cagr && !empty($cagr)) {
                         $input['has_cagr'] = 1;
                     } else {
@@ -582,18 +582,18 @@ class PostSubjectController extends CrudController
                 } else {
                     $input['has_cagr'] = 0;
                 }
-            }elseif($input['type'] == PostSubject::TYPE_POST_ARTICLE){
-                if(empty(trim($input['keywords']))){
-                    ReturnJson(false, trans('lang.param_empty'),'观点文关键词不能为空');
+            } elseif ($input['type'] == PostSubject::TYPE_POST_ARTICLE) {
+                if (empty(trim($input['keywords']))) {
+                    ReturnJson(false, trans('lang.param_empty'), '观点文关键词不能为空');
                 }
-                
+
                 $input['has_cagr'] = 0;
                 $input['product_id'] = 0;
                 $input['product_category_id'] = 0;
                 $input['analyst'] = null;
                 $input['version'] = null;
-            }else{
-                ReturnJson(false, trans('lang.param_empty'),'未知课题类型');
+            } else {
+                ReturnJson(false, trans('lang.param_empty'), '未知课题类型');
             }
 
             // 开启事务
@@ -773,7 +773,7 @@ class PostSubjectController extends CrudController
                 $recordUpdate['accepter'] = $request->user->id;
                 $recordUpdate['accept_status'] = 1;
             }
-            
+
             if (count($recordUpdate) > 0) {
                 $res = $model->update($recordUpdate);
             }
@@ -2261,6 +2261,7 @@ class PostSubjectController extends CrudController
 
         $logData['ingore_details'] = '';
         $logData['ingore_details'] .= '忽略' . $subjectIngore . '条数据' . "\n";
+        $ingoreDetailsText = $logData['ingore_details'];
         $logData['ingore_details'] .= implode("\n", $ingoreDetails) . "\n";
 
         $logData['error_details'] = '';
@@ -2271,7 +2272,7 @@ class PostSubjectController extends CrudController
         if (!$excelData || count($excelData) < 1) {
             ReturnJson(FALSE, trans('lang.data_empty'), '上传失败,没数据');
         }
-        ReturnJson(true, trans('lang.request_success'), explode("\n", $logData['details'] . $logData['error_details']));
+        ReturnJson(true, trans('lang.request_success'), explode("\n", $logData['details'] . $ingoreDetailsText . $logData['error_details']));
     }
 
     /**
