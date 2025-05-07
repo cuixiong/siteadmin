@@ -17,7 +17,7 @@ class AutoPostConfig extends Base {
     protected $table = 'auto_post_config';
     // 设置允许入库字段,数组形式
     protected $fillable
-        = ['id', 'name', 'code', 'title_template_ids', 'content_template_ids', 'product_category_ids',
+        = ['id', 'name', 'code', 'type', 'title_template_ids', 'content_template_ids', 'product_category_ids',
            'start_product_id', 'post_num', 'db_host', 'db_name', 'db_username', 'db_password', 'db_charset', 'domain',
            'created_by', 'created_at', 'updated_by', 'updated_at', 'sort', 'status'];
 
@@ -58,6 +58,17 @@ class AutoPostConfig extends Base {
             }
         }
         return $model;
+    }
+
+
+    const POST_SITE_TYPE_INSIDE = 1;
+    const POST_SITE_TYPE_OUTSIDE = 2;
+
+    public static function getSiteTypeList(){
+        return [
+            self::POST_SITE_TYPE_INSIDE => '站内',
+            self::POST_SITE_TYPE_OUTSIDE => '站外',
+        ];
     }
 
 }
