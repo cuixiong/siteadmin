@@ -871,6 +871,18 @@ Route::middleware([
         Route::post('change-sort', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'changeSort'])->name('站点地图:排序修改');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'form'])->name('站点地图:数据单查');
     });
+    
+    // 货币配置
+    Route::prefix('CurrencyConfig')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'store'])->name('货币配置:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'update'])->name('货币配置:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'destroy'])->name('货币配置:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'list'])->name('货币配置:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'changeStatus'])->name('货币配置:状态修改');
+        Route::post('change-first', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'changeFirst'])->name('货币配置:状态修改');
+        Route::post('change-show-home', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'changeShowHome'])->name('货币配置:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'searchDroplist'])->name('货币配置:搜索下拉列表数据');
+    });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
 });
