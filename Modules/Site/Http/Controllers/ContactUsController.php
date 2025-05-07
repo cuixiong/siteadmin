@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use Illuminate\Support\Facades\Http;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Controllers\CrudController;
@@ -9,13 +10,16 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\City;
 use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\MessageCategory;
 use Modules\Site\Http\Models\MessageLanguageVersion;
+use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\Region;
 
 class ContactUsController extends CrudController {
+    public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
 
     /**
      * 查询列表页
@@ -50,10 +54,10 @@ class ContactUsController extends CrudController {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
             $record = $model->get()->toArray();
-            foreach ($record as  &$value){
-                if(!empty($value['send_email_time'] )){
+            foreach ($record as &$value) {
+                if (!empty($value['send_email_time'])) {
                     $value['send_email_time_str'] = date('Y-m-d H:i:s', $value['send_email_time']);
-                }else{
+                } else {
                     $value['send_email_time_str'] = '';
                 }
             }
@@ -214,5 +218,77 @@ class ContactUsController extends CrudController {
             }
             ReturnJson(true, trans('lang.update_success'));
         }
+    }
+
+    /**
+     *  重新发送邮件
+     */
+    public function againSendEmail(Request $request) {
+        try {
+            $ids = [];
+            if (!empty($request->ids)) {
+                if (is_array($request->ids)) {
+                    $ids = $request->ids;
+                } else {
+                    $ids = [$request->ids];
+                }
+            } elseif (!empty($request->id)) {
+                $ids = [$request->id];
+            }
+            $site = $request->header('site');
+            $domain = Site::where('name', $site)->value("domain");
+            if (empty($domain)) {
+                ReturnJson(false, '站点配置异常');
+            }
+            if (strpos($domain, '://') === false) {
+                $domain = 'https://'.$domain;
+            }
+            $url = $domain.'/api/third/send-email';
+            $sucCnt = 0;
+            $errMsg = [];
+            $mcate_list = MessageCategory::query()->pluck('code', 'id')->toArray();
+            foreach ($ids as $id) {
+                $record = (new ContactUs())->findOrFail($id);
+                if(empty($record )){
+                    continue;
+                }
+                //已支付与已完成
+                $code = $mcate_list[$record->category_id];
+                $reqData = [
+                    'id'   => $id,
+                    'code' => $code,
+                ];
+                $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
+                //\Log::error('返回结果数据:'.json_encode([$url, $reqData]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+                $response = Http::post($url, $reqData);
+                $resp = $response->json();
+                if (!empty($resp) && $resp['code'] == 200) {
+                    $sucCnt++;
+                } else {
+                    $errMsg[] = $resp;
+                }
+            }
+            if (empty($errMsg)) {
+                ReturnJson(true, "发送成功:{$sucCnt}次");
+            } else {
+                \Log::error('返回结果数据:'.json_encode($errMsg));
+                ReturnJson(false, '发送失败,未知错误');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(true, '未知错误');
+        }
+    }
+
+    public function makeSign($data, $signkey) {
+        unset($data['sign']);
+        $signStr = '';
+        ksort($data);
+        foreach ($data as $key => $value) {
+            $signStr .= $key.'='.$value.'&';
+        }
+        $signStr .= "key={$signkey}";
+
+        //dump($signStr);
+        return md5($signStr);
     }
 }

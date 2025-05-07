@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Rule;
 use Modules\Admin\Http\Models\Site;
@@ -180,6 +181,9 @@ class TemplateController extends CrudController {
             //发帖用户
             $postUserList = $this->getSitePostUser();
             $data['post_user_list'] = $postUserList;
+            //所有管理员用户
+            $data['admin_user_list'] = User::query()->where("status", 1)->selectRaw('id as value , nickname as label ')
+                                           ->get()->toArray();
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -293,11 +297,80 @@ class TemplateController extends CrudController {
     }
 
     /**
+     *  批量修改模板使用状态
+     */
+    public function batchEditTemplateUse(Request $request) {
+        try {
+            $input = $request->input();
+            $template_ids = $input['temp_ids'] ?? '';
+            $user_ids = $input['user_ids'] ?? '';
+            $TemplateUse = new TemplateUse();
+
+            if(empty($template_ids )){
+                $modelInstance = $this->ModelInstance();
+                $model = $modelInstance->query();
+                $model = $modelInstance->HandleWhere($model, $request);
+                //use_name_id
+                $searchStr = $request->input('search');
+                $search = @json_decode($searchStr, true);
+                if (!empty($search['use_name_id'])) {
+                    $tempIdList = TemplateUse::query()->whereIn('user_id', [$search['use_name_id']])->pluck("temp_id")
+                                             ->toArray();
+                    $model = $model->whereIn("id", $tempIdList);
+                }
+                //不是超级管理员, 只展示当前角色已分配的模版
+                $type = $request->type ?? 1;
+                if (!$request->user->is_super) {
+                    $isExistRule = $this->checkEditRule($type, $request->user);
+                } else {
+                    $isExistRule = true;
+                }
+                if (!$isExistRule) {
+//                $postUsrList = $this->getSitePostUser();
+//                $userIds = array_column($postUsrList, 'value');
+                    $userIds = [$request->user->id];
+                    $tempIdList = TemplateUse::query()->whereIn('user_id', $userIds)->pluck("temp_id")->toArray();
+                    $model = $model->whereIn("id", $tempIdList);
+                }
+                $template_ids = $model->pluck("id")->toArray();
+            }
+
+            if(empty($input['is_update'] )){
+                ReturnJson(true, trans('lang.request_success') , ['count' => count($template_ids)]);
+            }
+
+            if (!empty($template_ids) && !empty($user_ids)) {
+                if(!is_array($template_ids)) {
+                    $template_ids = explode(",", $template_ids);
+                }
+                $user_ids = explode(",", $user_ids);
+                foreach ($template_ids as $template_id) {
+                    //删除之前模版记录
+                    $TemplateUse->where("temp_id", $template_id)->delete();
+                    foreach ($user_ids as $user_id) {
+                        $add_data = [
+                            'user_id' => $user_id,
+                            'temp_id' => $template_id,
+                        ];
+                        $TemplateUse->insert($add_data);
+                    }
+                }
+            } else {
+                ReturnJson(false, trans('lang.param_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      *
-     * @param $template  object 模版对象
-     * @param $product  object 报告对象
-     * @param $pdObj   object 报告详情对象
+     * @param $template     object 模版对象
+     * @param $product      object 报告对象
+     * @param $pdObj        object 报告详情对象
      * @param $is_auto_post bool 是否自动发帖
+     *
      * @return array|string|string[]
      */
     public function templateWirteData($template, $product, $pdObj, $is_auto_post = false) {
@@ -384,8 +457,7 @@ class TemplateController extends CrudController {
         // 处理模板变量  {{link}}
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
         $tempContent = $this->handlerMuchLine($tempContent);
-
-        if(!$is_auto_post) {
+        if (!$is_auto_post) {
             $tempContent = str_replace(' ', '&nbsp;', $tempContent);
         }
 
@@ -815,13 +887,96 @@ EOF;
         if (empty($template) || empty($product)) {
             return '';
         }
-
-        //查询模板描述数据
-        $productId = $product['id'];
+        // $checkErr = $this->checkTempWarnRule($template, $product);
+        // if ($checkErr) //查询模板描述数据
+        // {
+        //     return '';
+        // }
         $year = date("Y", $product['published_date']);
         $pdModel = new ProductsDescription($year);
         $pdObj = $pdModel->where("product_id", $productId)->first();
 
         return $this->templateWirteData($template, $product, $pdObj);
+    }
+
+    public function checkFlagEmpty($flag, $temp_content, $product) {
+        if (strpos($temp_content, $flag) !== false) {
+            $temp_content = str_replace($flag, '', $temp_content);
+            $product['keywords'] = '';
+            $product['keywords_cn'] = '';
+            $product['keywords_jp'] = '';
+            $product['keywords_en'] = '';
+            $product['keywords_kr'] = '';
+            $product['keywords_de'] = '';
+            $product['last_year'] = '';
+            $product['this_year'] = '';
+            $product['six_year'] = '';
+            $product['cagr'] = '';
+        }
+    }
+
+    private function checkTempWarnRule($template, $product) {
+        $err = false;
+        $template_content = $template['content'];
+        if ($template['type'] == 1) {
+            if (strpos($template_content, '@@@@') !== false && empty($product['keywords'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords}}') !== false && empty($product['keywords'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_cn}}') !== false && empty($product['keywords_cn'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_jp}}') !== false && empty($product['keywords_jp'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_en}}') !== false && empty($product['keywords_en'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_kr}}') !== false && empty($product['keywords_kr'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_de}}') !== false && empty($product['keywords_de'])) {
+                return true;
+            }
+        } else {
+            //标题模版
+            if (strpos($template_content, '@@@@') !== false && empty($product['keywords'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords}}') !== false && empty($product['keywords'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_cn}}') !== false && empty($product['keywords_cn'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_jp}}') !== false && empty($product['keywords_jp'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_en}}') !== false && empty($product['keywords_en'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_kr}}') !== false && empty($product['keywords_kr'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{keywords_de}}') !== false && empty($product['keywords_de'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{last_year}}') !== false && empty($product['last_scale'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{this_year}}') !== false && empty($product['current_scale'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{six_year}}') !== false && empty($product['future_scale'])) {
+                return true;
+            }
+            if (strpos($template_content, '{{cagr}}') !== false && empty($product['cagr'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

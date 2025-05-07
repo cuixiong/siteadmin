@@ -48,7 +48,7 @@ class Template extends Base {
             }
         }
         //区分是内容模板,还是标题模版
-        $type = $request->input('type');
+        $type = $request->input('type') ?? 1;
         $model->where("type", $type);
         //分类查询
         if (!empty($search['cate_id'])) {
