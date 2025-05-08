@@ -144,7 +144,6 @@ class ProductsController extends CrudController {
                      'created_by', 'id']
                 )
             );
-
             $productList = Products::query()->whereIn('id', $product_id_list)
                                    ->select($hasFieldArray)
                                    ->get()->keyBy('id')
@@ -387,7 +386,7 @@ class ProductsController extends CrudController {
                   )
         ) {
             $query = $query->where($type, intval($keyword));
-        } elseif (filled($keyword) && in_array($type, ['author', 'keywords'])
+        } elseif (filled($keyword) && in_array($type, ['author'])
         ) {
             $query = $query->where($type, $keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
@@ -395,20 +394,16 @@ class ProductsController extends CrudController {
             $start_time = $keyword[0] ?? 0;
             $end_time = $keyword[1] ?? 0;
             $query = $query->where($type, 'BETWEEN', [intval($start_time), intval($end_time)]);
-        } else if ($type == 'name') {
-            //中文搜索, 测试明确 需要精确搜索
+        } elseif (filled($keyword) && in_array($type, ['keywords'])) {
+            //几个国家语言的关键词搜索
+            $query->match(['keywords', 'keywords_cn', 'keywords_en', 'keywords_jp', 'keywords_kr', 'keywords_de'],
+                          '"'.$keyword.'"', true);
+        } elseif (in_array($type, ['name'])) {
+            //中英文搜索
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
                 foreach ($keyWordArraySphinx as $val) {
-                    $query->match($type, '"'.$val.'"', true);
-                }
-            }
-        } elseif ($type == 'english_name') {
-            //英文搜索, 需要精确搜索
-            $keyWordArraySphinx = explode(" ", $keyword);
-            if (count($keyWordArraySphinx) > 0) {
-                foreach ($keyWordArraySphinx as $val) {
-                    $query->match($type, '"'.$val.'"', true);
+                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
                 }
             }
         }
@@ -1016,7 +1011,7 @@ class ProductsController extends CrudController {
             //分类
             $data = (new ProductsCategory())->GetList(['id as value', 'name as label', 'id', 'pid'], true, 'pid',
                                                       ['status' => 1]);
-        } elseif ($keyword == 'status') {
+        } elseif (in_array($keyword, ['status', 'show_recommend', 'show_hot'])) {
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
             } else {

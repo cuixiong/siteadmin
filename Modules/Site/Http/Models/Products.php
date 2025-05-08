@@ -472,6 +472,16 @@ class Products extends Base {
                 'value' => 'status',
                 'type'  => '2',
             ],
+            [
+                'name'  => '热门状态',
+                'value' => 'show_hot',
+                'type'  => '2',
+            ],
+            [
+                'name'  => '精品状态',
+                'value' => 'show_recommend',
+                'type'  => '2',
+            ],
         ];
     }
 
@@ -585,6 +595,11 @@ class Products extends Base {
                 'show_recommend'  => $data['show_recommend'] ?? 1,
                 'status'          => $data['status'] ?? 1,
                 'keywords'        => $data['keywords'] ?? '',
+                'keywords_cn'     => $data['keywords_cn'] ?? '',
+                'keywords_en'     => $data['keywords_en'] ?? '',
+                'keywords_jp'     => $data['keywords_jp'] ?? '',
+                'keywords_kr'     => $data['keywords_kr'] ?? '',
+                'keywords_de'     => $data['keywords_de'] ?? '',
                 'year'            => $data['year'] ?? 0,
                 'degree_keyword'  => strlen($data['keywords']),
                 'sort'            => $data['sort'] ?? 100,
@@ -771,8 +786,8 @@ class Products extends Base {
     public function batchUpdateSphinx($product_id_list, $site) {
         // 设置当前租户
         tenancy()->initialize($site);
-        // TODO: cuizhixiong 2025/1/3 'publisher_id',后续加上
-        $fieldList = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords', 'year', 'url',
+        $fieldList = ['id', 'name', 'english_name', 'category_id', 'country_id', 'price', 'keywords',
+                      'keywords_cn', 'keywords_en', 'keywords_jp', 'keywords_kr', 'keywords_de', 'year', 'url',
                       'publisher_id',
                       'published_date', 'status', 'author', 'discount', 'discount_amount', 'show_hot', 'show_recommend',
                       'sort', 'created_at'];

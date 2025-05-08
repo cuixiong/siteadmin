@@ -137,6 +137,16 @@ class NewsController extends CrudController {
                 'value' => 'status',
                 'type'  => '2',
             ],
+            [
+                'name'  => '序号',
+                'value' => 'sort',
+                'type'  => '1',
+            ],
+            [
+                'name'  => '首页显示',
+                'value' => 'show_home',
+                'type'  => '2',
+            ],
         ];
         array_unshift($field, ['name' => '请选择', 'value' => '', 'type' => '']);
         ReturnJson(true, trans('lang.request_success'), $field);
@@ -151,7 +161,7 @@ class NewsController extends CrudController {
         $input = $request->all();
         $keyword = $input['keyword'];
         $data = [];
-        if ($keyword == 'status') {
+        if ($keyword == 'status' || $keyword == 'show_home') {
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
             } else {
