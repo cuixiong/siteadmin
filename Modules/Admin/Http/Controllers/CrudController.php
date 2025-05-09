@@ -194,10 +194,6 @@ class CrudController extends Controller {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            $status = $request->status;
-            $systemValueModel = new SystemValue();
-            $updData = ['hidden' => $status, 'status' => $status];
-            $systemValueModel->where('parent_id', $record->id)->update($updData);
 
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
