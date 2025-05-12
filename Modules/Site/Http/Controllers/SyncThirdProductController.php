@@ -707,11 +707,6 @@ class SyncThirdProductController extends CrudController {
                         //直接更新
                         $newProductDescriptionUpdate = $newProductDescription->where('product_id', $product['id'])
                             ->first();
-                        if ($newProductDescriptionUpdate) {
-                            $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
-                        } else {
-                            $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
-                        }
                         // 属性是否有变动
                         if (
                             $newProductDescriptionUpdate
@@ -719,6 +714,11 @@ class SyncThirdProductController extends CrudController {
                             == $itemDescription['companies_mentioned']
                         ) {
                             $productChange = true;
+                        }
+                        if ($newProductDescriptionUpdate) {
+                            $descriptionRecord = $newProductDescriptionUpdate->updateWithAttributes($itemDescription);
+                        } else {
+                            $descriptionRecord = $newProductDescription->saveWithAttributes($itemDescription);
                         }
                     }
                     $updateCount++;

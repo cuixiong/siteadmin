@@ -27,6 +27,7 @@ class EmailSceneController extends CrudController{
             ['value' => 'productSample','label' => 'productSample'],
             ['value' => 'sampleRequest','label' => 'sampleRequest'],
             ['value' => 'customized','label' => 'customized'],
+            ['value' => 'requestOffer','label' => '委托报价(日)-requestOffer'],
             ['value' => 'payment','label' => 'payment'],
             ['value' => 'placeOrder','label' => 'placeOrder'],
         ];

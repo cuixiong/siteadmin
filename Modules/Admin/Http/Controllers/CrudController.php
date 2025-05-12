@@ -127,6 +127,9 @@ class CrudController extends Controller {
      * @param Array $where    查询条件数组 默认空数组
      */
     protected function list(Request $request) {
+        
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '200M'); 
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
