@@ -2331,6 +2331,7 @@ class PostSubjectController extends CrudController
         ini_set("memory_limit", '-1'); // 不限制内存
         // $time1 = microtime(true);
         $file_temp_name = $_POST['file_temp_name'] ?? null; //随机数，用于建立临时文件夹
+        
         $chunks = $_POST['totalNo'] ?? null; //切片总数
         $currentChunk = $_POST['no'] ?? null; //当前切片
         $blob = $_FILES['file'] ?? null; //二进制数据
@@ -2349,7 +2350,7 @@ class PostSubjectController extends CrudController
         }
 
 
-        $blob = $_FILES['file'];
+        $uploadFileName = $_POST['fileName'];
         $basePath = public_path();
         $dir = $basePath . '/site/' . $request->header('Site') . '/post-subject/';
         $dirtemp = $basePath . '/site/' . $request->header('Site') . '/post-subject/temp/'; // 保存分片文件的目录
@@ -2924,6 +2925,7 @@ class PostSubjectController extends CrudController
 
 
         $logData = [];
+        $logData['file'] = $uploadFileName;
         $logData['type'] = $logType;
         // $logData['post_subject_id'] = ;
         $logData['success_count'] = $subjectSuccess;
