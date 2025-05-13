@@ -205,6 +205,10 @@ class CheckAccessCntBanCommand extends Command {
         $temp_content = file_get_contents($siteNginxConfInfo['access_ban_conf_path']);
         $banList = explode(";", $banStr);
         foreach ($banList as $forbanStr) {
+            if(empty($forbanStr ) || !strpos($forbanStr, 'deny') !== false){
+                continue;
+            }
+
             if (strpos($temp_content, $forbanStr) !== false) {
                 //包含跳过
             } else {
