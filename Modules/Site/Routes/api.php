@@ -872,7 +872,7 @@ Route::middleware([
     });
     
     // 货币配置
-    Route::prefix('CurrencyConfig')->group(function () {
+    Route::prefix('currency-config')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'store'])->name('货币配置:数据新增');
         Route::post('update', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'update'])->name('货币配置:数据更新');
         Route::post('destroy', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'destroy'])->name('货币配置:数据删除');
