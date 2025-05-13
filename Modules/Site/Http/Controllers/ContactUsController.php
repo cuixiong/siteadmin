@@ -74,7 +74,7 @@ class ContactUsController extends CrudController {
                         $priceVersionName =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                     }
                 }
-                $value['price_edition'] = $priceVersionName;
+                $value['price_edition_name'] = $priceVersionName;
             }
             $data = [
                 'total' => $total,
