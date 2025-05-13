@@ -17,6 +17,8 @@ use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\Region;
+use Modules\Site\Http\Models\PriceEditionValue;
+use Modules\Site\Http\Models\Language;
 
 class ContactUsController extends CrudController {
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
@@ -60,6 +62,19 @@ class ContactUsController extends CrudController {
                 } else {
                     $value['send_email_time_str'] = '';
                 }
+
+                // 价格版本
+                $priceVersionName = '';
+                
+                if (!empty($value['price_edition'])) {
+                    $priceEditionRecord = PriceEditionValue::query()->select(['name', 'language_id'])->where('id', $value['price_edition'])->first();
+                    if ($priceEditionRecord) {
+                        $priceEditionData = $priceEditionRecord->toArray();
+                        $languageName = Language::where('id', $priceEditionData['language_id'])->value('name');
+                        $priceVersionName =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                    }
+                }
+                $value['price_edition'] = $priceVersionName;
             }
             $data = [
                 'total' => $total,
