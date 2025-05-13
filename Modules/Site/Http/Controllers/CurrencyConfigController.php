@@ -25,6 +25,8 @@ class CurrencyConfigController extends CrudController
             
             $data['is_show'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code' => 'V_Show','status' => 1], ['sort' => 'ASC']);
 
+            $data['currency_code'] = array_combine(PayConst::$coinTypeALL, PayConst::$coinTypeALL);
+            
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());

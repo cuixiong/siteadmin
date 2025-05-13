@@ -5,7 +5,7 @@ CREATE TABLE `currency_config` (
   `exchange_rate` decimal(10,2) DEFAULT '1.00' COMMENT '相对与主货币的汇率',
   `tax_rate` decimal(10,2) DEFAULT '0.00' COMMENT '税率、消费税',
   `is_show` tinyint(1) DEFAULT '0' COMMENT '是否在列表、详情返回',
-  `order` smallint DEFAULT '100' COMMENT '排序:整数,数值越小,排序越靠前。',
+  `sort` smallint DEFAULT '100' COMMENT '排序:整数,数值越小,排序越靠前。',
   `status` tinyint(1) DEFAULT '1' COMMENT '状态:1代表有效或显示,0代表无效或隐藏。',
   `creater` int DEFAULT NULL,
   `created_at` int DEFAULT NULL,
