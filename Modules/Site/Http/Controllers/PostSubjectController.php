@@ -1187,6 +1187,7 @@ class PostSubjectController extends CrudController
                 'ps.accepter',
                 'ps.keywords',
                 'ps.has_cagr',
+                'pc.name as category_name',
                 'p.keywords_cn',
                 'p.keywords_en',
                 'p.keywords_jp',
@@ -1196,6 +1197,9 @@ class PostSubjectController extends CrudController
                 // ->from($model->getTable() . ' as ps')
                 ->leftJoin((new Products)->getTable() . ' as p', function ($join) {
                     $join->on('p.id', '=', 'ps.product_id');
+                })
+                ->leftJoin((new ProductsCategory())->getTable() . ' as pc', function ($join) {
+                    $join->on('pc.id', '=', 'ps.product_category_id');
                 })
                 ->get()->toArray();
             if (!(count($subjectData) > 0)) {
@@ -1218,6 +1222,7 @@ class PostSubjectController extends CrudController
             '关键词(日)',
             '关键词(韩)',
             '关键词(德)',
+            '行业',
         ];
 
         // 创建 Spreadsheet 对象
@@ -1249,6 +1254,7 @@ class PostSubjectController extends CrudController
         $sheet->getColumnDimension('I')->setWidth(15);  // 设置 I 列宽度
         $sheet->getColumnDimension('J')->setWidth(15);  // 设置 J 列宽度
         $sheet->getColumnDimension('K')->setWidth(15);  // 设置 K 列宽度
+        $sheet->getColumnDimension('L')->setWidth(15);  // 设置 L 列宽度
 
 
 
@@ -1286,6 +1292,8 @@ class PostSubjectController extends CrudController
             $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
             $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
             $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
+
+            $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
 
             $rowIndex++;
             $rowIndex += empty($extraLine) ? 0 : $extraLine;
@@ -1372,6 +1380,7 @@ class PostSubjectController extends CrudController
                 'ps.accepter',
                 'ps.keywords',
                 'ps.has_cagr',
+                'pc.name as category_name',
                 'p.keywords_cn',
                 'p.keywords_en',
                 'p.keywords_jp',
@@ -1381,6 +1390,9 @@ class PostSubjectController extends CrudController
                 // ->from($model->getTable() . ' as ps')
                 ->leftJoin((new Products)->getTable() . ' as p', function ($join) {
                     $join->on('p.id', '=', 'ps.product_id');
+                })
+                ->leftJoin((new ProductsCategory())->getTable() . ' as pc', function ($join) {
+                    $join->on('pc.id', '=', 'ps.product_category_id');
                 })
                 ->get()->toArray();
             if (!(count($subjectData) > 0)) {
@@ -1441,6 +1453,7 @@ class PostSubjectController extends CrudController
             '关键词(日)',
             '关键词(韩)',
             '关键词(德)',
+            '行业',
         ];
         $details = [];
         $subjectSuccess = 0;
@@ -1502,6 +1515,7 @@ class PostSubjectController extends CrudController
             $sheet->getColumnDimension('I')->setWidth(15);  // 设置 I 列宽度
             $sheet->getColumnDimension('J')->setWidth(15);  // 设置 J 列宽度
             $sheet->getColumnDimension('K')->setWidth(15);  // 设置 K 列宽度
+            $sheet->getColumnDimension('L')->setWidth(15);  // 设置 L 列宽度
 
             // 添加标题行
             $sheet->fromArray($excelHeader, null, 'A1');
@@ -1586,6 +1600,8 @@ class PostSubjectController extends CrudController
                     $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
                     $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
                     $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
+                    
+                    $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
 
                     $rowIndex++;
                 }

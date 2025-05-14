@@ -83,7 +83,7 @@ class AutoPostController extends CrudController
         // 检查是否存在重复记录
         $keywordArray = array_values(array_unique(array_column($productOrginData, 'keywords')));
         // 去重要求 一年内关键词不重复
-        $yearTimestamp = strtotime(date('Y-01-01 00:00:00'));;
+        $yearTimestamp = strtotime(date('Y-01-01 00:00:00'));
         $existKeywordArray = News::query()->whereIn("keywords", $keywordArray)->where('upload_at', '>=', $yearTimestamp)->pluck('keywords')->toArray();
         $handlerProductList = [];
         $temp = [];
@@ -98,6 +98,15 @@ class AutoPostController extends CrudController
                 );
                 continue;
             } elseif (in_array($item['keywords'], $temp)) {
+
+                // 内部去重
+                $this->insertAutoPostLog(
+                    $autoPostConfig['code'],
+                    $item['id'],
+                    AutoPostLog::POST_STATUS_EXIST,
+                    '同一批数据里重复'
+                );
+                continue;
             }
 
 
@@ -305,20 +314,20 @@ class AutoPostController extends CrudController
         $data = array_column($productList, null, 'id');
         $productIds = array_keys($data);
         $productData = Products::query()
-            //                               ->select([
-            //                                                     'id',
-            //                                                     'category_id',
-            //                                                     'name',
-            //                                                     'keywords',
-            //                                                     'url',
-            //                                                     'published_date',
-            //                                                     'classification',
-            //                                                     'application',
-            //                                                     'cagr',
-            //                                                     'last_scale',
-            //                                                     'current_scale',
-            //                                                     'future_scale'
-            //                                                 ])
+            // ->select([
+            //     'id',
+            //     'category_id',
+            //     'name',
+            //     'keywords',
+            //     'url',
+            //     'published_date',
+            //     'classification',
+            //     'application',
+            //     'cagr',
+            //     'last_scale',
+            //     'current_scale',
+            //     'future_scale'
+            // ])
             ->whereIn('id', $productIds)
             ->get();
         $code = $autoPostConf['code'];
@@ -328,19 +337,23 @@ class AutoPostController extends CrudController
                 $this->uselocalDb($defaultDbConfig);
                 $suffix = date('Y', $item['published_date']);
                 $productDescription = (new ProductsDescription($suffix))->where('product_id', $item['id'])
-                    //                                                                        ->select([
-                    //                                                                                     'description',
-                    //                                                                                     'table_of_content',
-                    //                                                                                     'companies_mentioned',
-                    //                                                                                     'definition',
-                    //                                                                                     'overview'
-                    //                                                                                 ])
+                    // ->select([
+                    //     'description',
+                    //     'table_of_content',
+                    //     'companies_mentioned',
+                    //     'definition',
+                    //     'overview'
+                    // ])
                     ->first();
                 if (empty($item) || empty($productDescription)) {
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '缺少详情数据');
                     continue;
                 }
                 $productArr = json_decode(json_encode($productDescription), true) ?? [];
+                // 兼容部分日文网站，由于详情为空需要用到英文详情判断使用那个模板，因此这里将description_en的值赋给description
+                if(isset($productArr['description_en']) && empty($productArr['description'])){
+                    $productArr['description'] = $productArr['description_en'];
+                }
                 $itemArr = json_decode(json_encode($item), true) ?? [];
                 $product = array_merge($itemArr, $productArr);
                 $templateCategoryId = $this->getTemplateCategoryId($wordCategory, $product['description']);
@@ -435,7 +448,7 @@ class AutoPostController extends CrudController
                     $newsModel->updated_at = time();
                     $newsModel->upload_at = time();
                     $newsModel->upload_at = time();
-                    $newsModel->hits = mt_rand(100,500);
+                    $newsModel->hits = mt_rand(100, 500);
                     $newsModel->real_hits = 0;
                     $newsModel->save();
                     $this->insertAutoPostLog(
@@ -443,11 +456,10 @@ class AutoPostController extends CrudController
                         $item['id'],
                         AutoPostLog::POST_STATUS_SUCCESS,
                         '成功',
-                        ($newsModel->id).'/'.$product['url'],
+                        ($newsModel->id) . '/' . $product['url'],
                         $product['titleTemplate']['id'],
                         $product['contentTemplate']['id']
                     );
-
                 } elseif ($type == AutoPostConfig::POST_SITE_TYPE_OUTSIDE) {
 
                     $author = 1;
