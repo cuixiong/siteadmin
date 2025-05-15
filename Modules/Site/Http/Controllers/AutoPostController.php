@@ -333,7 +333,7 @@ class AutoPostController extends CrudController
         $code = $autoPostConf['code'];
         foreach ($productData as $key => $item) {
             try {
-                $item['wp_category_id'] = $data[$item['id']]['wp_category_id'];
+                $item['wp_category_id'] = $data[$item['id']]['wp_category_id'] ?? 0;
                 $this->uselocalDb($defaultDbConfig);
                 $suffix = date('Y', $item['published_date']);
                 $productDescription = (new ProductsDescription($suffix))->where('product_id', $item['id'])
@@ -349,11 +349,11 @@ class AutoPostController extends CrudController
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '缺少详情数据');
                     continue;
                 }
-                $productArr = json_decode(json_encode($productDescription), true) ?? [];
                 // 兼容部分日文网站，由于详情为空需要用到英文详情判断使用那个模板，因此这里将description_en的值赋给description
-                if(isset($productArr['description_en']) && empty($productArr['description'])){
-                    $productArr['description'] = $productArr['description_en'];
+                if(isset($productDescription->description_en) && empty($productDescription->description)){
+                    $productDescription->description = $productDescription->description_en;
                 }
+                $productArr = json_decode(json_encode($productDescription), true) ?? [];
                 $itemArr = json_decode(json_encode($item), true) ?? [];
                 $product = array_merge($itemArr, $productArr);
                 $templateCategoryId = $this->getTemplateCategoryId($wordCategory, $product['description']);
