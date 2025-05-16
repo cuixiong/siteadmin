@@ -14,6 +14,7 @@ use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
+use Modules\Site\Http\Models\TemplateCateMapping;
 
 class UpdateProductsByOtherSite extends Command
 {
@@ -51,79 +52,94 @@ class UpdateProductsByOtherSite extends Command
             exit;
         }
 
+        tenancy()->initialize($originSiteName);
         $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->value('value');
-        $url = SystemValue::where('key', 'sync_target_url')->value('value');
+        $productDataUrl = SystemValue::where('key', 'sync_target_url')->value('value');
+        $keywordsUrl = SystemValue::where('key', 'sync_keywords_url')->value('value');
+        $keywordsField = SystemValue::where('key', 'sync_keywords_field')->value('value');
 
+        // echo $url;
         // $domain = 'https://www.qyresearch.com/';
         // $url = $domain . '/api/third/get-product-data';
 
         // $url = 'https://www.lpinformationdata.com/test/get-product-data';
-
-        if (empty($url)) {
+        // dd($startTimestamp);
+        // dd($url);
+        // exit;
+        if (empty($url) || empty($productDataUrl)) {
             echo '缺少地址' . "\n";
         }
 
-        // 查询目标网站的报告数据 需大于设定的起始时间且有日文关键词
-        tenancy()->initialize($originSiteName);
-
-        // 请求数据
+        // 查询目标网站的报告数据
         $reqData = [
             'startTimestamp'    => $startTimestamp,
-            'num'    => 1000,
+            'num'    => 10,
         ];
         $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
-        $response = Http::post($url, $reqData);
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/x-www-form-urlencoded',
+        ])->post($productDataUrl, $reqData);
         $resp = $response->json();
         if (empty($resp) || $resp['code'] != 200) {
             echo '请求数据失败' . "\n" . json_encode($resp) . "\n";
-        }
-
-        $productData = $resp;
-        if (empty($productData)) {
-            echo '请求无数据' . "\n";
-        }
-
-        $productNameArray = [];
-        if ($productData) {
-            foreach ($productData as $key => $item) {
-
-                $suffix = date('Y', $item['published_date']);
-                $productDescription = (new ProductsDescription($suffix))
-                    ->select([
-                        'description',
-                        'table_of_content',
-                        'companies_mentioned',
-                        'definition',
-                        'overview'
-                    ])
-                    ->where('product_id', $item['id'])
-                    ->first();
-                $productData[$key] = array_merge($item, $productDescription ? $productDescription->toArray() : []);
-                $productNameArray[] = $item['name'];
-            }
-        } else {
-
-            echo '没有数据' . PHP_EOL;
             exit;
         }
 
+        $productData = $resp['data'];
+        if (empty($productData)) {
+            echo '请求无数据' . "\n";
+            exit;
+        }
+
+        $lastUpdateTime = end($productData)['updated_at']; // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
+
+        // 需要去另一个网站上查询缺失的日文关键词
+        $urlArray = []; //自定义链接数组
+        $urlArray = array_unique(array_column($productData, 'url'));
+        $keywordsArray = [];
+        if($urlArray && count($urlArray)>0){
+
+            $urlArrayParam = json_encode($urlArray);
+            $reqData = [
+                'url_data'    => $urlArrayParam,
+            ];
+            $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
+            $response = Http::withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ])->post($productDataUrl, $reqData);
+            $resp = $response->json();
+            if (empty($resp) || $resp['code'] != 200) {
+                echo '请求更新关键词接口失败' . "\n" . json_encode($resp) . "\n";
+            }
+            $keywordsArray = $resp['data']; 
+            //填充到原来的报告数据中
+
+        }
+
+
+
+        $productNameArray = [];
+        $productNameArray = array_column($productData, 'name');
         //默认出版商
         $publisherIds = Site::where('name', $originSiteName)->value('publisher_id');
         $publisherIdArray = explode(',', $publisherIds);
         $defaultPublisherId = $publisherIdArray[0];
 
         // 行业
-        $categoryData = ProductsCategory::query()->where("status", 1)->pluck("id", "link")->toArray();
+        $categoryData = ProductsCategory::query()->select(["id", "link"])->where("status", 1)->get()->toArray();
         $categoryData = array_column($categoryData, 'id', 'link');
-
+        // dd($categoryData);
+        // exit;
 
         // 默认标题模板
         $templateTitleCache = [];
-        $templateCategory = TemplateCategory::query()->select(['id', 'keywords'])->where(['status' => 1])->orderBy(['order' => SORT_ASC, 'id' => SORT_DESC])->get()->toArray();
+        $templateCategory = TemplateCategory::query()->select(['id', 'match_words'])->where(['status' => 1])->orderBy('sort', 'ASC')->orderBy('id', 'DESC')->get()->toArray();
 
 
         // 去重
-        $existData = Products::query()->select(['id', 'name', 'published_date'])->whereIn('name', $productNameArray)->get()->toArray();
+        $existData = Products::query()->select(['id', 'english_name as name', 'published_date'])->whereIn('english_name', $productNameArray)->get()->toArray();
         $existNameArray = array_column($existData, 'name');
         $existData = array_column($existData, null, 'name');
         foreach ($productData as $key => $item) {
@@ -142,17 +158,17 @@ class UpdateProductsByOtherSite extends Command
             $defaultTemplateCategory = 0;
             // 获取该条数据所属模板分类
             foreach ($templateCategory as $templateCategoryItem) {
-                if (empty($templateCategoryItem['keywords'])) {
+                if (empty($templateCategoryItem['match_words'])) {
                     if ($defaultTemplateCategory == 0) {
                         $defaultTemplateCategory = $templateCategoryItem['id'];
                     }
                     continue;
                 }
-                $templateCategorykeywords = explode(',', $templateCategoryItem['keywords']);
+                $templateCategorykeywords = explode(',', $templateCategoryItem['match_words']);
                 //只需满足任意关键词
                 $flag = false;
                 foreach ($templateCategorykeywords as $categorykeyword) {
-                    if (strpos($item['description_en'], $categorykeyword) !== false) {
+                    if (strpos($item['description'], $categorykeyword) !== false) {
                         $flag = true;
                         break;
                     }
@@ -168,20 +184,32 @@ class UpdateProductsByOtherSite extends Command
 
                 $templateTitle = $templateTitleCache[$defaultTemplateCategory] ?? '';
             } else {
-                $templateTitle = Template::query()->select(['content'])
+                $templateTitle = Template::from((new Template)->getTable() . ' as t')->select(['content'])
                     // ->where(['status' => 1])
-                    ->where(['type' => 1])
-                    ->whereRaw("FIND_IN_SET(?, category_id) > 0", [$defaultTemplateCategory])
-                    ->orderBy(['order' => SORT_DESC, 'id' => SORT_DESC])
-                    ->asArray()->scalar();
+                    ->where(['type' => 2])
+                    ->leftJoin((new TemplateCateMapping)->getTable() . ' as tcp', function ($join) {
+                        $join->on('tcp.temp_id', '=', 't.id');
+                    })
+                    ->where('cate_id', $defaultTemplateCategory)
+                    ->orderBy('t.sort', 'ASC')->orderBy('t.id', 'DESC')
+                    ->value('content');
 
                 $templateTitleCache[$defaultTemplateCategory] = $templateTitle;
             }
-
+            // dd($templateTitle);
+            // exit;
+            // 2.0兼容
+            if (!isset($item['keywords']) && isset($item['keyword'])) {
+                $item['keywords'] = $item['keyword'];
+            }
+            if (!isset($item['price']) && isset($item['single_user_price'])) {
+                $item['price'] = $item['single_user_price'];
+            }
             $newProductName = $templateTitle;
-            $newProductName = str_replace('@@@@', $item['keywords'], $newProductName);
-            $newProductName = str_replace('{{keywords}}', $item['keywords'], $newProductName);
-
+            $newProductName = str_replace('@@@@', $item['keywords_jp'], $newProductName);
+            $newProductName = str_replace('{{keywords}}', $item['keywords_jp'], $newProductName);
+            // dd($newProductName);
+            // exit;
             // 基础数据
             $productItem = [
                 'name' => $newProductName,
@@ -291,7 +319,7 @@ class UpdateProductsByOtherSite extends Command
                 }
             } else {
                 // 新增
-                $product = Products::create($item);
+                $product = Products::create($productItem);
                 $product_id = $product['id'];
                 //新增报告详情
                 $newYear = Products::publishedDateFormatYear($item['published_date']);
