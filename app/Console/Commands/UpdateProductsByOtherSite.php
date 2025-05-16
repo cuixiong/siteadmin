@@ -4,10 +4,12 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Site;
 use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\Products;
+use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
@@ -29,6 +31,8 @@ class UpdateProductsByOtherSite extends Command
      */
     protected $description = 'Command description';
 
+    public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
+
     /**
      * 日文网站从英文网站获取报告数据
      *
@@ -47,35 +51,38 @@ class UpdateProductsByOtherSite extends Command
             exit;
         }
 
-        // 查询设定的起始时间 以及 目标站点
         $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->value('value');
-        $siteName = SystemValue::where('key', 'sync_target_site_name')->value('value');
+        $url = SystemValue::where('key', 'sync_target_url')->value('value');
 
-        // 查询数据库配置
-        $targetSite = Site::query()->where('name', $siteName)->first();
-        if (!$targetSite) {
-            echo '找不到相关站点' . PHP_EOL;
-            exit;
+        // $domain = 'https://www.qyresearch.com/';
+        // $url = $domain . '/api/third/get-product-data';
+
+        // $url = 'https://www.lpinformationdata.com/test/get-product-data';
+
+        if (empty($url)) {
+            echo '缺少地址' . "\n";
         }
-        // $database = Database::query()->where('id',$targetSite->database_id)->first();
-        // if(!$database){
-        //     echo '找不到'.$siteName .'的相关数据库配置'.PHP_EOL;
-        //     exit;
-        // }
 
         // 查询目标网站的报告数据 需大于设定的起始时间且有日文关键词
-        tenancy()->initialize($targetSite->name);
-        $baseQuery = Products::query()
-            ->where(function ($query) use ($startTimestamp) {
-                $query->where('created_at', '>', $startTimestamp)->orWhere('updated_at', '>', $startTimestamp);
-            })
-            ->where(function ($query) {
+        tenancy()->initialize($originSiteName);
 
-                $query->whereNotNull('keywords_jp')->where('keywords_jp', '<>', '');
-            });
+        // 请求数据
+        $reqData = [
+            'startTimestamp'    => $startTimestamp,
+            'num'    => 1000,
+        ];
+        $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
+        $response = Http::post($url, $reqData);
+        $resp = $response->json();
+        if (empty($resp) || $resp['code'] != 200) {
+            echo '请求数据失败' . "\n" . json_encode($resp) . "\n";
+        }
 
-        // 一次取1000条数据
-        $productData = $baseQuery->limit(1000)->get()->toArray();
+        $productData = $resp;
+        if (empty($productData)) {
+            echo '请求无数据' . "\n";
+        }
+
         $productNameArray = [];
         if ($productData) {
             foreach ($productData as $key => $item) {
@@ -91,7 +98,7 @@ class UpdateProductsByOtherSite extends Command
                     ])
                     ->where('product_id', $item['id'])
                     ->first();
-                $productData[$key] = array_merge($item, $productDescription ?? []);
+                $productData[$key] = array_merge($item, $productDescription ? $productDescription->toArray() : []);
                 $productNameArray[] = $item['name'];
             }
         } else {
@@ -100,15 +107,15 @@ class UpdateProductsByOtherSite extends Command
             exit;
         }
 
-        // 切换回本站点更新数据
-        tenancy()->initialize($originSiteName);
-
         //默认出版商
-        $publisherIds = Site::where('name', $targetSite->name)->value('publisher_id');
+        $publisherIds = Site::where('name', $originSiteName)->value('publisher_id');
         $publisherIdArray = explode(',', $publisherIds);
         $defaultPublisherId = $publisherIdArray[0];
 
         // 行业
+        $categoryData = ProductsCategory::query()->where("status", 1)->pluck("id", "link")->toArray();
+        $categoryData = array_column($categoryData, 'id', 'link');
+
 
         // 默认标题模板
         $templateTitleCache = [];
@@ -123,6 +130,14 @@ class UpdateProductsByOtherSite extends Command
             if (empty($item['name'])) {
                 continue;
             }
+
+            // 行业转换
+            if (isset($categoryData[$item['category_link']]) && $categoryData[$item['category_link']]) {
+                $item['category_id'] = $categoryData[$item['category_link']];
+            } else {
+                $item['category_id'] = 0;
+            }
+
 
             $defaultTemplateCategory = 0;
             // 获取该条数据所属模板分类
@@ -320,5 +335,19 @@ class UpdateProductsByOtherSite extends Command
 
 
         dd('完成');
+    }
+
+    public function makeSign($data, $signkey)
+    {
+        unset($data['sign']);
+        $signStr = '';
+        ksort($data);
+        foreach ($data as $key => $value) {
+            $signStr .= $key . '=' . $value . '&';
+        }
+        $signStr .= "key={$signkey}";
+
+        //dump($signStr);
+        return md5($signStr);
     }
 }
