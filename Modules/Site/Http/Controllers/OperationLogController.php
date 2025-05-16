@@ -7,8 +7,10 @@ use App\Observers\SiteOperationLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\User;
+use Modules\Site\Http\Models\Authority;
 use Modules\Site\Http\Models\Information;
 use Modules\Site\Http\Models\Menu;
 use Modules\Site\Http\Models\News;
@@ -17,6 +19,7 @@ use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsExportLog;
+use Modules\Site\Http\Models\SystemValue;
 use Stancl\Tenancy\Facades\Tenancy;
 
 class OperationLogController extends CrudController {
@@ -35,12 +38,10 @@ class OperationLogController extends CrudController {
         } else if ($type == 'delete') {
             $content = '删除了ID='.$model->id.'的数据行。';
         }
-
         //如果没有内容,直接不添加
-        if(empty($content)){
+        if (empty($content)) {
             return false;
         }
-
         $request = request();
         $site = $request->header('Site');
         $category = $site ? 2 : 1;
@@ -49,6 +50,11 @@ class OperationLogController extends CrudController {
         // }
         $name = $request->route()->getName();
         $route = request()->path();
+        $groupClassName = ['systemvalue', 'system'];
+        $module = strtolower($ClassName);
+        if (in_array($module, $groupClassName)) {
+            $module = strtolower(class_basename(SystemValue::class));
+        }
         $data = [
             'class'  => OperationLogController::class,
             'method' => 'SaveLog',
@@ -60,7 +66,7 @@ class OperationLogController extends CrudController {
                 'title'      => $name,
                 'content'    => $content,
                 'site'       => $site,
-                'module'     => strtolower($ClassName),
+                'module'     => $module,
                 'created_by' => request()->user->id,
                 'created_at' => time(),
             ]
@@ -113,7 +119,7 @@ class OperationLogController extends CrudController {
                 $OriginalValue = $model->getOriginal($field);
                 $OriginalValue = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                 $NewValue = is_array($value) ? implode(',', $value) : $value;
-                if(empty($OriginalValue ) && empty($NewValue)){
+                if (empty($OriginalValue) && empty($NewValue)) {
                     continue;
                 }
                 $title = $ColumnComment.'从'.$OriginalValue.'更新为：'.$NewValue;
@@ -143,7 +149,6 @@ class OperationLogController extends CrudController {
 //            }
 //        }
         //strtolower(class_basename(Products::class));
-
         // TODO: cuizhixiong 2024/9/13 后续优化
         $addData = [];
         $addData['value'] = strtolower(class_basename(Products::class));
@@ -161,13 +166,26 @@ class OperationLogController extends CrudController {
         $addData['value'] = strtolower(class_basename(Information::class));
         $addData['label'] = '资讯模块';
         $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(Authority::class));
+        $addData['label'] = '权威引用模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(SystemValue::class));
+        $addData['label'] = '网点配置模块';
+        $options['OperationLogModule'][] = $addData;
         $addData['value'] = strtolower(class_basename(ProductsExportLog::class));
         $addData['label'] = '导出记录模块';
         $options['OperationLogModule'][] = $addData;
-
         //$options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
-        $options['user'] = (new User)->GetListLabel(['id as value', 'name as label'], false, '', ['status' => '1']);
+//
+        $siteId = getSiteId();
+        $role_id_list = Role::query()->where('site_id', 'like', '%'.$siteId.'%')
+                            ->orWhere('is_super', 1)
+                            ->pluck('id')->toArray();
+        $options['user'] = User::query()
+                               ->whereIn('role_id', $role_id_list)
+                               ->where("status", 1)
+                               ->selectRaw('id as value,nickname as label')
+                               ->get()->toArray();
         ReturnJson(true, '', $options);
     }
-
 }

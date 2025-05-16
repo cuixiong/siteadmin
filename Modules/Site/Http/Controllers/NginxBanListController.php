@@ -12,6 +12,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Console\Commands\CheckAccessCntBanCommand;
 use App\Console\Commands\CheckNginxLoadCommand;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -19,6 +20,58 @@ use Modules\Site\Http\Models\NginxBanList;
 use Modules\Site\Http\Models\SystemValue;
 
 class NginxBanListController extends CrudController {
+
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            if (empty($request->service_type)) {
+                $request->service_type = 1;
+            }
+            //过滤业务类型
+            $model = $model->where("service_type", $request->service_type);
+
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get();
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
     public function searchDroplist() {
         $data['type'] = [
             '1' => 'IP封禁',
@@ -62,6 +115,11 @@ class NginxBanListController extends CrudController {
             $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
             $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
             $query = NginxBanList::query()->where("status", 1);
+            if (empty($request->service_type)) {
+                $request->service_type = 1;
+            }
+            //过滤业务类型
+            $query = $query->where("service_type", $request->service_type);
             $search = $request->search ?? '';
             if (!is_array($search)) {
                 $search = json_decode($search, true);
@@ -99,8 +157,19 @@ class NginxBanListController extends CrudController {
             if (!is_array($ban_str)) {
                 $ban_str[] = $ban_str;
             }
-            NginxBanList::query()->whereIn("ban_str", $ban_str)->delete();
-            (new CheckNginxLoadCommand())->reloadNginxBySite(getSiteName());
+            $query = NginxBanList::query()->whereIn("ban_str", $ban_str);
+            if (empty($request->service_type)) {
+                $request->service_type = 1;
+            }
+            //过滤业务类型
+            $query = $query->where("service_type", $request->service_type);
+            $query->delete();
+            if($request->service_typ == 1){
+                (new CheckNginxLoadCommand())->reloadNginxBySite(getSiteName());
+            }else{
+                (new CheckAccessCntBanCommand())->delBanStrList(getSiteName(),$ban_str);
+            }
+
             ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());

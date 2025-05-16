@@ -171,7 +171,8 @@ class CrudController extends Controller {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $record = $ModelInstance->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
+            $record = $ModelInstance->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1],
+                                                   ['sort' => 'ASC']);
             ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -194,7 +195,6 @@ class CrudController extends Controller {
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -261,7 +261,53 @@ class CrudController extends Controller {
             $data['headerTitle'] = $headerTitle;
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
+    }
+
+    /**
+     * 调整排序
+     *
+     * @param Request $request
+     */
+    public function resetSort(Request $request) {
+        $ids = $request->ids;
+        if (!is_array($ids)) {
+            $ids = explode(",", $ids);
+        }
+        $all_list = $this->ModelInstance()->orderBy('sort', 'asc')
+                         ->select(['sort', 'id'])->get()->toArray();
+        $begin_sort_val = 1;
+        $exist_handler_ids = [];
+        for ($i = 0; $i < count($all_list); $i++) {
+            $fordata = $all_list[$i];
+            $exist_handler_ids[] = $fordata['id'];
+            if (in_array($fordata['id'], $ids)) {
+                $begin_sort_val = $fordata['sort'];
+                break;
+            }
+        }
+        foreach ($ids as $key => $id) {
+            $exist_handler_ids[] = $id;
+            $record = $this->ModelInstance()->find($id);
+            if ($record) {
+                $begin_sort_val += 1;
+                $record->update([
+                                    'sort' => $begin_sort_val,
+                                ]);
+            }
+        }
+        foreach ($all_list as $key => $fordata) {
+            if (!in_array($fordata['id'], $exist_handler_ids)) {
+                $record = $this->ModelInstance()->find($fordata['id']);
+                if ($record) {
+                    $begin_sort_val += 1;
+                    $record->update([
+                                        'sort' => $begin_sort_val,
+                                    ]);
+                }
+            }
+        }
+        ReturnJson(true, trans('lang.request_success'));
     }
 }

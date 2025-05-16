@@ -18,6 +18,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Modules\Admin\Http\Models\Country as AdminCountry;
+use Modules\Admin\Http\Models\Publisher;
+use Modules\Site\Http\Models\Publisher as SitePublisher;
 use Modules\Site\Http\Models\BanWhiteList;
 use Modules\Site\Http\Models\Country;
 use Modules\Admin\Http\Models\Language as AdminLanguage;
@@ -79,6 +81,9 @@ class NotifySite implements ShouldQueue {
                 case NotityTypeConst::SYNC_SITE_SETTING:
                     $this->syncSiteSetting($siteInfo);
                     break;
+                case NotityTypeConst::SYNC_SITE_PUBLISHER:
+                    $this->syncSitePublisher($siteInfo);
+                    break;
                 default:
                     break;
             }
@@ -95,9 +100,9 @@ class NotifySite implements ShouldQueue {
 
     public function syncSitePrice($siteInfo) {
         // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-        if (empty($siteInfo['is_local'])) {
-            return true;
-        }
+//        if (empty($siteInfo['is_local'])) {
+//            return true;
+//        }
         // 设置当前租户
         tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
@@ -269,4 +274,32 @@ class NotifySite implements ShouldQueue {
         }
         BanWhiteList::query()->whereNotIn("id", $existIdList)->delete();
     }
+
+    public function syncSitePublisher($siteInfo) {
+        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
+//        if (!$siteInfo['is_local']) {
+//            return true;
+//        }
+        // 设置当前租户
+        tenancy()->initialize($siteInfo['name']);
+        //同步 Publisher
+        $publisherList = Publisher::all()->map(function ($item) {
+            return $item->getAttributes();
+        })->toArray();
+        $existIdList = [];
+        foreach ($publisherList as $forCoutry) {
+            $for_id = $forCoutry['id'];
+            $existIdList[] = $for_id;
+            $isExist = SitePublisher::query()->where("id", $for_id)->count();
+            $forCoutry['updated_at'] = time();
+            if ($isExist) {
+                // 存在则更新
+                SitePublisher::query()->where("id", $for_id)->update($forCoutry);
+            } else {
+                SitePublisher::insert($forCoutry);
+            }
+        }
+        $publisherList::query()->whereNotIn("id", $existIdList)->delete();
+    }
+
 }

@@ -115,53 +115,6 @@ class CheckAccessCntBanCommand extends Command {
         return $banStr;
     }
 
-    public function getBlackBanNginxStr($sysValList) {
-        //查询超过N次的IP
-        $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
-        $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
-                                      ->where("status", 1)
-                                      ->groupBy('ban_str')
-                                      ->having('cnt', '>=', $black_ban_cnt)
-                                      ->selectRaw('count(*) as cnt, ban_str')
-                                      ->pluck('ban_str')->toArray();
-        if (!empty($cntBlackIpList)) {
-            foreach ($cntBlackIpList as $forIp) {
-                $banIpStrList[] = PHP_EOL.$forIp;
-            }
-        }
-        $banStr = '';
-        if (!empty($banIpStrList)) {
-            $banIpStrList = array_unique($banIpStrList);
-            $banStr = implode('', $banIpStrList);
-        }
-        //查询超过N次的UA
-        $banUaStrList = NginxBanList::query()->where("ban_type", 2)
-                                    ->where("status", 1)
-                                    ->groupBy('ban_str')
-                                    ->having('cnt', '>=', $black_ban_cnt)
-                                    ->selectRaw('count(*) as cnt, ban_str')
-                                    ->pluck('ban_str')->toArray();
-        if (!empty($banUaStrList)) {
-            $banUaStrList = array_unique($banUaStrList);
-            $uabanStr = PHP_EOL.'if ($http_user_agent ~* "';
-            $uaListStr = '';
-            foreach ($banUaStrList as $forUaVal) {
-                $handler_ua = "(".$this->customEscape($forUaVal, ['.', '(', ')', '+', '?', "*", '\\']).")|";
-                $uaListStr .= $handler_ua;
-            }
-            $uabanStr .= rtrim($uaListStr, '|');
-            $uabanStr .= '") {';
-            $uabanStr .= PHP_EOL.'return 403;'.PHP_EOL;
-            $uabanStr .= '}'.PHP_EOL;
-        }
-        if (!empty($uabanStr)) {
-            $banStr .= PHP_EOL.$uabanStr;
-        }
-        $banStr .= PHP_EOL;
-
-        return $banStr;
-    }
-
     public function customEscape($input, $characters) {
         // 转义指定的字符
         $escaped = '';
@@ -205,14 +158,21 @@ class CheckAccessCntBanCommand extends Command {
         $temp_content = file_get_contents($siteNginxConfInfo['access_ban_conf_path']);
         $banList = explode(";", $banStr);
         foreach ($banList as $forbanStr) {
-            if(empty($forbanStr ) || !strpos($forbanStr, 'deny') !== false){
+            if (empty($forbanStr) || !strpos($forbanStr, 'deny') !== false) {
                 continue;
             }
-
             if (strpos($temp_content, $forbanStr) !== false) {
                 //包含跳过
             } else {
-                $temp_content .= $forbanStr.";";
+                $forRealBanStr = $forbanStr.";";
+                $add_data = [
+                    'ban_str'      => $forRealBanStr,
+                    'ban_type'     => 1,
+                    'service_type' => 2,
+                    'created_at'   => time(),
+                ];
+                NginxBanList::query()->insert($add_data);
+                $temp_content .= $forRealBanStr;
             }
         }
         $new_file_path = $siteNginxConfInfo['access_ban_conf_path'];
@@ -257,5 +217,57 @@ class CheckAccessCntBanCommand extends Command {
 
     public static function removeAnsiControlChars($text) {
         return preg_replace('/\e[[][A-Za-z0-9.;?]*[a-zA-Z]/', '', $text);
+    }
+
+    /**
+     * 删除封禁nginx黑名单
+     *
+     * @param $siteName
+     * @param $banStrList
+     *
+     */
+    public function delBanStrList($siteName, $banStrList) {
+        $server_id = Site::query()->where("name", $siteName)->value("server_id");
+        if (empty($server_id)) {
+            return true;
+        }
+        $server_info = Server::find($server_id);
+        if (empty($server_info)) {
+            return true;
+        }
+        $ssh_host = $server_info['ip'];
+        $username = $server_info['username'];
+        $password = $server_info['password'];
+        $siteNameList[] = $siteName;
+        $siteNginxConfList = SiteNginxConf::query()->whereIn("name", $siteNameList)->get()->toArray();
+        foreach ($siteNginxConfList as $siteNginxConfInfo) {
+            $site = $siteNginxConfInfo['name'];
+            tenancy()->initialize($site);
+            //连接远程服务器
+            $ssh = new SSH2($ssh_host);
+            if (!$ssh->login($username, $password)) {
+                return [
+                    'result' => false,
+                    'output' => trans('lang.server_login_fail'),
+                ];
+            }
+            $ssh->setTimeout(600);
+            $temp_file_path = $siteNginxConfInfo['access_ban_conf_path'];
+            $banStr = $this->handlerDiffBanStr($temp_file_path, $banStrList);
+            $echo_sh_commands = "echo '{$banStr}' > {$temp_file_path}";
+            $execute_reload_res = $this->executeCommands($ssh, $echo_sh_commands);
+            $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
+            $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);
+            \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+        }
+    }
+
+    public function handlerDiffBanStr($temp_file_path, $banStrList) {
+        $conf_ban_str = file_get_contents($temp_file_path);
+        foreach ($banStrList as $banStr) {
+            $conf_ban_str = str_replace($banStr, '', $conf_ban_str);
+        }
+
+        return $conf_ban_str;
     }
 }

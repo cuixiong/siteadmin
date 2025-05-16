@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use App\Const\NotityTypeConst;
 use Modules\Admin\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\PriceEdition;
 use Modules\Admin\Http\Models\PriceEditionValue;
@@ -349,4 +350,10 @@ class PriceEditionController extends CrudController
             exit;
         }
     }
+
+    public function syncSiteDb() {
+        syncSiteDbByType(NotityTypeConst::SYNC_SITE_PRICE);
+        ReturnJson(true, trans('lang.request_success'));
+    }
+
 }
