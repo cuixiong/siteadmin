@@ -36,6 +36,8 @@ class UpdateProductsByOtherSite extends Command
 
     /**
      * 日文网站从英文网站获取报告数据
+     * 1、lpi-jp没有数据，要从lpi-en那边获取，跨地区连数据库获取太慢，改为lpi-en网站提供接口;
+     * 2、lpi-en含日文关键词的数据太少，所以还需去qy-jp网站查询填补日语关键词;
      *
      * @return int
      */
@@ -95,8 +97,14 @@ class UpdateProductsByOtherSite extends Command
         $lastUpdateTime = end($productData)['updated_at']; // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
 
         // 需要去另一个网站上查询缺失的日文关键词
+
         $urlArray = []; //自定义链接数组
-        $urlArray = array_unique(array_column($productData, 'url'));
+        foreach ($productData as $key => $item) {
+            if(empty($item['keywords_jp'])){
+                $urlArray[] = $item['url'];
+            }
+        }
+        $urlArray = array_unique($urlArray);
         $keywordsArray = [];
         if($urlArray && count($urlArray)>0){
 
@@ -113,11 +121,8 @@ class UpdateProductsByOtherSite extends Command
             if (empty($resp) || $resp['code'] != 200) {
                 echo '请求更新关键词接口失败' . "\n" . json_encode($resp) . "\n";
             }
-            $keywordsArray = $resp['data']; 
-            //填充到原来的报告数据中
-
+            $keywordsArray = json_decode($resp['data'],true); 
         }
-
 
 
         $productNameArray = [];
@@ -144,6 +149,15 @@ class UpdateProductsByOtherSite extends Command
         $existData = array_column($existData, null, 'name');
         foreach ($productData as $key => $item) {
             if (empty($item['name'])) {
+                continue;
+            }
+            
+            //填充到原来的报告数据中
+            if(isset($keywordsArray[$item['url']])){
+            $item['keywords_jp'] = $keywordsArray[$item['url']];
+            }
+
+            if (empty($item['keywords_jp'])) {
                 continue;
             }
 
