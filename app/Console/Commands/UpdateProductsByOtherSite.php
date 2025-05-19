@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Site;
+use Modules\Site\Http\Controllers\SyncThirdProductController;
 use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsDescription;
+use Modules\Site\Http\Models\SyncLog;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
@@ -34,6 +36,10 @@ class UpdateProductsByOtherSite extends Command
 
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
 
+    public static $autoSyncDataKey = 'autoSyncData';
+    public static $openAutoSyncData       = 1;
+    public static $closeAutoSyncData      = 0;
+
     /**
      * 日文网站从英文网站获取报告数据
      * 1、lpi-jp没有数据，要从lpi-en那边获取，跨地区连数据库获取太慢，改为lpi-en网站提供接口;
@@ -44,8 +50,28 @@ class UpdateProductsByOtherSite extends Command
     public function handle()
     {
 
+        $autoSyncDataVal = SystemValue::query()
+            ->where("key", self::$autoSyncDataKey)
+            ->value('hidden');
+        //如果没有开启自动同步开关, 那么直接退出
+        if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
+            echo '未启动网站设置的开关'."\n";
+            exit;
+        }
+
         ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
         ini_set("memory_limit", -1);
+        $start_time  = time();
+        $count = 0;
+        $insertCount = 0;
+        $updateCount = 0;
+        $ingoreCount = 0;
+        $errorCount = 0;
+        $details = '';
+        $ingore_detail = '';
+        $updateDetail = '';
+        $insertDetail = '';
+        $succIdList = [];
 
         $option = $this->option();
         $originSiteName = $option['site'];
@@ -56,10 +82,13 @@ class UpdateProductsByOtherSite extends Command
 
         tenancy()->initialize($originSiteName);
         $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->value('value');
-        $productDataUrl = SystemValue::where('key', 'sync_target_url')->value('value');
+        $productDataUrl = SystemValue::where('key', 'sync_get_product_url')->value('value');
         $keywordsUrl = SystemValue::where('key', 'sync_keywords_url')->value('value');
-        $keywordsField = SystemValue::where('key', 'sync_keywords_field')->value('value');
+        $queryNum = SystemValue::where('key', 'sync_query_num')->value('value');
+        // $keywordsField = SystemValue::where('key', 'sync_keywords_field')->value('value');
 
+        // dd($productDataUrl);
+        // exit;
         // echo $url;
         // $domain = 'https://www.qyresearch.com/';
         // $url = $domain . '/api/third/get-product-data';
@@ -68,14 +97,19 @@ class UpdateProductsByOtherSite extends Command
         // dd($startTimestamp);
         // dd($url);
         // exit;
-        if (empty($url) || empty($productDataUrl)) {
+        if (empty($productDataUrl) || empty($keywordsUrl)) {
             echo '缺少地址' . "\n";
+            exit;
+        }
+        if (empty($queryNum)) {
+            echo '缺少查询数量' . "\n";
+            exit;
         }
 
         // 查询目标网站的报告数据
         $reqData = [
             'startTimestamp'    => $startTimestamp,
-            'num'    => 10,
+            'num'    => $queryNum,
         ];
         $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
         $response = Http::withHeaders([
@@ -93,20 +127,22 @@ class UpdateProductsByOtherSite extends Command
             echo '请求无数据' . "\n";
             exit;
         }
-
+        $count = count($productData);
         $lastUpdateTime = end($productData)['updated_at']; // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
 
         // 需要去另一个网站上查询缺失的日文关键词
 
         $urlArray = []; //自定义链接数组
         foreach ($productData as $key => $item) {
-            if(empty($item['keywords_jp'])){
+            if (empty($item['keywords_jp'])) {
                 $urlArray[] = $item['url'];
             }
         }
+        // dd($urlArray);
+        // exit;
         $urlArray = array_unique($urlArray);
         $keywordsArray = [];
-        if($urlArray && count($urlArray)>0){
+        if ($urlArray && count($urlArray) > 0) {
 
             $urlArrayParam = json_encode($urlArray);
             $reqData = [
@@ -116,14 +152,15 @@ class UpdateProductsByOtherSite extends Command
             $response = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/x-www-form-urlencoded',
-            ])->post($productDataUrl, $reqData);
+            ])->post($keywordsUrl, $reqData);
             $resp = $response->json();
             if (empty($resp) || $resp['code'] != 200) {
                 echo '请求更新关键词接口失败' . "\n" . json_encode($resp) . "\n";
             }
-            $keywordsArray = json_decode($resp['data'],true); 
+            $keywordsArray = $resp['data'];
         }
-
+        // dd($keywordsArray);
+        // exit;
 
         $productNameArray = [];
         $productNameArray = array_column($productData, 'name');
@@ -149,15 +186,18 @@ class UpdateProductsByOtherSite extends Command
         $existData = array_column($existData, null, 'name');
         foreach ($productData as $key => $item) {
             if (empty($item['name'])) {
+                $ingoreCount++;
                 continue;
             }
-            
+
             //填充到原来的报告数据中
-            if(isset($keywordsArray[$item['url']])){
-            $item['keywords_jp'] = $keywordsArray[$item['url']];
+            if (isset($keywordsArray[$item['url']])) {
+                $item['keywords_jp'] = $keywordsArray[$item['url']];
             }
 
             if (empty($item['keywords_jp'])) {
+                $ingoreCount++;
+                $ingore_detail .= "【忽略】报告名:{$item['name']};url:{$item['url']};无法查询到关键词" . "\r\n";
                 continue;
             }
 
@@ -231,7 +271,7 @@ class UpdateProductsByOtherSite extends Command
                 'publisher_id' => $defaultPublisherId,
                 'category_id' => $item['category_id'],
                 'price' => $item['price'],
-                'keywords' => $item['keywords'],
+                'keywords' => $item['keywords_jp'],
                 'url' => $item['url'],
                 'published_date' => $item['published_date'],
                 'status' => 1,
@@ -331,6 +371,9 @@ class UpdateProductsByOtherSite extends Command
                         $descriptionRecord = $newProductDescription->saveWithAttributes($productDescriptionItem);
                     }
                 }
+                $updateCount++;
+                $insertDetail .= "报告id:{$product_id};【{$item['name']}】" . "\r\n";
+                array_push($succIdList, $product_id);
             } else {
                 // 新增
                 $product = Products::create($productItem);
@@ -340,7 +383,12 @@ class UpdateProductsByOtherSite extends Command
                 $newProductDescription = (new ProductsDescription($newYear));
                 $productDescriptionItem['product_id'] = $product['id'];
                 $descriptionRecord = $newProductDescription->saveWithAttributes($productDescriptionItem);
+                $insertCount++;
+                $insertDetail .= "报告id:{$product['id']};【{$product['name']}】" . "\r\n";
+                array_push($succIdList, $product['id']);
             }
+
+
 
             // 更新或新增课题
             if (!empty($product_id)) {
@@ -370,13 +418,32 @@ class UpdateProductsByOtherSite extends Command
             }
         }
 
+        //批量推送sphinx索引
+        (new SyncThirdProductController())->PushSphinxQueueByIdList($succIdList, $originSiteName);
+
 
         // 修改起始时间
+        $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->update(['value' => $lastUpdateTime]);
 
-        // $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->update(['value'=>]);
 
+        // 记录日志
+        $logModel = new SyncLog();
+        $logData = [
+            'count'         => $count,
+            'insert_count'  => $insertCount,
+            'update_count'  => $updateCount,
+            'ingore_count'  => $ingoreCount,
+            'error_count'   => $errorCount,
+            'error_detail'  => $details,
+            'ingore_detail' => $ingore_detail,
+            'update_detail' => $updateDetail,
+            'insert_detail' => $insertDetail,
+            'created_at'    => $start_time,
+            'updated_at'    => time(),
+        ];
+        $logModel->insert($logData);
 
-        dd('完成');
+        dd('执行结束');
     }
 
     public function makeSign($data, $signkey)
