@@ -50,14 +50,6 @@ class UpdateProductsByOtherSite extends Command
     public function handle()
     {
 
-        $autoSyncDataVal = SystemValue::query()
-            ->where("key", self::$autoSyncDataKey)
-            ->value('hidden');
-        //如果没有开启自动同步开关, 那么直接退出
-        if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
-            echo '未启动网站设置的开关'."\n";
-            exit;
-        }
 
         ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
         ini_set("memory_limit", -1);
@@ -81,6 +73,16 @@ class UpdateProductsByOtherSite extends Command
         }
 
         tenancy()->initialize($originSiteName);
+        
+        $autoSyncDataVal = SystemValue::query()
+            ->where("key", self::$autoSyncDataKey)
+            ->value('hidden');
+        //如果没有开启自动同步开关, 那么直接退出
+        if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
+            echo '未启动网站设置的开关'."\n";
+            exit;
+        }
+        
         $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->value('value');
         $productDataUrl = SystemValue::where('key', 'sync_get_product_url')->value('value');
         $keywordsUrl = SystemValue::where('key', 'sync_keywords_url')->value('value');
