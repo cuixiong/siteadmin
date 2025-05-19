@@ -241,13 +241,13 @@ class UpdateProductsByOtherSite extends Command
                 $templateTitle = $templateTitleCache[$defaultTemplateCategory] ?? '';
             } else {
                 $templateTitle = Template::from((new Template)->getTable() . ' as t')->select(['content'])
-                    // ->where(['status' => 1])
+                    ->where(['status' => 0])
                     ->where(['type' => 2])
                     ->leftJoin((new TemplateCateMapping)->getTable() . ' as tcp', function ($join) {
                         $join->on('tcp.temp_id', '=', 't.id');
                     })
                     ->where('cate_id', $defaultTemplateCategory)
-                    ->orderBy('t.sort', 'ASC')->orderBy('t.id', 'DESC')
+                    ->orderBy('t.sort', 'DESC')->orderBy('t.id', 'DESC')
                     ->value('content');
 
                 $templateTitleCache[$defaultTemplateCategory] = $templateTitle;
