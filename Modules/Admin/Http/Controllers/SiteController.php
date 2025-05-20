@@ -74,8 +74,8 @@ class SiteController extends CrudController {
             if ($res !== true) {
                 // 回滚事务
                 DB::rollBack();
-                ReturnJson(FALSE, $res);
-            }else{
+                ReturnJson(false, $res);
+            } else {
                 DB::commit();
             }
             // //事务有点问题
@@ -112,7 +112,6 @@ class SiteController extends CrudController {
     //     Tenancy::end();
     //     ReturnJson(true, trans('lang.add_success'));
     // }
-
     /**
      * 远程连接服务器新建站点
      *
@@ -231,15 +230,14 @@ class SiteController extends CrudController {
             if ($res !== true) {
                 // 回滚事务
                 DB::rollBack();
-                ReturnJson(FALSE,
+                ReturnJson(
+                    false,
                     $res
                 );
             } else {
-
                 DB::commit();
                 ReturnJson(true, trans('lang.update_success'));
             }
-
             // return $res;
             // DB::commit();
         } catch (\Exception $e) {
@@ -773,10 +771,10 @@ class SiteController extends CrudController {
             $res = (new Site)->GetListLabel($field, false, '', ['status' => 1]);
         } else {
             $res = Site::query()->whereIn('id', $site_ids)
-                ->where("status" , 1)
-                ->selectRaw('name as value , name as label')
-                ->get()
-                ->toArray();
+                       ->where("status", 1)
+                       ->selectRaw('name as value , name as label')
+                       ->get()
+                       ->toArray();
             //$res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
         }
         ReturnJson(true, trans('lang.request_success'), $res);
@@ -809,18 +807,18 @@ class SiteController extends CrudController {
             ];
         } else {
             $siteInfo = Site::where('name', $site)->first();
-            if(empty($siteInfo )){
+            if (empty($siteInfo)) {
                 ReturnJson(false, '站点不存在!');
             }
             $is_local = $siteInfo->is_local;
-            if(empty($is_local )){
+            if (empty($is_local)) {
                 $third_domain = $siteInfo->third_domain;
                 $data = [
                     'url'   => "{$third_domain}/#{$site_redirect_url}",
                     'token' => $encryString,
                     'site'  => $site,
                 ];
-            }else{
+            } else {
                 $data = [
                     'url'   => "{$domain}/#{$site_redirect_url}",
                     'token' => $encryString,
@@ -879,7 +877,12 @@ class SiteController extends CrudController {
     public function getSiteToken($user) {
         $tokenKey = 'login_token_'.$user->id;
         $cacheToken = Redis::get($tokenKey);
-        if (!empty($cacheToken)) {
+        $appDomain = env('APP_DOMAIN');
+        $is_center = false;
+        if (stripos($appDomain, 'cnsite.qyresearch.com') !== false) {
+            $is_center = true;
+        }
+        if (!empty($cacheToken) && $is_center) {
             $token = $cacheToken;
             $expires = Redis::ttl($tokenKey);
         } else {
@@ -892,7 +895,6 @@ class SiteController extends CrudController {
                 'login_at' => time(),
             ];
             \Modules\Admin\Http\Models\User::query()->where('id', $user->id)->update($userUpd);
-
             $expires = auth('api')->factory()->getTTL() + 66240;
             Redis::setex($tokenKey, $expires, $token);
         }

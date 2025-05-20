@@ -23,6 +23,52 @@ use Modules\Site\Http\Models\SystemValue;
 use Stancl\Tenancy\Facades\Tenancy;
 
 class OperationLogController extends CrudController {
+
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get();
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
     public static function AddLog($model, $type) {
         if (php_sapi_name() === 'cli') {
             // 请求来自 Artisan 命令行 , 会导致 $request->route() 返回 null, 因此不记录日志
@@ -181,11 +227,21 @@ class OperationLogController extends CrudController {
         $role_id_list = Role::query()->where('site_id', 'like', '%'.$siteId.'%')
                             ->orWhere('is_super', 1)
                             ->pluck('id')->toArray();
-        $options['user'] = User::query()
-                               ->whereIn('role_id', $role_id_list)
-                               ->where("status", 1)
-                               ->selectRaw('id as value,nickname as label')
-                               ->get()->toArray();
+        $optionsUserList = [];
+        $userList = User::query()
+                        ->where("status", 1)
+                        ->get()->toArray();
+        foreach ($userList as $forUser) {
+            $forRoleIdList = explode(',', $forUser['role_id']);
+            $role_result = array_intersect($forRoleIdList, $role_id_list);
+            if(!empty($role_result )) {
+                $addData = [];
+                $addData['label'] = $forUser['nickname'];
+                $addData['value'] = $forUser['id'];
+                $optionsUserList[] = $addData;
+            }
+        }
+        $options['user'] = $optionsUserList;
         ReturnJson(true, '', $options);
     }
 }

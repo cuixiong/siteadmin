@@ -68,6 +68,13 @@ class TeamMemberController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
             //$input['is_analyst'] = $input['is_analyst'] ?? 0;
+            if(empty($input['language'])){
+                $input['language'] = '';
+            }
+            if(empty($input['phone'] )){
+                $input['phone'] = '';
+            }
+
             $record = $this->ModelInstance()->findOrFail($request->id);
             if (!$record->update($input)) {
                 ReturnJson(false, trans('lang.update_error'));

@@ -213,7 +213,7 @@ Route::middleware([
         Route::get('option', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'option'])->name('价格版本管理:价格版本列表下拉列表数据');
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'changeStatus'])->name('价格版本管理:状态修改');
-        Route::post('sync-site-db', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'syncSiteDb'])->name('价格版本管理:同步到站点');
+        Route::get('sync-site-db', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'syncSiteDb'])->name('价格版本管理:同步到站点');
     });
 
     // FileManagement 控制器
@@ -475,7 +475,7 @@ Route::middleware([
         Route::post('update', [Modules\Admin\Http\Controllers\PublisherController::class, 'update'])->name('出版商管理:出版商编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\PublisherController::class, 'destroy'])->name('出版商管理:出版商删除');
         Route::post('upload-logo', [Modules\Admin\Http\Controllers\PublisherController::class, 'uploadLogo'])->name('出版商管理:上传logo');
-        Route::post('sync-site-db', [Modules\Admin\Http\Controllers\PublisherController::class, 'syncSiteDb'])->name('出版商管理:同步到站点');
+        Route::get('sync-site-db', [Modules\Admin\Http\Controllers\PublisherController::class, 'syncSiteDb'])->name('出版商管理:同步到站点');
     });
 
     // PriceEdition 控制器
