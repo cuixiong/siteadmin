@@ -462,9 +462,9 @@ class SiteController extends CrudController {
                 $model->limit($request->pageSize);
             }
             // 数据排序
-            $order = $request->order ? $request->order : 'id';
+            $order = $request->order ? $request->order : 'sort';
             // 升序/降序
-            $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
+            $sort = (strtoupper($request->sort) == 'ASC') ? 'DESC' : 'ASC';
             $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get();
             //查询后的数据处理
             if ($record && count($record) > 0) {

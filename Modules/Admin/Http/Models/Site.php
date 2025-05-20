@@ -27,6 +27,7 @@ class Site extends Base
         'frontend_repository',
         'api_path',
         'frontend_path',
+        'sort',
         // 'db_host',
         // 'db_port',
         // 'db_database',
@@ -639,7 +640,7 @@ class Site extends Base
             'cd ' . $dirName . ' && sed -i \'s|{{DB_PASSWORD}}|' . $dbPassword . '|g\' .env',
             'cd ' . $dirName . ' && sed -i \'s|{{APP_NAME}}|' . $siteName . '|g\' .env',
             'cd ' . $dirName . ' && sed -i \'s|{{DOMAIN}}|' . $domain . '|g\' .env',
-            
+
         ];
         return $commands;
     }

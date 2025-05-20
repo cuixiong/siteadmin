@@ -157,17 +157,21 @@ class NginxBanListController extends CrudController {
             if (!is_array($ban_str)) {
                 $ban_str[] = $ban_str;
             }
-            $query = NginxBanList::query()->whereIn("ban_str", $ban_str);
+            $query = NginxBanList::query();
             if (empty($request->service_type)) {
                 $request->service_type = 1;
             }
             //过滤业务类型
             $query = $query->where("service_type", $request->service_type);
-            $query->delete();
+
+            foreach ($ban_str as $ban_str_item){
+                $query->where("ban_str", 'like' , "%{$ban_str_item}%")->delete();
+            }
+
             if($request->service_typ == 1){
                 (new CheckNginxLoadCommand())->reloadNginxBySite(getSiteName());
             }else{
-                (new CheckAccessCntBanCommand())->delBanStrList(getSiteName(),$ban_str);
+                (new CheckAccessCntBanCommand())->delBanStrList(getSiteName());
             }
 
             ReturnJson(true, trans('lang.delete_success'));
