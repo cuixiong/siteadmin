@@ -7,8 +7,10 @@ use App\Observers\SiteOperationLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\User;
+use Modules\Site\Http\Models\Authority;
 use Modules\Site\Http\Models\Information;
 use Modules\Site\Http\Models\Menu;
 use Modules\Site\Http\Models\News;
@@ -17,9 +19,56 @@ use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsExportLog;
+use Modules\Site\Http\Models\SystemValue;
 use Stancl\Tenancy\Facades\Tenancy;
 
 class OperationLogController extends CrudController {
+
+
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get();
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
     public static function AddLog($model, $type) {
         if (php_sapi_name() === 'cli') {
             // 请求来自 Artisan 命令行 , 会导致 $request->route() 返回 null, 因此不记录日志
@@ -35,12 +84,10 @@ class OperationLogController extends CrudController {
         } else if ($type == 'delete') {
             $content = '删除了ID='.$model->id.'的数据行。';
         }
-
         //如果没有内容,直接不添加
-        if(empty($content)){
+        if (empty($content)) {
             return false;
         }
-
         $request = request();
         $site = $request->header('Site');
         $category = $site ? 2 : 1;
@@ -49,6 +96,11 @@ class OperationLogController extends CrudController {
         // }
         $name = $request->route()->getName();
         $route = request()->path();
+        $groupClassName = ['systemvalue', 'system'];
+        $module = strtolower($ClassName);
+        if (in_array($module, $groupClassName)) {
+            $module = strtolower(class_basename(SystemValue::class));
+        }
         $data = [
             'class'  => OperationLogController::class,
             'method' => 'SaveLog',
@@ -60,7 +112,7 @@ class OperationLogController extends CrudController {
                 'title'      => $name,
                 'content'    => $content,
                 'site'       => $site,
-                'module'     => strtolower($ClassName),
+                'module'     => $module,
                 'created_by' => request()->user->id,
                 'created_at' => time(),
             ]
@@ -113,7 +165,7 @@ class OperationLogController extends CrudController {
                 $OriginalValue = $model->getOriginal($field);
                 $OriginalValue = is_array($OriginalValue) ? implode(',', $OriginalValue) : $OriginalValue;
                 $NewValue = is_array($value) ? implode(',', $value) : $value;
-                if(empty($OriginalValue ) && empty($NewValue)){
+                if (empty($OriginalValue) && empty($NewValue)) {
                     continue;
                 }
                 $title = $ColumnComment.'从'.$OriginalValue.'更新为：'.$NewValue;
@@ -143,7 +195,6 @@ class OperationLogController extends CrudController {
 //            }
 //        }
         //strtolower(class_basename(Products::class));
-
         // TODO: cuizhixiong 2024/9/13 后续优化
         $addData = [];
         $addData['value'] = strtolower(class_basename(Products::class));
@@ -161,13 +212,36 @@ class OperationLogController extends CrudController {
         $addData['value'] = strtolower(class_basename(Information::class));
         $addData['label'] = '资讯模块';
         $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(Authority::class));
+        $addData['label'] = '权威引用模块';
+        $options['OperationLogModule'][] = $addData;
+        $addData['value'] = strtolower(class_basename(SystemValue::class));
+        $addData['label'] = '网点配置模块';
+        $options['OperationLogModule'][] = $addData;
         $addData['value'] = strtolower(class_basename(ProductsExportLog::class));
         $addData['label'] = '导出记录模块';
         $options['OperationLogModule'][] = $addData;
-
         //$options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
-        $options['user'] = (new User)->GetListLabel(['id as value', 'name as label'], false, '', ['status' => '1']);
+//
+        $siteId = getSiteId();
+        $role_id_list = Role::query()->where('site_id', 'like', '%'.$siteId.'%')
+                            ->orWhere('is_super', 1)
+                            ->pluck('id')->toArray();
+        $optionsUserList = [];
+        $userList = User::query()
+                        ->where("status", 1)
+                        ->get()->toArray();
+        foreach ($userList as $forUser) {
+            $forRoleIdList = explode(',', $forUser['role_id']);
+            $role_result = array_intersect($forRoleIdList, $role_id_list);
+            if(!empty($role_result )) {
+                $addData = [];
+                $addData['label'] = $forUser['nickname'];
+                $addData['value'] = $forUser['id'];
+                $optionsUserList[] = $addData;
+            }
+        }
+        $options['user'] = $optionsUserList;
         ReturnJson(true, '', $options);
     }
-
 }

@@ -106,14 +106,15 @@ class SystemController extends CrudController {
     public function systemValueDestroy(Request $request) {
         try {
             $this->ValidateInstance($request);
-            $record = SystemValue::query();
             $ids = $request->ids;
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            $record->whereIn('id', $ids);
-            if (!$record->delete()) {
-                ReturnJson(false, trans('lang.delete_error'));
+            foreach ($ids as $forid){
+                $record = SystemValue::find($forid);
+                if ($record) {
+                    $record->delete();
+                }
             }
             ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {

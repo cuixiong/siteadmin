@@ -93,7 +93,7 @@ class AccessLogController extends CrudController {
             $is_delete = $request->input('is_delete', 0);
             $searchCondition = [];
             //选项页
-            $tab = $request->input('tab', 'ip'); //ip , referer , ua_info
+            $tab = $request->input('tab', 'ip'); //ip , referer , ua_info , ip_addr
             //搜索条件
             if (!empty($search)) {
                 foreach ($search as $key => $value) {

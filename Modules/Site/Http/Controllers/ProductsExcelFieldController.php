@@ -55,21 +55,21 @@ class ProductsExcelFieldController extends CrudController {
      *
      * @param Request $request
      */
-    protected function resetSort(Request $request) {
-        $ids = $request->ids;
-        if (!is_array($ids)) {
-            $ids = explode(",", $ids);
-        }
-        foreach ($ids as $key => $id) {
-            $record = $this->ModelInstance()->find($id);
-            if ($record) {
-                $record->update([
-                                    'sort' => $key + 1,
-                                ]);
-            }
-        }
-        ReturnJson(true, trans('lang.request_success'));
-    }
+//    public function resetSort(Request $request) {
+//        $ids = $request->ids;
+//        if (!is_array($ids)) {
+//            $ids = explode(",", $ids);
+//        }
+//        foreach ($ids as $key => $id) {
+//            $record = $this->ModelInstance()->find($id);
+//            if ($record) {
+//                $record->update([
+//                                    'sort' => $key + 1,
+//                                ]);
+//            }
+//        }
+//        ReturnJson(true, trans('lang.request_success'));
+//    }
 
     /**
      * 获取搜索下拉列表

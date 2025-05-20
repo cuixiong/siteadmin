@@ -127,6 +127,7 @@ class CheckNginxLoadCommand extends Command {
         $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
         $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
                                       ->where("status", 1)
+                                      ->where("service_type", 1)
                                       ->groupBy('ban_str')
                                       ->having('cnt', '>=', $black_ban_cnt)
                                       ->selectRaw('count(*) as cnt, ban_str')
@@ -161,6 +162,7 @@ class CheckNginxLoadCommand extends Command {
         //查询超过1次的UA
         $cntBlackUaList = NginxBanList::query()->where("ban_type", 2)
                                       ->where("status", 1)
+                                      ->where("service_type", 1)
                                       ->groupBy('ban_str')
                                       ->having('cnt', '>=', $black_ban_cnt)
                                       ->selectRaw('count(*) as cnt, ban_str')
@@ -215,6 +217,7 @@ class CheckNginxLoadCommand extends Command {
         $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
         $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
                                       ->where("status", 1)
+                                      ->where("service_type", 1)
                                       ->groupBy('ban_str')
                                       ->having('cnt', '>=', $black_ban_cnt)
                                       ->selectRaw('count(*) as cnt, ban_str')
@@ -232,6 +235,7 @@ class CheckNginxLoadCommand extends Command {
         //查询超过N次的UA
         $banUaStrList = NginxBanList::query()->where("ban_type", 2)
                                     ->where("status", 1)
+                                    ->where("service_type", 1)
                                     ->groupBy('ban_str')
                                     ->having('cnt', '>=', $black_ban_cnt)
                                     ->selectRaw('count(*) as cnt, ban_str')

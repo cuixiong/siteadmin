@@ -482,6 +482,7 @@ Route::middleware([
         Route::get('options', [Modules\Site\Http\Controllers\TeamMemberController::class, 'options'])->name('团队成员:字典数据');
         Route::post('change-analyst', [Modules\Site\Http\Controllers\TeamMemberController::class, 'ChangeAnalyst'])->name('团队成员:分析师状态修改');
         Route::post('change-show-product', [Modules\Site\Http\Controllers\TeamMemberController::class, 'changeShowProduct'])->name('团队成员:分析师报告显示修改');
+        Route::post('reset-sort', [Modules\Site\Http\Controllers\TeamMemberController::class, 'resetSort'])->name('团队成员:调整排序');
     });
     // Office控制器
     Route::prefix('office')->group(function () {
@@ -492,6 +493,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeStatus'])->name('办公室列表:状态修改');
         Route::post('change-view-status', [Modules\Site\Http\Controllers\OfficeController::class, 'changeViewStatus'])->name('办公室列表:字段状态修改');
         Route::any('options', [Modules\Site\Http\Controllers\OfficeController::class, 'options'])->name('办公室列表:下拉列表');
+        Route::post('reset-sort', [Modules\Site\Http\Controllers\OfficeController::class, 'resetSort'])->name('办公室列表:调整排序');
     });
     // Qualification控制器
     Route::prefix('qualification')->group(function () {
@@ -500,6 +502,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\QualificationController::class, 'destroy'])->name('资质认证:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\QualificationController::class, 'list'])->name('资质认证:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\QualificationController::class, 'changeStatus'])->name('资质认证:状态修改');
+        Route::post('reset-sort', [Modules\Site\Http\Controllers\QualificationController::class, 'resetSort'])->name('资质认证:调整排序');
     });
     // Comment控制器
     Route::prefix('comment')->group(function () {
@@ -508,6 +511,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\CommentController::class, 'destroy'])->name('客户评价:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\CommentController::class, 'list'])->name('客户评价:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\CommentController::class, 'changeStatus'])->name('客户评价:状态修改');
+        Route::post('reset-sort', [Modules\Site\Http\Controllers\CommentController::class, 'resetSort'])->name('客户评价:调整排序');
     });
     // History控制器
     Route::prefix('history')->group(function () {
@@ -870,7 +874,7 @@ Route::middleware([
         Route::post('change-sort', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'changeSort'])->name('站点地图:排序修改');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'form'])->name('站点地图:数据单查');
     });
-    
+
     // 货币配置
     Route::prefix('currency-config')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'store'])->name('货币配置:数据新增');

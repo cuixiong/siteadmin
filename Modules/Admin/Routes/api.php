@@ -54,6 +54,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\RuleController::class, 'changeStatus'])->name('权限管理:修改状态');
         Route::get('option-add-rule', [Modules\Admin\Http\Controllers\RuleController::class, 'optionAddRule'])->name('权限管理:新增权限的字典数据');
         Route::post('admin-routes', [Modules\Admin\Http\Controllers\RuleController::class, 'GetAdminRoute'])->name('权限管理:总控模块路由');
+        Route::post('reset-sort', [Modules\Admin\Http\Controllers\RuleController::class, 'resetSort'])->name('权限管理:调整排序');
     });
 
     // Role控制器
@@ -212,6 +213,7 @@ Route::middleware([
         Route::get('option', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'option'])->name('价格版本管理:价格版本列表下拉列表数据');
         Route::get('search-droplist', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'searchDroplist'])->name('价格版本管理:搜索下拉列表数据');
         Route::post('change-status',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'changeStatus'])->name('价格版本管理:状态修改');
+        Route::get('sync-site-db', [Modules\Admin\Http\Controllers\PriceEditionController::class, 'syncSiteDb'])->name('价格版本管理:同步到站点');
     });
 
     // FileManagement 控制器
@@ -388,6 +390,7 @@ Route::middleware([
         // Route::post('callback-results', [Modules\Admin\Http\Controllers\SiteController::class, 'callbackResults'])->name('站点管理:站点更新结果');
         // Route::get('get-catch-git-status', [Modules\Admin\Http\Controllers\SiteController::class, 'getCatchGitStatus'])->name('站点管理:返回更新结果');
         Route::get('jump-site-url',[Modules\Admin\Http\Controllers\SiteController::class, 'jumpSiteUrl'])->name('站点管理:获取站点跳转地址');
+        Route::post('reset-sort', [Modules\Admin\Http\Controllers\SiteController::class, 'resetSort'])->name('站点管理:调整排序');
     });
 
     // SiteUpdateLog 控制器
@@ -472,6 +475,7 @@ Route::middleware([
         Route::post('update', [Modules\Admin\Http\Controllers\PublisherController::class, 'update'])->name('出版商管理:出版商编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\PublisherController::class, 'destroy'])->name('出版商管理:出版商删除');
         Route::post('upload-logo', [Modules\Admin\Http\Controllers\PublisherController::class, 'uploadLogo'])->name('出版商管理:上传logo');
+        Route::get('sync-site-db', [Modules\Admin\Http\Controllers\PublisherController::class, 'syncSiteDb'])->name('出版商管理:同步到站点');
     });
 
     // PriceEdition 控制器

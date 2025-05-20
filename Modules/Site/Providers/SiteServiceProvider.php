@@ -5,6 +5,7 @@ namespace Modules\Site\Providers;
 use App\Observers\SiteOperationLog;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Modules\Site\Http\Models\Authority;
 use Modules\Site\Http\Models\Information;
 use Modules\Site\Http\Models\Menu;
 use Modules\Site\Http\Models\News;
@@ -12,6 +13,8 @@ use Modules\Site\Http\Models\OperationLog;
 use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsExportLog;
+use Modules\Site\Http\Models\System;
+use Modules\Site\Http\Models\SystemValue;
 
 class SiteServiceProvider extends ServiceProvider
 {
@@ -45,6 +48,10 @@ class SiteServiceProvider extends ServiceProvider
         Menu::observe(SiteOperationLog::class);
         Information::observe(SiteOperationLog::class);
         ProductsExportLog::observe(SiteOperationLog::class);
+
+        Authority::observe(SiteOperationLog::class);
+        SystemValue::observe(SiteOperationLog::class);
+        System::observe(SiteOperationLog::class);
 
     }
 

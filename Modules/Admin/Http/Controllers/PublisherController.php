@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use App\Const\NotityTypeConst;
 use App\Helper\ImageHelper;
 use Modules\Admin\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
@@ -65,7 +66,7 @@ class PublisherController extends CrudController
     /**
      * 上传logo
      * @param $request 请求信息
-     * 
+     *
      */
     public function uploadLogo(Request $request)
     {
@@ -78,4 +79,10 @@ class PublisherController extends CrudController
         $filename = pathinfo($originalName, PATHINFO_FILENAME) . '_' . time() . '.' . pathinfo($originalName, PATHINFO_EXTENSION);
         ReturnJson(TRUE, trans('lang.request_success'), ImageHelper::SaveImage($file, $filename, '/uploads/publisher/'));
     }
+
+    public function syncSiteDb() {
+        syncSiteDbByType(NotityTypeConst::SYNC_SITE_PUBLISHER);
+        ReturnJson(true, trans('lang.request_success'));
+    }
+
 }

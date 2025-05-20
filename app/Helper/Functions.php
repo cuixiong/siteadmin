@@ -63,7 +63,7 @@ function convertToFormData($list) {
 }
 
 function getSiteName() {
-    return request()->header("Site" , '');
+    return request()->header("Site", '');
 }
 
 function getSiteDomain() {
@@ -74,6 +74,12 @@ function getSiteDomain() {
     }
 
     return $domain;
+}
+
+function getSiteId() {
+    $siteName = getSiteName();
+
+    return Site::query()->where('name', $siteName)->value("id");
 }
 
 function getReportUrl($product) {
