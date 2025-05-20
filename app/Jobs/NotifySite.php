@@ -282,10 +282,8 @@ class NotifySite implements ShouldQueue {
 //        }
         // 设置当前租户
         tenancy()->initialize($siteInfo['name']);
-        $siteName = $siteInfo['name'];
-        $publisher_ids = Site::query()->where("name", $siteName)->value('publisher_id');
+        $publisher_ids = $siteInfo['publisher_id'];
         $publisher_id_list = explode(',' , $publisher_ids);
-
         //同步 Publisher
         $publisherList = Publisher::all()->map(function ($item) {
             return $item->getAttributes();
@@ -306,7 +304,7 @@ class NotifySite implements ShouldQueue {
                 SitePublisher::insert($forCoutry);
             }
         }
-        $publisherList::query()->whereNotIn("id", $existIdList)->delete();
+        SitePublisher::query()->whereNotIn("id", $existIdList)->delete();
     }
 
 }
