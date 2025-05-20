@@ -1562,6 +1562,7 @@ class PostSubjectController extends CrudController
                             $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
                             $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
                             $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
+                            $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
                         }
                         if (!empty($linkValue)) {
                             // 发帖链接
