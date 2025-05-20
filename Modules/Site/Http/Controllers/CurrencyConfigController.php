@@ -129,7 +129,7 @@ class CurrencyConfigController extends CrudController
                 ReturnJson(false, 'id is empty');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
-            $record->is_first = $request->is_first;
+            $record->is_show = $request->is_show;
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }

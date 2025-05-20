@@ -7,9 +7,9 @@ CREATE TABLE `currency_config` (
   `is_show` tinyint(1) DEFAULT '0' COMMENT '是否在列表、详情返回',
   `sort` smallint DEFAULT '100' COMMENT '排序:整数,数值越小,排序越靠前。',
   `status` tinyint(1) DEFAULT '1' COMMENT '状态:1代表有效或显示,0代表无效或隐藏。',
-  `creater` int DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
   `created_at` int DEFAULT NULL,
-  `updater` int DEFAULT NULL,
+  `updated_by` int DEFAULT NULL,
   `updated_at` int DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
