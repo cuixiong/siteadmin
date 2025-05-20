@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Modules\Site\Http\Models\AutoPostConfig;
 use Modules\Site\Http\Models\AutoPostLog;
+use Modules\Site\Http\Models\News;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\ProductsDescription;
@@ -14,10 +15,12 @@ use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
 use Modules\Site\Http\Models\TemplateCateMapping;
 
-class AutoPostController extends CrudController {
+class AutoPostController extends CrudController
+{
     public $site = '';
 
-    public function handlerAutoPostJob() {
+    public function handlerAutoPostJob()
+    {
         try {
             //兼容site
             $site = request()->header('Site');
@@ -41,15 +44,92 @@ class AutoPostController extends CrudController {
         }
     }
 
-    public function handService($autoPostConfig, $site) {
+    public function handService($autoPostConfig, $site)
+    {
         request()->headers->set('Site', $site); // 设置请求头
         //判断参数
-        if (empty(
-            $autoPostConfig['title_template_ids'] || empty($autoPostConfig['content_template_ids'])
-            || empty($autoPostConfig['product_category_ids'] || empty($autoPostConfig['start_product_id']))
-        )) {
+        if (empty($autoPostConfig['title_template_ids'] || empty($autoPostConfig['content_template_ids'])
+            || empty($autoPostConfig['product_category_ids'] || empty($autoPostConfig['start_product_id'])))) {
             throw new \Exception("param error");
         }
+
+        if ($autoPostConfig['type'] = AutoPostConfig::POST_SITE_TYPE_INSIDE) {
+            $this->insideHandle($autoPostConfig);
+        } elseif ($autoPostConfig['type'] = AutoPostConfig::POST_SITE_TYPE_OUTSIDE) {
+            $this->wpHandle($autoPostConfig);
+        }
+    }
+
+    // 站内发帖
+    private function insideHandle($autoPostConfig)
+    {
+        $defaultDbConfig = Config::get('database.connections.mysql');
+        // 分类报告数据
+        // $productCategoryData = ProductsCategory::query()->pluck('name', 'id')->toArray();
+        $productCategoryIds = explode(',', $autoPostConfig['product_category_ids']);
+        // 定位要发帖的报告
+        $productOrginData = Products::query()->select(['id', 'keywords', 'name', 'published_date', 'category_id'])
+            ->where('status', 1)
+            ->whereIn('category_id', $productCategoryIds)
+            ->where('id', '>', $autoPostConfig['start_product_id'])
+            ->limit($autoPostConfig['post_num'])
+            ->orderBy('id', 'asc')
+            ->get()->toArray();
+
+        if (empty($productOrginData)) {
+            echo '没有数据' . PHP_EOL;
+            return false;
+        }
+        // 检查是否存在重复记录
+        $keywordArray = array_values(array_unique(array_column($productOrginData, 'keywords')));
+        // 去重要求 一年内关键词不重复
+        $yearTimestamp = strtotime(date('Y-01-01 00:00:00'));
+        $existKeywordArray = News::query()->whereIn("keywords", $keywordArray)->where('upload_at', '>=', $yearTimestamp)->pluck('keywords')->toArray();
+        $handlerProductList = [];
+        $temp = [];
+        foreach ($productOrginData as $key => &$item) {
+            if (in_array($item['keywords'], $existKeywordArray)) {
+                // 数据库去重
+                $this->insertAutoPostLog(
+                    $autoPostConfig['code'],
+                    $item['id'],
+                    AutoPostLog::POST_STATUS_EXIST,
+                    '数据库已存在'
+                );
+                continue;
+            } elseif (in_array($item['keywords'], $temp)) {
+
+                // 内部去重
+                $this->insertAutoPostLog(
+                    $autoPostConfig['code'],
+                    $item['id'],
+                    AutoPostLog::POST_STATUS_EXIST,
+                    '同一批数据里重复'
+                );
+                continue;
+            }
+
+
+            $temp[] = $item['keywords'];
+            $handlerProductList[] = $item;
+        }
+        if (!empty($handlerProductList)) {
+            $productArray = array_chunk($handlerProductList, 100);
+            foreach ($productArray as $key => $group) {
+                $this->insertPost($group, $autoPostConfig, $defaultDbConfig, AutoPostConfig::POST_SITE_TYPE_INSIDE);
+            }
+            echo '加入队列成功' . PHP_EOL;
+        } else {
+            echo '过滤重名报告后无数据' . PHP_EOL;
+        }
+        // 修改起始id
+        $lastProductId = end($productOrginData)['id'];
+        AutoPostConfig::query()->where('id', $autoPostConfig['id'])
+            ->update(['start_product_id' => $lastProductId]);
+    }
+
+    private function wpHandle($autoPostConfig)
+    {
         $defaultDbConfig = Config::get('database.connections.mysql');
         //wp 数据库连接 (验证数据源)
         $mysql = $this->useRemoteDb($autoPostConfig);
@@ -64,32 +144,47 @@ class AutoPostController extends CrudController {
         $productCategoryIds = explode(',', $autoPostConfig['product_category_ids']);
         // 定位要发帖的报告
         $productOrginData = Products::query()->select(['id', 'keywords', 'name', 'published_date', 'category_id'])
-                                    ->where('status', 1)
-                                    ->whereIn('category_id', $productCategoryIds)
-                                    ->where('id', '>', $autoPostConfig['start_product_id'])
-                                    ->limit($autoPostConfig['post_num'])
-                                    ->orderBy('id', 'asc')
-                                    ->get()->toArray();
+            ->where('status', 1)
+            ->whereIn('category_id', $productCategoryIds)
+            ->where('id', '>', $autoPostConfig['start_product_id'])
+            ->limit($autoPostConfig['post_num'])
+            ->orderBy('id', 'asc')
+            ->get()->toArray();
         if (empty($productOrginData)) {
-            echo '没有数据'.PHP_EOL;
+            echo '没有数据' . PHP_EOL;
 
             return false;
         }
         // 检查是否存在重复记录
-        $productNameArray = array_values(array_unique(array_column($productOrginData, 'name')));
+        $keywordArray = array_values(array_unique(array_column($productOrginData, 'keywords')));
         $mysql = $this->useRemoteDb($autoPostConfig);
+        // 去重要求 一年内关键词不重复
+        $year = date('Y', time());
         $existKeywordArray = DB::connection($mysql)->table('wp_posts')
-                               ->whereIn("post_name", $productNameArray)->pluck('post_name')->toArray();
+            ->whereIn("post_name", $keywordArray)->where('post_date', '>=', $year)->pluck('post_name')->toArray();
         $this->uselocalDb($defaultDbConfig);
         $handlerProductList = [];
+        $temp = [];
         foreach ($productOrginData as $key => &$item) {
-            if (in_array($item['name'], $existKeywordArray)) {
+            if (in_array($item['keywords'], $existKeywordArray)) {
                 // 数据库去重
                 $this->insertAutoPostLog(
-                    $autoPostConfig['code'], $item['id'], AutoPostLog::POST_STATUS_EXIST, '数据库已存在'
+                    $autoPostConfig['code'],
+                    $item['id'],
+                    AutoPostLog::POST_STATUS_EXIST,
+                    '数据库已存在'
+                );
+                continue;
+            } elseif (in_array($item['keywords'], $temp)) {
+                $this->insertAutoPostLog(
+                    $autoPostConfig['code'],
+                    $item['id'],
+                    AutoPostLog::POST_STATUS_EXIST,
+                    '内部重复'
                 );
                 continue;
             }
+            $temp[] = $item['keywords'];
             //行业转换
             $item['wp_category_id'] = $wpCategoryColumn[$productCategoryData[$item['category_id']]] ?? 1;
             $handlerProductList[] = $item;
@@ -97,19 +192,20 @@ class AutoPostController extends CrudController {
         if (!empty($handlerProductList)) {
             $productArray = array_chunk($handlerProductList, 100);
             foreach ($productArray as $key => $group) {
-                $this->insertWpPost($group, $autoPostConfig, $defaultDbConfig);
+                $this->insertPost($group, $autoPostConfig, $defaultDbConfig, AutoPostConfig::POST_SITE_TYPE_OUTSIDE);
             }
-            echo '加入队列成功'.PHP_EOL;
+            echo '加入队列成功' . PHP_EOL;
         } else {
-            echo '过滤重名报告后无数据'.PHP_EOL;
+            echo '过滤重名报告后无数据' . PHP_EOL;
         }
         // 修改起始id
         $lastProductId = end($productOrginData)['id'];
         AutoPostConfig::query()->where('id', $autoPostConfig['id'])
-                      ->update(['start_product_id' => $lastProductId]);
+            ->update(['start_product_id' => $lastProductId]);
     }
 
-    private function useRemoteDb($autoPostConfig): string {
+    private function useRemoteDb($autoPostConfig): string
+    {
         // 定义新的数据库配置
         $newDatabaseConfig = [
             'driver'    => 'mysql',
@@ -135,7 +231,8 @@ class AutoPostController extends CrudController {
         return $mysql;
     }
 
-    private function uselocalDb($dbConfig) {
+    private function uselocalDb($dbConfig)
+    {
         // 切换到新的数据库配置
         $mysql = "mysql";
         Config::set("database.connections.{$mysql}", $dbConfig);
@@ -148,40 +245,47 @@ class AutoPostController extends CrudController {
     }
 
     public function insertAutoPostLog(
-        $code, $product_id, $status, $detail, $wp_link = '', $title_template_id = null, $content_template_id = null
+        $code,
+        $product_id,
+        $status,
+        $detail,
+        $wp_link = '',
+        $title_template_id = null,
+        $content_template_id = null
     ) {
         AutoPostLog::query()->insert([
-                                         'code'                => $code,
-                                         'product_id'          => $product_id,
-                                         'created_at'          => time(),
-                                         'post_status'         => $status,
-                                         'detail'              => $detail,
-                                         'wp_link'             => $wp_link,
-                                         'title_template_id'   => $title_template_id,
-                                         'content_template_id' => $content_template_id,
-                                     ]);
+            'code'                => $code,
+            'product_id'          => $product_id,
+            'created_at'          => time(),
+            'post_status'         => $status,
+            'detail'              => $detail,
+            'wp_link'             => $wp_link,
+            'title_template_id'   => $title_template_id,
+            'content_template_id' => $content_template_id,
+        ]);
     }
 
-    public function insertWpPost($productList, $autoPostConf, $defaultDbConfig) {
+    public function insertPost($productList, $autoPostConf, $defaultDbConfig, $type)
+    {
         // 标题模板范围
         $titleTemplateIds = $autoPostConf['title_template_ids'];
         $titleTemplateIds = !empty($titleTemplateIds) ? explode(',', $titleTemplateIds) : [];
         $titleTemplateArray = Template::query()->select(['id', 'name', 'content'])
-                                      ->where('status', 1)
-                                      ->where('type', 2)
-                                      ->whereIn('id', $titleTemplateIds)
-                                      ->get()->toArray();
+            ->where('status', 1)
+            ->where('type', 2)
+            ->whereIn('id', $titleTemplateIds)
+            ->get()->toArray();
         // 内容模板范围
         $contentTemplateIds = $autoPostConf['content_template_ids'];
         $contentTemplateIds = !empty($contentTemplateIds) ? explode(',', $contentTemplateIds) : [];
         $contentTemplateArray = Template::query()->select(['id', 'name', 'content'])
-                                        ->where('status', 1)
-                                        ->where('type', 1)
-                                        ->whereIn('id', $contentTemplateIds)
-                                        ->get()->toArray();
+            ->where('status', 1)
+            ->where('type', 1)
+            ->whereIn('id', $contentTemplateIds)
+            ->get()->toArray();
         // 模板按分类归类
         $wordCategory = TemplateCategory::query()->select(['id', 'match_words'])->where(['status' => 1])->get()
-                                        ->toArray();
+            ->toArray();
         $newTitleTemplateArray = [];
         foreach ($titleTemplateArray as $key => $item) {
             $item['has_cagr_param'] = strpos($item['content'], '{{cagr}}') !== false;
@@ -210,50 +314,56 @@ class AutoPostController extends CrudController {
         $data = array_column($productList, null, 'id');
         $productIds = array_keys($data);
         $productData = Products::query()
-//                               ->select([
-//                                                     'id',
-//                                                     'category_id',
-//                                                     'name',
-//                                                     'keywords',
-//                                                     'url',
-//                                                     'published_date',
-//                                                     'classification',
-//                                                     'application',
-//                                                     'cagr',
-//                                                     'last_scale',
-//                                                     'current_scale',
-//                                                     'future_scale'
-//                                                 ])
-                               ->whereIn('id', $productIds)
-                               ->get();
+            // ->select([
+            //     'id',
+            //     'category_id',
+            //     'name',
+            //     'keywords',
+            //     'url',
+            //     'published_date',
+            //     'classification',
+            //     'application',
+            //     'cagr',
+            //     'last_scale',
+            //     'current_scale',
+            //     'future_scale'
+            // ])
+            ->whereIn('id', $productIds)
+            ->get();
         $code = $autoPostConf['code'];
         foreach ($productData as $key => $item) {
             try {
-                $item['wp_category_id'] = $data[$item['id']]['wp_category_id'];
+                $item['wp_category_id'] = $data[$item['id']]['wp_category_id'] ?? 0;
                 $this->uselocalDb($defaultDbConfig);
                 $suffix = date('Y', $item['published_date']);
                 $productDescription = (new ProductsDescription($suffix))->where('product_id', $item['id'])
-//                                                                        ->select([
-//                                                                                     'description',
-//                                                                                     'table_of_content',
-//                                                                                     'companies_mentioned',
-//                                                                                     'definition',
-//                                                                                     'overview'
-//                                                                                 ])
-                                                                        ->first();
+                    // ->select([
+                    //     'description',
+                    //     'table_of_content',
+                    //     'companies_mentioned',
+                    //     'definition',
+                    //     'overview'
+                    // ])
+                    ->first();
                 if (empty($item) || empty($productDescription)) {
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '缺少详情数据');
                     continue;
+                }
+                // 兼容部分日文网站，由于详情为空需要用到英文详情判断使用那个模板，因此这里将description_en的值赋给description
+                if(isset($productDescription->description_en) && empty($productDescription->description)){
+                    $productDescription->description = $productDescription->description_en;
                 }
                 $productArr = json_decode(json_encode($productDescription), true) ?? [];
                 $itemArr = json_decode(json_encode($item), true) ?? [];
                 $product = array_merge($itemArr, $productArr);
                 $templateCategoryId = $this->getTemplateCategoryId($wordCategory, $product['description']);
                 $product['titleTemplate'] = [];
-                if (!isset($newTitleTemplateArray[$templateCategoryId])
+                if (
+                    !isset($newTitleTemplateArray[$templateCategoryId])
                     || count(
-                           $newTitleTemplateArray[$templateCategoryId]
-                       ) == 0) {
+                        $newTitleTemplateArray[$templateCategoryId]
+                    ) == 0
+                ) {
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '未发现可用标题模板');
                     continue;
                 }
@@ -267,13 +377,19 @@ class AutoPostController extends CrudController {
                 }
                 if ($newTitleTemplate['has_last_scale_param'] && empty($product['last_scale'])) {
                     $this->insertAutoPostLog(
-                        $code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '{{last_year}}无数据'
+                        $code,
+                        $item['id'],
+                        AutoPostLog::POST_STATUS_INGORE,
+                        '{{last_year}}无数据'
                     );
                     continue;
                 }
                 if ($newTitleTemplate['has_current_scale_param'] && empty($product['current_scale'])) {
                     $this->insertAutoPostLog(
-                        $code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '{{this_year}}无数据'
+                        $code,
+                        $item['id'],
+                        AutoPostLog::POST_STATUS_INGORE,
+                        '{{this_year}}无数据'
                     );
                     continue;
                 }
@@ -282,131 +398,175 @@ class AutoPostController extends CrudController {
                     continue;
                 }
                 $product['contentTemplate'] = [];
-                if (!isset($newContentTemplateArray[$templateCategoryId])
+                if (
+                    !isset($newContentTemplateArray[$templateCategoryId])
                     || count(
-                           $newContentTemplateArray[$templateCategoryId]
-                       ) == 0) {
+                        $newContentTemplateArray[$templateCategoryId]
+                    ) == 0
+                ) {
                     $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_INGORE, '未发现可用报告模板');
                     continue;
                 }
                 $tempContentNum = mt_rand(1, count($newContentTemplateArray[$templateCategoryId]));
                 $product['contentTemplate']['id'] = $newContentTemplateArray[$templateCategoryId][$tempContentNum
-                                                                                                  - 1]['id'];
+                    - 1]['id'];
                 $product['contentTemplate']['content'] = $newContentTemplateArray[$templateCategoryId][$tempContentNum
-                                                                                                       - 1]['content'];
+                    - 1]['content'];
                 //计算获取文章信息
-//                $articleInfo = $this->articleInfo(
-//                    $product['titleTemplate']['content'], $product['contentTemplate']['content'], $product
-//                );
+                //                $articleInfo = $this->articleInfo(
+                //                    $product['titleTemplate']['content'], $product['contentTemplate']['content'], $product
+                //                );
                 $articleInfo = $this->newarticleInfo(
-                    $product['titleTemplate'], $product['contentTemplate'], $item, $productDescription
+                    $product['titleTemplate'],
+                    $product['contentTemplate'],
+                    $item,
+                    $productDescription
                 );
                 $timestamp = time();
                 $time = date('Y-m-d H:i:s', $timestamp);
-                //$articleKeyword = $articleInfo['keyword'];
-                $productName = $item['name'];
+                $articleKeyword = $articleInfo['keyword'];
+                // $productName = $item['name'];
                 $articleTitle = $articleInfo['title'];
                 $articleContent = $articleInfo['content'];
                 $articleDescription = $articleInfo['description'];
-                $author = 1;
-                // 要插入的数据
-                $insertPostData = [
-                    'post_excerpt'          => '',
-                    'post_status'           => 'publish',
-                    'comment_status'        => 'open',
-                    'ping_status'           => 'open',
-                    'to_ping'               => '',
-                    'pinged'                => '',
-                    'post_content_filtered' => '',
-                    'post_type'             => 'post',
-                    'post_author'           => $author,
-                    'post_date'             => $time,
-                    'post_date_gmt'         => $time,
-                    'post_content'          => $articleContent,
-                    'post_title'            => $articleTitle,
-                    'post_name'             => $productName,
-                    'post_modified'         => $time,
-                    'post_modified_gmt'     => $time,
-                ];
-                $insertPostmetaData = [
-                    // 一些附带的数据，不确定影不影响
-                    // '_yoast_indexnow_last_ping' => $timestamp,
-                    // '_yoast_wpseo_primary_category' => '',
-                    // '_yoast_wpseo_content_score'    => 30,
-                    // '_yoast_wpseo_focuskeywords'    => '',
-                    // '_yoast_wpseo_keywordsynonyms'    => '',
-                    // '_yoast_wpseo_estimated-reading-time-minutes'    => 0,
-                    '_yoast_wpseo_metadesc' => $articleDescription //seo description
-                ];
-                $insertYoastIndexableData = [
-                    // 默认数据
-                    'object_type'                    => 'post',
-                    'object_sub_type'                => 'post',
-                    'breadcrumb_title'               => $articleTitle,
-                    'post_status'                    => 'post',
-                    'readability_score'              => 30,
-                    'created_at'                     => $time,
-                    'updated_at'                     => $time,
-                    'blog_id'                        => 1,
-                    'estimated_reading_time_minutes' => 0,
-                    'version'                        => 2,
-                    'object_last_modified'           => $time,
-                    'object_published_at'            => $time,
-                    'inclusive_language_score'       => 0,
-                    // 重要的数据
-                    'permalink'                      => '', // 帖子访问链接
-                    'permalink_hash'                 => '', //加密permalink
-                    'object_id'                      => 0, //post_id 需插入posts后获取
-                    'author_id'                      => $author,
-                    'title'                          => $articleTitle.' - QY Research',
-                    'description'                    => $articleDescription,
-                ];
-                $insertTermRelationshipsData = [
-                    'object_id'        => 0,
-                    'term_taxonomy_id' => $product['wp_category_id'],
-                    'term_order'       => 0,
-                ];
-                // wp_post 文章表
-                // wp_postmeta 有个seo description要写入, 点文章编辑的时候会在下方yoast插件显示出来，只有点更新才会生效
-                // wp_yoast_indexable 插件的一个表，wp页面生成时会读取该数据进行生成 ,相关页面缓存在 {wp路径}/wp-content/cache/supercache/{站点}/archives/{id} 中
-                //
-                $mysql = $this->useRemoteDb($autoPostConf);
-                $postId = DB::connection($mysql)->table('wp_posts')->insertGetId($insertPostData);
-                foreach ($insertPostmetaData as $key => $value) {
-                    $tempData = [];
-                    $tempData['post_id'] = $postId;
-                    $tempData['meta_key'] = $key;
-                    $tempData['meta_value'] = $value;
-                    DB::connection($mysql)->table('wp_postmeta')->insertGetId($tempData);
-                }
-                $domain = $autoPostConf['domain'];
-                $insertYoastIndexableData['object_id'] = $postId;
-                $insertYoastIndexableData['permalink'] = $domain."/archives/".$postId;
-                // $this->logger(json_encode(strlen($insertYoastIndexableData['permalink'])));
-                // $this->logger(json_encode(md5($insertYoastIndexableData['permalink'])));
-                // return ;
-                $insertYoastIndexableData['permalink_hash'] = strlen($insertYoastIndexableData['permalink']).':'.md5(
+                if ($type == AutoPostConfig::POST_SITE_TYPE_INSIDE) {
+                    $newsModel = new News();
+                    $newsModel->title = $articleTitle;
+                    $newsModel->category_id = $product['category_id'];
+                    $newsModel->type = 1;
+                    $newsModel->keywords = $articleKeyword;
+                    $newsModel->tags = $articleKeyword;
+                    $newsModel->url = $product['url'];
+                    $newsModel->description = $articleDescription;
+                    $newsModel->content = $articleContent;
+                    $newsModel->sort = 100;
+                    $newsModel->show_home = 1;
+                    $newsModel->status = 1;
+                    $newsModel->created_by = 0;
+                    $newsModel->created_at = time();
+                    $newsModel->updated_by = 0;
+                    $newsModel->updated_at = time();
+                    $newsModel->upload_at = time();
+                    $newsModel->upload_at = time();
+                    $newsModel->hits = mt_rand(100, 500);
+                    $newsModel->real_hits = 0;
+                    $newsModel->save();
+                    $this->insertAutoPostLog(
+                        $code,
+                        $item['id'],
+                        AutoPostLog::POST_STATUS_SUCCESS,
+                        '成功',
+                        ($newsModel->id) . '/' . $product['url'],
+                        $product['titleTemplate']['id'],
+                        $product['contentTemplate']['id']
+                    );
+                } elseif ($type == AutoPostConfig::POST_SITE_TYPE_OUTSIDE) {
+
+                    $author = 1;
+                    // 要插入的数据
+                    $insertPostData = [
+                        'post_excerpt'          => '',
+                        'post_status'           => 'publish',
+                        'comment_status'        => 'open',
+                        'ping_status'           => 'open',
+                        'to_ping'               => '',
+                        'pinged'                => '',
+                        'post_content_filtered' => '',
+                        'post_type'             => 'post',
+                        'post_author'           => $author,
+                        'post_date'             => $time,
+                        'post_date_gmt'         => $time,
+                        'post_content'          => $articleContent,
+                        'post_title'            => $articleTitle,
+                        'post_name'             => $articleKeyword,
+                        'post_modified'         => $time,
+                        'post_modified_gmt'     => $time,
+                    ];
+                    $insertPostmetaData = [
+                        // 一些附带的数据，不确定影不影响
+                        // '_yoast_indexnow_last_ping' => $timestamp,
+                        // '_yoast_wpseo_primary_category' => '',
+                        // '_yoast_wpseo_content_score'    => 30,
+                        // '_yoast_wpseo_focuskeywords'    => '',
+                        // '_yoast_wpseo_keywordsynonyms'    => '',
+                        // '_yoast_wpseo_estimated-reading-time-minutes'    => 0,
+                        '_yoast_wpseo_metadesc' => $articleDescription //seo description
+                    ];
+                    $insertYoastIndexableData = [
+                        // 默认数据
+                        'object_type'                    => 'post',
+                        'object_sub_type'                => 'post',
+                        'breadcrumb_title'               => $articleTitle,
+                        'post_status'                    => 'post',
+                        'readability_score'              => 30,
+                        'created_at'                     => $time,
+                        'updated_at'                     => $time,
+                        'blog_id'                        => 1,
+                        'estimated_reading_time_minutes' => 0,
+                        'version'                        => 2,
+                        'object_last_modified'           => $time,
+                        'object_published_at'            => $time,
+                        'inclusive_language_score'       => 0,
+                        // 重要的数据
+                        'permalink'                      => '', // 帖子访问链接
+                        'permalink_hash'                 => '', //加密permalink
+                        'object_id'                      => 0, //post_id 需插入posts后获取
+                        'author_id'                      => $author,
+                        'title'                          => $articleTitle . ' - QY Research',
+                        'description'                    => $articleDescription,
+                    ];
+                    $insertTermRelationshipsData = [
+                        'object_id'        => 0,
+                        'term_taxonomy_id' => $product['wp_category_id'],
+                        'term_order'       => 0,
+                    ];
+                    // wp_post 文章表
+                    // wp_postmeta 有个seo description要写入, 点文章编辑的时候会在下方yoast插件显示出来，只有点更新才会生效
+                    // wp_yoast_indexable 插件的一个表，wp页面生成时会读取该数据进行生成 ,相关页面缓存在 {wp路径}/wp-content/cache/supercache/{站点}/archives/{id} 中
+                    //
+                    $mysql = $this->useRemoteDb($autoPostConf);
+                    $postId = DB::connection($mysql)->table('wp_posts')->insertGetId($insertPostData);
+                    foreach ($insertPostmetaData as $key => $value) {
+                        $tempData = [];
+                        $tempData['post_id'] = $postId;
+                        $tempData['meta_key'] = $key;
+                        $tempData['meta_value'] = $value;
+                        DB::connection($mysql)->table('wp_postmeta')->insertGetId($tempData);
+                    }
+                    $domain = $autoPostConf['domain'];
+                    $insertYoastIndexableData['object_id'] = $postId;
+                    $insertYoastIndexableData['permalink'] = $domain . "/archives/" . $postId;
+                    // $this->logger(json_encode(strlen($insertYoastIndexableData['permalink'])));
+                    // $this->logger(json_encode(md5($insertYoastIndexableData['permalink'])));
+                    // return ;
+                    $insertYoastIndexableData['permalink_hash'] = strlen($insertYoastIndexableData['permalink']) . ':' . md5(
                         $insertYoastIndexableData['permalink']
                     );
-                $indexableId = DB::connection($mysql)->table('wp_yoast_indexable')->insertGetId(
-                    $insertYoastIndexableData
-                );
-                $insertTermRelationshipsData['object_id'] = $postId;
-                $term_taxonomy_id = DB::connection($mysql)->table('wp_term_relationships')->insertGetId(
-                    $insertTermRelationshipsData
-                );
-                $this->insertAutoPostLog(
-                    $code, $item['id'], AutoPostLog::POST_STATUS_SUCCESS, '成功',
-                    $insertYoastIndexableData['permalink'], $product['titleTemplate']['id'],
-                    $product['contentTemplate']['id']
-                );
+                    $indexableId = DB::connection($mysql)->table('wp_yoast_indexable')->insertGetId(
+                        $insertYoastIndexableData
+                    );
+                    $insertTermRelationshipsData['object_id'] = $postId;
+                    $term_taxonomy_id = DB::connection($mysql)->table('wp_term_relationships')->insertGetId(
+                        $insertTermRelationshipsData
+                    );
+                    $this->insertAutoPostLog(
+                        $code,
+                        $item['id'],
+                        AutoPostLog::POST_STATUS_SUCCESS,
+                        '成功',
+                        $insertYoastIndexableData['permalink'],
+                        $product['titleTemplate']['id'],
+                        $product['contentTemplate']['id']
+                    );
+                }
             } catch (\Exception $e) {
                 $this->insertAutoPostLog($code, $item['id'], AutoPostLog::POST_STATUS_ERROR, $e->getMessage());
             }
         }
     }
 
-    private function getTemplateCategoryId($wordCategory, $des) {
+    private function getTemplateCategoryId($wordCategory, $des)
+    {
         $defaultWordCategory = 0;
         foreach ($wordCategory as $key2 => $item2) {
             if (empty($item2['match_words'])) {
@@ -433,7 +593,8 @@ class AutoPostController extends CrudController {
         return $defaultWordCategory;
     }
 
-    private function newarticleInfo($titleTemplate, $contentTemplate, $product, $productDesc) {
+    private function newarticleInfo($titleTemplate, $contentTemplate, $product, $productDesc)
+    {
         $temolateController = new TemplateController();
         $keyword = $product['keywords'];
         $title = $temolateController->templateWirteData($titleTemplate, $product, $productDesc, true);
@@ -455,7 +616,8 @@ class AutoPostController extends CrudController {
     }
 
     // 返回发帖标题、内容等信息
-    private function articleInfo($titleTemplate, $contentTemplate, $product) {
+    private function articleInfo($titleTemplate, $contentTemplate, $product)
+    {
         // 替换后的标题
         $title = $titleTemplate;
         $title = str_replace('@@@@', $product['keywords'], $title);
@@ -508,8 +670,8 @@ class AutoPostController extends CrudController {
         $content = str_replace('{{this_year}}', $product['current_scale'] ?? '', $content);
         $content = str_replace('{{six_year}}', $product['future_scale'] ?? '', $content);
         $frontend_domain = getSiteDomain();
-        $link = $frontend_domain.'/reports/'.$product['id'].'/'.$product['url'];
-        $linkElement = '<a href="'.$link.'"  title="'.$keyword.'" target="blank">'.$link.'</a>';
+        $link = $frontend_domain . '/reports/' . $product['id'] . '/' . $product['url'];
+        $linkElement = '<a href="' . $link . '"  title="' . $keyword . '" target="blank">' . $link . '</a>';
         $content = str_replace('{{link}}', $linkElement, $content);
         //描述第一段
         $reg = "/<\/?[a-z]+( [^>]*)?>/";
@@ -529,12 +691,14 @@ class AutoPostController extends CrudController {
     /**
      * 对截取的类型、应用进行特殊字符过滤,并且进行缩进、换行等各种格式处理
      */
-    public function applicationHandle($text = '', $separator = "", $space = '', $leftTag = '', $rightTag = '') {
+    public function applicationHandle($text = '', $separator = "", $space = '', $leftTag = '', $rightTag = '')
+    {
         if (empty($text)) {
             return '';
         }
         $text = explode(
-            "\n", str_replace("", '', str_replace("\t", '', trim(str_replace("\r\n", "\n", $text), "\n")))
+            "\n",
+            str_replace("", '', str_replace("\t", '', trim(str_replace("\r\n", "\n", $text), "\n")))
         );
         //过滤空字符串
         $text = array_filter($text, function ($value) {
@@ -542,7 +706,7 @@ class AutoPostController extends CrudController {
         });
         //添加缩进
         $text = array_map(function ($item) use ($space, $leftTag, $rightTag) {
-            return $leftTag.$space.trim($item).$rightTag;
+            return $leftTag . $space . trim($item) . $rightTag;
         }, $text);
         //合并
         $text = implode($separator, $text);
@@ -551,7 +715,8 @@ class AutoPostController extends CrudController {
     }
 
     // 对目录进行换行，缩进
-    public static function tocHandle($toc) {
+    public static function tocHandle($toc)
+    {
         $pattern = '/ {0,}(?<!\.)\d{1,2}(\.\d{1,2}){0,3} .{0,}\n/';
         $result = [];
         $match = [];
@@ -578,7 +743,7 @@ class AutoPostController extends CrudController {
                     preg_match('/(?<!.)\d{1,2} /', trim($value, "\n"), $matchTitle);
                     $value = trim($value, "\r\n");
                     $value = trim($value, "\n");
-                    $result[$count] .= trim($value, "\n").'<br />';
+                    $result[$count] .= trim($value, "\n") . '<br />';
                 } else {
                     if (!isset($result[$count])) {
                         continue;
@@ -590,7 +755,7 @@ class AutoPostController extends CrudController {
                     for ($i = 0; $i < $str_count; $i++) {
                         $space .= '&nbsp;&nbsp;&nbsp;&nbsp;';
                     }
-                    $result[$count] .= $space.trim(str_replace("\n", "<br />", $value), "\n")."<br />";
+                    $result[$count] .= $space . trim(str_replace("\n", "<br />", $value), "\n") . "<br />";
                 }
             }
         }
