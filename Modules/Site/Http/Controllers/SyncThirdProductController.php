@@ -940,7 +940,7 @@ class SyncThirdProductController extends CrudController {
                                               ->where("key", $this->autoSyncDataKey)
                                               ->value('value');
                 //如果没有开启自动同步开关, 那么直接退出
-                if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
+                    if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
                     throw new \Exception("no open auto sync data config");
 
                     return false;
@@ -954,7 +954,7 @@ class SyncThirdProductController extends CrudController {
                 $this->notifyDataSyncTokenKey,
                 $this->notifyDataResTableKey
             ];
-            $sync_sleep_time_info = SystemValue::query()->where("key", 'sync_sleep_time')->fisrt();
+            $sync_sleep_time_info = SystemValue::query()->where("key", 'sync_sleep_time')->first();
             if (!empty($sync_sleep_time_info)) {
                 if (!empty($sync_sleep_time_info->hidden)) {
                     $start_time = $sync_sleep_time_info->value;
