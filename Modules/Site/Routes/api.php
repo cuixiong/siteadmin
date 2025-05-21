@@ -787,6 +787,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectController::class, 'searchDroplist'])->name('发帖课题:搜索下拉列表数据');
         Route::get('advanced-filters', [Modules\Site\Http\Controllers\PostSubjectController::class, 'advancedFilters'])->name('发帖课题:高级筛选数据');
         Route::post('accept', [Modules\Site\Http\Controllers\PostSubjectController::class, 'accept'])->name('发帖课题:领取/分配');
+        Route::post('move-in-common', [Modules\Site\Http\Controllers\PostSubjectController::class, 'moveInCommon'])->name('发帖课题:移入公客');
 
         Route::post('export-subject', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubject'])->name('发帖课题:导出课题');
         Route::post('export-subject-link', [Modules\Site\Http\Controllers\PostSubjectController::class, 'exportSubjectLink'])->name('发帖课题:导出日志');

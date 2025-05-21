@@ -1137,6 +1137,13 @@ class PostSubjectController extends CrudController
             ReturnJson(TRUE, trans('lang.request_success'));
         }
     }
+    // 移入公客
+    public function moveInCommon(Request $request){
+        $request->replace([
+            'accepter' => -1
+        ]);
+        return $this->accept($request);
+    }
 
     /**
      * 导出课题
