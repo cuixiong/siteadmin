@@ -223,10 +223,9 @@ class CheckAccessCntBanCommand extends Command {
      * 删除封禁nginx黑名单
      *
      * @param $siteName
-     * @param $banStrList
      *
      */
-    public function delBanStrList($siteName, $banStrList) {
+    public function delBanStrList($siteName) {
         $server_id = Site::query()->where("name", $siteName)->value("server_id");
         if (empty($server_id)) {
             return true;
@@ -253,7 +252,12 @@ class CheckAccessCntBanCommand extends Command {
             }
             $ssh->setTimeout(600);
             $temp_file_path = $siteNginxConfInfo['access_ban_conf_path'];
-            $banStr = $this->handlerDiffBanStr($temp_file_path, $banStrList);
+            $ban_str_list = NginxBanList::query()->where('service_type', 2)->pluck('ban_str')->toArray();
+            $banStr = '';
+            foreach ($ban_str_list as $forBanStr){
+                $banStr  .= $forBanStr . PHP_EOL;
+            }
+            //$banStr = $this->handlerDiffBanStr($temp_file_path, $banStrList);
             $echo_sh_commands = "echo '{$banStr}' > {$temp_file_path}";
             $execute_reload_res = $this->executeCommands($ssh, $echo_sh_commands);
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';

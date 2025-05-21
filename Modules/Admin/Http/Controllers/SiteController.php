@@ -462,9 +462,9 @@ class SiteController extends CrudController {
                 $model->limit($request->pageSize);
             }
             // 数据排序
-            $order = $request->order ? $request->order : 'id';
+            $order = $request->order ? $request->order : 'sort';
             // 升序/降序
-            $sort = (strtoupper($request->sort) == 'ASC') ? 'ASC' : 'DESC';
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             $record = $model->select($ModelInstance->ListSelect)->orderBy($order, $sort)->get();
             //查询后的数据处理
             if ($record && count($record) > 0) {
@@ -768,11 +768,12 @@ class SiteController extends CrudController {
             : ['name as value', 'name as label'];
         $res = [];
         if ($is_super > 0) {
-            $res = (new Site)->GetListLabel($field, false, '', ['status' => 1]);
+            $res = (new Site)->GetListLabel($field, false, '', ['status' => 1], ['sort' => 'asc']);
         } else {
             $res = Site::query()->whereIn('id', $site_ids)
                        ->where("status", 1)
                        ->selectRaw('name as value , name as label')
+                       ->orderBy('sort', 'asc')
                        ->get()
                        ->toArray();
             //$res = (new Site)->GetListLabel($field, false, '', ['status' => 1, 'id' => $site_ids]);
