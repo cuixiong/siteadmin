@@ -1294,11 +1294,11 @@ class PostSubjectController extends CrudController
             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
             $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
 
-            $sheet->setCellValue([6 + 1, $rowIndex + 1], $subject['keywords_cn'] ?? ''); // 关键词(中)
-            $sheet->setCellValue([7 + 1, $rowIndex + 1], $subject['keywords_en'] ?? ''); // 关键词(英)
-            $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
-            $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
-            $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
+            $sheet->setCellValue([6 + 1, $rowIndex + 1], !empty($subject['keywords_cn']) ? '有' : '无'); // 关键词(中)
+            $sheet->setCellValue([7 + 1, $rowIndex + 1], !empty($subject['keywords_en']) ? '有' : '无'); // 关键词(英)
+            $sheet->setCellValue([8 + 1, $rowIndex + 1], !empty($subject['keywords_jp']) ? '有' : '无'); // 关键词(日)
+            $sheet->setCellValue([9 + 1, $rowIndex + 1], !empty($subject['keywords_kr']) ? '有' : '无'); // 关键词(韩)
+            $sheet->setCellValue([10 + 1, $rowIndex + 1], !empty($subject['keywords_de']) ? '有' : '无'); // 关键词(德)
 
             $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
 
@@ -1564,11 +1564,12 @@ class PostSubjectController extends CrudController
                             $sheet->setCellValue([4 + 1, $rowIndex + 1], $subject['keywords']); // 关键词
                             $sheet->setCellValue([5 + 1, $rowIndex + 1], !empty($subject['has_cagr']) ? '是' : '否'); // 是否有数据
 
-                            $sheet->setCellValue([6 + 1, $rowIndex + 1], $subject['keywords_cn'] ?? ''); // 关键词(中)
-                            $sheet->setCellValue([7 + 1, $rowIndex + 1], $subject['keywords_en'] ?? ''); // 关键词(英)
-                            $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
-                            $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
-                            $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
+                            $sheet->setCellValue([6 + 1, $rowIndex + 1], !empty($subject['keywords_cn']) ? '有' : '无'); // 关键词(中)
+                            $sheet->setCellValue([7 + 1, $rowIndex + 1], !empty($subject['keywords_en']) ? '有' : '无'); // 关键词(英)
+                            $sheet->setCellValue([8 + 1, $rowIndex + 1], !empty($subject['keywords_jp']) ? '有' : '无'); // 关键词(日)
+                            $sheet->setCellValue([9 + 1, $rowIndex + 1], !empty($subject['keywords_kr']) ? '有' : '无'); // 关键词(韩)
+                            $sheet->setCellValue([10 + 1, $rowIndex + 1], !empty($subject['keywords_de']) ? '有' : '无'); // 关键词(德)
+                            
                             $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
                         }
                         if (!empty($linkValue)) {
