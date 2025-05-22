@@ -53,9 +53,9 @@ class AutoPostController extends CrudController
             throw new \Exception("param error");
         }
 
-        if ($autoPostConfig['type'] = AutoPostConfig::POST_SITE_TYPE_INSIDE) {
+        if ($autoPostConfig['type'] == AutoPostConfig::POST_SITE_TYPE_INSIDE) {
             $this->insideHandle($autoPostConfig);
-        } elseif ($autoPostConfig['type'] = AutoPostConfig::POST_SITE_TYPE_OUTSIDE) {
+        } elseif ($autoPostConfig['type'] == AutoPostConfig::POST_SITE_TYPE_OUTSIDE) {
             $this->wpHandle($autoPostConfig);
         }
     }
