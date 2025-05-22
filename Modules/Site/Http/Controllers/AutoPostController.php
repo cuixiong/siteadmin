@@ -451,12 +451,14 @@ class AutoPostController extends CrudController
                     $newsModel->hits = mt_rand(100, 500);
                     $newsModel->real_hits = 0;
                     $newsModel->save();
+                    
+                    $domain = $autoPostConf['domain'];
                     $this->insertAutoPostLog(
                         $code,
                         $item['id'],
                         AutoPostLog::POST_STATUS_SUCCESS,
                         '成功',
-                        ($newsModel->id) . '/' . $product['url'],
+                        $domain.'/news/'.($newsModel->id) . '/' . $product['url'],
                         $product['titleTemplate']['id'],
                         $product['contentTemplate']['id']
                     );
