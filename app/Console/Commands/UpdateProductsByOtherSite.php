@@ -404,7 +404,7 @@ class UpdateProductsByOtherSite extends Command
                     $postSubjectUpdate['product_category_id'] = $item['category_id'];
                     $postSubjectUpdate['version'] = intval($item['price'] ?? 0);
                     $postSubjectUpdate['analyst'] = $item['author'];
-                    $postSubjectUpdate['keywords'] = $item['keywords'];
+                    $postSubjectUpdate['keywords'] = $item['keywords_jp'];
                     $postSubjectUpdate['has_cagr'] = !empty($item['cagr']) ? 1 : 0;
                     if ($postSubject) {
                         // 需比对类型、应用、企业是否有变化，有则打开修改状态
