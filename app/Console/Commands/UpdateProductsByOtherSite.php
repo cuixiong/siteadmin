@@ -398,7 +398,7 @@ class UpdateProductsByOtherSite extends Command
                     // 修改课题
                     $postSubject = PostSubject::query()->where('product_id', $product_id)->first();
                     $postSubjectUpdate = [];
-                    $postSubjectUpdate['name'] = $item['name'];
+                    $postSubjectUpdate['name'] = $newProductName;
                     $postSubjectUpdate['type'] = PostSubject::TYPE_POST_SUBJECT;
                     $postSubjectUpdate['product_id'] = $product_id;
                     $postSubjectUpdate['product_category_id'] = $item['category_id'];
