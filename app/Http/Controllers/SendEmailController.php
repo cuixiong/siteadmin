@@ -19,7 +19,7 @@ use Modules\Admin\Http\Models\User;
 
 class SendEmailController extends Controller {
     // 注册发邮method
-    private $EmailCodes = ['register' => '注册账号', 'password' => '重置密码'];
+    private $EmailCodes = ['register' => '注册账号', 'password' => '重置密码' , 'active' => '激活账号'];
 
     /**
      * 动态配置邮箱参数
@@ -235,6 +235,71 @@ class SendEmailController extends Controller {
 
         return true;
     }
+
+    /**
+     * reset password eamil send
+     *
+     * @param use Illuminate\Http\Request $request;
+     *
+     * @return response Code
+     */
+    public function activate($userId) {
+        try {
+            $user = User::where('id', $userId)->first();
+            if (empty($user)) {
+                ReturnJson(false, trans()->get('lang.eamail_undefined'));
+            }
+            $user = $user->toArray();
+            $email = $user['email'];
+            $scene = EmailScene::where('action', 'active')->select(
+                ['id', 'name', 'title', 'body', 'email_sender_id', 'email_recipient', 'status', 'alternate_email_id']
+            )->first();
+            if (empty($scene)) {
+                ReturnJson(false, trans()->get('lang.eamail_error'));
+            }
+            $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                $scene->email_sender_id
+            );
+            $user['activate_url'] = env('APP_DOMAIN');
+            $user['domain'] = env('APP_DOMAIN');
+            // 邮箱账号配置信息
+            $config = [
+                'host'       => $senderEmail->host,
+                'port'       => $senderEmail->port,
+                'encryption' => $senderEmail->encryption,
+                'username'   => $senderEmail->email,
+                'password'   => $senderEmail->password
+            ];
+            $this->SetConfig($config);
+            if ($scene->alternate_email_id) {
+                // 备用邮箱配置信息
+                $BackupSenderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
+                    $scene->alternate_email_id
+                );
+                $BackupConfig = [
+                    'host'       => $BackupSenderEmail->host,
+                    'port'       => $BackupSenderEmail->port,
+                    'encryption' => $BackupSenderEmail->encryption,
+                    'username'   => $BackupSenderEmail->email,
+                    'password'   => $BackupSenderEmail->password
+                ];
+                $this->SetConfig($BackupConfig, 'backups');// 若发送失败，则使用备用邮箱发送
+            }
+            try {
+                $this->SendEmail($email, $scene->body, $user, $scene->title, $senderEmail->email);
+            } catch (\Exception $e) {
+                if ($scene->alternate_email_id) {
+                    $this->SendEmail($email, $scene->body, $user, $scene->title, $BackupSenderEmail->email, 'backups');
+                }
+            }
+            EmailLog::AddLog(1, $scene->email_sender_id, $email, $scene->id, $user);
+            ReturnJson(true, trans()->get('lang.eamail_success'));
+        } catch (\Exception $e) {
+            EmailLog::AddLog(1, $scene->email_sender_id, $email, $scene->id, $user);
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
 
     /**
      * reset password eamil send

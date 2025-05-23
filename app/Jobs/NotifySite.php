@@ -17,7 +17,10 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\Country as AdminCountry;
+use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Site\Http\Models\Publisher as SitePublisher;
 use Modules\Site\Http\Models\BanWhiteList;
@@ -38,7 +41,8 @@ use Modules\Site\Http\Models\SystemValue;
 class NotifySite implements ShouldQueue {
     use Dispatchable, InteractsWithQueue, Queueable, BaseJob;
 
-    public $data = '';
+    public $data           = '';
+    public $sourceDbConfig = [];
 
     /**
      * Create a new job instance.
@@ -47,6 +51,7 @@ class NotifySite implements ShouldQueue {
      */
     public function __construct($data) {
         $this->data = $data;
+        $this->sourceDbConfig = Config::get('database.connections.mysql');
     }
 
     /**
@@ -99,129 +104,117 @@ class NotifySite implements ShouldQueue {
     }
 
     public function syncSitePrice($siteInfo) {
-        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-//        if (empty($siteInfo['is_local'])) {
-//            return true;
-//        }
-        // 设置当前租户
-        tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         $priceeditionList = AdminPriceEdition::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         $existIdList = [];
+        $database_info = $this->getDbConfigBySite($siteInfo);
+        $this->useRemoteDbBySite($database_info);
         foreach ($priceeditionList as $forPriceEdition) {
             $for_id = $forPriceEdition['id'];
             $existIdList[] = $for_id;
-            $isExist = PriceEdition::query()->where("id", $for_id)->count();
+            $isExist = DB::connection('mysql')->table('price_editions')->where("id", $for_id)->count();
             if ($isExist) {
                 // 存在则更新
-                PriceEdition::query()->where("id", $for_id)->update($forPriceEdition);
+                DB::connection('mysql')->table('price_editions')->where("id", $for_id)->update($forPriceEdition);
             } else {
-                PriceEdition::insert($forPriceEdition);
+                DB::connection('mysql')->table('price_editions')->insert($forPriceEdition);
             }
         }
-        PriceEdition::query()->whereNotIn("id", $existIdList)->delete();
+        DB::connection('mysql')->table('price_editions')->whereNotIn("id", $existIdList)->delete();
         //同步 price_edition_values
+        $this->useLocalDb();
         $priceValueList = AdminPriceEditionValue::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         $existIdList = [];
+        $this->useRemoteDbBySite($database_info);
         foreach ($priceValueList as $forPriceValue) {
             $for_id = $forPriceValue['id'];
             $existIdList[] = $for_id;
-            $isExist = PriceEditionValue::query()->where("id", $for_id)->count();
+            $isExist = DB::connection('mysql')->table('price_edition_values')->where("id", $for_id)->count();
             if ($isExist) {
                 // 存在则更新
-                PriceEditionValue::query()->where("id", $for_id)->update($forPriceValue);
+                DB::connection('mysql')->table('price_edition_values')->where("id", $for_id)->update($forPriceValue);
             } else {
-                PriceEditionValue::insert($forPriceValue);
+                DB::connection('mysql')->table('price_edition_values')->insert($forPriceValue);
             }
         }
-        PriceEditionValue::query()->whereNotIn("id", $existIdList)->delete();
+        DB::connection('mysql')->table('price_edition_values')->whereNotIn("id", $existIdList)->delete();
     }
 
     public function syncSiteCountry($siteInfo) {
-        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-//        if (!$siteInfo['is_local']) {
-//            return true;
-//        }
-        // 设置当前租户
-        tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         $coutryList = AdminCountry::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         $existIdList = [];
+        $database_info = $this->getDbConfigBySite($siteInfo);
+        $this->useRemoteDbBySite($database_info);
         foreach ($coutryList as $forCoutry) {
             $for_id = $forCoutry['id'];
             $existIdList[] = $for_id;
-            $isExist = Country::query()->where("id", $for_id)->count();
+            $isExist = DB::connection('mysql')->table('countrys')->where("id", $for_id)->count();
             if ($isExist) {
                 // 存在则更新
-                Country::query()->where("id", $for_id)->update($forCoutry);
+                DB::connection('mysql')->table('countrys')->where("id", $for_id)->update($forCoutry);
             } else {
-                Country::insert($forCoutry);
+                DB::connection('mysql')->table('countrys')->insert($forCoutry);
             }
         }
-        Country::query()->whereNotIn("id", $existIdList)->delete();
+        DB::connection('mysql')->table('countrys')->whereNotIn("id", $existIdList)->delete();
     }
 
     public function syncSiteLanguage($siteInfo) {
-        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-//        if (!$siteInfo['is_local']) {
-//            return true;
-//        }
-        // 设置当前租户
-        tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         $languageList = AdminLanguage::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         $existIdList = [];
+        $database_info = $this->getDbConfigBySite($siteInfo);
+        $this->useRemoteDbBySite($database_info);
         foreach ($languageList as $forCoutry) {
             $for_id = $forCoutry['id'];
             $existIdList[] = $for_id;
-            $isExist = Language::query()->where("id", $for_id)->count();
+            $isExist = DB::connection('mysql')->table('languages')->where("id", $for_id)->count();
             if ($isExist) {
                 // 存在则更新
-                Language::query()->where("id", $for_id)->update($forCoutry);
+                DB::connection('mysql')->table('languages')->where("id", $for_id)->update($forCoutry);
             } else {
-                Language::insert($forCoutry);
+                DB::connection('mysql')->table('languages')->insert($forCoutry);
             }
         }
-        Language::query()->whereNotIn("id", $existIdList)->delete();
+        DB::connection('mysql')->table('languages')->whereNotIn("id", $existIdList)->delete();
     }
 
     public function syncSiteSetting($siteInfo) {
-        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-//        if (!$siteInfo['is_local']) {
-//            return true;
-//        }
-        // 设置当前租户
-        tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         //只控制ip限流与ua限流配置
-        $systemList = AdminSystem::query()->whereIn("alias", ['ip_limit_rules', 'ua_ban_rule' , 'nginx_ban_rules' , 'access_cnt_nginx_ban'])->get()->map(
+        $systemList = AdminSystem::query()->whereIn("alias", ['ip_limit_rules', 'ua_ban_rule', 'nginx_ban_rules',
+                                                              'access_cnt_nginx_ban'])->get()->map(
             function ($item) {
                 return $item->getAttributes();
             }
         )->toArray();
         $systemIdList = [];
+        $database_info = $this->getDbConfigBySite($siteInfo);
+        $this->useRemoteDbBySite($database_info);
         foreach ($systemList as $forCoutry) {
             $for_id = $forCoutry['id'];
             $systemIdList[] = $for_id;
-            $idExist = System::query()->where("alias", $forCoutry['alias'])->value('id');
+            $idExist = DB::connection('mysql')->table('systems')->where("alias", $forCoutry['alias'])->value('id');
             unset($forCoutry['id']);
             //$forCoutry['updated_at'] = time();
             if ($idExist > 0) {
                 // 存在则更新
-                System::query()->where("id", $idExist)->update($forCoutry);
+                DB::connection('mysql')->table('systems')->where("id", $idExist)->update($forCoutry);
             } else {
-                System::insert($forCoutry);
+                DB::connection('mysql')->table('systems')->insert($forCoutry);
             }
         }
         ######################################
+        $this->useLocalDb();
         $systemValueList = AdminSystemValue::query()->whereIn("parent_id", $systemIdList)->get()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
@@ -229,82 +222,123 @@ class NotifySite implements ShouldQueue {
             $for_id = $forSystemValue['id'];
             unset($forSystemValue['id']);
             //parentid需要修改
+            $this->useLocalDb();
             $parentAlias = AdminSystem::query()->where("id", $forSystemValue['parent_id'])->value('alias');
-            $forSystemValue['parent_id'] = System::query()->where("alias", $parentAlias)->value('id');
-            SystemValue::query()->where("parent_id" , $forSystemValue['parent_id'])->delete();
+            $this->useRemoteDbBySite($database_info);
+            $forSystemValue['parent_id'] = DB::connection('mysql')->table('systems')->where("alias", $parentAlias)->value('id');
+            DB::connection('mysql')->table('system_values')->where("parent_id", $forSystemValue['parent_id'])->delete();
         }
-
-        foreach ($systemValueList as $forsSystemValue){
-            $siteSysId = SystemValue::query()->where("key", $forsSystemValue['key'])->value('id');
+        foreach ($systemValueList as $forsSystemValue) {
+            $siteSysId = DB::connection('mysql')->table('system_values')->where("key", $forsSystemValue['key'])->value('id');
             unset($forsSystemValue['id']);
             //$forsSystemValue['updated_at'] = time();
             if ($siteSysId > 0) {
                 // 存在则更新
-                SystemValue::query()->where("id", $siteSysId)->update($forsSystemValue);
+                DB::connection('mysql')->table('system_values')->where("id", $siteSysId)->update($forsSystemValue);
             } else {
-                SystemValue::insert($forsSystemValue);
+                DB::connection('mysql')->table('system_values')->insert($forsSystemValue);
             }
         }
-
     }
 
     public function syncSiteIpWhite($siteInfo) {
-        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-//        if (!$siteInfo['is_local']) {
-//            return true;
-//        }
-        // 设置当前租户
-        tenancy()->initialize($siteInfo['name']);
         //同步 price_editions
         $BanWhiteList = AdminBanWhiteList::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         $existIdList = [];
+        $database_info = $this->getDbConfigBySite($siteInfo);
+        $this->useRemoteDbBySite($database_info);
         foreach ($BanWhiteList as $forCoutry) {
             $for_id = $forCoutry['id'];
             $existIdList[] = $for_id;
-            $isExist = BanWhiteList::query()->where("id", $for_id)->count();
+            $isExist = DB::connection('mysql')->table('ban_white_list')->where("id", $for_id)->count();
             $forCoutry['updated_at'] = time();
             if ($isExist) {
                 // 存在则更新
-                BanWhiteList::query()->where("id", $for_id)->update($forCoutry);
+                DB::connection('mysql')->table('ban_white_list')->where("id", $for_id)->update($forCoutry);
             } else {
-                BanWhiteList::insert($forCoutry);
+                DB::connection('mysql')->table('ban_white_list')->insert($forCoutry);
             }
         }
-        BanWhiteList::query()->whereNotIn("id", $existIdList)->delete();
+        DB::connection('mysql')->table('ban_white_list')->whereNotIn("id", $existIdList)->delete();
     }
 
     public function syncSitePublisher($siteInfo) {
-        // TODO: cuizhixiong 2024/9/20 后续需考虑国外站点的同步
-//        if (!$siteInfo['is_local']) {
-//            return true;
-//        }
-        // 设置当前租户
-        tenancy()->initialize($siteInfo['name']);
         $publisher_ids = $siteInfo['publisher_id'];
-        $publisher_id_list = explode(',' , $publisher_ids);
+        $publisher_id_list = explode(',', $publisher_ids);
         //同步 Publisher
         $publisherList = Publisher::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
         $existIdList = [];
+        $database_info = $this->getDbConfigBySite($siteInfo);
+        $this->useRemoteDbBySite($database_info);
         foreach ($publisherList as $forCoutry) {
             $for_id = $forCoutry['id'];
-            if(!in_array($for_id , $publisher_id_list)){
+            if (!in_array($for_id, $publisher_id_list)) {
                 continue;
             }
             $existIdList[] = $for_id;
-            $isExist = SitePublisher::query()->where("id", $for_id)->count();
+            $isExist = DB::connection('mysql')->table('publishers')->where("id", $for_id)->count();
             $forCoutry['updated_at'] = time();
             if ($isExist) {
                 // 存在则更新
-                SitePublisher::query()->where("id", $for_id)->update($forCoutry);
+                DB::connection('mysql')->table('publishers')->where("id", $for_id)->update($forCoutry);
             } else {
-                SitePublisher::insert($forCoutry);
+                DB::connection('mysql')->table('publishers')->insert($forCoutry);
             }
         }
-        SitePublisher::query()->whereNotIn("id", $existIdList)->delete();
+        DB::connection('mysql')->table('publishers')->whereNotIn("id", $existIdList)->delete();
     }
 
+    public function getDbConfigBySite($site) {
+        $database_id = $site['database_id'];
+        $database_info = Database::find($database_id);
+        if (empty($database_info)) {
+            return [];
+        } else {
+            return $database_info->toArray();
+        }
+    }
+
+    private function useLocalDb() {
+        // 切换到新的数据库配置
+        $mysql = "mysql";
+        Config::set("database.connections.{$mysql}", $this->sourceDbConfig);
+        // 断开当前连接
+        DB::purge($mysql);
+        // 重新连接
+        DB::reconnect($mysql);
+
+        return $mysql;
+    }
+
+
+    private function useRemoteDbBySite($database_info) {
+        // 定义新的数据库配置
+        $newDatabaseConfig = [
+            'driver'    => 'mysql',
+            'host'      => $database_info['public_host'],
+            'database'  => $database_info['name'],
+            'username'  => $database_info['username'],
+            //'password'  => $database_info['password'],
+            'password'  => '9d672e87bf75c4e5',
+            'port'      => '3306',
+            'charset'   => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix'    => '',
+            'strict'    => true,
+            'engine'    => null,
+        ];
+        // 切换到新的数据库配置
+        $mysql = "mysql";
+        Config::set("database.connections.{$mysql}", $newDatabaseConfig);
+        // 断开当前连接
+        DB::purge($mysql);
+        // 重新连接
+        DB::reconnect($mysql);
+
+        return $mysql;
+    }
 }

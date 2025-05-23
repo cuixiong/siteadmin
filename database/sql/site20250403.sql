@@ -7,6 +7,10 @@ ADD COLUMN `language` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT
 ADD COLUMN `img2` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '' COMMENT '图片2' AFTER `language`,
 ADD COLUMN `phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '' COMMENT '电话' AFTER `img2`;
 
+ALTER TABLE `team_members`
+    ADD COLUMN `region_name` varchar(255) NULL COMMENT '区域昵称' AFTER `region_id`;
+
+
 
 
 ALTER TABLE `offices`

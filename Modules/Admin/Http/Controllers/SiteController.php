@@ -575,6 +575,10 @@ class SiteController extends CrudController {
                 ['code' => 'Switch_State', 'status' => 1],
                 ['sort' => 'ASC']
             );
+            $data['select_list'] = [
+                ['value' => 0, 'label' => '否'],
+                ['value' => 1, 'label' => '是'],
+            ];
             //是否创建数据库
             // $data['is_create_database'] = (new DictionaryValue())->GetListLabel($field, false, '', ['code'=>'Create Database','status' => 1], ['sort' => 'ASC']);
             ReturnJson(true, trans('lang.request_success'), $data);

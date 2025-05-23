@@ -241,6 +241,12 @@ class LoginController extends Controller {
             $token = base64_decode($request->token);
             list($email, $id) = explode('&', $token);
             $res = User::where('email', $email)->where('id', $id)->update(['status' => 1]);
+            if($res){
+                //发送邮件
+                (new SendEmailController)->activate($id);
+            }
+
+
             $res ? ReturnJson(true, trans('lang.request_success')) : ReturnJson(false, trans('lang.request_error'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
