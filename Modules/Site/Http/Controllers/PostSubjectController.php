@@ -1674,6 +1674,7 @@ class PostSubjectController extends CrudController
         }
 
         // /www/wwwroot/yadmin/admin/public/site/gircn/exportDir
+        $uploadFileName = $_POST['fileName'];
         $basePath = public_path();
         $dir = $basePath . '/site/' . $request->header('Site') . '/post-subject/';
         $dirtemp = $basePath . '/site/' . $request->header('Site') . '/post-subject/temp/'; // 保存分片文件的目录
@@ -2273,6 +2274,7 @@ class PostSubjectController extends CrudController
         }
 
         $logData = [];
+        $logData['file'] = $uploadFileName;
         $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD;
         // $logData['post_subject_id'] = ;
         $logData['success_count'] = $subjectSuccess;

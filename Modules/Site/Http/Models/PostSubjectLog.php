@@ -11,6 +11,7 @@ class PostSubjectLog extends Base
 
     // 设置允许入库字段,数组形式
     protected $fillable = [
+        'file', 
         'type', 
         'details', 
         'error_details', 
