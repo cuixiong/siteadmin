@@ -1972,6 +1972,8 @@ class PostSubjectController extends CrudController
                                         }
                                     }
                                 } else {
+                                    $subjectFail++;
+                                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】- 发帖平台数据为空';
                                     continue;
                                 }
                                 if (!isset($postPlatformId) || empty($postPlatformId)) {
@@ -2054,6 +2056,8 @@ class PostSubjectController extends CrudController
                                         }
                                     }
                                 } else {
+                                    $subjectFail++;
+                                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】- 发帖平台数据为空';
                                     continue;
                                 }
                                 if (!isset($postPlatformId) || empty($postPlatformId)) {
@@ -2150,6 +2154,8 @@ class PostSubjectController extends CrudController
                                         }
                                     }
                                 } else {
+                                    $subjectFail++;
+                                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】- 发帖平台数据为空';
                                     continue;
                                 }
                                 if (!isset($postPlatformId) || empty($postPlatformId)) {
@@ -2237,6 +2243,8 @@ class PostSubjectController extends CrudController
                                     }
                                 }
                             } else {
+                                $subjectFail++;
+                                $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($postLinkValue['rowKey'] ?? '??') . '行】- 发帖平台数据为空';
                                 continue;
                             }
                             if (!isset($postPlatformId) || empty($postPlatformId)) {
