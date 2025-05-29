@@ -2212,7 +2212,8 @@ class PostSubjectController extends CrudController
                         $recordInsert['change_status'] = 0;
                         $recordInsert['has_cagr'] = 0;
                         $postSubjectData = PostSubject::create($recordInsert);
-
+                        
+                        $isInsert = false;
 
                         //处理链接
                         $existLinkBySubject = []; //单个课题中链接重复
