@@ -101,8 +101,8 @@ class ProductsController extends CrudController {
             if (!empty($request->order)) {
                 $model = $model->orderBy($request->order, $sort);
             } else {
-                //$model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
-                $model = $model->orderBy('id', 'DESC');
+                $model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+                //$model = $model->orderBy('id', 'DESC');
             }
             $record = $model->get();
             $data = [
@@ -1508,6 +1508,7 @@ class ProductsController extends CrudController {
                 $item['definition'] = $descriptionData['definition'] ?? '';
                 $item['overview'] = $descriptionData['overview'] ?? '';
                 $item['country_id'] = $regionList[$item['country_id']] ?? '';
+                $item['reports_url'] = getReportUrl($item , $params['site']);
                 $row = [];
                 foreach ($field as $value) {
                     if (empty($value) || !isset($item[$value])) {

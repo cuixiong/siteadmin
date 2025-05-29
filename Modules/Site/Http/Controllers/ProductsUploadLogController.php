@@ -586,19 +586,19 @@ class ProductsUploadLogController extends CrudController
                         //旧纪录年份
                         $oldPublishedDate = $product['published_date'];
                         $oldYear = Products::publishedDateFormatYear($oldPublishedDate);
-                        
+
                         $product_model = $product_model->where("id", $product['id'])->first();
                         // $originalAttributes = $product_model->getAttributes();
                         // 属性是否有变动
                         if (
                             $product_model
                             && (
-                                $product_model->classification != $row['classification']
-                                || $product_model->application != $row['application']
-                                || $product_model->cagr != $row['cagr']
-                                || $product_model->last_scale != $row['last_scale']
-                                || $product_model->current_scale != $row['current_scale']
-                                || $product_model->future_scale != $row['future_scale']
+                                $product_model->classification != $item['classification']
+                                || $product_model->application != $item['application']
+                                || $product_model->cagr != $item['cagr']
+                                || $product_model->last_scale != $item['last_scale']
+                                || $product_model->current_scale != $item['current_scale']
+                                || $product_model->future_scale != $item['future_scale']
                             )
                         ) {
                             $productChange = true;

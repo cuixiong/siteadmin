@@ -82,11 +82,16 @@ function getSiteId() {
     return Site::query()->where('name', $siteName)->value("id");
 }
 
-function getReportUrl($product) {
-    $domain = getSiteDomain();
+function getReportUrl($product , $site = '') {
+    if(empty($site )){
+        $domain = getSiteDomain();
+    }else{
+        $domain = Site::query()->where('name', $site)->value("domain");
+    }
     if (empty($domain)) {
         return '';
     }
+
     $productId = $product['id'];
     if (!empty($product['url'])) {
         $url = $domain."/reports/{$productId}/{$product['url']}";

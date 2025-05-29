@@ -28,6 +28,8 @@ class Site extends Base
         'api_path',
         'frontend_path',
         'sort',
+        'is_local',
+        'third_domain',
         // 'db_host',
         // 'db_port',
         // 'db_database',
