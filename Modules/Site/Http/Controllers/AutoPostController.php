@@ -433,7 +433,7 @@ class AutoPostController extends CrudController
                     $newsModel = new News();
                     $newsModel->title = $articleTitle;
                     $newsModel->category_id = $product['category_id'];
-                    $newsModel->type = 1;
+                    $newsModel->type = $autoPostConf['news_category_id'];
                     $newsModel->keywords = $articleKeyword;
                     $newsModel->tags = $articleKeyword;
                     $newsModel->url = $product['url'];
