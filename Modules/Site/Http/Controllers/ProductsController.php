@@ -213,8 +213,13 @@ class ProductsController extends CrudController {
                 return $this->SearchForMysql($request);
             }
         } catch (\Exception $e) {
-            // return $this->SearchForMysql($request);
-            ReturnJson(false, $e->getMessage());
+            if($e instanceof  \Foolz\SphinxQL\Exception\ConnectionException){
+                ReturnJson(false, 'sphinx重启中');
+            }else{
+                // return $this->SearchForMysql($request);
+                ReturnJson(false, $e->getMessage());
+            }
+
         }
     }
 
@@ -1508,7 +1513,7 @@ class ProductsController extends CrudController {
                 $item['definition'] = $descriptionData['definition'] ?? '';
                 $item['overview'] = $descriptionData['overview'] ?? '';
                 $item['country_id'] = $regionList[$item['country_id']] ?? '';
-                $item['reports_url'] = getReportUrl($item , $params['site']);
+                $item['reports_url'] = getReportUrl($item, $params['site']);
                 $row = [];
                 foreach ($field as $value) {
                     if (empty($value) || !isset($item[$value])) {
