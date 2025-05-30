@@ -73,20 +73,21 @@ class UpdateProductsByOtherSite extends Command
         }
 
         tenancy()->initialize($originSiteName);
-        
+
         $autoSyncDataVal = SystemValue::query()
             ->where("key", self::$autoSyncDataKey)
             ->value('hidden');
         //如果没有开启自动同步开关, 那么直接退出
         if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
-            echo '未启动网站设置的开关'."\n";
+            echo '未启动网站设置的开关' . "\n";
             exit;
         }
-        
+
         $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->value('value');
         $productDataUrl = SystemValue::where('key', 'sync_get_product_url')->value('value');
         $keywordsUrl = SystemValue::where('key', 'sync_keywords_url')->value('value');
         $queryNum = SystemValue::where('key', 'sync_query_num')->value('value');
+        $startProductId = SystemValue::where('key', 'sync_start_product_id')->value('value');
         // $keywordsField = SystemValue::where('key', 'sync_keywords_field')->value('value');
 
         // dd($productDataUrl);
@@ -112,15 +113,20 @@ class UpdateProductsByOtherSite extends Command
         $reqData = [
             'startTimestamp'    => $startTimestamp,
             'num'    => $queryNum,
+            'startProductId' => $startProductId,
         ];
         $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/x-www-form-urlencoded',
-        ])->post($productDataUrl, $reqData);
+        $response = Http::post($productDataUrl, $reqData);
+        // $response = Http::withHeaders([
+        //     'Accept' => 'application/json',
+        //     'Content-Type' => 'application/x-www-form-urlencoded',
+        // ])->post($productDataUrl, $reqData);
         $resp = $response->json();
         if (empty($resp) || $resp['code'] != 200) {
             echo '请求数据失败' . "\n" . json_encode($resp) . "\n";
+            exit;
+        } elseif (empty($resp) || $resp['code'] == 500) {
+            echo $resp['msg'] . "\n";
             exit;
         }
 
@@ -130,7 +136,8 @@ class UpdateProductsByOtherSite extends Command
             exit;
         }
         $count = count($productData);
-        $lastUpdateTime = end($productData)['updated_at']; // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
+        $lastUpdateTime = strtotime(end($productData)['updated_at']); // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
+        $lastProductId = end($productData)['id'];
 
         // 需要去另一个网站上查询缺失的日文关键词
 
@@ -275,7 +282,7 @@ class UpdateProductsByOtherSite extends Command
                 'price' => $item['price'],
                 'keywords' => $item['keywords_jp'],
                 'url' => $item['url'],
-                'published_date' => $item['published_date'],
+                'published_date' => strtotime($item['published_date']),
                 'status' => 1,
                 'author' => $item['author'],
                 'pages' => $item['pages'],
@@ -425,7 +432,8 @@ class UpdateProductsByOtherSite extends Command
 
 
         // 修改起始时间
-        $startTimestamp = SystemValue::where('key', 'sync_start_timestamp')->update(['value' => $lastUpdateTime]);
+        SystemValue::where('key', 'sync_start_timestamp')->update(['value' => $lastUpdateTime]);
+        SystemValue::where('key', 'sync_start_product_id')->update(['value' => $lastProductId]);
 
 
         // 记录日志
