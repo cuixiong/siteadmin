@@ -63,6 +63,7 @@ class NotifySite implements ShouldQueue {
         echo "开始".PHP_EOL;
         try {
             $data = json_decode($this->data, true);
+            $this->useLocalDb();
             $siteInfo = Site::query()->where('id', $data['siteId'])->first();
             if (empty($siteInfo) || $siteInfo->status != 1) {
                 \Log::error('返回结果数据:同步错误  文件路径:'.__CLASS__.'  行号:'.__LINE__);
@@ -322,8 +323,7 @@ class NotifySite implements ShouldQueue {
             'host'      => $database_info['public_host'],
             'database'  => $database_info['name'],
             'username'  => $database_info['username'],
-            //'password'  => $database_info['password'],
-            'password'  => '9d672e87bf75c4e5',
+            'password'  => $database_info['password'],
             'port'      => '3306',
             'charset'   => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
