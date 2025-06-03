@@ -33,7 +33,7 @@ class AutoPostConfigController extends CrudController {
             $data['type'] = [];
             $typeList = AutoPostConfig::getSiteTypeList();
             foreach ($typeList as $key => $value) {
-                $data['type'][] = ['label' => $key, 'value' => $value];
+                $data['type'][] = ['label' => $value, 'value' => $key];
             }
             // 站内新闻类型
             $data['news_category'] = (new NewsCategory())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1]);
