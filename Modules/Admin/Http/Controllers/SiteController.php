@@ -857,20 +857,20 @@ class SiteController extends CrudController {
         }
         $data = explode(',', $decryptData);
         if (count($data) != 3) {
-            ReturnJson(false, trans('lang.request_fail'));
+            ReturnJson(false, trans('lang.request_fail')."1");
         } else {
             $user_id = $data[0];
             $site_id = $data[1];
             $time = $data[2];
             if ($site_id != $site) {
-                ReturnJson(false, trans('lang.request_fail'));
+                ReturnJson(false, trans('lang.request_fail')."2");
             } else {
                 if (time() - $time > 50) {
-                    ReturnJson(false, trans('lang.request_fail'));
+                    ReturnJson(false, trans('lang.request_fail')."3");
                 }
                 $user = User::find($user_id);
                 if (empty($user)) {
-                    ReturnJson(false, trans('lang.request_fail'));
+                    ReturnJson(false, trans('lang.request_fail')."4");
                 }
                 $respData = $this->getSiteToken($user);
                 ReturnJson(true, trans('lang.request_success'), $respData);
