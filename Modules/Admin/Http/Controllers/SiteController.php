@@ -865,7 +865,7 @@ class SiteController extends CrudController {
             if ($site_id != $site) {
                 ReturnJson(false, trans('lang.request_fail')."2");
             } else {
-                if (time() - $time > 50) {
+                if (time() - $time > 120) {
                     ReturnJson(false, trans('lang.request_fail')."3");
                 }
                 $user = User::find($user_id);
