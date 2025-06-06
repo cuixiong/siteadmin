@@ -353,6 +353,8 @@ Route::middleware([
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\MenuController::class, 'batchUpdateParam'])->name('导航菜单:批量修改参数');
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\MenuController::class, 'batchUpdateOption'])->name('导航菜单:批量修改参数子项');
         Route::post('batch-update', [Modules\Site\Http\Controllers\MenuController::class, 'batchUpdate'])->name('导航菜单:批量修改');
+        Route::post('menu-change-sort', [Modules\Site\Http\Controllers\MenuController::class, 'menuChangeSort'])->name('导航菜单:修改排序');
+        Route::post('reset-sort', [Modules\Site\Http\Controllers\MenuController::class, 'resetSort'])->name('导航菜单:调整排序');
     });
 
     // System控制器
@@ -886,6 +888,15 @@ Route::middleware([
         Route::post('change-first', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'changeFirst'])->name('货币配置:状态修改');
         Route::post('change-show-home', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'changeShowHome'])->name('货币配置:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'searchDroplist'])->name('货币配置:搜索下拉列表数据');
+    });
+
+    // 站点端国家
+    Route::prefix('country')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\CountryController::class, 'list'])->name('国家管理:地区列表');
+        Route::get('option', [Modules\Site\Http\Controllers\CountryController::class, 'option'])->name('国家管理:下拉列表数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\CountryController::class, 'searchDroplist'])->name('国家管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
     });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');

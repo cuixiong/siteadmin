@@ -1,13 +1,15 @@
 <?php
 
-namespace Modules\Admin\Http\Controllers;
+namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\Country;
 
 class CountryController extends CrudController
 {
+
+
     /**
      * 获取搜索下拉列表
      * @param $request 请求信息
@@ -43,6 +45,7 @@ class CountryController extends CrudController
             if (!$record) {
                 ReturnJson(FALSE, trans('lang.add_error'));
             }
+            // 同步到分站点
             ReturnJson(TRUE, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());

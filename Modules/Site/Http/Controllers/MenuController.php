@@ -1,5 +1,6 @@
 <?php
 namespace Modules\Site\Http\Controllers;
+use Modules\Admin\Http\Models\Rule;
 use Modules\Site\Http\Controllers\CrudController;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -93,6 +94,7 @@ class MenuController extends CrudController{
         }
         $childList = Menu::query()->where("parent_id", $menuInfo['id'])
                                      //->where("status", 1)
+                                     ->orderBy('sort' , 'asc')
                                      ->get()->toArray();
         foreach ($childList as $value) {
             $forChildList = [];
@@ -192,5 +194,40 @@ class MenuController extends CrudController{
         }
     }
 
+
+    public function menuChangeSort(Request $request) {
+        try {
+            $input = $request->input();
+            $parent_id = $input['parent_id'] ?? 0;
+            $current_menu_id = $input['current_menu_id'] ?? 0;
+            $sort_child_ids = $input['sort_child_ids'] ?? '';
+            if (empty($current_menu_id) || empty($sort_child_ids)) {
+                ReturnJson(false, trans('lang.param_error'));
+            }
+            $sort_child_id_list = explode(',', $sort_child_ids);
+            $db_child_list = Menu::query()->where("parent_id", $parent_id)->pluck("id")->toArray();
+            $db_child_list[] = $current_menu_id;
+            //安全问题, 必须校验一波
+            $diff_res = array_diff($sort_child_id_list, $db_child_list);
+            if (!empty($diff_res)) {
+                ReturnJson(false, trans('lang.param_error')."2");
+            }
+            //修改父级
+            Menu::query()->where("id", $current_menu_id)->update(['parent_id' => $parent_id]);
+            //修改排序
+            $this->changeSortByids($sort_child_id_list);
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function changeSortByids($ids) {
+        $begin_sort = 1;
+        foreach ($ids as $forId) {
+            Menu::query()->where("id", $forId)->update(['sort' => $begin_sort]);
+            $begin_sort += 1;
+        }
+    }
 
 }

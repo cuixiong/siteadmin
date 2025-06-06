@@ -1,32 +1,33 @@
 <?php
 
 namespace Modules\Admin\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\Rule;
 
-class RuleController extends CrudController
-{
+class RuleController extends CrudController {
     /**
      * 查询列表页
+     *
      * @param use Illuminate\Http\Request;
      */
     public function list(Request $request) {
         try {
             $search = $request->input('search');
-            if(isset($request->category) && !empty($request->category)){
-                if(!is_array($search)){
-                    $search = json_decode($search,true);
+            if (isset($request->category) && !empty($request->category)) {
+                if (!is_array($search)) {
+                    $search = json_decode($search, true);
                     $search['category'] = $request->category;
                 }
             }
-            $list = (new Rule)->GetList('*',false,'parent_id',$search);
-            $list = array_column($list,null,'id');
+            $list = (new Rule)->GetList('*', false, 'parent_id', $search);
+            $list = array_column($list, null, 'id');
             $childNode = array(); // 储存已递归的ID
             foreach ($list as &$map) {
-                $children = $this->tree($list,'parent_id',$map['id'],$childNode);
-                if($children){
+                $children = $this->tree($list, 'parent_id', $map['id'], $childNode);
+                if ($children) {
                     $map['children'] = $children;
                 }
             }
@@ -36,64 +37,67 @@ class RuleController extends CrudController
                 }
             }
             $list = array_values($list);
-            ReturnJson(TRUE,trans('lang.request_success'),$list);
+            ReturnJson(true, trans('lang.request_success'), $list);
         } catch (\Exception $e) {
-            ReturnJson(FALSE,$e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
     /**
      * 递归获取树状列表数据
+     *
      * @param $list
-     * @param $key 需要递归的键值，这个键值的值必须为整数型
+     * @param $key      需要递归的键值，这个键值的值必须为整数型
      * @param $parentId 父级默认值
+     *
      * @return array $res
      */
-    public function tree($list,$key,$parentId = 0,&$childNode) {
-
+    public function tree($list, $key, $parentId = 0, &$childNode) {
         $tree = [];
         foreach ($list as $item) {
             if ($item[$key] == $parentId) {
                 $childNode[] = $item['id'];// 储存已递归的ID
-                $children = $this->tree($list,$key,$item['id'],$childNode);
+                $children = $this->tree($list, $key, $item['id'], $childNode);
                 if (!empty($children)) {
                     $item['children'] = $children;
                 }
                 $tree[] = $item;
             }
-
         }
+
         return $tree;
     }
 
     /**
      * 返回某一模块路由
+     *
      * @param string $module
-     * @param array $result
+     * @param array  $result
      */
-    private function RoutesList($module = '')
-    {
+    private function RoutesList($module = '') {
         $routes = Route::getRoutes();
         $result = [];
         foreach ($routes as $route) {
             $prefix = $route->getPrefix();
-            $group = explode('/',$prefix);
+            $group = explode('/', $prefix);
             $group = isset($group[2]) ? $group[2] : null;
             $name = $route->getName();
-            if(!empty($name)){
+            if (!empty($name)) {
                 $uri = $route->uri;
                 $action = $route->getAction();
                 $controller = $action['controller'];
-                if(!empty($module)){
-                    if(strpos($controller,$module) !== false){
-                        if($group){
-                            array_push($result,['name' => $name,'route' => $uri,'value' => $controller,'group' => $group]);
+                if (!empty($module)) {
+                    if (strpos($controller, $module) !== false) {
+                        if ($group) {
+                            array_push(
+                                $result, ['name' => $name, 'route' => $uri, 'value' => $controller, 'group' => $group]
+                            );
                         }
                     }
                 }
             }
         }
-        $groups = array_column($result,'group');
+        $groups = array_column($result, 'group');
         $groups = array_unique($groups);
         $routeList = [];
         foreach ($groups as $key => $group) {
@@ -104,15 +108,15 @@ class RuleController extends CrudController
             $data = [];
             $name = '';
             for ($i = 0; $i < count($group_data); $i++) {
-                if(empty($name)){
-                    if(isset($group_data[$i]['name'])){
+                if (empty($name)) {
+                    if (isset($group_data[$i]['name'])) {
                         $name = $group_data[$i]['name'];
                     }
                 }
             }
-            if(!empty($name)){
-                $name = explode(':',$name);
-                if(isset($name[0]) && !empty($name[0])){
+            if (!empty($name)) {
+                $name = explode(':', $name);
+                if (isset($name[0]) && !empty($name[0])) {
                     $name = $name[0];
                 }
             }
@@ -121,122 +125,124 @@ class RuleController extends CrudController
             $data['value'] = $group;
             $routeList[] = $data;
         }
+
         return $routeList;
     }
+
     /**
      * 返回Admin模块路由
+     *
      * @param use Illuminate\Http\Request $request
      */
-    public function GetAdminRoute(Request $request)
-    {
+    public function GetAdminRoute(Request $request) {
         $category = $request->category;
-        if($category == "1"){
+        if ($category == "1") {
             $module = 'Admin';
-        } else if($category == "2") {
+        } else if ($category == "2") {
             $module = 'Site';
         } else {
             $module = '';
         }
         $routes = $this->RoutesList($module);
-        ReturnJson(TRUE,trans('lang.request_success'),$routes);
+        ReturnJson(true, trans('lang.request_success'), $routes);
     }
 
     /**
      * 返回Admin模块权限value-label格式行数据
      */
-    public function option(Request $request)
-    {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 1,'status' => 1]);
-        ReturnJson(TRUE,trans('lang.request_success'),$list);
+    public function option(Request $request) {
+        $list = (new Rule)->GetListLabel(['id', 'id as value', 'name as label', 'parent_id'], true, 'parent_id',
+                                         ['category' => 1, 'status' => 1], ['sort' => 'ASC', 'created_at' => 'DESC']);
+        ReturnJson(true, trans('lang.request_success'), $list);
     }
 
     /**
      * 返回Site模块的权限value-label格式行数据
      */
-    public function optionSite(Request $request)
-    {
-        $list = (new Rule)->GetListLabel(['id','id as value','name as label','parent_id'],true,'parent_id',['category' => 2,'status' => 1] , ['sort' => 'ASC' , 'created_at' => 'DESC']);
-        ReturnJson(TRUE,trans('lang.request_success'),$list);
+    public function optionSite(Request $request) {
+        $list = (new Rule)->GetListLabel(['id', 'id as value', 'name as label', 'parent_id'], true, 'parent_id',
+                                         ['category' => 2, 'status' => 1], ['sort' => 'ASC', 'created_at' => 'DESC']);
+        ReturnJson(true, trans('lang.request_success'), $list);
     }
 
     /**
      * get dict options
+     *
      * @return Array
      */
-    public function options(Request $request)
-    {
+    public function options(Request $request) {
         $options = [];
-        $codes = ['Switch_State','Route_Classification','Menu_Type'];
+        $codes = ['Switch_State', 'Route_Classification', 'Menu_Type'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
-        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
-        if(!empty($data)){
-            foreach ($data as $map){
+        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
+                               ->orderBy('sort', 'asc')->get()->toArray();
+        if (!empty($data)) {
+            foreach ($data as $map) {
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
             }
         }
-        ReturnJson(TRUE,'', $options);
+        ReturnJson(true, '', $options);
     }
 
     /**
      * get dict options
+     *
      * @return Array
      */
-    public function optionAddRule(Request $request)
-    {
+    public function optionAddRule(Request $request) {
         $options = [];
-        $codes = ['Menu_Type','Route_Classification','Switch_State','V_Show'];
+        $codes = ['Menu_Type', 'Route_Classification', 'Switch_State', 'V_Show'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
-        $data = DictionaryValue::whereIn('code',$codes)->where('status',1)->select('code','value',$NameField)->orderBy('sort','asc')->get()->toArray();
-        if(!empty($data)){
-            foreach ($data as $map){
-                if($map['code'] == 'V_Show' || $map['code'] == 'Switch_State' || $map['code'] == 'Route_Classification'){
+        $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
+                               ->orderBy('sort', 'asc')->get()->toArray();
+        if (!empty($data)) {
+            foreach ($data as $map) {
+                if ($map['code'] == 'V_Show' || $map['code'] == 'Switch_State'
+                    || $map['code'] == 'Route_Classification') {
                     $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
                 } else {
                     $options[$map['code']][] = ['label' => $map['label'], 'value' => $map['value']];
                 }
             }
         }
-        ReturnJson(TRUE,'', $options);
+        ReturnJson(true, '', $options);
     }
 
-    public function changeStatus(Request $request)
-    {
+    public function changeStatus(Request $request) {
         try {
-            if(empty($request->id)){
-                ReturnJson(FALSE,'id is empty');
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             $record->status = $request->status;
-            if(!$record->save()){
-                ReturnJson(FALSE,trans('lang.update_error'));
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
             }
             $childerIds = Rule::TreeGetChildIds($request->id);
-            $this->ModelInstance()->whereIn('id',$childerIds)->update(['status' => $request->status]);
-            ReturnJson(TRUE,trans('lang.update_success'));
+            $this->ModelInstance()->whereIn('id', $childerIds)->update(['status' => $request->status]);
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE,$e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
-    public function update(Request $request)
-    {
+    public function update(Request $request) {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
             if (!$record->update($input)) {
-                ReturnJson(FALSE, trans('lang.update_error'));
+                ReturnJson(false, trans('lang.update_error'));
             }
             $childerIds = Rule::TreeGetChildIds($request->id);
-            $this->ModelInstance()->whereIn('id',$childerIds)->update(['status' => $request->status]);
-            ReturnJson(TRUE, trans('lang.update_success'));
+            $this->ModelInstance()->whereIn('id', $childerIds)->update(['status' => $request->status]);
+            ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
     }
 
-    public function destroy(Request $request)
-    {
+    public function destroy(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
@@ -245,14 +251,72 @@ class RuleController extends CrudController
             }
             foreach ($ids as $id) {
                 $record = $this->ModelInstance()->find($id);
-                if($record){
-                    $this->ModelInstance()->where('parent_id',$id)->delete();
+                if ($record) {
+                    $this->ModelInstance()->where('parent_id', $id)->delete();
                     $record->delete();
                 }
             }
-            ReturnJson(TRUE, trans('lang.delete_success'));
+            ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
-            ReturnJson(FALSE, $e->getMessage());
+            ReturnJson(false, $e->getMessage());
         }
+    }
+
+    public function ruleChangeSort(Request $request) {
+        try {
+            $input = $request->input();
+            $parent_id = $input['parent_id'] ?? 0;
+            $current_rule_id = $input['current_rule_id'] ?? 0;
+            $sort_child_ids = $input['sort_child_ids'] ?? '';
+            if (empty($parent_id) || empty($current_rule_id) || empty($sort_child_ids)) {
+                ReturnJson(false, trans('lang.param_error'));
+            }
+            $sort_child_id_list = explode(',', $sort_child_ids);
+            $db_child_list = Rule::query()->where("parent_id", $parent_id)->pluck("id")->toArray();
+            $db_child_list[] = $current_rule_id;
+            //安全问题, 必须校验一波
+            $diff_res = array_diff($sort_child_id_list, $db_child_list);
+            if (!empty($diff_res)) {
+                ReturnJson(false, trans('lang.param_error')."2");
+            }
+            //修改父级
+            Rule::query()->where("id", $current_rule_id)->update(['parent_id' => $parent_id]);
+            //修改排序
+            $this->changeSortByids($sort_child_id_list);
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function changeSortByids($ids) {
+        $begin_sort = 1;
+        foreach ($ids as $forId) {
+            Rule::query()->where("id", $forId)->update(['sort' => $begin_sort]);
+            $begin_sort += 1;
+        }
+    }
+
+    /**
+     * 调整排序
+     *
+     * @param Request $request
+     */
+    public function resetSort(Request $request) {
+        $ids = $request->ids;
+        if (!is_array($ids)) {
+            $ids = explode(",", $ids);
+        }
+        $begin_sort_val = 1;
+        foreach ($ids as $key => $id) {
+            $record = $this->ModelInstance()->find($id);
+            if ($record) {
+                $begin_sort_val += 1;
+                $record->update([
+                                    'sort' => $begin_sort_val,
+                                ]);
+            }
+        }
+        ReturnJson(true, trans('lang.request_success'));
     }
 }
