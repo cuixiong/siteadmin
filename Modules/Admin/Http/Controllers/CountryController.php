@@ -2,6 +2,7 @@
 
 namespace Modules\Admin\Http\Controllers;
 
+use App\Const\NotityTypeConst;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
@@ -137,5 +138,13 @@ class CountryController extends CrudController
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
+
+    public function syncSiteDb() {
+        syncSiteDbByType(NotityTypeConst::SYNC_SITE_COUNTRY);
+        ReturnJson(true, trans('lang.request_success'));
+    }
+
+
 
 }

@@ -413,6 +413,7 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\CountryController::class, 'store'])->name('国家管理:新增地区');
         Route::post('update', [Modules\Admin\Http\Controllers\CountryController::class, 'update'])->name('国家管理:修改地区');
         Route::post('destroy', [Modules\Admin\Http\Controllers\CountryController::class, 'destroy'])->name('国家管理:删除地区');
+        Route::post('sync-site-db', [Modules\Admin\Http\Controllers\CountryController::class, 'syncSiteDb'])->name('国家管理:同步到站点');
     });
 
     // City 控制器
