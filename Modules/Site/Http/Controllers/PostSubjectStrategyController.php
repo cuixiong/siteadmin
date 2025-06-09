@@ -6,12 +6,93 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Controllers\CrudController;
+use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\PostSubjectStrategy;
 use Modules\Site\Http\Models\PostSubjectStrategyUser;
 use Modules\Site\Http\Models\ProductsCategory;
 
 class PostSubjectStrategyController extends CrudController
 {
+    /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                //$model = $model->orderBy('sort', $sort)->orderBy('id', 'DESC');
+                $model = $model->orderBy('id', 'DESC');
+            }
+            $record = $model->get()->toArray();
+            if ($record) {
+                $categoryData = ProductsCategory::query()->pluck("name", "id")->toArray();
+                foreach ($record as $key => $item) {
+                    $itemCategoryData = explode(',', $item['category_ids']);
+                    $record[$key]['category_name'] = [];
+                    foreach ($itemCategoryData as $itemCategoryId) {
+                        if (isset($categoryData[$itemCategoryId])) {
+                            $record[$key]['category_name'][] = $categoryData[$itemCategoryId] ?? [];
+                        }
+                    }
+
+                    $record[$key]['strategy'] = [];
+                    $userData = PostSubjectStrategyUser::query()->select(['user_id', 'num'])
+                        ->where(['strategy_id' => $item['id']])
+                        ->orderBy('sort', 'asc')
+                        ->get()?->toArray();
+                    $userCount = null;
+                    $postMember = array_column((new TemplateController())->getSitePostUser(), 'label', 'value');
+                    foreach ($userData as $userItem) {
+                        $member = $userItem['user_id'];
+                        if (isset($postMember[$userItem['user_id']]) && !empty($postMember[$userItem['user_id']])) {
+                            $member = $postMember[$userItem['user_id']];
+                            $userCount = PostSubject::query()->select(['id'])
+                                ->whereIn('product_category_id', $itemCategoryData)
+                                ->where('type', PostSubject::TYPE_POST_SUBJECT)
+                                ->where('propagate_status', 0)
+                                ->where('accepter', $userItem['user_id'])
+                                ->count();
+                        }
+                        $record[$key]['strategy'][] = ['member' => $member, 'strategy_num' => $userItem['num'] ?? '', 'unpropagate_count' => $userCount ?? '',];
+                    }
+                }
+            }
+
+            $data = [
+                'total'       => $total,
+                'list'        => $record,
+                'headerTitle' => [],
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
 
     /**
      * 获取搜索下拉列表
@@ -40,12 +121,39 @@ class PostSubjectStrategyController extends CrudController
                 $data['type'][] = ['label' => $value, 'value' => $key];
             }
 
+            // 领取人/发帖用户
+            $data['accepter_list'] = (new TemplateController())->getSitePostUser();
+            if (count($data['accepter_list']) > 0) {
+                array_unshift($data['accepter_list'], ['label' => '公客', 'value' => '-1']);
+            }
             ReturnJson(TRUE, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(FALSE, $e->getMessage());
         }
     }
+
     
+    /**
+     * AJax单个查询
+     *
+     * @param $request 请求信息
+     */
+    protected function form(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $userData = PostSubjectStrategyUser::query()->select(['id','user_id', 'num'])
+                ->where(['strategy_id' => $record->id])
+                ->orderBy('sort', 'asc')
+                ->get()?->toArray();
+            $record['user_data'] = $userData;
+            ReturnJson(true, trans('lang.request_success'), $record);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
     /**
      * 新增
      *
@@ -126,7 +234,7 @@ class PostSubjectStrategyController extends CrudController
 
         // 开启事务
         DB::beginTransaction();
-        
+
         try {
 
             $record = $this->ModelInstance()::findOrFail($input['id']);
@@ -163,8 +271,9 @@ class PostSubjectStrategyController extends CrudController
             ReturnJson(false, $e->getMessage());
         }
     }
-    
-    protected function destroy(Request $request) {
+
+    protected function destroy(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;

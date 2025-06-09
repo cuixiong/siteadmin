@@ -814,6 +814,7 @@ Route::middleware([
     // PostSubjectStrategy 课题策略
     Route::prefix('post-subject-strategy')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'store'])->name('课题策略:数据新增');
+        Route::get('form/{id}', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'form'])->name('课题策略:数据单查');
         Route::post('update', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'update'])->name('课题策略:数据更新');
         Route::post('destroy', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'destroy'])->name('课题策略:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'list'])->name('课题策略:数据列表');
