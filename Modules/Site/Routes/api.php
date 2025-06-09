@@ -808,6 +808,28 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'searchDroplist'])->name('发帖操作记录:搜索下拉列表数据');
     });
 
+    
+    // PostSubjectStrategy 课题策略
+    Route::prefix('post-subject-strategy')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'store'])->name('课题策略:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'update'])->name('课题策略:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'destroy'])->name('课题策略:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'list'])->name('课题策略:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'changeStatus'])->name('课题策略:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'searchDroplist'])->name('课题策略:搜索下拉列表数据');
+    });
+    
+    // PostSubjectFilter 课题黑名单
+    Route::prefix('post-subject-filter')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'store'])->name('课题黑名单:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'update'])->name('课题黑名单:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'destroy'])->name('课题黑名单:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'list'])->name('课题黑名单:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'changeStatus'])->name('课题黑名单:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'searchDroplist'])->name('课题黑名单:搜索下拉列表数据');
+    });
+
+
     // CaseShare 案例分享
     Route::prefix('case-share')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\CaseShareController::class, 'list'])->name('案例分享:数据列表');

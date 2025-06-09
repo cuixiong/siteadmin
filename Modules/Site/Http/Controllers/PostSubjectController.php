@@ -22,6 +22,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Foolz\SphinxQL\SphinxQL;
 use Modules\Site\Http\Models\PersonalSetting;
+use Modules\Site\Http\Models\PostSubjectFilter;
 use Modules\Site\Services\SphinxService;
 
 class PostSubjectController extends CrudController
@@ -1043,6 +1044,7 @@ class PostSubjectController extends CrudController
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
         $accepter = $input['accepter'] ?? '';
+        $isFilter = $input['is_filter'] ?? 0;
 
         $isOwn = false;
         if (empty($accepter) && isset($request->user->id)) {
@@ -1056,6 +1058,7 @@ class PostSubjectController extends CrudController
             $accepterName = '公客';
         } else {
             $accepterName = User::query()->where('id', $accepter)->value('nickname');
+            $isFilter = PostSubjectFilter::POST_SUBJECT_READ;
         }
 
 
@@ -1088,6 +1091,59 @@ class PostSubjectController extends CrudController
             //查询出涉及的id
             $postSubjectData = $model->select(['id', 'name'])->get()->toArray();
             $idsData = array_column($postSubjectData, 'id');
+
+            if ($isFilter == PostSubjectFilter::POST_SUBJECT_JOIN) {
+                // 加入过滤列表
+                $insertFilterData = [];
+                // $insertFilterColumn = ['user_id', 'keywords', 'created_by', 'created_at', 'updated_by', 'updated_at',];
+                $filterUserId = $request->user->id;
+                $time = time();
+                $tempKeywordsArray = [];
+                foreach ($idsData as $key => $subject_id) {
+                    $tempKeywords = $postSubjectData[$subject_id]['keywords'] ?? '';
+                    if (!empty($tempKeywords)) {
+                        $tempKeywordsArray[] = $tempKeywords;
+                    }
+                }
+
+                $filterKeywordsData = PostSubjectFilter::query()
+                    ->select(['keywords'])
+                    ->where(['user_id', $filterUserId])
+                    ->whereIn('in', 'keywords', $tempKeywordsArray)
+                    ->pluck('keywords')?->toArray() ?? [];
+
+                foreach ($idsData as $key => $subject_id) {
+                    $tempKeywords = $postSubjectData[$subject_id]['keywords'] ?? '';
+                    if (in_array($tempKeywords, $filterKeywordsData)) {
+                        continue;
+                    }
+                    $insertFilterData[] = [
+                        'user_id' => $filterUserId,
+                        'keywords' => $tempKeywords,
+                        'created_by' => $filterUserId,
+                        'created_at' => $time,
+                        'updated_by' => $filterUserId,
+                        'updated_at' => $time,
+                    ];
+                }
+                if (!empty($insertFilterData) && count($insertFilterData)>0) {
+                    PostSubjectFilter::insert($insertFilterData);
+                }
+            } elseif ($isFilter == PostSubjectFilter::POST_SUBJECT_READ) {
+                // 领取的课题id根据过滤列表过滤
+                $filterKeywordsData = PostSubjectFilter::query()->select(['keywords'])->where('user_id' , $accepter)->pluck('keywords')?->toArray() ?? [];
+                $newIdsData = [];
+                foreach ($idsData as $key => $subject_id) {
+                    $tempKeywords = $postSubjectData[$subject_id]['keywords'] ?? '';
+                    if (!empty($tempKeywords) && !in_array($tempKeywords, $filterKeywordsData)) {
+                        // unset();
+                        $newIdsData[] = $subject_id;
+                    }
+                }
+                $idsData = $newIdsData;
+            }
+
+
             // 领取操作
             $updateData = [
                 'accepter' => $accepter != -1 ? $accepter : null,
@@ -1138,9 +1194,11 @@ class PostSubjectController extends CrudController
         }
     }
     // 移入公客
-    public function moveInCommon(Request $request){
+    public function moveInCommon(Request $request)
+    {
         $request->replace([
-            'accepter' => -1
+            'accepter' => -1,
+            'is_filter' => PostSubjectFilter::POST_SUBJECT_JOIN
         ]);
         return $this->accept($request);
     }
@@ -1569,7 +1627,7 @@ class PostSubjectController extends CrudController
                             $sheet->setCellValue([8 + 1, $rowIndex + 1], !empty($subject['keywords_jp']) ? '有' : ''); // 关键词(日)
                             $sheet->setCellValue([9 + 1, $rowIndex + 1], !empty($subject['keywords_kr']) ? '有' : ''); // 关键词(韩)
                             $sheet->setCellValue([10 + 1, $rowIndex + 1], !empty($subject['keywords_de']) ? '有' : ''); // 关键词(德)
-                            
+
                             $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
                         }
                         if (!empty($linkValue)) {
@@ -1609,7 +1667,7 @@ class PostSubjectController extends CrudController
                     $sheet->setCellValue([8 + 1, $rowIndex + 1], $subject['keywords_jp'] ?? ''); // 关键词(日)
                     $sheet->setCellValue([9 + 1, $rowIndex + 1], $subject['keywords_kr'] ?? ''); // 关键词(韩)
                     $sheet->setCellValue([10 + 1, $rowIndex + 1], $subject['keywords_de'] ?? ''); // 关键词(德)
-                    
+
                     $sheet->setCellValue([11 + 1, $rowIndex + 1], $subject['category_name'] ?? ''); // 行业
 
                     $rowIndex++;
@@ -2218,7 +2276,7 @@ class PostSubjectController extends CrudController
                         $recordInsert['change_status'] = 0;
                         $recordInsert['has_cagr'] = 0;
                         $postSubjectData = PostSubject::create($recordInsert);
-                        
+
                         $isInsert = false;
 
                         //处理链接
@@ -2367,7 +2425,7 @@ class PostSubjectController extends CrudController
         ini_set("memory_limit", '-1'); // 不限制内存
         // $time1 = microtime(true);
         $file_temp_name = $_POST['file_temp_name'] ?? null; //随机数，用于建立临时文件夹
-        
+
         $chunks = $_POST['totalNo'] ?? null; //切片总数
         $currentChunk = $_POST['no'] ?? null; //当前切片
         $blob = $_FILES['file'] ?? null; //二进制数据

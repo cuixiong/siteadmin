@@ -36,6 +36,7 @@ class PostSubjectLog extends Base
     const POST_SUBJECT_LINK_EXPORT = 4; // 导出日志(链接)
     const POST_SUBJECT_LINK_UPLOAD = 5; // 上传日志
     const POST_SUBJECT_LINK_UPLOAD_OLD = 6; // 旧课题上传
+    const POST_SUBJECT_STRATEGY_ACCEPT = 7; // 策略分配
 
     public static function getLogTypeList()
     {
@@ -46,6 +47,7 @@ class PostSubjectLog extends Base
             self::POST_SUBJECT_LINK_EXPORT => '导出日志',
             self::POST_SUBJECT_LINK_UPLOAD => '上传日志',
             self::POST_SUBJECT_LINK_UPLOAD_OLD => '旧课题上传',
+            self::POST_SUBJECT_STRATEGY_ACCEPT => '策略分配',
         ];
     }
 
