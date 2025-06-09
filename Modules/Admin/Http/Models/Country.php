@@ -89,7 +89,7 @@ class Country extends Base
                 $language = request()->HeaderLanguage ?? '';
             }
             $sitename = getSiteName();
-            if(in_array($sitename , ['mrrs' , 'yhen' , 'qyen', 'lpien'])){
+            if(in_array($sitename , ['mrrs' , 'yhen' , 'qyen', 'lpien' , 'mmgen' , 'giren'])){
                 $language = 'en';
             }
             switch ($language) {
@@ -162,10 +162,10 @@ class Country extends Base
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
+        return true;
         //同步分站点不在总控直接同步 , 采用异步延时通知的方式
         // TODO: cuizhixiong 2024/9/12 待完善
         syncSiteDbByType(NotityTypeConst::SYNC_SITE_COUNTRY);
-        return true;
 
         $site = null;
         if ($isAllSite) {

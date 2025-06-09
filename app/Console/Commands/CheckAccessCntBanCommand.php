@@ -81,19 +81,28 @@ class CheckAccessCntBanCommand extends Command {
             $tab = 'ip';
         }
         $start_time = time() - $sysValList['day_ban_rules']['value'] * 3600;
-        $day_max_cnt = $sysValList['day_ban_rules']['back_value'] ?? 100;
-        $accessDayIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
-                                       ->groupBy($tab)
-                                       ->selectRaw("count(*) as cnt, ".$tab)
-                                       ->having('cnt', '>=', $day_max_cnt)
-                                       ->pluck('cnt', $tab)->toArray();
+        $day_max_cnt = $sysValList['day_ban_rules']['back_value'] ?? 0;
+        if(empty($day_max_cnt ) || $day_max_cnt <=0 ){
+            $accessDayIpLogList = [];
+        }else{
+            $accessDayIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
+                                           ->groupBy($tab)
+                                           ->selectRaw("count(*) as cnt, ".$tab)
+                                           ->having('cnt', '>=', $day_max_cnt)
+                                           ->pluck('cnt', $tab)->toArray();
+        }
+
         $start_time = time() - $sysValList['hour_ban_rules']['value'] * 3600;
-        $hour_max_cnt = $sysValList['hour_ban_rules']['back_value'] ?? 100;
-        $accessHourIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
-                                        ->groupBy($tab)
-                                        ->selectRaw("count(*) as cnt, ".$tab)
-                                        ->having('cnt', '>=', $hour_max_cnt)
-                                        ->pluck('cnt', $tab)->toArray();
+        $hour_max_cnt = $sysValList['hour_ban_rules']['back_value'] ?? 0;
+        if(empty($hour_max_cnt )  || $hour_max_cnt <=0 ){
+            $accessHourIpLogList = [];
+        }else{
+            $accessHourIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
+                                            ->groupBy($tab)
+                                            ->selectRaw("count(*) as cnt, ".$tab)
+                                            ->having('cnt', '>=', $hour_max_cnt)
+                                            ->pluck('cnt', $tab)->toArray();
+        }
         $accessIpLogList = array_merge($accessDayIpLogList, $accessHourIpLogList);
         $banStr = '';
         foreach ($accessIpLogList as $forIp => $forVal) {

@@ -288,6 +288,7 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\RuleController::class, 'store'])->name('权限管理:权限新增');
         Route::post('destroy', [Modules\Admin\Http\Controllers\RuleController::class, 'destroy'])->name('权限管理:权限删除');
         Route::post('update', [Modules\Admin\Http\Controllers\RuleController::class, 'update'])->name('权限管理:权限编辑');
+        Route::post('rule-change-sort', [Modules\Admin\Http\Controllers\RuleController::class, 'ruleChangeSort'])->name('权限管理:权限编辑');
     });
 
     // Role控制器
@@ -412,6 +413,7 @@ Route::middleware([
         Route::post('store', [Modules\Admin\Http\Controllers\CountryController::class, 'store'])->name('国家管理:新增地区');
         Route::post('update', [Modules\Admin\Http\Controllers\CountryController::class, 'update'])->name('国家管理:修改地区');
         Route::post('destroy', [Modules\Admin\Http\Controllers\CountryController::class, 'destroy'])->name('国家管理:删除地区');
+        Route::post('sync-site-db', [Modules\Admin\Http\Controllers\CountryController::class, 'syncSiteDb'])->name('国家管理:同步到站点');
     });
 
     // City 控制器
@@ -541,7 +543,6 @@ Route::middleware([
 
 
     Route::get('admin/dictionary/save-to-site',[Modules\Admin\Http\Controllers\DictionaryController::class, 'test'])->name('测试:字典同步测试');
-    Route::get('admin/country/save-to-site',[Modules\Admin\Http\Controllers\CountryController::class, 'test'])->name('测试:国家同步测试');
     Route::get('admin/price-edition/save-to-site',[Modules\Admin\Http\Controllers\PriceEditionController::class, 'test'])->name('测试:价格同步测试');
     Route::get('admin/language/save-to-site',[Modules\Admin\Http\Controllers\LanguageController::class, 'test'])->name('测试:语言同步测试');
 
