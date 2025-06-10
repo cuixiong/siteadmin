@@ -52,7 +52,7 @@ class PostSubjectStrategy extends Base
             ->toArray();
 
         if (!$userData) {
-            return ['code' => -1, 'msg' => '缺少分配对象'];
+            ReturnJson(false, '缺少分配对象');
         }
         $queryCount = 0;
         $baseQuery =  PostSubject::query()->select(['id', 'name', 'keywords'])
@@ -73,14 +73,14 @@ class PostSubjectStrategy extends Base
 
             if ($queryCount > $count) {
                 $text[] = '<span style="color:#ff0000;">剩余数量不足以分配</span>';
-                return ['code' => -1, 'msg' => implode("<br />", $text)];
+                ReturnJson(false, implode("<br />", $text));
             } else {
                 foreach ($userData as $key => $userItem) {
                     $text[] = $userItem['username'] . '分配 <span style="color:#ff0000;">' . $userItem['num'] . '</span> 条记录';
                 }
             }
 
-            return ['code' => 1, 'msg' => implode("<br />", $text)];
+            ReturnJson(true, implode("<br />", $text));
         } elseif ($type == 2) {
 
             $postSubjectData = $baseQuery->limit($queryCount)->orderBy('id','desc')->asArray()->all();
@@ -90,7 +90,7 @@ class PostSubjectStrategy extends Base
             $text = [];
             if ($queryCount > count($postSubjectData)) {
                 $text[] = '<span style="color:#ff0000;">剩余数量不足以分配</span>';
-                return ['code' => -1, 'msg' => implode("<br />", $text)];
+                ReturnJson(false, implode("<br />", $text));
             }
 
             // 打乱顺序并分割数据,执行分配
@@ -155,7 +155,7 @@ class PostSubjectStrategy extends Base
             $logData['ingore_details'] = implode("\n", $ingoreDetails);
             $log->create($logData);
 
-            return ['code' => 1, 'msg' => '完成'];
+            ReturnJson(true, '完成');
         }
     }
 }

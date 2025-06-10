@@ -50,7 +50,10 @@ class PostSubjectStrategyController extends CrudController
             $record = $model->get()->toArray();
             if ($record) {
                 $categoryData = ProductsCategory::query()->pluck("name", "id")->toArray();
+                $typeList = PostSubjectStrategy::getTypeList() ?? [];
                 foreach ($record as $key => $item) {
+                    $record[$key]['type_name'] = $typeList[$item['type']] ?? '';
+
                     $itemCategoryData = explode(',', $item['category_ids']);
                     $record[$key]['category_name'] = [];
                     foreach ($itemCategoryData as $itemCategoryId) {
@@ -132,17 +135,18 @@ class PostSubjectStrategyController extends CrudController
         }
     }
 
-    
+
     /**
      * AJax单个查询
      *
      * @param $request 请求信息
      */
-    protected function form(Request $request) {
+    protected function form(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
-            $userData = PostSubjectStrategyUser::query()->select(['id','user_id', 'num'])
+            $userData = PostSubjectStrategyUser::query()->select(['id', 'user_id', 'num', 'sort'])
                 ->where(['strategy_id' => $record->id])
                 ->orderBy('sort', 'asc')
                 ->get()?->toArray();
@@ -242,6 +246,9 @@ class PostSubjectStrategyController extends CrudController
                 ReturnJson(FALSE, trans('lang.data_empty'));
             }
 
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
             // 删除已存在的数据
             PostSubjectStrategyUser::where('strategy_id', $record->id)->delete();
 
@@ -291,5 +298,26 @@ class PostSubjectStrategyController extends CrudController
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    
+    /**
+     * 执行策略
+     *
+     */
+    protected function executeStrategy(Request $request){
+        set_time_limit(-1);
+        ini_set('memory_limit', -1);
+
+        $input = $request->all();
+        $type = $input['type'] ?? ''; // 1：获取数量;2：执行操作
+        $id = $input['id'] ?? '';
+        $config = PostSubjectStrategy::find()->andWhere(['id' => $id])->first()->toArray();
+        if ($config && $config['type'] == PostSubjectStrategy::TYPE_ASSIGN) {
+            return (new PostSubjectStrategy())->assignStrategy($type, $config);
+        } else {
+            ReturnJson(false, '未知策略');
+        }
+        
     }
 }
