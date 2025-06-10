@@ -312,7 +312,7 @@ class PostSubjectStrategyController extends CrudController
         $input = $request->all();
         $type = $input['type'] ?? ''; // 1：获取数量;2：执行操作
         $id = $input['id'] ?? '';
-        $config = PostSubjectStrategy::find()->andWhere(['id' => $id])->first()->toArray();
+        $config = PostSubjectStrategy::query()->where('id',$id)->first()->toArray();
         if ($config && $config['type'] == PostSubjectStrategy::TYPE_ASSIGN) {
             return (new PostSubjectStrategy())->assignStrategy($type, $config);
         } else {
