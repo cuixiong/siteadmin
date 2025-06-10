@@ -820,7 +820,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'list'])->name('课题策略:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'changeStatus'])->name('课题策略:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'searchDroplist'])->name('课题策略:搜索下拉列表数据');
-        Route::get('execute-strategy', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'executeStrategy'])->name('课题策略:执行策略');
+        Route::post('execute-strategy', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'executeStrategy'])->name('课题策略:执行策略');
     });
     
     // PostSubjectFilter 课题黑名单

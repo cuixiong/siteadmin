@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Models;
 
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\Base;
 
 class PostSubjectStrategy extends Base
@@ -44,8 +45,7 @@ class PostSubjectStrategy extends Base
 
         // 查询用户 
         $userData = PostSubjectStrategyUser::from((new PostSubjectStrategyUser)->getTable() . ' as pssu')
-            ->select(['pssu.id', 'pssu.user_id', 'pssu.num', 'a.username'])
-            ->leftJoin('admins as a', 'pssu.user_id', '=', 'a.id')
+            ->select(['pssu.id', 'pssu.user_id', 'pssu.num',])
             ->where('pssu.strategy_id', $config['id'])
             ->orderBy('pssu.sort', 'asc')
             ->get()
@@ -54,6 +54,8 @@ class PostSubjectStrategy extends Base
         if (!$userData) {
             ReturnJson(false, '缺少分配对象');
         }
+        
+        
         $queryCount = 0;
         $baseQuery =  PostSubject::query()->select(['id', 'name', 'keywords'])
             ->whereIn('product_category_id', $categoryIds)
@@ -61,8 +63,11 @@ class PostSubjectStrategy extends Base
             ->where('accept_status', $acceptStatus);
 
         foreach ($userData as $key => $userItem) {
+            $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->pluck('nickname') ?? '未知';
+            $userData[$key]['username'] = $nickname;
             $queryCount += $userItem['num'];
         }
+
 
         if ($type == 1) {
             $count = $baseQuery->count();
@@ -83,7 +88,7 @@ class PostSubjectStrategy extends Base
             ReturnJson(true, implode("<br />", $text));
         } elseif ($type == 2) {
 
-            $postSubjectData = $baseQuery->limit($queryCount)->orderBy('id','desc')->asArray()->all();
+            $postSubjectData = $baseQuery->limit($queryCount)->orderBy('id','desc')->get()?->toArray()??[];
             $postSubjectData = array_column($postSubjectData, null, 'id');
             $idsArray = array_keys($postSubjectData);
 
@@ -138,7 +143,7 @@ class PostSubjectStrategy extends Base
                     'updated_by' => $userItem['user_id'],
                 ];
                 // return $updateData;
-                PostSubject::updateAll($updateData, ['in', 'id', $newIdSegment]);
+                PostSubject::query()->whereIn("id", $newIdSegment)->update($updateData);
 
                 // 更新起始位置
                 $start += $userItem['num'];

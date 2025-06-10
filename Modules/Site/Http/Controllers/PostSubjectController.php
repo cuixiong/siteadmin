@@ -2254,7 +2254,7 @@ class PostSubjectController extends CrudController
                             }
                         }
                         if (count($recordUpdate) > 0) {
-                            PostSubject::updateAll($recordUpdate, ['id' => $postSubjectData['id']]);
+                            PostSubject::query()->where("id", $postSubjectData['id'])->update($recordUpdate);
                         }
                     } else {
 
