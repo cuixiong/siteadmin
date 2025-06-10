@@ -1089,7 +1089,7 @@ class PostSubjectController extends CrudController
             ReturnJson(true, trans('lang.request_success'), $data);
         } else {
             //查询出涉及的id
-            $postSubjectData = $model->select(['id', 'name'])->get()->toArray();
+            $postSubjectData = $model->select(['id', 'name', 'keywords'])->get()->toArray();
             $idsData = array_column($postSubjectData, 'id');
 
             if ($isFilter == PostSubjectFilter::POST_SUBJECT_JOIN) {
@@ -1132,15 +1132,15 @@ class PostSubjectController extends CrudController
             } elseif ($isFilter == PostSubjectFilter::POST_SUBJECT_READ) {
                 // 领取的课题id根据过滤列表过滤
                 $filterKeywordsData = PostSubjectFilter::query()->select(['keywords'])->where('user_id' , $accepter)->pluck('keywords')?->toArray() ?? [];
-                $newIdsData = [];
+                $newIdsData = $idsData;
                 foreach ($idsData as $key => $subject_id) {
                     $tempKeywords = $postSubjectData[$subject_id]['keywords'] ?? '';
-                    if (!empty($tempKeywords) && !in_array($tempKeywords, $filterKeywordsData)) {
+                    if (!empty($tempKeywords) && in_array($tempKeywords, $filterKeywordsData)) {
                         // unset();
-                        $newIdsData[] = $subject_id;
+                        unset($newIdsData[$key]);
                     }
                 }
-                $idsData = $newIdsData;
+                $idsData = array_values($newIdsData);
             }
 
 

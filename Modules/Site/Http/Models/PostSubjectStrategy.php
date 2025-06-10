@@ -63,7 +63,7 @@ class PostSubjectStrategy extends Base
             ->where('accept_status', $acceptStatus);
 
         foreach ($userData as $key => $userItem) {
-            $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->pluck('nickname') ?? '未知';
+            $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->value('nickname') ?? '未知';
             $userData[$key]['username'] = $nickname;
             $queryCount += $userItem['num'];
         }
