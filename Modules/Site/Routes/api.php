@@ -831,6 +831,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'list'])->name('课题黑名单:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'changeStatus'])->name('课题黑名单:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'searchDroplist'])->name('课题黑名单:搜索下拉列表数据');
+        Route::post('export', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'export'])->name('课题黑名单:导出');
     });
 
 

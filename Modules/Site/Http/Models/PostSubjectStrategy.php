@@ -54,8 +54,8 @@ class PostSubjectStrategy extends Base
         if (!$userData) {
             ReturnJson(false, '缺少分配对象');
         }
-        
-        
+
+
         $queryCount = 0;
         $baseQuery =  PostSubject::query()->select(['id', 'name', 'keywords'])
             ->whereIn('product_category_id', $categoryIds)
@@ -71,31 +71,35 @@ class PostSubjectStrategy extends Base
 
         if ($type == 1) {
             $count = $baseQuery->count();
-            $text = [];
-            $text[] = '查询符合条件的未领取课题数量为: <span style="color:#ff0000;">' . $count . '</span>';
-            $text[] = '截取最新<span style="color:#ff0000;">' . $queryCount . '</span>条记录随机分配：';
-            $text[] = '------------------------------------';
+            $returnData = [];
+            $returnData['all_count'] = $count;
+            $returnData['query_count'] = $queryCount;
+            $returnData['user'] = [];
 
             if ($queryCount > $count) {
-                $text[] = '<span style="color:#ff0000;">剩余数量不足以分配</span>';
-                ReturnJson(false, implode("<br />", $text));
+                ReturnJson(false, '剩余数量不足以分配',$returnData);
             } else {
                 foreach ($userData as $key => $userItem) {
-                    $text[] = $userItem['username'] . '分配 <span style="color:#ff0000;">' . $userItem['num'] . '</span> 条记录';
+                    $returnData['user'][] = [
+                        'user_id' => $userItem['user_id'],
+                        'username' => $userItem['username'],
+                        'num' => $userItem['num'],
+                    ];
                 }
             }
 
-            ReturnJson(true, implode("<br />", $text));
+            ReturnJson(true, '返回数量', $returnData);
         } elseif ($type == 2) {
 
-            $postSubjectData = $baseQuery->limit($queryCount)->orderBy('id','desc')->get()?->toArray()??[];
+            $postSubjectData = $baseQuery->limit($queryCount)->orderBy('id', 'desc')->get()?->toArray() ?? [];
             $postSubjectData = array_column($postSubjectData, null, 'id');
             $idsArray = array_keys($postSubjectData);
 
-            $text = [];
+            $returnData = [];
+            $returnData['all_count'] = count($postSubjectData);
+            $returnData['query_count'] = $queryCount;
             if ($queryCount > count($postSubjectData)) {
-                $text[] = '<span style="color:#ff0000;">剩余数量不足以分配</span>';
-                ReturnJson(false, implode("<br />", $text));
+                ReturnJson(false, '剩余数量不足以分配',$returnData);
             }
 
             // 打乱顺序并分割数据,执行分配
@@ -160,7 +164,7 @@ class PostSubjectStrategy extends Base
             $logData['ingore_details'] = implode("\n", $ingoreDetails);
             $log->create($logData);
 
-            ReturnJson(true, '完成');
+            ReturnJson(true, '执行完成');
         }
     }
 }
