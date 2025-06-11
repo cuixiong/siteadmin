@@ -213,13 +213,12 @@ class ProductsController extends CrudController {
                 return $this->SearchForMysql($request);
             }
         } catch (\Exception $e) {
-            if($e instanceof  \Foolz\SphinxQL\Exception\ConnectionException){
+            if ($e instanceof \Foolz\SphinxQL\Exception\ConnectionException) {
                 ReturnJson(false, 'sphinx重启中');
-            }else{
+            } else {
                 // return $this->SearchForMysql($request);
                 ReturnJson(false, $e->getMessage());
             }
-
         }
     }
 
@@ -568,6 +567,7 @@ class ProductsController extends CrudController {
             if (!empty($productIdList)) {
                 //删除sphinx的索引
                 (new SphinxService())->delSphinxIndexByProductIdList($productIdList);
+                (new SenWordsService())->addSenWokrdLogByProductList($productIdList);
                 //删除讯搜索引(代码已注释)
 //                $SiteName = $request->header('Site');
 //                $RootPath = base_path();
@@ -1130,6 +1130,55 @@ class ProductsController extends CrudController {
                     $record->delete();
                     // 删除完成后同步到xunsearch
                     $this->ModelInstance()->syncSearchIndex($record->id, 'delete');
+                }
+            }
+            ReturnJson(true, trans('lang.delete_success'));
+        }
+    }
+
+    /**
+     * 批量删除
+     *
+     * @param $request 请求信息
+     */
+    public function quickBatchDelete(Request $request) {
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? 1; //1：获取数量;2：执行操作
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(true, trans('lang.param_empty').':ids');
+            }
+        } else {
+            //筛选
+            $data = $this->GetProductList($request);
+            $record = $data['list'];
+            if (empty($record)) {
+                ReturnJson(true, trans('lang.param_empty').':ids');
+            }
+            $ids = array_column($record, 'id');
+        }
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $data['count'] = count($ids);
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } elseif ($type == 2) {
+            // $data['result_count'] = $model->delete();
+            // 批量操作无法触发添加日志的功能，但我领导要求有日志
+            $product_model = new Products();
+            $proIdInfoList = Products::query()->whereIn('id', $ids)->select(['year', 'id'])->get()->toArray();
+            foreach ($proIdInfoList as $forInfo) {
+                $year = $forInfo['year'];
+                (new ProductsDescription($year))
+                    ->where('product_id', $forInfo['id'])
+                    ->delete();
+                $rs = Products::query()->where("id", $forInfo['id'])->delete();
+                if ($rs) {
+                    // 删除完成后同步到xunsearch
+                    $product_model->syncSearchIndex($forInfo['id'], 'delete');
                 }
             }
             ReturnJson(true, trans('lang.delete_success'));

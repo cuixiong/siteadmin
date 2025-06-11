@@ -99,6 +99,7 @@ Route::middleware([
         Route::post('batch-update', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdate'])->name('报告管理:批量修改');
         Route::post('batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'batchDelete'])->name('报告管理:批量删除');
         Route::post('quick-search', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearch'])->name('报告管理:快速搜索');
+        Route::post('quick-batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'quickBatchDelete'])->name('报告管理:批量删除');
         Route::get('quick-search-dictionary', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearchDictionary'])->name('报告管理:快速搜索-字典数据');
 
     });
@@ -290,6 +291,7 @@ Route::middleware([
     // 敏感词路由
     Route::prefix('senwords')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'list'])->name('敏感词管理:模版列表');
+        Route::get('ban-log-list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'banLogList'])->name('敏感词管理:封禁报告列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'searchDroplist'])->name('敏感词管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeStatus'])->name('敏感词管理:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeSort'])->name('敏感词管理:排序修改');

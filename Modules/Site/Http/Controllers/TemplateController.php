@@ -399,7 +399,7 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{keywords_de}}', $product['keywords_de']);
         //处理新变量  产品划分, 细分市场 , 产品类别
         $tempContent = $this->writeTempWord($tempContent, '{{product_class}}', $product['product_class']);
-        $tempContent = $this->writeTempWord($tempContent, '{{segment}}', $product['segment}']);
+        $tempContent = $this->writeTempWord($tempContent, '{{segment}}', $product['segment']);
         $tempContent = $this->writeTempWord($tempContent, '{{division}}', $product['division']);
 
         //页数,图表
