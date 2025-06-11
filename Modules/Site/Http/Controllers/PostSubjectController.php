@@ -1108,12 +1108,15 @@ class PostSubjectController extends CrudController
 
                 $filterKeywordsData = PostSubjectFilter::query()
                     ->select(['keywords'])
-                    ->where(['user_id', $filterUserId])
-                    ->whereIn('in', 'keywords', $tempKeywordsArray)
+                    ->where('user_id', $filterUserId)
+                    ->whereIn('keywords', $tempKeywordsArray)
                     ->pluck('keywords')?->toArray() ?? [];
 
                 foreach ($idsData as $key => $subject_id) {
                     $tempKeywords = $postSubjectData[$subject_id]['keywords'] ?? '';
+                    if(empty($tempKeywords)){
+                        continue;
+                    }
                     if (in_array($tempKeywords, $filterKeywordsData)) {
                         continue;
                     }
