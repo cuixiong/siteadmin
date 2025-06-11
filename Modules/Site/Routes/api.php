@@ -810,7 +810,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'searchDroplist'])->name('发帖操作记录:搜索下拉列表数据');
     });
 
-    
+
     // PostSubjectStrategy 课题策略
     Route::prefix('post-subject-strategy')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'store'])->name('课题策略:数据新增');
@@ -822,7 +822,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'searchDroplist'])->name('课题策略:搜索下拉列表数据');
         Route::post('execute-strategy', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'executeStrategy'])->name('课题策略:执行策略');
     });
-    
+
     // PostSubjectFilter 课题黑名单
     Route::prefix('post-subject-filter')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'store'])->name('课题黑名单:数据新增');
@@ -900,6 +900,18 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'changeStatus'])->name('站点地图:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'changeSort'])->name('站点地图:排序修改');
         Route::get('form/{id}', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'form'])->name('站点地图:数据单查');
+    });
+
+    // City 控制器
+    Route::prefix('city')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\CityController::class, 'list'])->name('省市区管理:省市区列表');
+        Route::get('option', [Modules\Site\Http\Controllers\CityController::class, 'option'])->name('省市区管理:下拉列表数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\CityController::class, 'searchDroplist'])->name('省市区管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CityController::class, 'changeStatus'])->name('省市区管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\CityController::class, 'changeSort'])->name('省市区管理:排序修改');
+        Route::post('store', [Modules\Site\Http\Controllers\CityController::class, 'store'])->name('省市区管理:新增省市');
+        Route::post('update', [Modules\Site\Http\Controllers\CityController::class, 'update'])->name('省市区管理:修改省市');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CityController::class, 'destroy'])->name('省市区管理:删除省市');
     });
 
     // 货币配置

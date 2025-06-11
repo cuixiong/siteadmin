@@ -33,6 +33,9 @@ class Products extends Base {
             'keywords_jp',
             'keywords_kr',
             'keywords_de',
+            'product_class',  //产品类别
+            'division',  //细分市场
+            'segment',   //产品划分
             'url',  //自定义链接
             'published_date', //出版日期
             'sort', //排序

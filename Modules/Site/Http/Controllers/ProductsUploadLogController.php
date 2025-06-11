@@ -515,6 +515,9 @@ class ProductsUploadLogController extends CrudController
                         continue;
                     }
                     //新增其他扩展字段
+                    $item['segment'] = $row['segment'] ?? '';
+                    $item['division'] = $row['division'] ?? '';
+                    $item['product_class'] = $row['product_class'] ?? '';
                     $item['classification'] = $row['classification'] ?? '';
                     $item['application'] = $row['application'] ?? '';
                     //强校验几个字段
