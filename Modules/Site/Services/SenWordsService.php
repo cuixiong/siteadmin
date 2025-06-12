@@ -80,7 +80,7 @@ class SenWordsService {
         $res = Products::query()->whereIn('id', $productIdList)->update(['status' => 1]);
         $product_model = new Products();
         foreach ($productIdList as $forProductId) {
-            $product_model->syncSearchIndex($forProductId, 'add');
+            $product_model->syncSearchIndex($forProductId, 'update');
         }
         //删除日志
         SensitiveWordsLog::query()->where("word_id", $wordId)->delete();

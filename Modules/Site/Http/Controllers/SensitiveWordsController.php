@@ -38,7 +38,7 @@ class SensitiveWordsController extends CrudController {
             if (!$record) {
                 ReturnJson(false, trans('lang.add_error'));
             }
-            (new SenWordsService())->handlerUnBanByIdList($record->id);
+            (new SenWordsService())->handlerBanByIdList($record->id);
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
