@@ -44,7 +44,7 @@ class City extends Base
         }
 
         //type
-        if (isset($search->type)) {
+        if (isset($search->type) && is_numeric($search->type)) {
             $model = $model->where('type', $search->type);
         }
 

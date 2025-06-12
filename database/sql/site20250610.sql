@@ -1,6 +1,6 @@
 ALTER TABLE `product_routine`
     ADD COLUMN `product_class` varchar(255) NULL COMMENT '产品类别' AFTER `keywords_de`,
-ADD COLUMN `segment` varchar(255) NULL COMMENT '细分市场' AFTER `category`,
+ADD COLUMN `segment` varchar(255) NULL COMMENT '细分市场' AFTER `product_class`,
 ADD COLUMN `division` varchar(255) NULL COMMENT '产品划分' AFTER `segment`;
 
 

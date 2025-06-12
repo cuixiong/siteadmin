@@ -931,6 +931,9 @@ Route::middleware([
 
     // 站点端国家
     Route::prefix('country')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\CountryController::class, 'store'])->name('国家管理:新增地区');
+        Route::post('update', [Modules\Site\Http\Controllers\CountryController::class, 'update'])->name('国家管理:修改地区');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CountryController::class, 'destroy'])->name('国家管理:删除地区');
         Route::get('list', [Modules\Site\Http\Controllers\CountryController::class, 'list'])->name('国家管理:地区列表');
         Route::get('option', [Modules\Site\Http\Controllers\CountryController::class, 'option'])->name('国家管理:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\CountryController::class, 'searchDroplist'])->name('国家管理:搜索下拉列表数据');
