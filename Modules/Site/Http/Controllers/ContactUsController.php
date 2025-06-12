@@ -19,6 +19,9 @@ use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\Region;
 use Modules\Site\Http\Models\PriceEditionValue;
 use Modules\Site\Http\Models\Language;
+use Modules\Site\Http\Models\PostPlatform;
+use Modules\Site\Http\Models\PostSubject;
+use Modules\Site\Http\Models\PostSubjectLink;
 
 class ContactUsController extends CrudController {
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
@@ -56,6 +59,7 @@ class ContactUsController extends CrudController {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
             $record = $model->get()->toArray();
+            
             foreach ($record as &$value) {
                 if (!empty($value['send_email_time'])) {
                     $value['send_email_time_str'] = date('Y-m-d H:i:s', $value['send_email_time']);
@@ -75,6 +79,72 @@ class ContactUsController extends CrudController {
                     }
                 }
                 $value['price_edition_name'] = $priceVersionName;
+            }
+
+                // 平台列表
+                $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
+            // 查询留言是否与课题有关联 (关键词关联、已宣传、留言创建时间大于任一帖子宣传时间)
+            $productIdsArray = array_column($record, 'product_id');
+            $productsData = Products::query()->select(['id','keywords'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
+            $keywordsData = array_column($productsData, 'keywords', 'id');
+            $keywordsData = array_filter($keywordsData, function($value) {
+                return $value !== "" && $value !== null;
+            });
+            $postSubjectData = [];
+            if ($keywordsData && count($keywordsData) > 0) {
+                // 查询课题
+                $postSubjectData = PostSubject::query()->select(['id', 'accepter'])
+                    ->whereIn('keywords', $keywordsData)
+                    ->where('propagate_status', 1)
+                    ->get()?->toArray() ?? [];
+            }
+            $urlData = [];
+            if ($postSubjectData && count($postSubjectData) > 0) {
+                // 课题查询帖子链接
+                $postSubjecIdsArray = array_column($postSubjectData, 'id');
+                $urlData = PostSubjectLink::query()->whereIn('post_subject_id', $postSubjecIdsArray)->get()->toArray();
+            }
+            // 组合筛选符合条件的课题、平台、帖子
+            $newUrlData = [];
+            foreach ($urlData as $key => $value) {
+                if(!isset($newUrlData[$value['post_subject_id']])){
+                    $newUrlData[$value['post_subject_id']] = [];
+                }
+                $newUrlData[$value['post_subject_id']][] = $value;
+            }
+            $newPostSubjectData = [];
+            foreach ($postSubjectData as $key => $value) {
+                if(!isset($newUrlData[$value['post_subject_id']])){
+                    $newUrlData[$value['post_subject_id']] = [];
+                }
+                $newUrlData[$value['post_subject_id']][] = $value;
+            }
+
+            foreach ($record as $key => $value) {
+
+                $keywords = $keywordsData[$value['product_id']] ?? '';
+                if (empty($keywords)) {
+                    continue;
+                }
+                $postSubjectData = PostSubject::query()->select(['id', 'accepter'])
+                    ->where('keywords', $keywords)
+                    ->where('propagate_status', 1)
+                    ->get();
+                if ($postSubjectData) {
+                    $postSubjectData = $postSubjectData->toArray();
+                    // 宣传平台
+                    $urlData = PostSubjectLink::query()->where(['post_subject_id' => $postSubjectData['id']])->get()->toArray();
+                    $urlData = array_map(function ($urlItem) use ($platformList) {
+                        $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
+                        return $urlItem;
+                    }, $urlData);
+                    $value['post_subject']['url_data'] = $urlData;
+                }
+                
+            }
+            
+            foreach ($record as $key => $value) {
+            
             }
             $data = [
                 'total' => $total,
