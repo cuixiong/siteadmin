@@ -64,9 +64,9 @@ class OrderController extends CrudController {
                     $value['send_email_time_str'] = '';
                 }
                 if($value['is_mobile_pay'] == 1){
-                    $value['is_mobile_pay_text'] = 'PC端';
-                }else{
                     $value['is_mobile_pay_text'] = '移动端';
+                }else{
+                    $value['is_mobile_pay_text'] = 'PC端';
                 }
 
 
