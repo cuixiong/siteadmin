@@ -1091,6 +1091,7 @@ class PostSubjectController extends CrudController
             //查询出涉及的id
             $postSubjectData = $model->select(['id', 'name', 'keywords'])->get()->toArray();
             $idsData = array_column($postSubjectData, 'id');
+            $postSubjectData = array_column($postSubjectData, null,'id');
 
             if ($isFilter == PostSubjectFilter::POST_SUBJECT_JOIN) {
                 // 加入过滤列表
@@ -1187,13 +1188,27 @@ class PostSubjectController extends CrudController
             } else {
                 $details[] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】将' . $acceptCount . '个课题分配给【' . $accepterName . '】';
             }
-            foreach ($postSubjectData as $key => $value) {
-                $details[] = '【编号' . $value['id'] . '】' . $value['name'];
+            if ($isFilter == PostSubjectFilter::POST_SUBJECT_JOIN) {
+                $details[] = date('Y-m-d H:i:s', time()) . ' <span style="color:#ff0000;">课题将移入黑名单</span>';
             }
+
+            $ingoreCount = 0;
+            $returnDetail = $details;
+
+            foreach ($postSubjectData as $key => $value) {
+                $tempIngoreText = '';
+                if (!in_array($value['id'], $idsData)) {
+                    $tempIngoreText = ' <span style="color:#ff0000;">过滤</span>';
+                    $ingoreCount++;
+                }
+                $details[] = '【编号' . $value['id'] . '】' . $value['name']. $tempIngoreText;
+            }
+            $returnDetail[] = '黑名单过滤了' . $ingoreCount . '个课题';
             $logData['details'] = implode("\n", $details);
+            $logData['ingore_count'] = $ingoreCount;
             PostSubjectLog::create($logData);
 
-            ReturnJson(TRUE, trans('lang.request_success'));
+            ReturnJson(TRUE, trans('lang.request_success'),implode("<br />", $returnDetail));
         }
     }
     // 移入公客

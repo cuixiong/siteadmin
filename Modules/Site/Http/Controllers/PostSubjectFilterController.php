@@ -5,6 +5,7 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Site\Http\Models\PostSubjectFilter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -114,7 +115,8 @@ class PostSubjectFilterController extends CrudController
         foreach ($filterData as $item) {
 
             $sheet->setCellValue([1, $rowIndex + 1], $item['id']);
-            $sheet->setCellValue([2, $rowIndex + 1], $item['user_id']);
+            $username = User::query()->where('id', $item['user_id'])->value('nickname');
+            $sheet->setCellValue([2, $rowIndex + 1], $username);
             $sheet->setCellValue([3, $rowIndex + 1], $item['keywords']);
             $sheet->setCellValue([4, $rowIndex + 1], $item['created_at']);
 
