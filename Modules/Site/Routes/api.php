@@ -99,6 +99,7 @@ Route::middleware([
         Route::post('batch-update', [Modules\Site\Http\Controllers\ProductsController::class, 'batchUpdate'])->name('报告管理:批量修改');
         Route::post('batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'batchDelete'])->name('报告管理:批量删除');
         Route::post('quick-search', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearch'])->name('报告管理:快速搜索');
+        Route::post('quick-batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'quickBatchDelete'])->name('报告管理:批量删除');
         Route::get('quick-search-dictionary', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearchDictionary'])->name('报告管理:快速搜索-字典数据');
 
     });
@@ -290,6 +291,7 @@ Route::middleware([
     // 敏感词路由
     Route::prefix('senwords')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'list'])->name('敏感词管理:模版列表');
+        Route::get('ban-log-list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'banLogList'])->name('敏感词管理:封禁报告列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'searchDroplist'])->name('敏感词管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeStatus'])->name('敏感词管理:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeSort'])->name('敏感词管理:排序修改');
@@ -810,7 +812,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectLogController::class, 'searchDroplist'])->name('发帖操作记录:搜索下拉列表数据');
     });
 
-    
+
     // PostSubjectStrategy 课题策略
     Route::prefix('post-subject-strategy')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'store'])->name('课题策略:数据新增');
@@ -822,7 +824,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'searchDroplist'])->name('课题策略:搜索下拉列表数据');
         Route::post('execute-strategy', [Modules\Site\Http\Controllers\PostSubjectStrategyController::class, 'executeStrategy'])->name('课题策略:执行策略');
     });
-    
+
     // PostSubjectFilter 课题黑名单
     Route::prefix('post-subject-filter')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\PostSubjectFilterController::class, 'store'])->name('课题黑名单:数据新增');
@@ -903,6 +905,18 @@ Route::middleware([
         Route::get('form/{id}', [Modules\Site\Http\Controllers\SiteMapConfController::class, 'form'])->name('站点地图:数据单查');
     });
 
+    // City 控制器
+    Route::prefix('city')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\CityController::class, 'list'])->name('省市区管理:省市区列表');
+        Route::get('option', [Modules\Site\Http\Controllers\CityController::class, 'option'])->name('省市区管理:下拉列表数据');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\CityController::class, 'searchDroplist'])->name('省市区管理:搜索下拉列表数据');
+        Route::post('change-status', [Modules\Site\Http\Controllers\CityController::class, 'changeStatus'])->name('省市区管理:状态修改');
+        Route::post('change-sort', [Modules\Site\Http\Controllers\CityController::class, 'changeSort'])->name('省市区管理:排序修改');
+        Route::post('store', [Modules\Site\Http\Controllers\CityController::class, 'store'])->name('省市区管理:新增省市');
+        Route::post('update', [Modules\Site\Http\Controllers\CityController::class, 'update'])->name('省市区管理:修改省市');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CityController::class, 'destroy'])->name('省市区管理:删除省市');
+    });
+
     // 货币配置
     Route::prefix('currency-config')->group(function () {
         Route::post('store', [Modules\Site\Http\Controllers\CurrencyConfigController::class, 'store'])->name('货币配置:数据新增');
@@ -917,6 +931,9 @@ Route::middleware([
 
     // 站点端国家
     Route::prefix('country')->group(function () {
+        Route::post('store', [Modules\Site\Http\Controllers\CountryController::class, 'store'])->name('国家管理:新增地区');
+        Route::post('update', [Modules\Site\Http\Controllers\CountryController::class, 'update'])->name('国家管理:修改地区');
+        Route::post('destroy', [Modules\Site\Http\Controllers\CountryController::class, 'destroy'])->name('国家管理:删除地区');
         Route::get('list', [Modules\Site\Http\Controllers\CountryController::class, 'list'])->name('国家管理:地区列表');
         Route::get('option', [Modules\Site\Http\Controllers\CountryController::class, 'option'])->name('国家管理:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\CountryController::class, 'searchDroplist'])->name('国家管理:搜索下拉列表数据');

@@ -146,7 +146,7 @@ class NotifySite implements ShouldQueue {
     }
 
     public function syncSiteCountry($siteInfo) {
-        //同步 price_editions
+        //同步 countrys
         $coutryList = AdminCountry::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
@@ -154,21 +154,24 @@ class NotifySite implements ShouldQueue {
         $database_info = $this->getDbConfigBySite($siteInfo);
         $this->useRemoteDbBySite($database_info);
         foreach ($coutryList as $forCoutry) {
-            $for_id = $forCoutry['id'];
-            $existIdList[] = $for_id;
-            $isExist = DB::connection('mysql')->table('countrys')->where("id", $for_id)->count();
-            if ($isExist) {
+            unset($forCoutry['id']);
+            $site_contory_id = DB::connection('mysql')->table('countrys')
+                                 ->where("name", $forCoutry['name'])
+                                 ->value("id");
+            if (!empty($site_contory_id)) {
+                $existIdList[] = $site_contory_id;
                 // 存在则更新
-                DB::connection('mysql')->table('countrys')->where("id", $for_id)->update($forCoutry);
+                DB::connection('mysql')->table('countrys')->where("id", $site_contory_id)->update($forCoutry);
             } else {
-                DB::connection('mysql')->table('countrys')->insert($forCoutry);
+                $site_contory_id = DB::connection('mysql')->table('countrys')->insertGetId($forCoutry);
+                $existIdList[] = $site_contory_id;
             }
         }
         DB::connection('mysql')->table('countrys')->whereNotIn("id", $existIdList)->delete();
     }
 
     public function syncSiteLanguage($siteInfo) {
-        //同步 price_editions
+        //同步 Language
         $languageList = AdminLanguage::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
@@ -190,7 +193,7 @@ class NotifySite implements ShouldQueue {
     }
 
     public function syncSiteSetting($siteInfo) {
-        //同步 price_editions
+        //同步 System SystemValues
         //只控制ip限流与ua限流配置
         $systemList = AdminSystem::query()->whereIn("alias", ['ip_limit_rules', 'ua_ban_rule', 'nginx_ban_rules',
                                                               'access_cnt_nginx_ban'])->get()->map(
@@ -226,11 +229,14 @@ class NotifySite implements ShouldQueue {
             $this->useLocalDb();
             $parentAlias = AdminSystem::query()->where("id", $forSystemValue['parent_id'])->value('alias');
             $this->useRemoteDbBySite($database_info);
-            $forSystemValue['parent_id'] = DB::connection('mysql')->table('systems')->where("alias", $parentAlias)->value('id');
+            $forSystemValue['parent_id'] = DB::connection('mysql')->table('systems')->where("alias", $parentAlias)
+                                             ->value('id');
             DB::connection('mysql')->table('system_values')->where("parent_id", $forSystemValue['parent_id'])->delete();
         }
         foreach ($systemValueList as $forsSystemValue) {
-            $siteSysId = DB::connection('mysql')->table('system_values')->where("key", $forsSystemValue['key'])->value('id');
+            $siteSysId = DB::connection('mysql')->table('system_values')->where("key", $forsSystemValue['key'])->value(
+                'id'
+            );
             unset($forsSystemValue['id']);
             //$forsSystemValue['updated_at'] = time();
             if ($siteSysId > 0) {
@@ -243,7 +249,7 @@ class NotifySite implements ShouldQueue {
     }
 
     public function syncSiteIpWhite($siteInfo) {
-        //同步 price_editions
+        //同步 BanWhite
         $BanWhiteList = AdminBanWhiteList::all()->map(function ($item) {
             return $item->getAttributes();
         })->toArray();
@@ -314,7 +320,6 @@ class NotifySite implements ShouldQueue {
 
         return $mysql;
     }
-
 
     private function useRemoteDbBySite($database_info) {
         // 定义新的数据库配置

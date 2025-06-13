@@ -533,6 +533,10 @@ class SyncThirdProductController extends CrudController {
                     $item['keywords_de'] = '';
                 }
                 //新增其他扩展字段
+                $item['product_class'] = $row['product_class'] ?? '';
+                $item['segment'] = $row['segment'] ?? '';
+                $item['division'] = $row['division'] ?? '';
+
                 $item['classification'] = $row['classification'] ?? '';
                 $item['application'] = $row['application'] ?? '';
                 //强校验几个字段

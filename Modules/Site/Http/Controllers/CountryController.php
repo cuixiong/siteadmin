@@ -4,7 +4,6 @@ namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\DictionaryValue;
-use Modules\Site\Http\Models\Country;
 
 class CountryController extends CrudController
 {

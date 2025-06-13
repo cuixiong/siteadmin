@@ -43,7 +43,7 @@ class OrderController extends CrudController {
             }
             $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_code',
                            'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at',
-                           'pay_coin_type', 'send_email_time'];
+                           'pay_coin_type', 'send_email_time' , 'is_mobile_pay'];
             $model = $model->select($fieldsList);
             // 数据排序. 默认降序
             if (empty($request->sort)) {
@@ -63,6 +63,13 @@ class OrderController extends CrudController {
                 }else{
                     $value['send_email_time_str'] = '';
                 }
+                if($value['is_mobile_pay'] == 1){
+                    $value['is_mobile_pay_text'] = '移动端';
+                }else{
+                    $value['is_mobile_pay_text'] = 'PC端';
+                }
+
+
                 $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
             }
