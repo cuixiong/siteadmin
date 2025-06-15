@@ -434,7 +434,7 @@ class ContactUsController extends CrudController
 
 
     /**
-     * 导出黑名单
+     * 导出留言
      */
     public function export(Request $request)
     {
@@ -471,8 +471,58 @@ class ContactUsController extends CrudController
             if (!(count($filterData) > 0)) {
                 ReturnJson(true, trans('lang.data_empty'));
             }
+
+            // 平台列表
+            $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
+            $productIdsArray = array_unique(array_column($filterData, 'product_id'));
+            $productsData = Products::query()->select(['id', 'keywords'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
+            $keywordsData = array_column($productsData, 'keywords', 'id');
+            $keywordsData = array_filter($keywordsData, function ($item) {
+                return $item !== "" && $item !== null;
+            });
+            $postSubjectData = [];
+            if ($keywordsData && count($keywordsData) > 0) {
+                // 查询课题
+                $postSubjectData = PostSubject::query()->select(['id', 'keywords', 'accepter'])
+                    ->whereIn('keywords', $keywordsData)
+                    ->where('propagate_status', 1)
+                    ->get()?->toArray() ?? [];
+            }
+            $urlData = [];
+            if ($postSubjectData && count($postSubjectData) > 0) {
+                // 课题查询帖子链接
+                $postSubjecIdsArray = array_column($postSubjectData, 'id');
+                $urlData = PostSubjectLink::query()
+                    ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
+                    ->whereIn('post_subject_id', $postSubjecIdsArray)
+                    ->get()->toArray();
+                $urlData = array_map(function ($urlItem) use ($platformList) {
+                    $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
+                    return $urlItem;
+                }, $urlData);
+            }
+
+            // 重新排列一下课题与链接数据的结构
+            $newUrlData = [];
+            foreach ($urlData as $key => $item) {
+                if (!isset($newUrlData[$item['post_subject_id']])) {
+                    $newUrlData[$item['post_subject_id']] = [];
+                }
+                $newUrlData[$item['post_subject_id']][] = $item;
+            }
+            $newPostSubjectData = [];
+            foreach ($postSubjectData as $key => $item) {
+                if (!isset($newPostSubjectData[$item['keywords']])) {
+                    $newPostSubjectData[$item['keywords']] = [];
+                }
+                $newPostSubjectData[$item['keywords']][] = $item;
+            }
+
+
         }
         $date = date('Ymd', time());
+        $domain = env('APP_DOMAIN');
+        $site = request()->header("Site");
         $excelHeader = [
             '编号',
             '分类',
@@ -488,6 +538,8 @@ class ContactUsController extends CrudController
             '地区(国外)',
             '地区(国内)',
             '创建时间',
+            '领取人',
+            '平台链接',
         ];
 
         // 创建 Spreadsheet 对象
@@ -511,6 +563,8 @@ class ContactUsController extends CrudController
         $sheet->getColumnDimension('J')->setWidth(30);  // 设置 J 列宽度
         $sheet->getColumnDimension('K')->setWidth(30);  // 设置 K 列宽度
         $sheet->getColumnDimension('L')->setWidth(30);  // 设置 L 列宽度
+        $sheet->getColumnDimension('M')->setWidth(30); 
+        $sheet->getColumnDimension('N')->setWidth(60); 
 
         foreach ($filterData as $item) {
 
@@ -540,12 +594,64 @@ class ContactUsController extends CrudController
             $sheet->setCellValue([13, $rowIndex + 1], '');
             $sheet->setCellValue([14, $rowIndex + 1], $item['created_at'] ?? '');
 
+            $keywords = $keywordsData[$item['product_id']] ?? '';
+            if (!empty($keywords)) {
+                
+                $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
+                foreach ($recordPostSubjectData as $recordPostSubjectKey => $recordPostSubjectItem) {
+                    $recordPostSubjectUrlData = $newUrlData[$recordPostSubjectItem['id']] ?? [];
+                    $isBefore = false;
+                    $tempUrlData = [];
+                    foreach ($recordPostSubjectUrlData as $recordPostSubjectUrlItem) {
+                        // 需要任一个帖子时间早于留言时间才能算中标
+                        if (strtotime($recordPostSubjectUrlItem['created_at']) < strtotime($item['created_at'])) {
+                            $isBefore = true;
+                        }
+                        $tempUrlData[] = [
+                            // 'id' => $recordPostSubjectUrlItem['id'],
+                            'link' => $recordPostSubjectUrlItem['link'],
+                            'post_subject_id' => $recordPostSubjectUrlItem['post_subject_id'],
+                            'post_platform_id'  => $recordPostSubjectUrlItem['post_platform_id'],
+                            'platform_name'  => $recordPostSubjectUrlItem['platform_name'],
+                            'created_at' => $recordPostSubjectUrlItem['created_at'],
+                        ];
+                    }
+                    if ($isBefore) {
+                        if($recordPostSubjectKey > 0){
+                            $rowIndex++;
+                        }
+
+                        $accepterName =  User::query()->where('id', $recordPostSubjectItem['accepter'])->value('nickname') ?? '未知';
+                        if (!empty($recordPostSubjectItem['id'])) {
+                            $subjectUpdateLink = $domain . '/#/' . $site . '/postTopicList/EditPostTopic?id=' . $recordPostSubjectItem['id'];
+                        } else {
+                            $subjectUpdateLink = '';
+                        }
+                        // 添加领取人,链接是课题链接
+                        $sheet->setCellValue([15, $rowIndex + 1], $accepterName);
+                        $sheet->getCell([15, $rowIndex + 1])->getHyperlink()->setUrl($subjectUpdateLink);
+                        $sheet->getStyle([15, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        // 添加平台,链接是帖子链接
+                        foreach ($tempUrlData as $tempUrlKey => $tempUrlItem) {
+                            if($tempUrlKey > 0){
+                                $rowIndex++;
+                            }
+                            $sheet->setCellValue([16, $rowIndex + 1], $tempUrlItem['platform_name']);
+                            $sheet->getCell([16, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
+                            $sheet->getStyle([16, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        }
+
+                    }
+                }
+            }
+
+
             $rowIndex++;
         }
 
         // 设置 HTTP 头部并导出文件
         $date = date('Ymd');
-        $filename = 'export-filter-' . count($filterData) . '-' . $date . '.xlsx';
+        $filename = 'export-messages-' . count($filterData) . '-' . $date . '.xlsx';
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment; filename=\"$filename\"");
