@@ -392,8 +392,13 @@ class OrderController extends CrudController {
                     $product_name .= Products::query()->where('id', $order_goods['goods_id'])->value("name")."\n";
                     $product_price .= $order_goods['goods_original_price']."\n";
                     $PriceEditionValueInfo = PriceEditionValue::query()->where('id', $order_goods['price_edition'])->first();
-                    $product_language .= $languageList[$PriceEditionValueInfo['language_id']]."\n";
-                    $product_edition .= $PriceEditionValueInfo['name']."\n";
+                    if(!empty($PriceEditionValueInfo )){
+                        $product_language .= $languageList[$PriceEditionValueInfo['language_id']]."\n";
+                        $product_edition .= $PriceEditionValueInfo['name']."\n";
+                    }else{
+                        $product_language .= '--'."\n";
+                        $product_edition .= '--'."\n";
+                    }
                     $product_quantity .= $order_goods['goods_number']."\n";
                 }
                 $row = [];
@@ -402,7 +407,7 @@ class OrderController extends CrudController {
                 $row[] = $item['email'];
                 $row[] = $item['phone'];
                 $row[] = $item['company'];
-                $row[] = Country::getCountryName($item['country_id']);;
+                $row[] = Country::getCountryName($item['country_id']) ?? '';
                 $row[] = $real_address;
                 $row[] = $product_name;
                 $row[] = $product_price;
