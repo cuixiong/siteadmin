@@ -377,7 +377,8 @@ class OrderController extends CrudController {
                 if (empty($Invoicetext)) {
                     $Invoicetext = '未开票';
                 }
-                $Symbol = PayConst::$coinTypeSymbol[$item['pay_coin_type']] ?? '';
+                //$Symbol = PayConst::$coinTypeSymbol[$item['pay_coin_type']] ?? '';
+                $Symbol = $item['pay_coin_type'];
                 $exchange_coupon_amount = bcmul($item['coupon_amount'], $exchange_rate, 2);
                 $exchange_order_amount = bcmul($item['order_amount'], $exchange_rate, 2);
                 $order_list = OrderGoods::query()->where("order_id", $item['id'])->get()->toArray();
@@ -409,7 +410,11 @@ class OrderController extends CrudController {
                 $row[] = $product_edition;
                 $row[] = $product_quantity;
                 $row[] = OrderConst::$PAY_STATUS_TYPE[$item['is_pay']];
-                $row[] = date('Y-m-d H:i:s', $item['pay_time']);
+                if(empty($item['pay_time'] )){
+                    $row[] = '';
+                }else {
+                    $row[] = date('Y-m-d H:i:s', $item['pay_time']);
+                }
                 $row[] = $Symbol.$exchange_order_amount;
                 $row[] = $Symbol.$exchange_coupon_amount;
                 $row[] = $Symbol.$item['actually_paid'];
