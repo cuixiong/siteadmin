@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Modules\Admin\Http\Models\City;
 use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\MessageCategory;
 use Modules\Site\Http\Models\MessageLanguageVersion;
@@ -22,8 +23,11 @@ use Modules\Site\Http\Models\Language;
 use Modules\Site\Http\Models\PostPlatform;
 use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\PostSubjectLink;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class ContactUsController extends CrudController {
+class ContactUsController extends CrudController
+{
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
 
     /**
@@ -34,7 +38,8 @@ class ContactUsController extends CrudController {
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    protected function list(Request $request) {
+    protected function list(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
@@ -59,7 +64,7 @@ class ContactUsController extends CrudController {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
             $record = $model->get()->toArray();
-            
+
             foreach ($record as &$value) {
                 if (!empty($value['send_email_time'])) {
                     $value['send_email_time_str'] = date('Y-m-d H:i:s', $value['send_email_time']);
@@ -69,7 +74,7 @@ class ContactUsController extends CrudController {
 
                 // 价格版本
                 $priceVersionName = '';
-                
+
                 if (!empty($value['price_edition'])) {
                     $priceEditionRecord = PriceEditionValue::query()->select(['name', 'language_id'])->where('id', $value['price_edition'])->first();
                     if ($priceEditionRecord) {
@@ -81,70 +86,94 @@ class ContactUsController extends CrudController {
                 $value['price_edition_name'] = $priceVersionName;
             }
 
-            // // 平台列表
-            // $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
-            // // 查询留言是否与课题有关联 (关键词关联、已宣传、留言创建时间大于任一帖子宣传时间)
-            // $productIdsArray = array_column($record, 'product_id');
-            // $productsData = Products::query()->select(['id', 'keywords'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
-            // $keywordsData = array_column($productsData, 'keywords', 'id');
-            // $keywordsData = array_filter($keywordsData, function ($value) {
-            //     return $value !== "" && $value !== null;
-            // });
-            // $postSubjectData = [];
-            // if ($keywordsData && count($keywordsData) > 0) {
-            //     // 查询课题
-            //     $postSubjectData = PostSubject::query()->select(['id', 'accepter'])
-            //         ->whereIn('keywords', $keywordsData)
-            //         ->where('propagate_status', 1)
-            //         ->get()?->toArray() ?? [];
-            // }
-            // $urlData = [];
-            // if ($postSubjectData && count($postSubjectData) > 0) {
-            //     // 课题查询帖子链接
-            //     $postSubjecIdsArray = array_column($postSubjectData, 'id');
-            //     $urlData = PostSubjectLink::query()->whereIn('post_subject_id', $postSubjecIdsArray)->get()->toArray();
-            // }
-            // // 组合筛选符合条件的课题、平台、帖子
-            // $newUrlData = [];
-            // foreach ($urlData as $key => $value) {
-            //     if (!isset($newUrlData[$value['post_subject_id']])) {
-            //         $newUrlData[$value['post_subject_id']] = [];
-            //     }
-            //     $newUrlData[$value['post_subject_id']][] = $value;
-            // }
-            // $newPostSubjectData = [];
-            // foreach ($postSubjectData as $key => $value) {
-            //     if (!isset($newUrlData[$value['post_subject_id']])) {
-            //         $newUrlData[$value['post_subject_id']] = [];
-            //     }
-            //     $newUrlData[$value['post_subject_id']][] = $value;
-            // }
+            // 平台列表
+            $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
+            // 查询留言是否与课题有关联 (关键词关联、已宣传、留言创建时间大于任一帖子宣传时间)
+            $productIdsArray = array_column($record, 'product_id');
+            $productsData = Products::query()->select(['id', 'keywords'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
+            $keywordsData = array_column($productsData, 'keywords', 'id');
+            $keywordsData = array_filter($keywordsData, function ($item) {
+                return $item !== "" && $item !== null;
+            });
+            $postSubjectData = [];
+            if ($keywordsData && count($keywordsData) > 0) {
+                // 查询课题
+                $postSubjectData = PostSubject::query()->select(['id', 'keywords', 'accepter'])
+                    ->whereIn('keywords', $keywordsData)
+                    ->where('propagate_status', 1)
+                    ->get()?->toArray() ?? [];
+            }
+            $urlData = [];
+            if ($postSubjectData && count($postSubjectData) > 0) {
+                // 课题查询帖子链接
+                $postSubjecIdsArray = array_column($postSubjectData, 'id');
+                $urlData = PostSubjectLink::query()
+                    ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
+                    ->whereIn('post_subject_id', $postSubjecIdsArray)
+                    ->get()->toArray();
+                $urlData = array_map(function ($urlItem) use ($platformList) {
+                    $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
+                    return $urlItem;
+                }, $urlData);
+            }
 
-            // foreach ($record as $key => $value) {
+            // 重新排列一下课题与链接数据的结构
+            $newUrlData = [];
+            foreach ($urlData as $key => $item) {
+                if (!isset($newUrlData[$item['post_subject_id']])) {
+                    $newUrlData[$item['post_subject_id']] = [];
+                }
+                $newUrlData[$item['post_subject_id']][] = $item;
+            }
+            $newPostSubjectData = [];
+            foreach ($postSubjectData as $key => $item) {
+                if (!isset($newPostSubjectData[$item['keywords']])) {
+                    $newPostSubjectData[$item['keywords']] = [];
+                }
+                $newPostSubjectData[$item['keywords']][] = $item;
+            }
+            // 给留言记录附上课题、帖子信息
+            foreach ($record as $key => $item) {
+                $keywords = $keywordsData[$item['product_id']] ?? '';
+                if (empty($keywords)) {
+                    $record[$key]['keywords'] = $keywords;
+                    continue;
+                }
 
-            //     $keywords = $keywordsData[$value['product_id']] ?? '';
-            //     if (empty($keywords)) {
-            //         continue;
-            //     }
-            //     $postSubjectData = PostSubject::query()->select(['id', 'accepter'])
-            //         ->where('keywords', $keywords)
-            //         ->where('propagate_status', 1)
-            //         ->get();
-            //     if ($postSubjectData) {
-            //         $postSubjectData = $postSubjectData->toArray();
-            //         // 宣传平台
-            //         $urlData = PostSubjectLink::query()->where(['post_subject_id' => $postSubjectData['id']])->get()->toArray();
-            //         $urlData = array_map(function ($urlItem) use ($platformList) {
-            //             $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
-            //             return $urlItem;
-            //         }, $urlData);
-            //         $value['post_subject']['url_data'] = $urlData;
-            //     }
-            // }
-            
-            // foreach ($record as $key => $value) {
-            
-            // }
+                $record[$key]['accepter_data'] = [];
+                $record[$key]['url_data'] = [];
+
+                $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
+                foreach ($recordPostSubjectData as $recordPostSubjectItem) {
+                    $recordPostSubjectUrlData = $newUrlData[$recordPostSubjectItem['id']] ?? [];
+                    $isBefore = false;
+                    $tempUrlData = [];
+                    foreach ($recordPostSubjectUrlData as $recordPostSubjectUrlItem) {
+                        // 需要任一个帖子时间早于留言时间才能算中标
+                        if (strtotime($recordPostSubjectUrlItem['created_at']) < strtotime($item['created_at'])) {
+                            $isBefore = true;
+                        }
+                        $tempUrlData[] = [
+                            // 'id' => $recordPostSubjectUrlItem['id'],
+                            'link' => $recordPostSubjectUrlItem['link'],
+                            'post_subject_id' => $recordPostSubjectUrlItem['post_subject_id'],
+                            'post_platform_id'  => $recordPostSubjectUrlItem['post_platform_id'],
+                            'platform_name'  => $recordPostSubjectUrlItem['platform_name'],
+                            'created_at' => $recordPostSubjectUrlItem['created_at'],
+                        ];
+                    }
+                    if ($isBefore) {
+                        $record[$key]['url_data'] = $tempUrlData;
+                        $record[$key]['accepter_data'][] = [
+                            'post_subject_id' => $recordPostSubjectItem['id'],
+                            'accepter' => $recordPostSubjectItem['accepter'],
+                            'accepter_name' => User::query()->where('id', $recordPostSubjectItem['accepter'])->value('nickname') ?? '未知',
+                            'keywords' => $recordPostSubjectItem['keywords'],
+                        ];
+                    }
+                }
+            }
+
             $data = [
                 'total' => $total,
                 'list'  => $record
@@ -155,30 +184,42 @@ class ContactUsController extends CrudController {
         }
     }
 
-    public function options(Request $request) {
+    public function options(Request $request)
+    {
         $options = [];
         $codes = ['Switch_State', 'Channel_Type', 'Buy_Time'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
         $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
-                               ->orderBy('sort', 'asc')->get()->toArray();
+            ->orderBy('sort', 'asc')->get()->toArray();
         if (!empty($data)) {
             foreach ($data as $map) {
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
             }
         }
-        $options['categorys'] = (new MessageCategory)->GetListLabel(['id as value', 'name as label'], false, '',
-                                                                    ['status' => 1]);
-        $options['language_version'] = (new MessageLanguageVersion())->GetListLabel(['id as value', 'name as label'],
-                                                                                    false, '', ['status' => 1]);
+        $options['categorys'] = (new MessageCategory)->GetListLabel(
+            ['id as value', 'name as label'],
+            false,
+            '',
+            ['status' => 1]
+        );
+        $options['language_version'] = (new MessageLanguageVersion())->GetListLabel(
+            ['id as value', 'name as label'],
+            false,
+            '',
+            ['status' => 1]
+        );
         $options['country'] = Country::where('status', 1)->select('id as value', 'name as label')->orderBy(
-            'sort', 'asc'
+            'sort',
+            'asc'
         )->get()->toArray();
         $provinces = City::where(['status' => 1, 'type' => 1])->select('id as value', 'name as label')->orderBy(
-            'id', 'asc'
+            'id',
+            'asc'
         )->get()->toArray();
         foreach ($provinces as $key => $province) {
             $cities = City::where(['status' => 1, 'type' => 2, 'pid' => $province['value']])->select(
-                'id as value', 'name as label'
+                'id as value',
+                'name as label'
             )->orderBy('id', 'asc')->get()->toArray();
             $provinces[$key]['children'] = $cities;
         }
@@ -192,7 +233,8 @@ class ContactUsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeStatus(Request $request) {
+    public function changeStatus(Request $request)
+    {
         try {
             $ids = $request->ids;
             if (empty($ids)) {
@@ -223,7 +265,8 @@ class ContactUsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchUpdateParam(Request $request) {
+    public function batchUpdateParam(Request $request)
+    {
         $field = [
             [
                 'name'  => '状态',
@@ -240,7 +283,8 @@ class ContactUsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchUpdateOption(Request $request) {
+    public function batchUpdateOption(Request $request)
+    {
         $input = $request->all();
         $keyword = $input['keyword'];
         $data = [];
@@ -251,11 +295,20 @@ class ContactUsController extends CrudController {
                 $field = ['name as label', 'value'];
             }
             $data = (new DictionaryValue())->GetListLabel(
-                $field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']
+                $field,
+                false,
+                '',
+                ['code' => 'Show_Home_State', 'status' => 1],
+                ['sort' => 'ASC']
             );
         } elseif ($keyword == 'country_id') {
-            $data = (new Region())->GetListLabel(['id as value', 'name as label'], false, '', ['status' => 1],
-                                                 ['sort' => 'ASC']);
+            $data = (new Region())->GetListLabel(
+                ['id as value', 'name as label'],
+                false,
+                '',
+                ['status' => 1],
+                ['sort' => 'ASC']
+            );
         }
         ReturnJson(true, trans('lang.request_success'), $data);
     }
@@ -265,7 +318,8 @@ class ContactUsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchUpdate(Request $request) {
+    public function batchUpdate(Request $request)
+    {
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $keyword = $input['keyword'] ?? '';
@@ -277,7 +331,7 @@ class ContactUsController extends CrudController {
             //选中
             $ids = explode(',', $ids);
             if (!(count($ids) > 0)) {
-                ReturnJson(true, trans('lang.param_empty').':ids');
+                ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
             $model = $ModelInstance->whereIn('id', $ids);
         } else {
@@ -307,7 +361,8 @@ class ContactUsController extends CrudController {
     /**
      *  重新发送邮件
      */
-    public function againSendEmail(Request $request) {
+    public function againSendEmail(Request $request)
+    {
         try {
             $ids = [];
             if (!empty($request->ids)) {
@@ -325,15 +380,15 @@ class ContactUsController extends CrudController {
                 ReturnJson(false, '站点配置异常');
             }
             if (strpos($domain, '://') === false) {
-                $domain = 'https://'.$domain;
+                $domain = 'https://' . $domain;
             }
-            $url = $domain.'/api/third/send-email';
+            $url = $domain . '/api/third/send-email';
             $sucCnt = 0;
             $errMsg = [];
             $mcate_list = MessageCategory::query()->pluck('code', 'id')->toArray();
             foreach ($ids as $id) {
                 $record = (new ContactUs())->findOrFail($id);
-                if(empty($record )){
+                if (empty($record)) {
                     continue;
                 }
                 //已支付与已完成
@@ -355,7 +410,7 @@ class ContactUsController extends CrudController {
             if (empty($errMsg)) {
                 ReturnJson(true, "发送成功:{$sucCnt}次");
             } else {
-                \Log::error('返回结果数据:'.json_encode($errMsg));
+                \Log::error('返回结果数据:' . json_encode($errMsg));
                 ReturnJson(false, '发送失败,未知错误');
             }
         } catch (\Exception $e) {
@@ -363,16 +418,263 @@ class ContactUsController extends CrudController {
         }
     }
 
-    public function makeSign($data, $signkey) {
+    public function makeSign($data, $signkey)
+    {
         unset($data['sign']);
         $signStr = '';
         ksort($data);
         foreach ($data as $key => $value) {
-            $signStr .= $key.'='.$value.'&';
+            $signStr .= $key . '=' . $value . '&';
         }
         $signStr .= "key={$signkey}";
 
         //dump($signStr);
         return md5($signStr);
+    }
+
+
+    /**
+     * 导出留言
+     */
+    public function export(Request $request)
+    {
+
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '-1'); // 不限制内存
+        $input = $request->all();
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+
+        $model = ContactUs::query();
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(true, trans('lang.param_empty') . ':ids');
+            }
+            $model = $model->whereIn('id', $ids);
+        } else {
+            //筛选
+            $search = $request->input('search') ?? [];
+            $model = (new ContactUs())->HandleSearch($model, $search);
+        }
+
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $data['count'] = $model->count();
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } else {
+            // //查询出涉及的id
+            // $idsData = $model->select('id')->pluck('id')->toArray();
+            $filterData = $model->get()->toArray();
+            if (!(count($filterData) > 0)) {
+                ReturnJson(true, trans('lang.data_empty'));
+            }
+
+            // 平台列表
+            $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
+            $productIdsArray = array_unique(array_column($filterData, 'product_id'));
+            $productsData = Products::query()->select(['id', 'keywords'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
+            $keywordsData = array_column($productsData, 'keywords', 'id');
+            $keywordsData = array_filter($keywordsData, function ($item) {
+                return $item !== "" && $item !== null;
+            });
+            $postSubjectData = [];
+            if ($keywordsData && count($keywordsData) > 0) {
+                // 查询课题
+                $postSubjectData = PostSubject::query()->select(['id', 'keywords', 'accepter'])
+                    ->whereIn('keywords', $keywordsData)
+                    ->where('propagate_status', 1)
+                    ->get()?->toArray() ?? [];
+            }
+            $urlData = [];
+            if ($postSubjectData && count($postSubjectData) > 0) {
+                // 课题查询帖子链接
+                $postSubjecIdsArray = array_column($postSubjectData, 'id');
+                $urlData = PostSubjectLink::query()
+                    ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
+                    ->whereIn('post_subject_id', $postSubjecIdsArray)
+                    ->get()->toArray();
+                $urlData = array_map(function ($urlItem) use ($platformList) {
+                    $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
+                    return $urlItem;
+                }, $urlData);
+            }
+
+            // 重新排列一下课题与链接数据的结构
+            $newUrlData = [];
+            foreach ($urlData as $key => $item) {
+                if (!isset($newUrlData[$item['post_subject_id']])) {
+                    $newUrlData[$item['post_subject_id']] = [];
+                }
+                $newUrlData[$item['post_subject_id']][] = $item;
+            }
+            $newPostSubjectData = [];
+            foreach ($postSubjectData as $key => $item) {
+                if (!isset($newPostSubjectData[$item['keywords']])) {
+                    $newPostSubjectData[$item['keywords']] = [];
+                }
+                $newPostSubjectData[$item['keywords']][] = $item;
+            }
+
+
+        }
+        $date = date('Ymd', time());
+        $domain = env('APP_DOMAIN');
+        $site = request()->header("Site");
+        $excelHeader = [
+            '编号',
+            '分类',
+            '报告名称',
+            '用户',
+            '邮箱',
+            '公司',
+            '部门',
+            '电话',
+            '购买时间',
+            '语言版本',
+            '渠道',
+            '地区(国加)',
+            '地区(省市)',
+            '创建时间',
+            '领取人',
+            '平台链接',
+        ];
+
+        // 创建 Spreadsheet 对象
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // 设置标题行
+        $sheet->fromArray([$excelHeader], null, 'A1');
+
+        // 填充数据
+        $rowIndex = 1;
+        $sheet->getColumnDimension('A')->setWidth(10);  // 设置 A 列宽度
+        $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
+        $sheet->getColumnDimension('C')->setWidth(40);  // 设置 C 列宽度
+        $sheet->getColumnDimension('D')->setWidth(10);  // 设置 D 列宽度
+        $sheet->getColumnDimension('E')->setWidth(20);  // 设置 E 列宽度
+        $sheet->getColumnDimension('F')->setWidth(20);  // 设置 F 列宽度
+        $sheet->getColumnDimension('G')->setWidth(20);  // 设置 G 列宽度
+        $sheet->getColumnDimension('H')->setWidth(20);  // 设置 H 列宽度
+        $sheet->getColumnDimension('I')->setWidth(20);  // 设置 I 列宽度
+        $sheet->getColumnDimension('J')->setWidth(20);  // 设置 J 列宽度
+        $sheet->getColumnDimension('K')->setWidth(20);  // 设置 K 列宽度
+        $sheet->getColumnDimension('L')->setWidth(20);  // 设置 L 列宽度
+        $sheet->getColumnDimension('M')->setWidth(20); 
+        $sheet->getColumnDimension('N')->setWidth(30); 
+        $sheet->getColumnDimension('O')->setWidth(30); 
+        $sheet->getColumnDimension('P')->setWidth(60); 
+
+        foreach ($filterData as $item) {
+
+            $sheet->setCellValue([1, $rowIndex + 1], $item['id']); // ID
+            $sheet->setCellValue([2, $rowIndex + 1], $item['category_name'] ?? '');  // 分类
+            $sheet->setCellValue([3, $rowIndex + 1], $item['product_name'] ?? '');  // 报告名称
+            $sheet->setCellValue([4, $rowIndex + 1], $item['name'] ?? '');    // 用户
+            $sheet->setCellValue([5, $rowIndex + 1], $item['email'] ?? '');
+            $sheet->setCellValue([6, $rowIndex + 1], $item['company'] ?? '');
+            $sheet->setCellValue([7, $rowIndex + 1], $item['department'] ?? '');
+            $sheet->setCellValue([8, $rowIndex + 1], $item['phone'] ?? '');
+            $sheet->setCellValue([9, $rowIndex + 1], $item['buy_time'] ?? '');
+
+            // 价格版本
+            $priceVersionName = '';
+            if (!empty($item['price_edition'])) {
+                $priceEditionRecord = PriceEditionValue::query()->select(['name', 'language_id'])->where('id', $item['price_edition'])->first();
+                if ($priceEditionRecord) {
+                    $priceEditionData = $priceEditionRecord->toArray();
+                    $languageName = Language::where('id', $priceEditionData['language_id'])->value('name');
+                    $priceVersionName =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                }
+            }
+            $sheet->setCellValue([10, $rowIndex + 1], $priceVersionName ?? '');
+            $sheet->setCellValue([11, $rowIndex + 1], $item['channel_name'] ?? '');
+
+            $countryName = '';
+            if (!empty($item['country_id'])) {
+                $countryName = Country::getCountryName($item['country_id']);
+            }
+            $sheet->setCellValue([12, $rowIndex + 1], $countryName);
+            $provinceName = '';
+            if (!empty($item['province_id'])) {
+                $provinceName = City::query()->where('id', $item['province_id'])->value('name');
+            }
+            $cityName = '';
+            if (!empty($item['city_id'])) {
+                $cityName = City::query()->where('id', $item['city_id'])->value('name');
+            }
+            $sheet->setCellValue([13, $rowIndex + 1], $provinceName.' '.$cityName);
+            $sheet->setCellValue([14, $rowIndex + 1], $item['created_at'] ?? '');
+
+            $keywords = $keywordsData[$item['product_id']] ?? '';
+            if (!empty($keywords)) {
+                
+                $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
+                foreach ($recordPostSubjectData as $recordPostSubjectKey => $recordPostSubjectItem) {
+                    $recordPostSubjectUrlData = $newUrlData[$recordPostSubjectItem['id']] ?? [];
+                    $isBefore = false;
+                    $tempUrlData = [];
+                    foreach ($recordPostSubjectUrlData as $recordPostSubjectUrlItem) {
+                        // 需要任一个帖子时间早于留言时间才能算中标
+                        if (strtotime($recordPostSubjectUrlItem['created_at']) < strtotime($item['created_at'])) {
+                            $isBefore = true;
+                        }
+                        $tempUrlData[] = [
+                            // 'id' => $recordPostSubjectUrlItem['id'],
+                            'link' => $recordPostSubjectUrlItem['link'],
+                            'post_subject_id' => $recordPostSubjectUrlItem['post_subject_id'],
+                            'post_platform_id'  => $recordPostSubjectUrlItem['post_platform_id'],
+                            'platform_name'  => $recordPostSubjectUrlItem['platform_name'],
+                            'created_at' => $recordPostSubjectUrlItem['created_at'],
+                        ];
+                    }
+                    if ($isBefore) {
+                        if($recordPostSubjectKey > 0){
+                            $rowIndex++;
+                        }
+
+                        $accepterName =  User::query()->where('id', $recordPostSubjectItem['accepter'])->value('nickname') ?? '未知';
+                        if (!empty($recordPostSubjectItem['id'])) {
+                            $subjectUpdateLink = $domain . '/#/' . $site . '/postTopicList/EditPostTopic?id=' . $recordPostSubjectItem['id'];
+                        } else {
+                            $subjectUpdateLink = '';
+                        }
+                        // 添加领取人,链接是课题链接
+                        $sheet->setCellValue([15, $rowIndex + 1], $accepterName);
+                        $sheet->getCell([15, $rowIndex + 1])->getHyperlink()->setUrl($subjectUpdateLink);
+                        $sheet->getStyle([15, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        // 添加平台,链接是帖子链接
+                        foreach ($tempUrlData as $tempUrlKey => $tempUrlItem) {
+                            if($tempUrlKey > 0){
+                                $rowIndex++;
+                            }
+                            $sheet->setCellValue([16, $rowIndex + 1], $tempUrlItem['platform_name']);
+                            $sheet->getCell([16, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
+                            $sheet->getStyle([16, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        }
+
+                    }
+                }
+            }
+
+
+            $rowIndex++;
+        }
+
+        // 设置 HTTP 头部并导出文件
+        $date = date('Ymd');
+        $filename = 'export-messages-' . count($filterData) . '-' . $date . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+
+        exit;
     }
 }

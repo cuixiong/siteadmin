@@ -582,6 +582,8 @@ Route::middleware([
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateOption'])->name('联系我们:批量修改参数子项');
         Route::post('batch-update', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdate'])->name('联系我们:批量修改');
         Route::get('again-send-email', [Modules\Site\Http\Controllers\ContactUsController::class, 'againSendEmail'])->name('联系我们:重新发送邮件');
+
+        Route::post('export', [Modules\Site\Http\Controllers\ContactUsController::class, 'export'])->name('联系我们:导出');
     });
 
     Route::prefix('message-language-version')->group(function () {
