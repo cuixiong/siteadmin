@@ -171,8 +171,17 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\OrderController::class, 'destroy'])->name('订单管理:删除订单');
 
         Route::post('send-order-email', [App\Http\Controllers\SiteEmailController::class, 'sendOrderEmail'])->name('订单管理:补发邮件');
-
+        Route::post('export', [Modules\Site\Http\Controllers\OrderController::class, 'export'])->name('订单管理:批量导出');
     });
+
+    // Order导出控制器
+    Route::prefix('order-export-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\OrderExportLogController::class, 'list'])->name('导出记录:导出列表');
+        Route::post('destroy', [Modules\Site\Http\Controllers\OrderExportLogController::class, 'destroy'])->name('导出记录:删除记录');
+        Route::post('export-process', [Modules\Site\Http\Controllers\OrderExportLogController::class, 'exportProcess'])->name('导出记录:导出进度');
+        Route::post('export-file-download', [Modules\Site\Http\Controllers\OrderExportLogController::class, 'exportFileDownload'])->name('导出记录:下载导出文件');
+    });
+
 
     // ShopCart 控制器
     Route::prefix('shop-cart')->group(function () {
