@@ -163,7 +163,7 @@ class ContactUsController extends CrudController
                         ];
                     }
                     if ($isBefore) {
-                        $record[$key]['url_data'] = $tempUrlData;
+                        $record[$key]['url_data'] = array_merge($record[$key]['url_data'], $tempUrlData);
                         $record[$key]['accepter_data'][] = [
                             'post_subject_id' => $recordPostSubjectItem['id'],
                             'accepter' => $recordPostSubjectItem['accepter'],
@@ -517,8 +517,6 @@ class ContactUsController extends CrudController
                 }
                 $newPostSubjectData[$item['keywords']][] = $item;
             }
-
-
         }
         $date = date('Ymd', time());
         $domain = env('APP_DOMAIN');
@@ -563,10 +561,10 @@ class ContactUsController extends CrudController
         $sheet->getColumnDimension('J')->setWidth(20);  // 设置 J 列宽度
         $sheet->getColumnDimension('K')->setWidth(20);  // 设置 K 列宽度
         $sheet->getColumnDimension('L')->setWidth(20);  // 设置 L 列宽度
-        $sheet->getColumnDimension('M')->setWidth(20); 
-        $sheet->getColumnDimension('N')->setWidth(30); 
-        $sheet->getColumnDimension('O')->setWidth(30); 
-        $sheet->getColumnDimension('P')->setWidth(60); 
+        $sheet->getColumnDimension('M')->setWidth(20);
+        $sheet->getColumnDimension('N')->setWidth(30);
+        $sheet->getColumnDimension('O')->setWidth(30);
+        $sheet->getColumnDimension('P')->setWidth(60);
 
         foreach ($filterData as $item) {
 
@@ -606,12 +604,12 @@ class ContactUsController extends CrudController
             if (!empty($item['city_id'])) {
                 $cityName = City::query()->where('id', $item['city_id'])->value('name');
             }
-            $sheet->setCellValue([13, $rowIndex + 1], $provinceName.' '.$cityName);
+            $sheet->setCellValue([13, $rowIndex + 1], $provinceName . ' ' . $cityName);
             $sheet->setCellValue([14, $rowIndex + 1], $item['created_at'] ?? '');
 
             $keywords = $keywordsData[$item['product_id']] ?? '';
             if (!empty($keywords)) {
-                
+
                 $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
                 foreach ($recordPostSubjectData as $recordPostSubjectKey => $recordPostSubjectItem) {
                     $recordPostSubjectUrlData = $newUrlData[$recordPostSubjectItem['id']] ?? [];
@@ -632,7 +630,7 @@ class ContactUsController extends CrudController
                         ];
                     }
                     if ($isBefore) {
-                        if($recordPostSubjectKey > 0){
+                        if ($recordPostSubjectKey > 0) {
                             $rowIndex++;
                         }
 
@@ -648,14 +646,13 @@ class ContactUsController extends CrudController
                         $sheet->getStyle([15, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                         // 添加平台,链接是帖子链接
                         foreach ($tempUrlData as $tempUrlKey => $tempUrlItem) {
-                            if($tempUrlKey > 0){
+                            if ($tempUrlKey > 0) {
                                 $rowIndex++;
                             }
                             $sheet->setCellValue([16, $rowIndex + 1], $tempUrlItem['platform_name']);
                             $sheet->getCell([16, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
                             $sheet->getStyle([16, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                         }
-
                     }
                 }
             }
