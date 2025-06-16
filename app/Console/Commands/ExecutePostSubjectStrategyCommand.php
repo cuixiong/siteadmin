@@ -48,7 +48,7 @@ class ExecutePostSubjectStrategyCommand extends Command {
         }
         tenancy()->initialize($siteName);
         
-        $configs = PostSubjectStrategy::query()->andWhere(['status' => 1,])->get()->toArray();
+        $configs = PostSubjectStrategy::query()->where('status',1)->get()->toArray();
         foreach ($configs as $config) {
             $result = (new PostSubjectStrategy())->assignStrategy(2, $config);
             echo $result['msg'];

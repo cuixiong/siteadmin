@@ -611,7 +611,10 @@ class ProductsController extends CrudController {
     protected function form(Request $request) {
         try {
             $this->ValidateInstance($request);
-            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record = $this->ModelInstance()->query()->where('id', $request->id)->first();
+            if(!$record){
+                ReturnJson(false, '报告不存在');
+            };
             $year = date('Y', $record['published_date']);
             $descriptionData = (new ProductsDescription($year))->where('product_id', $record['id'])->first();
             if (!empty($descriptionData)) {
@@ -669,7 +672,10 @@ class ProductsController extends CrudController {
             // DB::connection($currentTenant->getConnectionName())->beginTransaction();
             DB::beginTransaction();
             $model = $this->ModelInstance();
-            $record = $model->findOrFail($input['id']);
+            $record = $model->query()->where('id', $input['id'])->first(); ;
+            if(!$record){
+                ReturnJson(false, '报告不存在');
+            };
             //旧纪录年份
             $oldYear = Products::publishedDateFormatYear($record->published_date);
             //新纪录年份
