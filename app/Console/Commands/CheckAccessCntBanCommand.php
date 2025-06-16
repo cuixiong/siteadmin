@@ -56,9 +56,9 @@ class CheckAccessCntBanCommand extends Command {
                 }
             }
         } catch (\Exception $e) {
-            \Log::error(
-                '检测nginx负载异常:'.json_encode([$e->getMessage()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
-            );
+//            \Log::error(
+//                '检测nginx负载异常:'.json_encode([$e->getMessage()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
+//            );
             echo $e->getMessage().PHP_EOL;
             exit;
         }
@@ -149,9 +149,9 @@ class CheckAccessCntBanCommand extends Command {
         $nginx_reload_path = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
         exec($nginx_reload_path, $output, $return_var);
         if ($return_var) {
-            \Log::error('重启nginx失败:'.json_encode($output));
+//            \Log::error('重启nginx失败:'.json_encode($output));
         } else {
-            \Log::info('重启nginx成功:'.json_encode($output));
+//            \Log::error('重启nginx成功:'.json_encode($output));
         }
     }
 
@@ -271,7 +271,7 @@ class CheckAccessCntBanCommand extends Command {
             $execute_reload_res = $this->executeCommands($ssh, $echo_sh_commands);
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
             $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);
-            \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+//            \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         }
     }
 

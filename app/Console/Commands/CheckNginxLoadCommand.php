@@ -69,10 +69,10 @@ class CheckNginxLoadCommand extends Command {
 
                 if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
-                    \Log::error(
-                        "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
-                        .__LINE__
-                    );
+//                    \Log::error(
+//                        "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
+//                        .__LINE__
+//                    );
                     echo "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".PHP_EOL;
                     $this->writeNginxConf($banStr, $siteNginxConfInfo);
                     $this->reloadNginx();
@@ -86,9 +86,9 @@ class CheckNginxLoadCommand extends Command {
                 }
             }
         } catch (\Exception $e) {
-            \Log::error(
-                '检测nginx负载异常:'.json_encode([$e->getMessage()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
-            );
+//            \Log::error(
+//                '检测nginx负载异常:'.json_encode([$e->getMessage()]).'  文件路径:'.__CLASS__.'  行号:'.__LINE__
+//            );
             echo $e->getMessage().PHP_EOL;
             exit;
         }
@@ -286,9 +286,9 @@ class CheckNginxLoadCommand extends Command {
         $nginx_reload_path = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
         exec($nginx_reload_path, $output, $return_var);
         if ($return_var) {
-            \Log::error('重启nginx失败:'.json_encode($output));
+//            \Log::error('重启nginx失败:'.json_encode($output));
         } else {
-            \Log::info('重启nginx成功:'.json_encode($output));
+//            \Log::error('重启nginx成功:'.json_encode($output));
         }
     }
 
@@ -329,10 +329,10 @@ class CheckNginxLoadCommand extends Command {
             $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
             //$banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
             $banStr = $this->getBlackBanNginxStr($sysValList);
-            \Log::error(
-                "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
-                .__LINE__
-            );
+//            \Log::error(
+//                "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
+//                .__LINE__
+//            );
             //$this->writeNginxConf($banStr, $siteNginxConfInfo); //open_basedir restriction in effect.
             //连接远程服务器
             $ssh = new SSH2($ssh_host);
@@ -356,7 +356,7 @@ class CheckNginxLoadCommand extends Command {
             //$this->reloadNginx();
             $nginx_reload_commands = 'sh /www/wwwroot/nginx_shell/nginx_reload.sh';
             $execute_reload_res = $this->executeCommands($ssh, $nginx_reload_commands);
-            \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
+//            \Log::error('重启结果:'.json_encode($execute_reload_res).'  文件路径:'.__CLASS__.'  行号:'.__LINE__);
         }
     }
 
