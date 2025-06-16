@@ -535,8 +535,8 @@ class ContactUsController extends CrudController
             '购买时间',
             '语言版本',
             '渠道',
-            '地区(国外)',
-            '地区(国内)',
+            '地区(国加)',
+            '地区(省市)',
             '创建时间',
             '领取人',
             '平台链接',
@@ -551,20 +551,22 @@ class ContactUsController extends CrudController
 
         // 填充数据
         $rowIndex = 1;
-        $sheet->getColumnDimension('A')->setWidth(20);  // 设置 A 列宽度
-        $sheet->getColumnDimension('B')->setWidth(30);  // 设置 B 列宽度
+        $sheet->getColumnDimension('A')->setWidth(10);  // 设置 A 列宽度
+        $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
         $sheet->getColumnDimension('C')->setWidth(40);  // 设置 C 列宽度
-        $sheet->getColumnDimension('D')->setWidth(30);  // 设置 D 列宽度
-        $sheet->getColumnDimension('E')->setWidth(30);  // 设置 E 列宽度
-        $sheet->getColumnDimension('F')->setWidth(30);  // 设置 F 列宽度
-        $sheet->getColumnDimension('G')->setWidth(30);  // 设置 G 列宽度
-        $sheet->getColumnDimension('H')->setWidth(30);  // 设置 H 列宽度
-        $sheet->getColumnDimension('I')->setWidth(30);  // 设置 I 列宽度
-        $sheet->getColumnDimension('J')->setWidth(30);  // 设置 J 列宽度
-        $sheet->getColumnDimension('K')->setWidth(30);  // 设置 K 列宽度
-        $sheet->getColumnDimension('L')->setWidth(30);  // 设置 L 列宽度
-        $sheet->getColumnDimension('M')->setWidth(30); 
-        $sheet->getColumnDimension('N')->setWidth(60); 
+        $sheet->getColumnDimension('D')->setWidth(10);  // 设置 D 列宽度
+        $sheet->getColumnDimension('E')->setWidth(20);  // 设置 E 列宽度
+        $sheet->getColumnDimension('F')->setWidth(20);  // 设置 F 列宽度
+        $sheet->getColumnDimension('G')->setWidth(20);  // 设置 G 列宽度
+        $sheet->getColumnDimension('H')->setWidth(20);  // 设置 H 列宽度
+        $sheet->getColumnDimension('I')->setWidth(20);  // 设置 I 列宽度
+        $sheet->getColumnDimension('J')->setWidth(20);  // 设置 J 列宽度
+        $sheet->getColumnDimension('K')->setWidth(20);  // 设置 K 列宽度
+        $sheet->getColumnDimension('L')->setWidth(20);  // 设置 L 列宽度
+        $sheet->getColumnDimension('M')->setWidth(20); 
+        $sheet->getColumnDimension('N')->setWidth(30); 
+        $sheet->getColumnDimension('O')->setWidth(30); 
+        $sheet->getColumnDimension('P')->setWidth(60); 
 
         foreach ($filterData as $item) {
 
@@ -576,7 +578,7 @@ class ContactUsController extends CrudController
             $sheet->setCellValue([6, $rowIndex + 1], $item['company'] ?? '');
             $sheet->setCellValue([7, $rowIndex + 1], $item['department'] ?? '');
             $sheet->setCellValue([8, $rowIndex + 1], $item['phone'] ?? '');
-            $sheet->setCellValue([9, $rowIndex + 1], $item['buy_time_name'] ?? '');
+            $sheet->setCellValue([9, $rowIndex + 1], $item['buy_time'] ?? '');
 
             // 价格版本
             $priceVersionName = '';
@@ -590,8 +592,21 @@ class ContactUsController extends CrudController
             }
             $sheet->setCellValue([10, $rowIndex + 1], $priceVersionName ?? '');
             $sheet->setCellValue([11, $rowIndex + 1], $item['channel_name'] ?? '');
-            $sheet->setCellValue([12, $rowIndex + 1], '');
-            $sheet->setCellValue([13, $rowIndex + 1], '');
+
+            $countryName = '';
+            if (!empty($item['country_id'])) {
+                $countryName = Country::getCountryName($item['country_id']);
+            }
+            $sheet->setCellValue([12, $rowIndex + 1], $countryName);
+            $provinceName = '';
+            if (!empty($item['province_id'])) {
+                $provinceName = City::query()->where('id', $item['province_id'])->value('name');
+            }
+            $cityName = '';
+            if (!empty($item['city_id'])) {
+                $cityName = City::query()->where('id', $item['city_id'])->value('name');
+            }
+            $sheet->setCellValue([13, $rowIndex + 1], $provinceName.' '.$cityName);
             $sheet->setCellValue([14, $rowIndex + 1], $item['created_at'] ?? '');
 
             $keywords = $keywordsData[$item['product_id']] ?? '';
