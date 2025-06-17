@@ -162,10 +162,11 @@ class NginxBanListController extends CrudController {
                 $request->service_type = 1;
             }
             //过滤业务类型
-            $query = $query->where("service_type", $request->service_type);
-
             foreach ($ban_str as $ban_str_item){
-                $query->where("ban_str", 'like' , "%{$ban_str_item}%")->delete();
+                NginxBanList::query()
+                    ->where("service_type", $request->service_type)
+                    ->where("ban_str", 'like' , "%{$ban_str_item}%")
+                    ->delete();
             }
 
             if($request->service_typ == 1){
