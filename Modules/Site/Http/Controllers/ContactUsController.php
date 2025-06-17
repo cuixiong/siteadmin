@@ -90,9 +90,13 @@ class ContactUsController extends CrudController
             $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
             // 查询留言是否与课题有关联 (关键词关联、已宣传、留言创建时间大于任一帖子宣传时间)
             $productIdsArray = array_column($record, 'product_id');
-            $productsData = Products::query()->select(['id', 'keywords'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
+            $productsData = Products::query()->select(['id', 'keywords', 'url'])->whereIn('id', $productIdsArray)->get()?->toArray() ?? [];
             $keywordsData = array_column($productsData, 'keywords', 'id');
             $keywordsData = array_filter($keywordsData, function ($item) {
+                return $item !== "" && $item !== null;
+            });
+            $productUrlData = array_column($productsData, 'url', 'id');
+            $productUrlData = array_filter($productUrlData, function ($item) {
                 return $item !== "" && $item !== null;
             });
             $postSubjectData = [];
@@ -135,10 +139,11 @@ class ContactUsController extends CrudController
             // 给留言记录附上课题、帖子信息
             foreach ($record as $key => $item) {
                 $keywords = $keywordsData[$item['product_id']] ?? '';
+                $record[$key]['keywords'] = $keywords;
                 if (empty($keywords)) {
-                    $record[$key]['keywords'] = $keywords;
                     continue;
                 }
+                $record[$key]['product_url'] = $productUrlData[$item['product_id']] ?? '';
 
                 $record[$key]['accepter_data'] = [];
                 $record[$key]['url_data'] = [];
@@ -467,7 +472,7 @@ class ContactUsController extends CrudController
         } else {
             // //查询出涉及的id
             // $idsData = $model->select('id')->pluck('id')->toArray();
-            $filterData = $model->get()->toArray();
+            $filterData = $model->orderBy('id','desc')->get()->toArray();
             if (!(count($filterData) > 0)) {
                 ReturnJson(true, trans('lang.data_empty'));
             }
@@ -525,6 +530,7 @@ class ContactUsController extends CrudController
             '编号',
             '分类',
             '报告名称',
+            '关键词',
             '用户',
             '邮箱',
             '公司',
@@ -533,9 +539,10 @@ class ContactUsController extends CrudController
             '购买时间',
             '语言版本',
             '渠道',
-            '地区(国加)',
+            '地区(国家)',
             '地区(省市)',
             '创建时间',
+            '内容',
             '领取人',
             '平台链接',
         ];
@@ -550,33 +557,38 @@ class ContactUsController extends CrudController
         // 填充数据
         $rowIndex = 1;
         $sheet->getColumnDimension('A')->setWidth(10);  // 设置 A 列宽度
-        $sheet->getColumnDimension('B')->setWidth(20);  // 设置 B 列宽度
-        $sheet->getColumnDimension('C')->setWidth(40);  // 设置 C 列宽度
-        $sheet->getColumnDimension('D')->setWidth(10);  // 设置 D 列宽度
-        $sheet->getColumnDimension('E')->setWidth(20);  // 设置 E 列宽度
+        $sheet->getColumnDimension('B')->setWidth(15);  // 设置 B 列宽度
+        $sheet->getColumnDimension('C')->setWidth(30);  // 设置 C 列宽度
+        $sheet->getColumnDimension('D')->setWidth(15);  // 设置 D 列宽度
+        $sheet->getColumnDimension('E')->setWidth(15);  // 设置 E 列宽度
         $sheet->getColumnDimension('F')->setWidth(20);  // 设置 F 列宽度
         $sheet->getColumnDimension('G')->setWidth(20);  // 设置 G 列宽度
-        $sheet->getColumnDimension('H')->setWidth(20);  // 设置 H 列宽度
+        $sheet->getColumnDimension('H')->setWidth(10);  // 设置 H 列宽度
         $sheet->getColumnDimension('I')->setWidth(20);  // 设置 I 列宽度
-        $sheet->getColumnDimension('J')->setWidth(20);  // 设置 J 列宽度
-        $sheet->getColumnDimension('K')->setWidth(20);  // 设置 K 列宽度
-        $sheet->getColumnDimension('L')->setWidth(20);  // 设置 L 列宽度
-        $sheet->getColumnDimension('M')->setWidth(20);
-        $sheet->getColumnDimension('N')->setWidth(30);
-        $sheet->getColumnDimension('O')->setWidth(30);
+        $sheet->getColumnDimension('J')->setWidth(10);  // 设置 J 列宽度
+        $sheet->getColumnDimension('K')->setWidth(10);  // 设置 K 列宽度
+        $sheet->getColumnDimension('L')->setWidth(10);  // 设置 L 列宽度
+        $sheet->getColumnDimension('M')->setWidth(15);
+        $sheet->getColumnDimension('N')->setWidth(15);
+        $sheet->getColumnDimension('O')->setWidth(20);
         $sheet->getColumnDimension('P')->setWidth(60);
+        $sheet->getColumnDimension('Q')->setWidth(30);
+        $sheet->getColumnDimension('R')->setWidth(60);
 
         foreach ($filterData as $item) {
+
+            $keywords = $keywordsData[$item['product_id']] ?? '';
 
             $sheet->setCellValue([1, $rowIndex + 1], $item['id']); // ID
             $sheet->setCellValue([2, $rowIndex + 1], $item['category_name'] ?? '');  // 分类
             $sheet->setCellValue([3, $rowIndex + 1], $item['product_name'] ?? '');  // 报告名称
-            $sheet->setCellValue([4, $rowIndex + 1], $item['name'] ?? '');    // 用户
-            $sheet->setCellValue([5, $rowIndex + 1], $item['email'] ?? '');
-            $sheet->setCellValue([6, $rowIndex + 1], $item['company'] ?? '');
-            $sheet->setCellValue([7, $rowIndex + 1], $item['department'] ?? '');
-            $sheet->setCellValue([8, $rowIndex + 1], $item['phone'] ?? '');
-            $sheet->setCellValue([9, $rowIndex + 1], $item['buy_time'] ?? '');
+            $sheet->setCellValue([4, $rowIndex + 1], $keywords);  // 关键词
+            $sheet->setCellValue([5, $rowIndex + 1], $item['name'] ?? '');    // 用户
+            $sheet->setCellValue([6, $rowIndex + 1], $item['email'] ?? '');
+            $sheet->setCellValue([7, $rowIndex + 1], $item['company'] ?? '');
+            $sheet->setCellValue([8, $rowIndex + 1], $item['department'] ?? '');
+            $sheet->setCellValue([9, $rowIndex + 1], $item['phone'] ?? '');
+            $sheet->setCellValue([10, $rowIndex + 1], $item['buy_time'] ?? '');
 
             // 价格版本
             $priceVersionName = '';
@@ -588,14 +600,14 @@ class ContactUsController extends CrudController
                     $priceVersionName =  (!empty($languageName) ? $languageName : '') . ' ' . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
-            $sheet->setCellValue([10, $rowIndex + 1], $priceVersionName ?? '');
-            $sheet->setCellValue([11, $rowIndex + 1], $item['channel_name'] ?? '');
+            $sheet->setCellValue([11, $rowIndex + 1], $priceVersionName ?? '');
+            $sheet->setCellValue([12, $rowIndex + 1], $item['channel_name'] ?? '');
 
             $countryName = '';
             if (!empty($item['country_id'])) {
                 $countryName = Country::getCountryName($item['country_id']);
             }
-            $sheet->setCellValue([12, $rowIndex + 1], $countryName);
+            $sheet->setCellValue([13, $rowIndex + 1], $countryName);
             $provinceName = '';
             if (!empty($item['province_id'])) {
                 $provinceName = City::query()->where('id', $item['province_id'])->value('name');
@@ -604,10 +616,10 @@ class ContactUsController extends CrudController
             if (!empty($item['city_id'])) {
                 $cityName = City::query()->where('id', $item['city_id'])->value('name');
             }
-            $sheet->setCellValue([13, $rowIndex + 1], $provinceName . ' ' . $cityName);
-            $sheet->setCellValue([14, $rowIndex + 1], $item['created_at'] ?? '');
-
-            $keywords = $keywordsData[$item['product_id']] ?? '';
+            $sheet->setCellValue([14, $rowIndex + 1], $provinceName . ' ' . $cityName);
+            $sheet->setCellValue([15, $rowIndex + 1], $item['created_at'] ?? '');
+            $sheet->setCellValue([16, $rowIndex + 1], $item['content'] ?? '');
+            
             if (!empty($keywords)) {
 
                 $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
@@ -641,17 +653,17 @@ class ContactUsController extends CrudController
                             $subjectUpdateLink = '';
                         }
                         // 添加领取人,链接是课题链接
-                        $sheet->setCellValue([15, $rowIndex + 1], $accepterName);
-                        $sheet->getCell([15, $rowIndex + 1])->getHyperlink()->setUrl($subjectUpdateLink);
-                        $sheet->getStyle([15, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                        $sheet->setCellValue([17, $rowIndex + 1], $accepterName);
+                        $sheet->getCell([17, $rowIndex + 1])->getHyperlink()->setUrl($subjectUpdateLink);
+                        $sheet->getStyle([17, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                         // 添加平台,链接是帖子链接
                         foreach ($tempUrlData as $tempUrlKey => $tempUrlItem) {
                             if ($tempUrlKey > 0) {
                                 $rowIndex++;
                             }
-                            $sheet->setCellValue([16, $rowIndex + 1], $tempUrlItem['platform_name']);
-                            $sheet->getCell([16, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
-                            $sheet->getStyle([16, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+                            $sheet->setCellValue([18, $rowIndex + 1], $tempUrlItem['platform_name']);
+                            $sheet->getCell([18, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
+                            $sheet->getStyle([18, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
                         }
                     }
                 }
