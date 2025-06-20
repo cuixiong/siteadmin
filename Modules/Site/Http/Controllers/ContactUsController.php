@@ -43,8 +43,8 @@ class ContactUsController extends CrudController
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
-            $model = $ModelInstance->query();
-            $model = $ModelInstance->HandleWhere($model, $request);
+            $model = ContactUs::from('contact_us as cu');
+            $model = $ModelInstance->HandleSearch($model, $request->search);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -59,9 +59,9 @@ class ContactUsController extends CrudController
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {
-                $model = $model->orderBy($request->order, $sort);
+                $model = $model->orderBy('cu.'. $request->order, $sort);
             } else {
-                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+                $model = $model->orderBy('cu.'.'sort', $sort)->orderBy('cu.'.'created_at', 'DESC');
             }
             $record = $model->get()->toArray();
 
@@ -192,7 +192,7 @@ class ContactUsController extends CrudController
     public function options(Request $request)
     {
         $options = [];
-        $codes = ['Switch_State', 'Channel_Type', 'Buy_Time'];
+        $codes = ['Switch_State', 'Channel_Type', 'Buy_Time', 'Message_Is_Bidding'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
         $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
             ->orderBy('sort', 'asc')->get()->toArray();
@@ -229,6 +229,11 @@ class ContactUsController extends CrudController
             $provinces[$key]['children'] = $cities;
         }
         $options['city'] = $provinces;
+
+        
+        // 领取人/发帖用户
+        $options['accepter'] = (new TemplateController())->getSitePostUser();
+
         ReturnJson(true, '', $options);
     }
 
