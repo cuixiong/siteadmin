@@ -23,7 +23,7 @@ class JwtMiddleware
                 return response()->json([
                     'code' => 'B001',
                     'message' => '账号不存在'
-                ], 404);
+                ]);
             }
             $token = $request->header('Authorization');
             $token = trim(str_replace('Bearer','',$token));
@@ -36,7 +36,7 @@ class JwtMiddleware
                     return response()->json([
                                                 'code' => -200,
                                                                   'message' => 'token is error'
-                                            ], 404);
+                                            ]);
                 }
             }
 
@@ -51,7 +51,7 @@ class JwtMiddleware
                     return response()->json([
                                                 'code' => -200,
                                                 'message' => 'token is error'
-                                            ], 404);
+                                            ]);
                 }
             }
 

@@ -71,7 +71,11 @@ class ContactUsController extends CrudController
                 } else {
                     $value['send_email_time_str'] = '';
                 }
-
+                if(!empty($value['product_id'] )){
+                    $value['url'] = Products::query()->where('id', $value['product_id'])->value('url');
+                }else{
+                    $value['url'] = '';
+                }
                 // 价格版本
                 $priceVersionName = '';
 
@@ -624,7 +628,7 @@ class ContactUsController extends CrudController
             $sheet->setCellValue([14, $rowIndex + 1], $provinceName . ' ' . $cityName);
             $sheet->setCellValue([15, $rowIndex + 1], $item['created_at'] ?? '');
             $sheet->setCellValue([16, $rowIndex + 1], $item['content'] ?? '');
-            
+
             if (!empty($keywords)) {
 
                 $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
