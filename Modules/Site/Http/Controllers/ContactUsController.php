@@ -55,7 +55,7 @@ class ContactUsController extends CrudController
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $model = $model->select($ModelInstance->ListSelect);
+            $model = $model->select(['cu.*']);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {

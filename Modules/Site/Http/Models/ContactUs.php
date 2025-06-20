@@ -123,6 +123,7 @@ class ContactUs extends Base
                 }
             });
         }
+        $isJoinProductTable = false;
         if (!empty($search)) {
             $timeArray = ['created_at', 'updated_at'];
             foreach ($search as $key => $value) {
@@ -132,41 +133,44 @@ class ContactUs extends Base
                     if (is_array($value)) {
                         $model = $model->whereBetween('cu.' . $key, $value);
                     }
-                } else if ($key == 'is_bidding') {
-                    if ($value == 1) {
+                } else if (in_array($key, ['is_bidding', 'accepter'])) {
+                    if(!$isJoinProductTable){
+                        $model->leftJoin((new Products())->getTable() . ' as p', 'cu.product_id', '=', 'p.id');
+                        $isJoinProductTable = true;
+                    }
+                    if ($key == 'is_bidding' && $value == 1) {
                         $model->whereExists(function ($query) {
                             $query->select(DB::raw(1))
                                 ->from('post_subject as ps')
                                 ->join('post_subject_link as psl', 'ps.id', '=', 'psl.post_subject_id')
                                 ->whereColumn('ps.keywords', 'p.keywords')
                                 ->where('psl.created_at', '<', DB::raw('cu.created_at'));
-                        })->join((new Products())->getTable() . ' as p', 'cu.product_id', '=', 'p.id');
-                    } elseif ($value === 0) {
-                        $model->leftJoin((new Products())->getTable() . ' as p', 'cu.product_id', '=', 'p.id')
-                            ->where(function ($query) {
-                                $query->whereNull('cu.product_id')
-                                    ->orWhere('cu.product_id', 0)
-                                    ->orWhere(function ($query) {
-                                        $query->whereNotNull('cu.product_id')
-                                            ->whereNotExists(function ($subQuery) {
-                                                $subQuery->select(DB::raw(1))
-                                                    ->from('post_subject as ps')
-                                                    ->join('post_subject_link as psl', 'ps.id', '=', 'psl.post_subject_id')
-                                                    ->whereRaw('ps.keywords = p.keywords')
-                                                    ->where('psl.created_at', '<', DB::raw('cu.created_at'));
-                                            });
-                                    });
-                            });
+                        });
+                    } elseif ($key == 'is_bidding' && $value === 0) {
+                        $model->where(function ($query) {
+                            $query->whereNull('cu.product_id')
+                                ->orWhere('cu.product_id', 0)
+                                ->orWhere(function ($query) {
+                                    $query->whereNotNull('cu.product_id')
+                                        ->whereNotExists(function ($subQuery) {
+                                            $subQuery->select(DB::raw(1))
+                                                ->from('post_subject as ps')
+                                                ->join('post_subject_link as psl', 'ps.id', '=', 'psl.post_subject_id')
+                                                ->whereRaw('ps.keywords = p.keywords')
+                                                ->where('psl.created_at', '<', DB::raw('cu.created_at'));
+                                        });
+                                });
+                        });
+                    } else if ($key == 'accepter' && !empty($value)) {
+                        $model->whereExists(function ($query) use ($value) {
+                            $query->select(DB::raw(1))
+                                ->from('post_subject as ps')
+                                ->join('post_subject_link as psl', 'ps.id', '=', 'psl.post_subject_id')
+                                ->whereColumn('ps.keywords', 'p.keywords')
+                                ->where('psl.created_at', '<', DB::raw('cu.created_at'))
+                                ->where('ps.accepter', $value);
+                        });
                     }
-                } else if ($key == 'accepter') {
-                    $model->whereExists(function ($query) use ($value) {
-                        $query->select(DB::raw(1))
-                            ->from('post_subject as ps')
-                            ->join('post_subject_link as psl', 'ps.id', '=', 'psl.post_subject_id')
-                            ->whereColumn('ps.keywords', 'p.keywords')
-                            ->where('psl.created_at', '<', DB::raw('cu.created_at'))
-                            ->where('ps.accepter', $value);
-                    })->join((new Products())->getTable() . ' as p', 'cu.product_id', '=', 'p.id');
                 } else if (in_array($key, ['created_by', 'updated_by']) && !empty($value)) {
                     $userIds = User::where('nickname', 'like', '%' . $value . '%')->pluck('id');
                     $userIds = $userIds ? $userIds : [];
