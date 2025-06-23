@@ -103,7 +103,7 @@ class CheckAccessCntBanCommand extends Command {
         foreach ($ban_rule_list as $ban_rule_key => $ban_rule_val){
             $unit = $ban_rule_val['value'];
             $unit_max_cnt = $ban_rule_val['back_value'] ?? 0;
-            $start_time = time() - $unit * 3600;
+            $start_time = time() - $unit * 60;
             //$start_time = 0;
             if (empty($unit_max_cnt) || $unit_max_cnt <= 0) {
                 continue;
@@ -191,7 +191,7 @@ class CheckAccessCntBanCommand extends Command {
                 }
             }
 
-            $forStr.= "{$unit}小时内 {$for_temp_ip} 访问超过 {$max_cnt} 次 ({$forCnt}次)";
+            $forStr.= "{$unit}分钟内 {$for_temp_ip} 访问超过 {$max_cnt} 次 ({$forCnt}次)";
 
             $this->banIpContent[$forIp] = $forStr;
         }
