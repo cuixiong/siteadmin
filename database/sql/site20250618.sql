@@ -16,4 +16,4 @@ CREATE TABLE `sync_site_log`
     `created_by` int                                                           DEFAULT '0' COMMENT '创建者',
     `created_at` int                                                           DEFAULT '0' COMMENT '创建时间',
     PRIMARY KEY (`id`) USING BTREE
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=innodb DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
