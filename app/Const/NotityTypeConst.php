@@ -18,4 +18,13 @@ class NotityTypeConst {
     const SYNC_SITE_LANGUAGE  = 'sync_site_language';  // 同步站点语言
     const SYNC_SITE_IP_WHITE  = 'sync_site_ip_white';  // 同步站点白名单
     const SYNC_SITE_SETTING   = 'sync_site_setting';  // 同步站点配置
+    public static $typeMap
+        = [
+            self::SYNC_SITE_PRICE     => '同步站点价格',
+            self::SYNC_SITE_PUBLISHER => '同步出版商',
+            self::SYNC_SITE_COUNTRY   => '同步站点国家',
+            self::SYNC_SITE_LANGUAGE  => '同步站点语言',
+            self::SYNC_SITE_IP_WHITE  => '同步站点白名单',
+            self::SYNC_SITE_SETTING   => '同步站点配置',
+        ];
 }

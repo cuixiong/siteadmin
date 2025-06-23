@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\Country as AdminCountry;
 use Modules\Admin\Http\Models\Database;
 use Modules\Admin\Http\Models\Publisher;
+use Modules\Admin\Http\Models\SyncSiteLog;
 use Modules\Site\Http\Models\Publisher as SitePublisher;
 use Modules\Site\Http\Models\BanWhiteList;
 use Modules\Site\Http\Models\Country;
@@ -71,6 +72,12 @@ class NotifySite implements ShouldQueue {
                 return true;
             }
             $sync_type = $data['sync_type'];
+            $sync_site_log_data = [];
+            $sync_site_log_data['site_id'] = $siteInfo->id;
+            $sync_site_log_data['site_name'] = $siteInfo->name;
+            $sync_site_log_data['event_type'] = $sync_type;
+            $sync_site_log_data['event_name'] = NotityTypeConst::$typeMap[$sync_type] ?? '';
+            $sync_site_log_data['status'] = 1;
             switch ($sync_type) {
                 case NotityTypeConst::SYNC_SITE_PRICE:
                     $this->syncSitePrice($siteInfo);
@@ -98,8 +105,11 @@ class NotifySite implements ShouldQueue {
                 'data'  => $this->data,
                 'error' => $e->getMessage(),
             ];
+            $sync_site_log_data['status'] = 0;
             \Log::error('同步总控数据--错误信息与数据:'.json_encode($errData));
         }
+        $this->useLocalDb();
+        SyncSiteLog::query()->create($sync_site_log_data);
 
         return true;
     }

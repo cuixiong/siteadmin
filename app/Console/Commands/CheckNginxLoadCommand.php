@@ -30,6 +30,7 @@ class CheckNginxLoadCommand extends Command {
      * @var string
      */
     protected $signature = 'task:check_nginx_load';
+    public $os_info_str = '';
 
     public function handle() {
         try {
@@ -39,13 +40,11 @@ class CheckNginxLoadCommand extends Command {
             exec($script_path, $load_os_arr);
             $load_os_data = current($load_os_arr);
             $load_os_val = explode(":", $load_os_data)[1] ?? 0;
-
             //获取宽带使用率
             $net_usage_rate_script_path = 'sh /www/wwwroot/bandwidth_util.sh';
             exec($net_usage_rate_script_path, $load_net_usage);
             $load_net_usage_data = current($load_net_usage);
             $net_usage_val = explode(":", $load_net_usage_data)[1] ?? 0;
-
 //            $siteNameList = Site::query()->where("status", 1)
 //                                ->where("is_loc!al", 1)
 //                                ->pluck("name");
@@ -61,13 +60,17 @@ class CheckNginxLoadCommand extends Command {
                 $check_max_load = $sysValList['check_max_load'] ?? 80;
                 $check_min_load = $sysValList['check_min_load'] ?? 60;
                 $net_usage_rate = $sysValList['net_usage_rate'] ?? 90;
-
-
-                $net_usage_val = rtrim($net_usage_val , '%');
+                $net_usage_val = rtrim($net_usage_val, '%');
                 echo "当前时间:".date("Y-m-d H:i:s")
-                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}".PHP_EOL;
-
+                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}"
+                     .PHP_EOL;
                 if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
+                    if($load_os_val >= $check_max_load){
+                        $this->os_info_str .= "当前服务器负载:{$load_os_val}已超过配置最大负载:{$check_max_load} ";
+                    }
+                    if($net_usage_val >= $net_usage_rate){
+                        $this->os_info_str .= "当前服务器网络使用率:{$net_usage_val}已超过配置网络使用率:{$net_usage_rate} ";
+                    }
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
 //                    \Log::error(
 //                        "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
@@ -138,7 +141,7 @@ class CheckNginxLoadCommand extends Command {
             }
         }
         $blackAddIpList = [];
-        foreach ($accessIpLogList as $forIp => $forVal) {
+        foreach ($accessIpLogList as $forIp => $forValCnt) {
             if ($tab == 'ip_muti_second') {
                 $ipstr = 'deny '.$forIp.'.0.0/16;';
             } elseif ($tab == 'ip_muti_third') {
@@ -146,8 +149,10 @@ class CheckNginxLoadCommand extends Command {
             } else {
                 $ipstr = 'deny '.$forIp.";";
             }
+            $content = $this->getContentByIp($sysValList, $forIp, $forValCnt);
             $blackAddIpList[] = [
                 'ban_str'    => $ipstr,
+                'content'    => $content,
                 'ban_type'   => 1,
                 'created_at' => time(),
             ];
@@ -175,18 +180,21 @@ class CheckNginxLoadCommand extends Command {
                                     ->groupBy('ua_info')
                                     ->selectRaw("count(*) as cnt, ua_info")
                                     ->having('cnt', '>=', $UaMaxCnt)
-                                    ->pluck('ua_info')->toArray();
+                                    ->pluck('cnt', 'ua_info')->toArray();
         //插入黑名单
         $blackUaList = [];
-        foreach ($accessUaLogList as $forAccUaVal) {
+        foreach ($accessUaLogList as $forAccUaVal => $forAccUaCnt) {
+            $content = $this->getContentByUa($sysValList, $forAccUaVal , $forAccUaCnt);
             $blackUaList[] = [
                 'ban_str'    => $forAccUaVal,
+                'content'    => $content,
                 'ban_type'   => 2,
                 'created_at' => time(),
             ];
         }
         NginxBanList::query()->insert($blackUaList);
         //合并UA列表
+        $accessUaLogList = array_keys($accessUaLogList);
         $banUaStrList = array_merge($accessUaLogList, $cntBlackUaList);
         if (!empty($banUaStrList)) {
             $banUaStrList = array_unique($banUaStrList);
@@ -210,6 +218,23 @@ class CheckNginxLoadCommand extends Command {
         //$banStr = "";
         //字符串替换
         //$this->writeNginxConf($banStr, $siteNginxConfInfo);
+    }
+
+    public function getContentByIp($sysValList, $forIp, $forValCnt) {
+        //获取当前站点, 异常流量
+        $beforeIpTime = $sysValList['beforeIpTime'] ?? 5; //默认5分钟
+        $ipMaxCnt = $sysValList['ipMaxReqCnt'] ?? 100; //默认100次
+        $ipMutiType = $sysValList['ipMutiType'] ?? 3; //默认3段ip
+
+        return $this->os_info_str." 当前开启{$ipMutiType}段IP校验, {$forIp}在{$beforeIpTime}分钟内访问超过{$ipMaxCnt}次 ({$forValCnt}次)";
+    }
+
+    public function getContentByUa($sysValList, $forAccUaVal, $forAccUaCnt) {
+        //获取当前站点, 异常流量
+        $beforeUaTime = $sysValList['beforeUaTime'] ?? 5; //默认5分钟
+        $UaMaxCnt = $sysValList['uaMaxReqCnt'] ?? 100; //默认100次
+
+        return $this->os_info_str." 当前UA校验, {$forAccUaVal}在{$beforeUaTime}分钟内访问超过{$UaMaxCnt}次 ({$forAccUaCnt}次)";
     }
 
     public function getBlackBanNginxStr($sysValList) {

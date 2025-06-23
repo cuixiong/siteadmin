@@ -33,6 +33,8 @@ class CheckAccessCntBanCommand extends Command {
      */
     protected $signature = 'task:check_access_cnt_nginx_ban';
 
+    public $banIpContent = [];
+
     public function handle() {
         try {
             //设置日志
@@ -83,68 +85,60 @@ class CheckAccessCntBanCommand extends Command {
         //获取是否封禁4段ip的配置
         $ban_full_ip_status = $sysValList['ban_full_ip_status']['hidden'];
         $ban_full_ip_cnt = $sysValList['ban_full_ip_cnt']['value'] ?? 50;
-        $ban_full_ip_list = [];
         if (!empty($ban_full_ip_status) && $tab != 'ip') {
             $use_full_ip_status = true;
         } else {
             $use_full_ip_status = false;
         }
-        $start_time = time() - $sysValList['day_ban_rules']['value'] * 3600;
-        $day_max_cnt = $sysValList['day_ban_rules']['back_value'] ?? 0;
-        if (empty($day_max_cnt) || $day_max_cnt <= 0) {
-            $accessDayIpLogList = [];
-        } else {
-            $accessDayIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
-                                           ->groupBy($tab)
-                                           ->selectRaw("count(*) as cnt, ".$tab)
-                                           ->having('cnt', '>=', $day_max_cnt)
-                                           ->pluck('cnt', $tab)->toArray();
-            if (!empty($accessDayIpLogList) && $use_full_ip_status) {
-                $tap_ip_list = array_keys($accessDayIpLogList);
-                $day_full_ip_list = AccessLog::query()
-                                             ->where("created_at", ">", $start_time)
-                                             ->whereIn($tab, $tap_ip_list)
-                                             ->groupBy('ip')
-                                             ->selectRaw("count(*) as cnt, ip")
-                                             ->having('cnt', '>=', $ban_full_ip_cnt)
-                                             ->pluck('cnt', 'ip')
-                                             ->toArray();
-                $day_full_ip_list = array_keys($day_full_ip_list);
-                $ban_full_ip_list = array_merge($ban_full_ip_list, $day_full_ip_list);
+
+        $ban_rule_list = [];
+        foreach ($sysValList as $forkey => $forData){
+            if (strpos($forkey, 'ban_rules') !== false) {
+                $ban_rule_list[$forkey] = $forData;
             }
         }
-        $start_time = time() - $sysValList['hour_ban_rules']['value'] * 3600;
-        $hour_max_cnt = $sysValList['hour_ban_rules']['back_value'] ?? 0;
-        if (empty($hour_max_cnt) || $hour_max_cnt <= 0) {
-            $accessHourIpLogList = [];
-        } else {
-            $accessHourIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
-                                            ->groupBy($tab)
-                                            ->selectRaw("count(*) as cnt, ".$tab)
-                                            ->having('cnt', '>=', $hour_max_cnt)
-                                            ->pluck('cnt', $tab)->toArray();
-            if (!empty($accessHourIpLogList) && $use_full_ip_status) {
-                $tap_ip_list = array_keys($accessHourIpLogList);
-                $hour_full_ip_list = AccessLog::query()
-                                             ->where("created_at", ">", $start_time)
-                                             ->whereIn($tab, $tap_ip_list)
-                                             ->groupBy('ip')
-                                             ->selectRaw("count(*) as cnt, ip")
-                                             ->having('cnt', '>=', $ban_full_ip_cnt)
-                                             ->pluck('cnt', 'ip')
-                                             ->toArray();
-                $hour_full_ip_list = array_keys($hour_full_ip_list);
-                $ban_full_ip_list = array_merge($ban_full_ip_list, $hour_full_ip_list);
+
+        $accessIpLogList = [];
+        $ban_full_ip_list = [];
+        foreach ($ban_rule_list as $ban_rule_key => $ban_rule_val){
+            $unit = $ban_rule_val['value'];
+            $unit_max_cnt = $ban_rule_val['back_value'] ?? 0;
+            $start_time = time() - $unit * 3600;
+            //$start_time = 0;
+            if (empty($unit_max_cnt) || $unit_max_cnt <= 0) {
+                continue;
+            } else {
+                $forAccessIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
+                                               ->groupBy($tab)
+                                               ->selectRaw("count(*) as cnt, ".$tab)
+                                               ->having('cnt', '>=', $unit_max_cnt)
+                                               ->pluck('cnt', $tab)->toArray();
+                if(!empty($forAccessIpLogList )){
+                    $accessIpLogList = array_merge($accessIpLogList, $forAccessIpLogList);
+                }
+
+                if (!empty($forAccessIpLogList) && $use_full_ip_status) {
+                    $tap_ip_list = array_keys($forAccessIpLogList);
+                    $forAccessIpLogList = AccessLog::query()
+                                                 ->where("created_at", ">", $start_time)
+                                                 ->whereIn($tab, $tap_ip_list)
+                                                 ->groupBy('ip')
+                                                 ->selectRaw("count(*) as cnt, ip")
+                                                 ->having('cnt', '>=', $ban_full_ip_cnt)
+                                                 ->pluck('cnt', 'ip')
+                                                 ->toArray();
+                    $ban_full_ip_list = array_merge($ban_full_ip_list, $forAccessIpLogList);
+                }
+                $this->addContentByIp($forAccessIpLogList, $use_full_ip_status, $unit_max_cnt, $tab , $unit);
             }
         }
-        if (!empty($ban_full_ip_list) && $use_full_ip_status) {
-            $ban_full_ip_list = array_unique($ban_full_ip_list);
-            foreach ($ban_full_ip_list as $forIp) {
+
+        if ($use_full_ip_status) {
+            foreach ($ban_full_ip_list as $forIp => $forVal) {
                 $ipstr = 'deny '.$forIp.";";
                 $banIpStrList[] = PHP_EOL.$ipstr;
             }
         } else {
-            $accessIpLogList = array_merge($accessDayIpLogList, $accessHourIpLogList);
             foreach ($accessIpLogList as $forIp => $forVal) {
                 if ($tab == 'ip_muti_second') {
                     $ipstr = 'deny '.$forIp.'.0.0/16;';
@@ -164,6 +158,54 @@ class CheckAccessCntBanCommand extends Command {
         $banStr .= PHP_EOL;
 
         return $banStr;
+    }
+
+    /**
+     *
+     * @param $ip_list
+     * @param $use_full_ip_status
+     * @param $max_cnt
+     * @param $tab
+     * @param $unit
+     *
+     */
+    public function addContentByIp($ip_list, $use_full_ip_status, $max_cnt, $tab , $unit) {
+        foreach ($ip_list  as $forIp => $forCnt){
+            $forStr = '';
+            if($use_full_ip_status) {
+                $for_ip_arr = explode('.', $forIp);
+                if ($tab == 'ip_muti_second') {
+                    $for_temp_ip = $for_ip_arr[0].".".$for_ip_arr[1]."(开启封禁完整ip配置)";
+                } elseif ($tab == 'ip_muti_third') {
+                    $for_temp_ip = $for_ip_arr[0].".".$for_ip_arr[1].".".$for_ip_arr[2]."(开启封禁完整ip配置)";
+                } else {
+                    $for_temp_ip = $forIp;
+                }
+            }else{
+                if ($tab == 'ip_muti_second') {
+                    $for_temp_ip = $forIp."(开启2段ip封禁)";;
+                } elseif ($tab == 'ip_muti_third') {
+                    $for_temp_ip = $forIp."(开启3段ip封禁)";;
+                } else {
+                    $for_temp_ip = $forIp."(开启4段ip封禁)";;
+                }
+            }
+
+            $forStr.= "{$unit}小时内 {$for_temp_ip} 访问超过 {$max_cnt} 次 ({$forCnt}次)";
+
+            $this->banIpContent[$forIp] = $forStr;
+        }
+    }
+
+    public function getContentByBanStr($banStr) {
+        $content = '';
+        foreach ($this->banIpContent as $forip => $forStr){
+            if(strpos($banStr, $forip) !== false){
+                $content = $forStr;
+                break;
+            }
+        }
+        return $content;
     }
 
     public function customEscape($input, $characters) {
@@ -215,11 +257,13 @@ class CheckAccessCntBanCommand extends Command {
             if (strpos($temp_content, $forbanStr) !== false) {
                 //包含跳过
             } else {
+                $content = $this->getContentByBanStr($forbanStr);
                 $forRealBanStr = $forbanStr.";";
                 $add_data = [
                     'ban_str'      => $forRealBanStr,
                     'ban_type'     => 1,
                     'service_type' => 2,
+                    'content'      => $content,
                     'created_at'   => time(),
                 ];
                 NginxBanList::query()->insert($add_data);
