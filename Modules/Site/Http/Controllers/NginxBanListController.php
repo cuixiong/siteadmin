@@ -40,7 +40,8 @@ class NginxBanListController extends CrudController {
                 $request->service_type = 1;
             }
             //过滤业务类型
-            $model = $model->where("service_type", $request->service_type);
+            $model = $model->where("service_type", $request->service_type)
+                ->where("status" , 1);
 
             // 总数量
             $total = $model->count();
