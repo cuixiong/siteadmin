@@ -190,7 +190,7 @@ class UpdateProductsByOtherSite extends Command
 
 
         // 去重
-        $existData = Products::query()->select(['id', 'english_name as name', 'published_date'])->whereIn('english_name', $productNameArray)->get()->toArray();
+        $existData = Products::query()->select(['id', 'english_name as name', 'published_date'])->whereIn('english_name', $productNameArray)->get()?->toArray() ?? [];
         $existNameArray = array_column($existData, 'name');
         $existData = array_column($existData, null, 'name');
         foreach ($productData as $key => $item) {

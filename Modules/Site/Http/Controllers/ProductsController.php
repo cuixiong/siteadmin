@@ -141,7 +141,7 @@ class ProductsController extends CrudController {
                     $templateContentField,
                     $templateCommomField,
                     ['classification', 'application', 'updated_at', 'updated_by', 'created_at',
-                     'created_by', 'id']
+                     'created_by', 'id',]
                 )
             );
             $productList = Products::query()->whereIn('id', $product_id_list)
@@ -189,6 +189,14 @@ class ProductsController extends CrudController {
                 $record[$key]['template_data'] = $templateData;
                 //删除描述
                 unset($record[$key]['description']);
+
+                // 生成趋势柱状图所需数据
+                $record[$key]['cagr'] = $productFor['cagr'];
+                $record[$key]['last_scale'] = $productFor['last_scale'];
+                $record[$key]['current_scale'] = $productFor['current_scale'];
+                $record[$key]['future_scale'] = $productFor['future_scale'];
+                $record[$key]['year'] = $year;
+
             }
             //$record = mb_convert_encoding($record, "UTF-8");
             $data = [
