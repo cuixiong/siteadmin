@@ -56,6 +56,7 @@ class FileManagement extends Controller{
         $fileNameArray = [];
         $fileNameDirArray = []; // 存放文件夹数据
         $fileNameFileArray = [];// 存放其它文件数据
+        $filename = rtrim($filename , '/');
         if (is_array($tempArray)) {
             foreach ($tempArray as $k => $v) {
                 // 跳过两个特殊目录
@@ -67,7 +68,7 @@ class FileManagement extends Controller{
                     if ($info['type'] == 'dir') {
                         $info['size'] = "";
                     } else {
-                        $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
+                        $info['size'] = self::converFileSize(@filesize($filename . '/' . $v));
                     }
                     $info['is_file'] = ['name' => $v];
                     $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. trim($path,'/'). '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
@@ -78,14 +79,14 @@ class FileManagement extends Controller{
                     }
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
-                    $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
+                    $info['active_time'] = date('Y-m-d H:i:s', @fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
                     clearstatcache();
-                    $info['create_time'] = date('Y-m-d H:i:s', filectime($filename . '/' . $v)) ?? ''; //创建时间
+                    $info['create_time'] = date('Y-m-d H:i:s', @filectime($filename . '/' . $v)) ?? ''; //创建时间
                     clearstatcache();
-                    $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
+                    $info['update_time'] = date('Y-m-d H:i:s', @filemtime($filename . '/' . $v)) ?? ''; //修改时间
                     $info['check'] = "";
 
-                    
+
                     if($info['type'] == 'dir'){
                         $fileNameDirArray[$v] = $info;
                     }else{

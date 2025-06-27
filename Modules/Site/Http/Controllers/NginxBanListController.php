@@ -40,7 +40,8 @@ class NginxBanListController extends CrudController {
                 $request->service_type = 1;
             }
             //过滤业务类型
-            $model = $model->where("service_type", $request->service_type);
+            $model = $model->where("service_type", $request->service_type)
+                ->where("status" , 1);
 
             // 总数量
             $total = $model->count();
@@ -144,6 +145,23 @@ class NginxBanListController extends CrudController {
             $data['list'] = $list;
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function bandetail(Request $request) {
+        try{
+            $ban_str = $request->input('ban_str', '');
+            if (empty($ban_str)) {
+                ReturnJson(false, 'ban_str 不能为空');
+            }
+            if (empty($request->service_type)) {
+                $request->service_type = 1;
+            }
+            $ban_detail_list = NginxBanList::query()->where("service_type", $request->service_type)
+                ->where("ban_str", 'like' , "%{$ban_str}%")->get()->toArray();
+            ReturnJson(true, trans('lang.request_success'), $ban_detail_list);
+        }catch (\Exception $e){
             ReturnJson(false, $e->getMessage());
         }
     }

@@ -30,7 +30,8 @@ use Modules\Site\Http\Models\SystemValue;
 class SiteEmailController extends Controller {
     // 注册发邮method
     private $EmailCodes = ['register' => '注册账号'];
-    public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
+    public  $signKey    = '62d9048a8a2ee148cf142a0e6696ab26';
+
     /**
      * 动态配置邮箱参数
      *
@@ -73,8 +74,14 @@ class SiteEmailController extends Controller {
             $this->validatorData($request->all());
             $action = $request->action;
             if (in_array($action, ['register', 'registerSuccess'])) {
-                $actionMethod = $request->action.'Test';
-                $res = $this->$actionMethod($request);
+//                $actionMethod = $request->action.'Test';
+//                $res = $this->$actionMethod($request);
+                $user = User::where('email', $request->test)->first();
+                if(empty($user )){
+                    ReturnJson(false, '邮箱用户不存在');
+                }
+                $testEmail = $user->id;
+                $res = $this->sendTestEmail($action, $testEmail);
             } else {
                 $testEmail = $request->test;
                 $res = $this->sendTestEmail($action, $testEmail);
@@ -411,14 +418,12 @@ class SiteEmailController extends Controller {
                 } else {
                     $ids = [$request->ids];
                 }
-            } elseif(!empty($request->id )) {
+            } elseif (!empty($request->id)) {
                 $ids = [$request->id];
             }
-
-            if(empty($ids )){
+            if (empty($ids)) {
                 ReturnJson(false, '订单ID不能为空');
             }
-
             $site = $request->header('site');
             $domain = Site::where('name', $site)->value("domain");
             if (empty($domain)) {
@@ -452,13 +457,12 @@ class SiteEmailController extends Controller {
                     $errMsg[] = $resp;
                 }
             }
-            if(empty($errMsg )){
+            if (empty($errMsg)) {
                 ReturnJson(true, "发送成功:{$sucCnt}次");
-            }else{
+            } else {
                 \Log::error('返回结果数据:'.json_encode($errMsg));
                 ReturnJson(false, '发送失败,未知错误');
             }
-
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }

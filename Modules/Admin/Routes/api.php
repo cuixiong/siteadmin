@@ -505,6 +505,12 @@ Route::middleware([
         Route::post('update', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'update'])->name('定时任务:数据编辑');
         Route::post('destroy', [Modules\Admin\Http\Controllers\TimedTaskController::class, 'destroy'])->name('定时任务:删除操作');
     });
+
+    // EmailLog控制器
+    Route::prefix('sync-site-log')->group(function () {
+        Route::get('list', [\Modules\Admin\Http\Controllers\SyncSiteLogController::class, 'list'])->name('同步站点日志:日志列表');
+        Route::get('search-droplist', [\Modules\Admin\Http\Controllers\SyncSiteLogController::class, 'searchDroplist'])->name('同步站点日志:搜索下拉列表数据');
+    });
 });
 
 /** 不需要登陆也不需要验证权限的路由 */

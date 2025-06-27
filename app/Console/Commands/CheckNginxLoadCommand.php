@@ -19,6 +19,7 @@ use Modules\Admin\Http\Models\SiteNginxConf;
 use Modules\Site\Http\Controllers\SiteCrontabController;
 use Modules\Site\Http\Models\AccessLog;
 use Modules\Site\Http\Models\NginxBanList;
+use Modules\Site\Http\Models\System as SiteSystem;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Admin\Http\Models\SystemValue as AdminSystemValue;
 use phpseclib3\Net\SSH2;
@@ -30,6 +31,7 @@ class CheckNginxLoadCommand extends Command {
      * @var string
      */
     protected $signature = 'task:check_nginx_load';
+    public $os_info_str = '';
 
     public function handle() {
         try {
@@ -39,13 +41,11 @@ class CheckNginxLoadCommand extends Command {
             exec($script_path, $load_os_arr);
             $load_os_data = current($load_os_arr);
             $load_os_val = explode(":", $load_os_data)[1] ?? 0;
-
             //获取宽带使用率
             $net_usage_rate_script_path = 'sh /www/wwwroot/bandwidth_util.sh';
             exec($net_usage_rate_script_path, $load_net_usage);
             $load_net_usage_data = current($load_net_usage);
             $net_usage_val = explode(":", $load_net_usage_data)[1] ?? 0;
-
 //            $siteNameList = Site::query()->where("status", 1)
 //                                ->where("is_loc!al", 1)
 //                                ->pluck("name");
@@ -57,17 +57,25 @@ class CheckNginxLoadCommand extends Command {
             foreach ($siteNginxConfList as $siteNginxConfInfo) {
                 $site = $siteNginxConfInfo['name'];
                 tenancy()->initialize($site);
-                $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
-                $check_max_load = $sysValList['check_max_load'] ?? 80;
-                $check_min_load = $sysValList['check_min_load'] ?? 60;
-                $net_usage_rate = $sysValList['net_usage_rate'] ?? 90;
-
-
-                $net_usage_val = rtrim($net_usage_val , '%');
+                //$sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
+                $parent_id = SiteSystem::query()->where("alias", 'nginx_ban_rules')
+                                       ->value("id");
+                $sysValList = SystemValue::query()->where("parent_id", $parent_id)
+                                         ->get()->keyBy("key")->toArray();
+                $check_max_load = $sysValList['check_max_load']['value'] ?? 80;
+                $check_min_load = $sysValList['check_min_load']['value'] ?? 60;
+                $net_usage_rate = $sysValList['net_usage_rate']['value'] ?? 90;
+                $net_usage_val = rtrim($net_usage_val, '%');
                 echo "当前时间:".date("Y-m-d H:i:s")
-                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}".PHP_EOL;
-
+                     ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}"
+                     .PHP_EOL;
                 if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
+                    if($load_os_val >= $check_max_load){
+                        $this->os_info_str .= "当前服务器负载:{$load_os_val}已超过配置最大负载:{$check_max_load} ";
+                    }
+                    if($net_usage_val >= $net_usage_rate){
+                        $this->os_info_str .= "当前服务器网络使用率:{$net_usage_val}已超过配置网络使用率:{$net_usage_rate} ";
+                    }
                     $banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
 //                    \Log::error(
 //                        "{$siteNginxConfInfo['name']}:nginx封禁字符串:{$banStr}".'  文件路径:'.__CLASS__.'  行号:'
@@ -105,9 +113,9 @@ class CheckNginxLoadCommand extends Command {
             return false;
         }
         //获取当前站点, 异常流量
-        $beforeIpTime = $sysValList['beforeIpTime'] ?? 5; //默认5分钟
-        $ipMaxCnt = $sysValList['ipMaxReqCnt'] ?? 100; //默认100次
-        $ipMutiType = $sysValList['ipMutiType'] ?? 3; //默认3段ip
+        $beforeIpTime = $sysValList['beforeIpTime']['value'] ?? 5; //默认5分钟
+        $ipMaxCnt = $sysValList['ipMaxReqCnt']['value'] ?? 100; //默认100次
+        $ipMutiType = $sysValList['ipMutiType']['value'] ?? 3; //默认3段ip
         if ($ipMutiType == 2) {
             $tab = 'ip_muti_second';
         } elseif ($ipMutiType == 3) {
@@ -115,16 +123,36 @@ class CheckNginxLoadCommand extends Command {
         } else {
             $tab = 'ip';
         }
+        //获取是否封禁4段ip的配置
+        $ban_full_ip_status = $sysValList['os_ban_full_ip_status']['hidden'];
+        $ban_full_ip_cnt = $sysValList['os_ban_full_ip_cnt']['value'] ?? 50;
+        if (!empty($ban_full_ip_status) && $tab != 'ip') {
+            $use_full_ip_status = true;
+        } else {
+            $use_full_ip_status = false;
+        }
+
         $start_time = time() - $beforeIpTime * 60;
         $accessIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
                                     ->groupBy($tab)
                                     ->selectRaw("count(*) as cnt, ".$tab)
                                     ->having('cnt', '>=', $ipMaxCnt)
                                     ->pluck('cnt', $tab)->toArray();
+        if (!empty($accessIpLogList) && $use_full_ip_status) {
+            $tap_ip_list = array_keys($accessIpLogList);
+            $accessIpLogList = AccessLog::query()
+                                           ->where("created_at", ">", $start_time)
+                                           ->whereIn($tab, $tap_ip_list)
+                                           ->groupBy('ip')
+                                           ->selectRaw("count(*) as cnt, ip")
+                                           ->having('cnt', '>=', $ban_full_ip_cnt)
+                                           ->pluck('cnt', 'ip')
+                                           ->toArray();
+        }
         $banStr = '';
         $banIpStrList = [];
         //查询超过1次的
-        $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
+        $black_ban_cnt = $sysValList['black_ban_cnt']['value'] ?? 1;
         $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
                                       ->where("status", 1)
                                       ->where("service_type", 1)
@@ -138,16 +166,20 @@ class CheckNginxLoadCommand extends Command {
             }
         }
         $blackAddIpList = [];
-        foreach ($accessIpLogList as $forIp => $forVal) {
-            if ($tab == 'ip_muti_second') {
+        foreach ($accessIpLogList as $forIp => $forValCnt) {
+            if($use_full_ip_status){
+                $ipstr = 'deny '.$forIp.";";
+            }elseif ($tab == 'ip_muti_second') {
                 $ipstr = 'deny '.$forIp.'.0.0/16;';
             } elseif ($tab == 'ip_muti_third') {
                 $ipstr = 'deny '.$forIp.'.0/24;';
             } else {
                 $ipstr = 'deny '.$forIp.";";
             }
+            $content = $this->getContentByIp($sysValList, $forIp, $forValCnt, $use_full_ip_status);
             $blackAddIpList[] = [
                 'ban_str'    => $ipstr,
+                'content'    => $content,
                 'ban_type'   => 1,
                 'created_at' => time(),
             ];
@@ -168,25 +200,28 @@ class CheckNginxLoadCommand extends Command {
                                       ->selectRaw('count(*) as cnt, ban_str')
                                       ->pluck('ban_str')->toArray();
         $banUaStrList = [];
-        $UaMaxCnt = $sysValList['uaMaxReqCnt'] ?? 100; //默认100次
-        $beforeUaTime = $sysValList['beforeUaTime'] ?? 5; //默认5分钟
+        $UaMaxCnt = $sysValList['uaMaxReqCnt']['value'] ?? 100; //默认100次
+        $beforeUaTime = $sysValList['beforeUaTime']['value'] ?? 5; //默认5分钟
         $ua_start_time = time() - $beforeUaTime * 60;
         $accessUaLogList = AccessLog::query()->where("created_at", ">", $ua_start_time)
                                     ->groupBy('ua_info')
                                     ->selectRaw("count(*) as cnt, ua_info")
                                     ->having('cnt', '>=', $UaMaxCnt)
-                                    ->pluck('ua_info')->toArray();
+                                    ->pluck('cnt', 'ua_info')->toArray();
         //插入黑名单
         $blackUaList = [];
-        foreach ($accessUaLogList as $forAccUaVal) {
+        foreach ($accessUaLogList as $forAccUaVal => $forAccUaCnt) {
+            $content = $this->getContentByUa($sysValList, $forAccUaVal , $forAccUaCnt);
             $blackUaList[] = [
                 'ban_str'    => $forAccUaVal,
+                'content'    => $content,
                 'ban_type'   => 2,
                 'created_at' => time(),
             ];
         }
         NginxBanList::query()->insert($blackUaList);
         //合并UA列表
+        $accessUaLogList = array_keys($accessUaLogList);
         $banUaStrList = array_merge($accessUaLogList, $cntBlackUaList);
         if (!empty($banUaStrList)) {
             $banUaStrList = array_unique($banUaStrList);
@@ -212,9 +247,30 @@ class CheckNginxLoadCommand extends Command {
         //$this->writeNginxConf($banStr, $siteNginxConfInfo);
     }
 
+    public function getContentByIp($sysValList, $forIp, $forValCnt ,$use_full_ip_status) {
+        //获取当前站点, 异常流量
+        $beforeIpTime = $sysValList['beforeIpTime']['value'] ?? 5; //默认5分钟
+        $ipMaxCnt = $sysValList['ipMaxReqCnt']['value'] ?? 100; //默认100次
+        $ipMutiType = $sysValList['ipMutiType']['value'] ?? 3; //默认3段ip
+        if($use_full_ip_status){
+            $ip_msg_str = '当前已开启全IP封禁';
+        }else{
+            $ip_msg_str = "当前开启{$ipMutiType}段IP校验";
+        }
+        return $this->os_info_str." , $ip_msg_str {$forIp} 在{$beforeIpTime}分钟内访问超过{$ipMaxCnt}次 ({$forValCnt}次)";
+    }
+
+    public function getContentByUa($sysValList, $forAccUaVal, $forAccUaCnt) {
+        //获取当前站点, 异常流量
+        $beforeUaTime = $sysValList['beforeUaTime']['value'] ?? 5; //默认5分钟
+        $UaMaxCnt = $sysValList['uaMaxReqCnt']['value'] ?? 100; //默认100次
+
+        return $this->os_info_str." 当前UA校验, {$forAccUaVal}在{$beforeUaTime}分钟内访问超过{$UaMaxCnt}次 ({$forAccUaCnt}次)";
+    }
+
     public function getBlackBanNginxStr($sysValList) {
         //查询超过N次的IP
-        $black_ban_cnt = $sysValList['black_ban_cnt'] ?? 1;
+        $black_ban_cnt = $sysValList['black_ban_cnt']['value'] ?? 1;
         $cntBlackIpList = NginxBanList::query()->where("ban_type", 1)
                                       ->where("status", 1)
                                       ->where("service_type", 1)
@@ -326,7 +382,10 @@ class CheckNginxLoadCommand extends Command {
         foreach ($siteNginxConfList as $siteNginxConfInfo) {
             $site = $siteNginxConfInfo['name'];
             tenancy()->initialize($site);
-            $sysValList = SystemValue::query()->where("alias", 'nginx_ban_rules')->pluck('value', 'key')->toArray();
+            $parent_id = SiteSystem::query()->where("alias", 'nginx_ban_rules')
+                                   ->value("id");
+            $sysValList = SystemValue::query()->where("parent_id", $parent_id)
+                                     ->get()->keyBy("key")->toArray();
             //$banStr = $this->getBanNginxStr($siteNginxConfInfo, $sysValList);
             $banStr = $this->getBlackBanNginxStr($sysValList);
 //            \Log::error(

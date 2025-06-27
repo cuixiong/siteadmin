@@ -766,6 +766,7 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\NginxBanListController::class, 'searchDroplist'])->name('nginx封禁:搜索下拉列表数据');
         Route::get('unban', [Modules\Site\Http\Controllers\NginxBanListController::class, 'unBan'])->name('nginx封禁:解封');
         Route::get('black-list', [Modules\Site\Http\Controllers\NginxBanListController::class, 'blackList'])->name('nginx封禁:黑名单列表');
+        Route::get('black-detail', [Modules\Site\Http\Controllers\NginxBanListController::class, 'bandetail'])->name('nginx封禁:黑名单列表');
         Route::post('del-black', [Modules\Site\Http\Controllers\NginxBanListController::class, 'delBlack'])->name('nginx封禁:删除黑名单');
     });
 
