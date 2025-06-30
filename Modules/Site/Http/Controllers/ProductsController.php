@@ -155,6 +155,17 @@ class ProductsController extends CrudController {
             $templateContentList = Template::query()->select(['id', 'content'])->where("status", 1)->get();
             $templateContentList = $templateContentList ? array_column($templateContentList->toArray(), 'content', 'id')
                 : [];
+            // 报告添加一个单位
+            $setting = [];
+            $setting = SystemValue::whereIn('key', ['products_units','newsWatermarkImage','topLogo', 'logo'])->pluck('value','key')->toArray();
+            if(!isset($setting['logo'])){
+                $setting['logo'] = $setting['topLogo']??'';
+            }
+            if(!isset($setting['products_units'])){
+                $setting['products_units'] = '';
+            }
+            $sitename = getSiteName();
+
             foreach ($record as $key => $item) {
                 $productId = $item['id'];
                 $record[$key]['report_url'] = $domain."/reports/{$item['id']}/".$item['url'];
@@ -187,15 +198,30 @@ class ProductsController extends CrudController {
                     $templateData = $this->filterTemplateWithNoData($templateData, $templateContentList, $productFor);
                 }
                 $record[$key]['template_data'] = $templateData;
-                //删除描述
-                unset($record[$key]['description']);
 
-                // 生成趋势柱状图所需数据
+                // 生成趋势柱状图所需数据 
                 $record[$key]['cagr'] = $productFor['cagr'];
                 $record[$key]['last_scale'] = $productFor['last_scale'];
                 $record[$key]['current_scale'] = $productFor['current_scale'];
                 $record[$key]['future_scale'] = $productFor['future_scale'];
                 $record[$key]['year'] = $year;
+                // 需要描述第一句话
+                $record[$key]['description_first'] = '';
+                if (in_array($sitename, ['qycn', 'lpicn', 'yhcn', 'gircn', 'tycn'])) {
+                    if (strpos($description, '。') !== false) {
+                        $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, '。') + 1);
+                    }
+                } elseif (in_array($sitename, ['mrrs', 'yhen', 'qyen', 'lpien', 'mmgen', 'giren'])) {
+                    if (strpos($description, '.') >= 100) {
+                        $record[$key]['description_first'] = mb_substr($description, 0, 100);
+                        $record[$key]['description_first'] .= mb_substr($description, 100, mb_strpos($description, '.') + 1);
+                    }
+                } else {
+
+                }
+
+                // 删除描述
+                unset($record[$key]['description']);
 
             }
             //$record = mb_convert_encoding($record, "UTF-8");
@@ -203,7 +229,8 @@ class ProductsController extends CrudController {
                 'total'       => $total,
                 'list'        => $record,
                 'headerTitle' => [],
-                'type'        => $type
+                'type'        => $type,
+                'setting'     => $setting, 
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
