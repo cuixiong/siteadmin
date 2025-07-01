@@ -157,11 +157,16 @@ class ProductsController extends CrudController {
                 : [];
             // 报告添加一个单位
             $setting = [];
-            $setting = SystemValue::whereIn('key', ['products_units','newsWatermarkImage','topLogo', 'logo'])->pluck('value','key')->toArray();
-            if(!isset($setting['logo'])){
-                $setting['logo'] = $setting['topLogo']??'';
+            $setting = SystemValue::whereIn('key', ['products_units', 'newsWatermarkImage', 'topLogo', 'logo', 'site_logo'])->pluck('value', 'key')->toArray();
+            if (!isset($setting['logo']) || empty($setting['logo'])) {
+                $setting['logo'] = $setting['topLogo'] ?? '';
             }
-            if(!isset($setting['products_units'])){
+            if (!isset($setting['logo']) || empty($setting['logo'])) {
+                $setting['logo'] = $setting['site_logo'] ?? '';
+            }
+            unset($setting['topLogo']);
+            unset($setting['site_logo']);
+            if (!isset($setting['products_units'])) {
                 $setting['products_units'] = '';
             }
             $sitename = getSiteName();
