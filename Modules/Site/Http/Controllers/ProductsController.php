@@ -218,13 +218,13 @@ class ProductsController extends CrudController {
                     }
                 } elseif (in_array($sitename, ['mrrs', 'yhen', 'qyen', 'lpien', 'mmgen', 'giren'])) {
                     
-                    $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, '.') + 1);
+                    $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n") + 1);
                     // 长度不足可能是截取错误 
                     $tempLength = 100;
                     if (mb_strlen($description) < $tempLength) {
 
                     }else if (mb_strlen($description) >= $tempLength && mb_strlen($record[$key]['description_first']) < $tempLength) {
-                        $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, '.', $tempLength) + 1);
+                        $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n", $tempLength) + 1);
                     }
                 } else {
 
