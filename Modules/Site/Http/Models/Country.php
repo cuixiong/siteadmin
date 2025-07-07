@@ -25,7 +25,7 @@ class Country extends Base {
             }
             switch ($language) {
                 case 'en':
-                    $name = $data['en'];
+                    $name = $data['en'] ?? '';
                     break;
                 case 'zh':
                     $name = $data['zh-cn'];
