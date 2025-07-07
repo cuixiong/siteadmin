@@ -392,6 +392,7 @@ class Order extends Base {
             $goodsData['language'] = $language;
             $goodsData['price_edition'] = isset($priceEdition['name']) ? $priceEdition['name'] : '';
             $goodsData['goods_present_price'] = $OrderGoods['goods_present_price'];
+            $goodsData['goods_original_price'] = $OrderGoods['goods_original_price'];
             //缩略图
             if (!empty($products['thumb'])) {
                 $thumb = $products['thumb'];

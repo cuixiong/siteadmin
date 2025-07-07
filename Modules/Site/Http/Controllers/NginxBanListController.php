@@ -20,8 +20,6 @@ use Modules\Site\Http\Models\NginxBanList;
 use Modules\Site\Http\Models\SystemValue;
 
 class NginxBanListController extends CrudController {
-
-
     /**
      * 查询列表页
      *
@@ -41,8 +39,7 @@ class NginxBanListController extends CrudController {
             }
             //过滤业务类型
             $model = $model->where("service_type", $request->service_type)
-                ->where("status" , 1);
-
+                           ->where("status", 1);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -61,7 +58,11 @@ class NginxBanListController extends CrudController {
             } else {
                 $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
             }
-            $record = $model->get();
+            $record = $model->get()->toArray();
+            foreach ($record as &$item) {
+                $ban_info = $this->getBanInfoByContent($item);
+                $item['ban_info'] = $ban_info;
+            }
             $data = [
                 'total' => $total,
                 'list'  => $record
@@ -72,6 +73,23 @@ class NginxBanListController extends CrudController {
         }
     }
 
+    public function getBanInfoByContent($banInfo) {
+        $content = $banInfo['content'];
+        $result = [];
+        $result['end_time'] = strtotime($banInfo['created_at']);
+        $result['ban_str'] = $banInfo['ban_str'];
+        if ($banInfo['ban_type'] == 1) {
+            $ban_str = str_replace('deny', '', $banInfo['ban_str']);
+            $ban_str = str_replace(';', '', $ban_str);
+            $result['ban_str'] = trim($ban_str);
+        }
+        //ip
+        preg_match('/(\d+)分钟/u', $content, $matches);
+        $minute_val = $matches[1] ?? 0;
+        $result['start_time'] = $result['end_time'] - 60 * $minute_val;
+
+        return $result;
+    }
 
     public function searchDroplist() {
         $data['type'] = [
@@ -150,7 +168,7 @@ class NginxBanListController extends CrudController {
     }
 
     public function bandetail(Request $request) {
-        try{
+        try {
             $ban_str = $request->input('ban_str', '');
             if (empty($ban_str)) {
                 ReturnJson(false, 'ban_str 不能为空');
@@ -159,9 +177,9 @@ class NginxBanListController extends CrudController {
                 $request->service_type = 1;
             }
             $ban_detail_list = NginxBanList::query()->where("service_type", $request->service_type)
-                ->where("ban_str", 'like' , "%{$ban_str}%")->get()->toArray();
+                                           ->where("ban_str", 'like', "%{$ban_str}%")->get()->toArray();
             ReturnJson(true, trans('lang.request_success'), $ban_detail_list);
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
     }
@@ -180,19 +198,17 @@ class NginxBanListController extends CrudController {
                 $request->service_type = 1;
             }
             //过滤业务类型
-            foreach ($ban_str as $ban_str_item){
+            foreach ($ban_str as $ban_str_item) {
                 NginxBanList::query()
-                    ->where("service_type", $request->service_type)
-                    ->where("ban_str", 'like' , "%{$ban_str_item}%")
-                    ->delete();
+                            ->where("service_type", $request->service_type)
+                            ->where("ban_str", 'like', "%{$ban_str_item}%")
+                            ->delete();
             }
-
-            if($request->service_typ == 1){
+            if ($request->service_typ == 1) {
                 (new CheckNginxLoadCommand())->reloadNginxBySite(getSiteName());
-            }else{
+            } else {
                 (new CheckAccessCntBanCommand())->delBanStrList(getSiteName());
             }
-
             ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
