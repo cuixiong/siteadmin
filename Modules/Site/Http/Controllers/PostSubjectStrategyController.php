@@ -61,6 +61,11 @@ class PostSubjectStrategyController extends CrudController
                             $record[$key]['category_name'][] = $categoryData[$itemCategoryId] ?? [];
                         }
                     }
+                    if(!empty($record[$key]['version'])){
+                        $record[$key]['version'] = explode(',', $item['version']??[]);
+                    }else{
+                        $record[$key]['version'] = [];
+                    }
 
                     $record[$key]['strategy'] = [];
                     $userData = PostSubjectStrategyUser::query()->select(['user_id', 'num'])
