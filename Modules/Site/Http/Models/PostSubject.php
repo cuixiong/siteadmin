@@ -598,7 +598,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(日)-子查询
-        if (!empty($search['keywords_jp']) && isset($search['keywords_jp']['content'])&& count($search['keywords_jp']['content']) > 0) {
+        if (!empty($search['keywords_jp']) && isset($search['keywords_jp']['content']) && count($search['keywords_jp']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_jp'];
@@ -618,7 +618,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(韩)-子查询
-        if (!empty($search['keywords_kr']) && isset($search['keywords_kr']['content'])&& count($search['keywords_kr']['content']) > 0) {
+        if (!empty($search['keywords_kr']) && isset($search['keywords_kr']['content']) && count($search['keywords_kr']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_kr'];
@@ -638,7 +638,7 @@ class PostSubject extends Base
         }
 
         // 报告关键词(德)-子查询
-        if (!empty($search['keywords_de']) && isset($search['keywords_de']['content'])&& count($search['keywords_de']['content']) > 0) {
+        if (!empty($search['keywords_de']) && isset($search['keywords_de']['content']) && count($search['keywords_de']['content']) > 0) {
 
             $condition = self::CONDITION_EQUAL;
             $searchItem = $search['keywords_de'];
@@ -779,5 +779,20 @@ class PostSubject extends Base
             }
         }
         return $data;
+    }
+
+    public static function getVersionList()
+    {
+        $list = self::query()->distinct()->where('type', self::TYPE_POST_SUBJECT)->pluck('version');
+        if($list){
+            $list = $list->toArray();
+            $list = array_filter($list,function($value){
+                return !empty($value);
+            });
+            sort($list);
+            
+            return $list;
+        }
+        return [];
     }
 }

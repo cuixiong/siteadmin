@@ -10,7 +10,7 @@ class PostSubjectStrategy extends Base
     protected $table = 'post_subject_strategy';
 
     // 设置允许入库字段,数组形式
-    protected $fillable = ['type', 'category_ids', 'status', 'sort', 'updated_by', 'created_by'];
+    protected $fillable = ['type', 'category_ids', 'version', 'status', 'sort', 'updated_by', 'created_by'];
 
     protected $attributes = [
         'status' => 1,
@@ -42,6 +42,12 @@ class PostSubjectStrategy extends Base
         } else {
             $categoryIds =  [];
         }
+        $versionArray = [];
+        if (!empty($config['version'])) {
+            $versionArray = explode(',', $config['version'] ?? '');
+        } else {
+            $versionArray =  [];
+        }
 
         // 查询用户 
         $userData = PostSubjectStrategyUser::from((new PostSubjectStrategyUser)->getTable() . ' as pssu')
@@ -61,7 +67,10 @@ class PostSubjectStrategy extends Base
             ->whereIn('product_category_id', $categoryIds)
             ->where('type', $subjectType)
             ->where('accept_status', $acceptStatus);
-
+        if ($versionArray && count($versionArray) > 0) {
+            $baseQuery->whereIn('version', $versionArray);
+        }
+        
         foreach ($userData as $key => $userItem) {
             $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->value('nickname') ?? '未知';
             $userData[$key]['username'] = $nickname;

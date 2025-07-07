@@ -123,7 +123,13 @@ class PostSubjectStrategyController extends CrudController
             foreach ($typeData as $key => $value) {
                 $data['type'][] = ['label' => $value, 'value' => $key];
             }
-
+            // 课题版本
+            $versionData = PostSubject::getVersionList();
+            $data['version'] = [];
+            foreach ($versionData as $value) {
+                $data['version'][] = ['label' => $value, 'value' => $value];
+            }
+            
             // 领取人/发帖用户
             $data['accepter_list'] = (new TemplateController())->getSitePostUser();
             if (count($data['accepter_list']) > 0) {
