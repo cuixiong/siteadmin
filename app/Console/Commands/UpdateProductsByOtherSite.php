@@ -198,6 +198,11 @@ class UpdateProductsByOtherSite extends Command
                 $ingoreCount++;
                 continue;
             }
+            if (!isset($item['description'])) {
+                $ingoreCount++;
+                $ingore_detail .= "【忽略】报告名:{$item['name']};缺少详情" . "\r\n";
+                continue;
+            }
 
             //填充到原来的报告数据中
             if (isset($keywordsArray[$item['url']])) {
