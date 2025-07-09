@@ -214,24 +214,15 @@ class ProductsController extends CrudController {
                 $record[$key]['current_scale'] = $productFor['current_scale'];
                 $record[$key]['future_scale'] = $productFor['future_scale'];
                 $record[$key]['year'] = $year;
-                // 需要描述第一句话
+                // 描述第一段作为复制图片的描述
                 $record[$key]['description_first'] = '';
-                if (in_array($sitename, ['qycn', 'lpicn', 'yhcn', 'gircn', 'tycn'])) {
-                    if (strpos($description, '。') !== false) {
-                        $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, '。') + 1);
-                    }
-                } elseif (in_array($sitename, ['mrrs', 'yhen', 'qyen', 'lpien', 'mmgen', 'giren'])) {
-                    
-                    $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n") + 1);
-                    // 长度不足可能是截取错误 
-                    $tempLength = 100;
-                    if (mb_strlen($description) < $tempLength) {
+                $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n") + 1);
+                // 长度不足可能是截取第二段 
+                $tempLength = 100;
+                if (mb_strlen($description) < $tempLength) {
 
-                    }else if (mb_strlen($description) >= $tempLength && mb_strlen($record[$key]['description_first']) < $tempLength) {
-                        $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n", $tempLength) + 1);
-                    }
-                } else {
-
+                }else if (mb_strlen($description) >= $tempLength && mb_strlen($record[$key]['description_first']) < $tempLength) {
+                    $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n", $tempLength) + 1);
                 }
 
                 // 删除描述
