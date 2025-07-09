@@ -131,9 +131,10 @@ class CheckNginxLoadCommand extends Command {
         } else {
             $use_full_ip_status = false;
         }
-
-        $start_time = time() - $beforeIpTime * 60;
-        $accessIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
+        $nowtime = time();
+        $start_time = $nowtime - $beforeIpTime * 60;
+        $accessIpLogList = AccessLog::query()
+                                    ->whereBetween('created_at', [$start_time, $nowtime])
                                     ->groupBy($tab)
                                     ->selectRaw("count(*) as cnt, ".$tab)
                                     ->having('cnt', '>=', $ipMaxCnt)
@@ -141,7 +142,7 @@ class CheckNginxLoadCommand extends Command {
         if (!empty($accessIpLogList) && $use_full_ip_status) {
             $tap_ip_list = array_keys($accessIpLogList);
             $accessIpLogList = AccessLog::query()
-                                           ->where("created_at", ">", $start_time)
+                                           ->whereBetween('created_at', [$start_time, $nowtime])
                                            ->whereIn($tab, $tap_ip_list)
                                            ->groupBy('ip')
                                            ->selectRaw("count(*) as cnt, ip")
@@ -181,7 +182,7 @@ class CheckNginxLoadCommand extends Command {
                 'ban_str'    => $ipstr,
                 'content'    => $content,
                 'ban_type'   => 1,
-                'created_at' => time(),
+                'created_at' => $nowtime,
             ];
             $banIpStrList[] = PHP_EOL.$ipstr;
         }
@@ -202,7 +203,7 @@ class CheckNginxLoadCommand extends Command {
         $banUaStrList = [];
         $UaMaxCnt = $sysValList['uaMaxReqCnt']['value'] ?? 100; //默认100次
         $beforeUaTime = $sysValList['beforeUaTime']['value'] ?? 5; //默认5分钟
-        $ua_start_time = time() - $beforeUaTime * 60;
+        $ua_start_time = $nowtime - $beforeUaTime * 60;
         $accessUaLogList = AccessLog::query()->where("created_at", ">", $ua_start_time)
                                     ->groupBy('ua_info')
                                     ->selectRaw("count(*) as cnt, ua_info")
@@ -216,7 +217,7 @@ class CheckNginxLoadCommand extends Command {
                 'ban_str'    => $forAccUaVal,
                 'content'    => $content,
                 'ban_type'   => 2,
-                'created_at' => time(),
+                'created_at' => $nowtime,
             ];
         }
         NginxBanList::query()->insert($blackUaList);

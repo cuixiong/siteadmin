@@ -32,8 +32,14 @@ class CheckAccessCntBanCommand extends Command {
      * @var string
      */
     protected $signature = 'task:check_access_cnt_nginx_ban';
+    public $now_time = 0;
 
     public $banIpContent = [];
+
+    public function __construct() {
+        parent::__construct();
+        $this->now_time = time();
+    }
 
     public function handle() {
         try {
@@ -103,12 +109,13 @@ class CheckAccessCntBanCommand extends Command {
         foreach ($ban_rule_list as $ban_rule_key => $ban_rule_val){
             $unit = $ban_rule_val['value'];
             $unit_max_cnt = $ban_rule_val['back_value'] ?? 0;
-            $start_time = time() - $unit * 60;
+            $start_time = $this->now_time - $unit * 60;
             //$start_time = 0;
             if (empty($unit_max_cnt) || $unit_max_cnt <= 0) {
                 continue;
             } else {
-                $forAccessIpLogList = AccessLog::query()->where("created_at", ">", $start_time)
+                $forAccessIpLogList = AccessLog::query()
+                                               ->whereBetween('created_at', [$start_time, $this->now_time])
                                                ->groupBy($tab)
                                                ->selectRaw("count(*) as cnt, ".$tab)
                                                ->having('cnt', '>=', $unit_max_cnt)
@@ -120,7 +127,7 @@ class CheckAccessCntBanCommand extends Command {
                 if (!empty($forAccessIpLogList) && $use_full_ip_status) {
                     $tap_ip_list = array_keys($forAccessIpLogList);
                     $forAccessIpLogList = AccessLog::query()
-                                                 ->where("created_at", ">", $start_time)
+                                                 ->whereBetween('created_at', [$start_time, $this->now_time])
                                                  ->whereIn($tab, $tap_ip_list)
                                                  ->groupBy('ip')
                                                  ->selectRaw("count(*) as cnt, ip")
@@ -264,7 +271,7 @@ class CheckAccessCntBanCommand extends Command {
                     'ban_type'     => 1,
                     'service_type' => 2,
                     'content'      => $content,
-                    'created_at'   => time(),
+                    'created_at'   => $this->now_time,
                 ];
                 NginxBanList::query()->insert($add_data);
                 $temp_content .= $forRealBanStr;
