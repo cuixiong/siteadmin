@@ -2030,6 +2030,8 @@ class ProductsController extends CrudController {
             $templateList = Template::query()
                                     ->select(['id', 'name', 'type', 'btn_color'])
                                     ->where("status", 1)
+                                    ->orderBy('sort', 'ASC')
+                                    ->orderBy('id', 'ASC')
                                     ->get()
                                     ->toArray();
             Redis::set($templateListKey, json_encode($templateList));

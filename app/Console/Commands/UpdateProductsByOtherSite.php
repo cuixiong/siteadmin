@@ -200,7 +200,7 @@ class UpdateProductsByOtherSite extends Command
             }
             if (!isset($item['description'])) {
                 $ingoreCount++;
-                $ingore_detail .= "【忽略】报告名:{$item['name']};缺少详情" . "\r\n";
+                $ingore_detail .= "【忽略】报告名:{$item['name']};查询不到完整报告(详情丢失)" . "\r\n";
                 continue;
             }
 
@@ -211,7 +211,7 @@ class UpdateProductsByOtherSite extends Command
 
             if (empty($item['keywords_jp'])) {
                 $ingoreCount++;
-                $ingore_detail .= "【忽略】报告名:{$item['name']};url:{$item['url']};无法查询到关键词" . "\r\n";
+                $ingore_detail .= "【忽略】报告名:{$item['name']};无法查询到关键词({$item['url']})" . "\r\n";
                 continue;
             }
 
@@ -386,7 +386,7 @@ class UpdateProductsByOtherSite extends Command
                     }
                 }
                 $updateCount++;
-                $insertDetail .= "报告id:{$product_id};【{$item['name']}】" . "\r\n";
+                $updateDetail .= "报告id:{$product_id};【{$item['name']}】" . "\r\n";
                 array_push($succIdList, $product_id);
             } else {
                 // 新增
