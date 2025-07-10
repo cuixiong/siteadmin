@@ -158,7 +158,7 @@ class ProductsController extends CrudController {
             // 报告添加一个单位
             $setting = [];
             $setting = SystemValue::query()->select(['key', 'value'])
-                ->whereIn('key', ['units', 'newsWatermarkImage', 'chartsLogo'])
+                ->whereIn('key', ['units', 'newsWatermarkImage', 'chartsLogo','chartsRate'])
                 ->get();
             if ($setting) {
                 $setting = $setting->toArray();
@@ -223,6 +223,17 @@ class ProductsController extends CrudController {
 
                 }else if (mb_strlen($description) >= $tempLength && mb_strlen($record[$key]['description_first']) < $tempLength) {
                     $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n", $tempLength) + 1);
+                }
+
+                // 详情描述中的单位为亿元，但是规模数据又是百万美元，因此系统设置单位为亿元时，需将规模数据进行换算
+                if (
+                    isset($setting['products_units']) && !empty($setting['products_units']) && $setting['products_units'] == '亿元'
+                    && isset($setting['chartsRate']) && !empty($setting['chartsRate']) && is_numeric($setting['chartsRate'])
+                ) {
+
+                    $record[$key]['last_scale'] = !empty($record[$key]['last_scale']) ? round(bcdiv(bcmul($record[$key]['last_scale'], $setting['chartsRate']), 100, 4), 1) : '';
+                    $record[$key]['current_scale'] = !empty($record[$key]['current_scale']) ? round(bcdiv(bcmul($record[$key]['current_scale'], $setting['chartsRate']), 100, 4), 1) : '';
+                    $record[$key]['future_scale'] = !empty($record[$key]['future_scale']) ? round(bcdiv(bcmul($record[$key]['future_scale'], $setting['chartsRate']), 100, 4), 1) : '';
                 }
 
                 // 删除描述
