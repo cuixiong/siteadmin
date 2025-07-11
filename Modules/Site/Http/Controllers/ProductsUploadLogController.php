@@ -578,6 +578,24 @@ class ProductsUploadLogController extends CrudController
                     //                    //设置失败,休眠2s
                     //                    sleep(2);
                     //                }
+
+                    
+                    // 注：168report负责的中文团队不负责gir、mmg、lpi这几个品牌，存在各种原因需要把详情开头的品牌词替换掉
+                    // 例如“据GIR (Global Info Research)调研...” 替换成“据专业团队调研..”
+                    if($params['site'] == '168report' && isset($itemDescription['description']) && !empty($itemDescription['description'])){
+                        $descSearchArray = [
+                            'GIR (Global Info Research)',
+                            'MARKET MONITOR GLOBAL, INC (MMG)',
+                        ];
+                        $descReplaceText = '专业团队';
+                        $itemDescription['description'] = str_replace($descSearchArray,$descReplaceText,$itemDescription['description']);
+                        
+                        $descSearchArray2= [
+                            'MMG调研团队，',
+                        ];
+                        $itemDescription['description'] = str_replace($descSearchArray2,'',$itemDescription['description']);
+                    }
+                    
                     //新纪录年份
                     $newYear = Products::publishedDateFormatYear($item['published_date']);
                     /**

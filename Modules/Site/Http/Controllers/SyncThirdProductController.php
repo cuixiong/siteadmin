@@ -573,6 +573,22 @@ class SyncThirdProductController extends CrudController {
                 } else {
                     $itemDescription['description'] = '';
                 }
+                // 注：168report负责的中文团队不负责gir、mmg、lpi这几个品牌，存在各种原因需要把详情开头的品牌词替换掉
+                // 例如“据GIR (Global Info Research)调研...” 替换成“据专业团队调研..”
+                if($site == '168report'){
+                    $descSearchArray = [
+                        'GIR (Global Info Research)',
+                        'MARKET MONITOR GLOBAL, INC (MMG)',
+                    ];
+                    $descReplaceText = '专业团队';
+                    $itemDescription['description'] = str_replace($descSearchArray,$descReplaceText,$itemDescription['description']);
+                    
+                    $descSearchArray2= [
+                        'MMG调研团队，',
+                    ];
+                    $itemDescription['description'] = str_replace($descSearchArray2,'',$itemDescription['description']);
+                }
+                
                 //英文详情
                 if (!empty($row['description_en'])) {
                     $descriptionEnArr = json_decode($row['description_en'], true);
