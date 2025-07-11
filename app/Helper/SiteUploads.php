@@ -56,10 +56,10 @@ class SiteUploads
      * @param $file 文件上传OBJ
      * @param $path 上传路径
      * @param $name 上传文件名
-     *
+     * @params $is_new 是否外网图片地址
      * @return string 文件URL
      */
-    public static function uploads($file, $path, $name, $createDateFolder = false, $watermark = null)
+    public static function uploads($file, $path, $name, $createDateFolder = false, $watermark = null, $is_new = false)
     {
         //新闻模块需要做年月路径
         if ($createDateFolder) {
@@ -76,7 +76,9 @@ class SiteUploads
             $imageWithWatermark = self::addWatermark($file, $watermark);
             $imageWithWatermark->save($FilePath . $name);
         } else {
-            $file->move($FilePath, $name);
+            if(!$is_new){
+                $file->move($FilePath, $name);
+            }
         }
 
         if (!empty($path)) {
