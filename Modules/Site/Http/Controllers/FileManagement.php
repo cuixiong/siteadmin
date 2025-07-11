@@ -5,20 +5,21 @@ namespace Modules\Site\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
+use Illuminate\Support\Facades\File;
 use Modules\Site\Http\Models\System;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\OssFile;
+use Nette\Utils\FileInfo;
 
 class FileManagement extends Controller {
     private $RootPath;
-    private $i = 1;
-
-    public $watermarkKey = 'newsWatermark';
-    public $watermarkImageKey = 'newsWatermarkImage'; // 水印图片路径
-    public $watermarkOpacityKey = 'newsWatermarkOpacity'; // 透明度
-    public $watermarkLocationKey = 'newsWatermarkLocation'; // 位置
-    public $watermarkOffsetWidthKey = 'newsWatermarkOffsetWidth'; // 水平偏移
-    public $watermarkOffsetHeightKey = 'newsWatermarkOffsetHeight'; // 垂直偏移
+    private $i                        = 1;
+    public  $watermarkKey             = 'newsWatermark';
+    public  $watermarkImageKey        = 'newsWatermarkImage'; // 水印图片路径
+    public  $watermarkOpacityKey      = 'newsWatermarkOpacity'; // 透明度
+    public  $watermarkLocationKey     = 'newsWatermarkLocation'; // 位置
+    public  $watermarkOffsetWidthKey  = 'newsWatermarkOffsetWidth'; // 水平偏移
+    public  $watermarkOffsetHeightKey = 'newsWatermarkOffsetHeight'; // 垂直偏移
 
     public function __construct() {
         $request = request();
@@ -30,15 +31,13 @@ class FileManagement extends Controller {
         // }
     }
 
-    public function FileList(Request $request)
-    {
+    public function FileList(Request $request) {
         //排序方式
         $sortBy = $request->sort_file ?? 'time'; // 默认按时间排序 name|time
         $orderType = $request->order_type ?? 'desc'; // 默认降序 asc|desc
-
         $path = $request->path ?? '';
         $path = ltrim($path, '/');
-        $filename = $this->RootPath . $path;
+        $filename = $this->RootPath.$path;
         if (!is_dir($filename)) {
             mkdir($filename, 0755, true);
             chmod($filename, 0755);
@@ -59,7 +58,7 @@ class FileManagement extends Controller {
                 continue;
             } else {
                 $result['prev_path'] = $bread_crumb_temp;
-                $bread_crumb_temp .= (!empty($bread_crumb_temp) ? '/' : '') . $v;
+                $bread_crumb_temp .= (!empty($bread_crumb_temp) ? '/' : '').$v;
                 $bread_crumbs[] = ['name' => $v, 'path' => $bread_crumb_temp];
             }
         }
@@ -77,53 +76,54 @@ class FileManagement extends Controller {
                     continue;
                 } else {
                     $info = [];
-                    $info['type'] = self::filetype($filename . '/' . $v);
+                    $info['type'] = self::filetype($filename.'/'.$v);
                     if ($info['type'] == 'dir') {
                         $info['size'] = "";
                     } else {
-                        $info['size'] = self::converFileSize(filesize($filename . '/' . $v));
+                        $info['size'] = self::converFileSize(filesize($filename.'/'.$v));
                     }
                     $info['is_file'] = ['name' => $v];
-                    $info['path'] = $path ? str_replace(public_path(), '', $this->RootPath . trim($path, '/') . '/' . $v)
-                        : str_replace(public_path(), '', $this->RootPath . $v);
-                    $info['orignal_path'] = $path . $v;
+                    $info['path'] = $path ? str_replace(public_path(), '', $this->RootPath.trim($path, '/').'/'.$v)
+                        : str_replace(public_path(), '', $this->RootPath.$v);
+                    $info['orignal_path'] = $path.$v;
                     if ($info['type'] == 'image') {
-                        $ImageSize = getimagesize($filename . '/' . $v);
-                        $info['width'] = $ImageSize[0] ?? 0 . ' px';
-                        $info['height'] = $ImageSize[1] ?? 0 . ' px';
+                        $ImageSize = getimagesize($filename.'/'.$v);
+                        $info['width'] = $ImageSize[0] ?? 0 .' px';
+                        $info['height'] = $ImageSize[1] ?? 0 .' px';
                     }
-                    $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
+                    $info['extension'] = pathinfo($filename.'/'.$v, PATHINFO_EXTENSION);
                     clearstatcache();
-                    $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
+                    $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename.'/'.$v)) ?? ''; //上次访问时间
                     clearstatcache();
-                    $info['create_time'] = date('Y-m-d H:i:s', filectime($filename . '/' . $v)) ?? ''; //创建时间
+                    $info['create_time'] = date('Y-m-d H:i:s', filectime($filename.'/'.$v)) ?? ''; //创建时间
                     clearstatcache();
-                    $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
-
+                    $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename.'/'.$v)) ?? ''; //修改时间
                     if ($info['type'] == 'dir') {
                         $fileNameDirArray[$v] = $info;
                     } else {
                         $fileNameFileArray[$v] = $info;
                     }
                 }
-
                 // 排序规则函数
                 $sortFunction = function ($a, $b) use ($sortBy, $orderType) {
                     if ($sortBy == 'time') {
                         // 按修改时间排序
                         $aTime = strtotime($a['update_time']);
                         $bTime = strtotime($b['update_time']);
+
                         return $orderType == 'asc' ? $aTime - $bTime : $bTime - $aTime;
                     } else {
                         // 按文件名排序
-                        return $orderType == 'asc' ? strcmp($a['is_file']['name'], $b['is_file']['name']) : strcmp($b['is_file']['name'], $a['is_file']['name']);
+                        return $orderType == 'asc'
+                            ? strcmp($a['is_file']['name'], $b['is_file']['name'])
+                            : strcmp(
+                                $b['is_file']['name'], $a['is_file']['name']
+                            );
                     }
                 };
-
                 // 对文件夹和文件分别排序
                 uasort($fileNameDirArray, $sortFunction);
                 uasort($fileNameFileArray, $sortFunction);
-
                 // 合并文件夹和文件结果
                 $fileNameArray = array_merge(array_values($fileNameDirArray), array_values($fileNameFileArray));
             }
@@ -696,21 +696,18 @@ class FileManagement extends Controller {
                 ReturnJson(false, '请选择上传文件');
             }
             $res = [];
-
             $watermarkConfig = null;
-
             foreach ($files as $file) {
                 $name = $file->getClientOriginalName();
                 // 是否新建年份文件夹
                 $createDateFolder = false;
                 // 是否使用水印
                 $watermark = null;
-
                 if (strpos($path, 'news/') !== false) {
                     //新闻模块需要做年月路径
                     $createDateFolder = true;
                     //新闻图片需要添加水印
-                    $watermarkConfig = !empty($watermarkConfig)?$watermarkConfig:$this->getWatermarkConfig();
+                    $watermarkConfig = !empty($watermarkConfig) ? $watermarkConfig : $this->getWatermarkConfig();
                     $watermark = $watermarkConfig;
                 }
                 $res[] = SiteUploads::uploads($file, $path, $name, $createDateFolder, $watermark);
@@ -721,10 +718,69 @@ class FileManagement extends Controller {
         }
     }
 
+    public function uploadsByWebPath(Request $request) {
+        try {
+            $webpath = $request->webpath;
+            $storepath = $request->storepath;
+            if (empty($webpath) || empty($storepath)) {
+                ReturnJson(false, '参数错误');
+            }
+            $res = [];
+            $watermarkConfig = null;
+            $site = getSiteName();
+            $savePath = public_path("/site/{$site}/{$storepath}");
+
+            //额外的处理新闻路径
+            $createDateFolder = false;
+            if (strpos($savePath, 'news/') !== false) {
+                if (strpos($savePath, '-') === false) {
+                    $createDateFolder = true;
+                    //拼接年月日路径
+                    $year = date('Y');
+                    $shortYear = (int)$year % 100; // 提取年份的最后两位
+                    $savePath = $savePath.'/'.$shortYear.'-'.date('m');
+                }
+            }
+
+            // 获取图片二进制数据
+            $imageData = @file_get_contents($webpath);
+            if ($imageData !== false) {
+                if (!is_dir($savePath)) {
+                    mkdir($savePath, 0777, true);
+                }
+                $file_name = basename(parse_url($webpath, PHP_URL_PATH));
+                //$file_name = date('YmdHis').rand(100000, 999999);
+                //$extension = pathinfo($webpath, PATHINFO_EXTENSION);
+                //$file_name = $file_name.'.'.$extension;
+                $savePath .= '/'.$file_name;
+                // 保存到本地
+                if (file_put_contents($savePath, $imageData)) {
+
+                } else {
+                    ReturnJson(false, '保存失败!');
+                }
+            }else{
+                ReturnJson(false, '图片地址错误!');
+            }
+            // 是否使用水印
+            $watermark = null;
+            if (strpos($savePath, 'news/') !== false) {
+                //新闻图片需要添加水印
+                $watermarkConfig = !empty($watermarkConfig) ? $watermarkConfig : $this->getWatermarkConfig();
+                $watermark = $watermarkConfig;
+            }
+            $file = new FileInfo($savePath);
+            $res = SiteUploads::uploads($file, $storepath, $file_name, $createDateFolder, $watermark , true);
+            ReturnJson(true, '上传成功', $res);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
     // 获取水印配置
     public function getWatermarkConfig() {
         $isOpen = System::query()->where("alias", $this->watermarkKey)->value('status');
-        if($isOpen && $isOpen == 1){
+        if ($isOpen && $isOpen == 1) {
             $keyList = [
                 $this->watermarkImageKey,
                 $this->watermarkOpacityKey,
@@ -732,9 +788,10 @@ class FileManagement extends Controller {
                 $this->watermarkOffsetWidthKey,
                 $this->watermarkOffsetHeightKey,
             ];
-            $data = SystemValue::query()->whereIn("key" , $keyList)->where("status", 1)->pluck('value' , 'key')->toArray();
+            $data = SystemValue::query()->whereIn("key", $keyList)->where("status", 1)->pluck('value', 'key')->toArray(
+            );
             $result = [];
-            if(!isset($data[$this->watermarkImageKey]) || empty($data[$this->watermarkImageKey])){
+            if (!isset($data[$this->watermarkImageKey]) || empty($data[$this->watermarkImageKey])) {
                 return null;
             }
             $result['image'] = $data[$this->watermarkImageKey];
@@ -742,8 +799,10 @@ class FileManagement extends Controller {
             $result['location'] = $data[$this->watermarkLocationKey];
             $result['offsetWidth'] = $data[$this->watermarkOffsetWidthKey];
             $result['offsetHeight'] = $data[$this->watermarkOffsetHeightKey];
+
             return $result;
         }
+
         return null;
     }
 
@@ -763,9 +822,7 @@ class FileManagement extends Controller {
         if (!empty($path)) {
             $filePath = $filePath.'/'.trim($path, '/');
         }
-
         $filePath = $filePath.'/'.$name;
-
         if (!file_exists($filePath)) {
             ReturnJson(false, '下载文件不存在');
         }
@@ -792,7 +849,6 @@ class FileManagement extends Controller {
         if (!empty($path)) {
             $filePath = $filePath.'/'.trim($path, '/');
         }
-
         $filePath = $filePath.'/'.$name;
         if (!file_exists($filePath)) {
             ReturnJson(false, '下载文件不存在');
@@ -803,10 +859,8 @@ class FileManagement extends Controller {
         }
         $fileAbsultPath = str_replace(public_path(), '', $res);
         $domain = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['SERVER_NAME'];
-        $newDownUrl = $domain . $fileAbsultPath;
-
-        ReturnJson(true, '请求成功' , ['downloadUrl' => $newDownUrl]);
-
+        $newDownUrl = $domain.$fileAbsultPath;
+        ReturnJson(true, '请求成功', ['downloadUrl' => $newDownUrl]);
     }
 
     // 根目录查询文件夹
@@ -949,7 +1003,7 @@ class FileManagement extends Controller {
             if (empty($path) || empty($oss_path) || empty($file_name) || empty($file_size) || empty($file_suffix)) {
                 ReturnJson(false, '参数错误');
             }
-            $file_fullpath = rtrim($path , "/")."/".$file_name;
+            $file_fullpath = rtrim($path, "/")."/".$file_name;
             $data = [
                 'path'          => $path,
                 'file_fullpath' => $file_fullpath,

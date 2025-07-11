@@ -40,6 +40,7 @@ Route::middleware([
         Route::post('move', [Modules\Site\Http\Controllers\FileManagement::class, 'CopyAndMove'])->name('站点端:文件管理:文件夹移动');
         Route::post('cmpress', [Modules\Site\Http\Controllers\FileManagement::class, 'cmpress'])->name('站点端:文件管理:文件夹压缩');
         Route::post('uploads', [Modules\Site\Http\Controllers\FileManagement::class, 'uploads'])->name('站点端:文件管理:文件上传');
+        Route::post('uploads-web-path', [Modules\Site\Http\Controllers\FileManagement::class, 'uploadsByWebPath'])->name('站点端:文件管理:文件上传');
         Route::get('dir_list', [Modules\Site\Http\Controllers\FileManagement::class, 'DirList'])->name('站点端:文件管理:文件夹列表(下拉)');
         Route::post('dir_size', [Modules\Site\Http\Controllers\FileManagement::class, 'DirSize'])->name('站点端:文件管理:文件夹大小计算');
         Route::post('unzip', [Modules\Site\Http\Controllers\FileManagement::class, 'unzip'])->name('站点端:文件管理:文件解压');
@@ -214,10 +215,10 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\CouponController::class, 'searchDroplist'])->name('优惠券:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\CouponController::class, 'changeStatus'])->name('优惠券:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\CouponController::class, 'changeSort'])->name('优惠券:排序修改');
-
         Route::post('store', [Modules\Site\Http\Controllers\CouponController::class, 'store'])->name('优惠券:新增优惠券');
         Route::post('update', [Modules\Site\Http\Controllers\CouponController::class, 'update'])->name('优惠券:修改优惠券');
         Route::post('destroy', [Modules\Site\Http\Controllers\CouponController::class, 'destroy'])->name('优惠券:删除优惠券');
+        Route::get('get-edition-values', [Modules\Site\Http\Controllers\CouponController::class, 'getEditionValues'])->name('优惠券:获取价格版本');
 
     });
 
