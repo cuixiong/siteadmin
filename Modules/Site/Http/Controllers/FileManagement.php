@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
@@ -698,7 +699,10 @@ class FileManagement extends Controller {
             $res = [];
             $watermarkConfig = null;
             foreach ($files as $file) {
-                $name = $file->getClientOriginalName();
+                $originalName = $file->getClientOriginalName();
+                $extension = pathinfo($originalName, PATHINFO_EXTENSION); // 返回 'jpg'
+                $file_name = date('YmdHis').rand(100000, 999999);
+                $name = $file_name.'.'.$extension;
                 // 是否新建年份文件夹
                 $createDateFolder = false;
                 // 是否使用水印
@@ -729,7 +733,6 @@ class FileManagement extends Controller {
             $watermarkConfig = null;
             $site = getSiteName();
             $savePath = public_path("/site/{$site}/{$storepath}");
-
             //额外的处理新闻路径
             $createDateFolder = false;
             if (strpos($savePath, 'news/') !== false) {
@@ -741,9 +744,9 @@ class FileManagement extends Controller {
                     $savePath = $savePath.'/'.$shortYear.'-'.date('m');
                 }
             }
-
             // 获取图片二进制数据
-            $imageData = @file_get_contents($webpath);
+            //$imageData = @file_get_contents($webpath);
+            $imageData = $this->getSteamByPath($webpath);
             if ($imageData !== false) {
                 if (!is_dir($savePath)) {
                     mkdir($savePath, 0777, true);
@@ -753,13 +756,15 @@ class FileManagement extends Controller {
                 //$extension = pathinfo($webpath, PATHINFO_EXTENSION);
                 //$file_name = $file_name.'.'.$extension;
                 $savePath .= '/'.$file_name;
+                if (file_exists($savePath)) {
+                    ReturnJson(false, '已有重名文件');
+                }
                 // 保存到本地
                 if (file_put_contents($savePath, $imageData)) {
-
                 } else {
                     ReturnJson(false, '保存失败!');
                 }
-            }else{
+            } else {
                 ReturnJson(false, '图片地址错误!');
             }
             // 是否使用水印
@@ -770,7 +775,7 @@ class FileManagement extends Controller {
                 $watermark = $watermarkConfig;
             }
             $file = new FileInfo($savePath);
-            $res = SiteUploads::uploads($file, $storepath, $file_name, $createDateFolder, $watermark , true);
+            $res = SiteUploads::uploads($file, $storepath, $file_name, $createDateFolder, $watermark, true);
             ReturnJson(true, '上传成功', $res);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -1032,6 +1037,19 @@ class FileManagement extends Controller {
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function getSteamByPath($url) {
+        try {
+            $client = new Client();
+            $response = $client->get($url, [
+                'headers' => ['User-Agent' => 'Mozilla/5.0']
+            ]);
+
+            return $response->getBody()->getContents();
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }
