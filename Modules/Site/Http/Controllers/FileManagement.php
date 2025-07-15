@@ -725,14 +725,13 @@ class FileManagement extends Controller {
                         $shortYear = (int)$year % 100; // 提取年份的最后两位
                         $temp_path = $temp_path . '/' . $shortYear . '-' . date('m');
                     }
-                    $file_real_path .= "/".$temp_path."/".$originalName;
-                    if(file_exists($file_real_path)){
-                        //文件存在,
-                        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-                        $file_name = date('YmdHis').rand(100000, 999999);
-                        $name = $file_name.'.'.$extension;
-                    }
-
+                }
+                $file_real_path .= "/".$temp_path."/".$originalName;
+                if(file_exists($file_real_path)){
+                    //文件存在,
+                    $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+                    $file_name = date('YmdHis').rand(100000, 999999);
+                    $name = $file_name.'.'.$extension;
                 }
                 $res[] = SiteUploads::uploads($file, $path, $name, $createDateFolder, $watermark);
             }
