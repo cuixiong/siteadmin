@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
@@ -692,13 +693,20 @@ class FileManagement extends Controller {
         try {
             $path = $request->path;
             $files = $request->file('file');
+            $is_replace = $request->is_replace ?? false;
             if (empty($files)) {
                 ReturnJson(false, '请选择上传文件');
             }
             $res = [];
             $watermarkConfig = null;
+            $site = getSiteName();
             foreach ($files as $file) {
-                $name = $file->getClientOriginalName();
+                $file_real_path = '';
+                $file_real_path = public_path("/site/{$site}/");
+                $temp_path = $path;
+
+                $originalName = $file->getClientOriginalName();
+                $name = $originalName;
                 // 是否新建年份文件夹
                 $createDateFolder = false;
                 // 是否使用水印
@@ -709,6 +717,21 @@ class FileManagement extends Controller {
                     //新闻图片需要添加水印
                     $watermarkConfig = !empty($watermarkConfig) ? $watermarkConfig : $this->getWatermarkConfig();
                     $watermark = $watermarkConfig;
+
+                    //临时路径
+                    if (strpos($temp_path, '-') === false) {
+                        //拼接年月日路径
+                        $year = date('Y');
+                        $shortYear = (int)$year % 100; // 提取年份的最后两位
+                        $temp_path = $temp_path . '/' . $shortYear . '-' . date('m');
+                    }
+                }
+                $file_real_path .= "/".$temp_path."/".$originalName;
+                if(file_exists($file_real_path)){
+                    //文件存在,
+                    $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+                    $file_name = date('YmdHis').rand(100000, 999999);
+                    $name = $file_name.'.'.$extension;
                 }
                 $res[] = SiteUploads::uploads($file, $path, $name, $createDateFolder, $watermark);
             }
@@ -729,7 +752,6 @@ class FileManagement extends Controller {
             $watermarkConfig = null;
             $site = getSiteName();
             $savePath = public_path("/site/{$site}/{$storepath}");
-
             //额外的处理新闻路径
             $createDateFolder = false;
             if (strpos($savePath, 'news/') !== false) {
@@ -741,25 +763,26 @@ class FileManagement extends Controller {
                     $savePath = $savePath.'/'.$shortYear.'-'.date('m');
                 }
             }
-
             // 获取图片二进制数据
-            $imageData = @file_get_contents($webpath);
+            //$imageData = @file_get_contents($webpath);
+            $imageData = $this->getSteamByPath($webpath);
             if ($imageData !== false) {
                 if (!is_dir($savePath)) {
                     mkdir($savePath, 0777, true);
                 }
                 $file_name = basename(parse_url($webpath, PHP_URL_PATH));
-                //$file_name = date('YmdHis').rand(100000, 999999);
-                //$extension = pathinfo($webpath, PATHINFO_EXTENSION);
-                //$file_name = $file_name.'.'.$extension;
+                if (file_exists($savePath . '/'. $file_name)) {
+                    $file_name = date('YmdHis').rand(100000, 999999);
+                    $extension = pathinfo($webpath, PATHINFO_EXTENSION);
+                    $file_name = $file_name.'.'.$extension;
+                }
                 $savePath .= '/'.$file_name;
                 // 保存到本地
                 if (file_put_contents($savePath, $imageData)) {
-
                 } else {
                     ReturnJson(false, '保存失败!');
                 }
-            }else{
+            } else {
                 ReturnJson(false, '图片地址错误!');
             }
             // 是否使用水印
@@ -770,7 +793,7 @@ class FileManagement extends Controller {
                 $watermark = $watermarkConfig;
             }
             $file = new FileInfo($savePath);
-            $res = SiteUploads::uploads($file, $storepath, $file_name, $createDateFolder, $watermark , true);
+            $res = SiteUploads::uploads($file, $storepath, $file_name, $createDateFolder, $watermark, true);
             ReturnJson(true, '上传成功', $res);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -1032,6 +1055,19 @@ class FileManagement extends Controller {
             }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function getSteamByPath($url) {
+        try {
+            $client = new Client();
+            $response = $client->get($url, [
+                'headers' => ['User-Agent' => 'Mozilla/5.0']
+            ]);
+
+            return $response->getBody()->getContents();
+        } catch (\Exception $e) {
+            return null;
         }
     }
 }

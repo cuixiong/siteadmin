@@ -68,6 +68,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Admin\Http\Controllers\RoleController::class, 'changeStatus'])->name('角色管理:修改状态');
         Route::get('adminId/{id}', [Modules\Admin\Http\Controllers\RoleController::class, 'adminId'])->name('角色管理:总控权限数据下拉');
         Route::get('siteId/{id}', [Modules\Admin\Http\Controllers\RoleController::class, 'siteId'])->name('角色管理:站点权限数据下拉');
+        Route::post('reset-sort', [Modules\Admin\Http\Controllers\RoleController::class, 'resetSort'])->name('角色管理:调整排序');
     });
 
     // Email控制器
