@@ -11,6 +11,7 @@ use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
+use Modules\Admin\Http\Models\Language;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Server;
 use Modules\Admin\Http\Models\User;
@@ -22,6 +23,8 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\ListStyle;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\Publisher;
+use Modules\Site\Http\Models\PriceEdition;
+use Modules\Site\Http\Models\PriceEditionValue;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
 use Modules\Site\Http\Models\ProductsCategory;
@@ -94,7 +97,7 @@ class ProductsController extends CrudController {
             $fields = ['id', 'name', 'publisher_id', 'english_name', 'country_id', 'category_id', 'price', 'created_at',
                        'created_by',
                        'published_date', 'author', 'show_hot', 'show_recommend', 'status', 'sort', 'discount',
-                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end', 'url'];
+                       'discount_amount', 'discount_type', 'discount_time_begin', 'discount_time_end', 'url' , 'price_values'];
             $model = $model->select($fields);
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
@@ -158,23 +161,21 @@ class ProductsController extends CrudController {
             // 报告添加一个单位
             $setting = [];
             $setting = SystemValue::query()->select(['key', 'value'])
-                ->whereIn('key', ['units', 'newsWatermarkImage', 'chartsLogo','chartsRate'])
-                ->get();
+                                  ->whereIn('key', ['units', 'newsWatermarkImage', 'chartsLogo', 'chartsRate'])
+                                  ->get();
             if ($setting) {
                 $setting = $setting->toArray();
                 $setting = array_column($setting, 'value', 'key');
-                if(isset($setting['units'])){
+                if (isset($setting['units'])) {
                     $setting['products_units'] = $setting['units'];
                     unset($setting['units']);
                 }
-                if(isset($setting['chartsLogo'])){
+                if (isset($setting['chartsLogo'])) {
                     $setting['logo'] = $setting['chartsLogo'];
                     unset($setting['chartsLogo']);
                 }
             }
-
             $sitename = getSiteName();
-
             foreach ($record as $key => $item) {
                 $productId = $item['id'];
                 $record[$key]['report_url'] = $domain."/reports/{$item['id']}/".$item['url'];
@@ -207,8 +208,7 @@ class ProductsController extends CrudController {
                     $templateData = $this->filterTemplateWithNoData($templateData, $templateContentList, $productFor);
                 }
                 $record[$key]['template_data'] = $templateData;
-
-                // 生成趋势柱状图所需数据 
+                // 生成趋势柱状图所需数据
                 $record[$key]['cagr'] = $productFor['cagr'];
                 $record[$key]['last_scale'] = $productFor['last_scale'];
                 $record[$key]['current_scale'] = $productFor['current_scale'];
@@ -217,28 +217,35 @@ class ProductsController extends CrudController {
                 // 描述第一段作为复制图片的描述
                 $record[$key]['description_first'] = '';
                 $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n") + 1);
-                // 长度不足可能是截取第二段 
+                // 长度不足可能是截取第二段
                 $tempLength = 100;
                 if (mb_strlen($description) < $tempLength) {
-
-                }else if (mb_strlen($description) >= $tempLength && mb_strlen($record[$key]['description_first']) < $tempLength) {
-                    $record[$key]['description_first'] = mb_substr($description, 0, mb_strpos($description, "\n", $tempLength) + 1);
+                } else if (mb_strlen($description) >= $tempLength
+                           && mb_strlen($record[$key]['description_first']) < $tempLength) {
+                    $record[$key]['description_first'] = mb_substr(
+                        $description, 0, mb_strpos($description, "\n", $tempLength) + 1
+                    );
                 }
-
                 // 详情描述中的单位为亿元，但是规模数据又是百万美元，因此系统设置单位为亿元时，需将规模数据进行换算
                 if (
-                    isset($setting['products_units']) && !empty($setting['products_units']) && $setting['products_units'] == '亿元'
-                    && isset($setting['chartsRate']) && !empty($setting['chartsRate']) && is_numeric($setting['chartsRate'])
+                    isset($setting['products_units']) && !empty($setting['products_units'])
+                    && $setting['products_units'] == '亿元'
+                    && isset($setting['chartsRate'])
+                    && !empty($setting['chartsRate'])
+                    && is_numeric($setting['chartsRate'])
                 ) {
-
-                    $record[$key]['last_scale'] = !empty($record[$key]['last_scale']) ? round(bcdiv(bcmul($record[$key]['last_scale'], $setting['chartsRate']), 100, 4), 1) : '';
-                    $record[$key]['current_scale'] = !empty($record[$key]['current_scale']) ? round(bcdiv(bcmul($record[$key]['current_scale'], $setting['chartsRate']), 100, 4), 1) : '';
-                    $record[$key]['future_scale'] = !empty($record[$key]['future_scale']) ? round(bcdiv(bcmul($record[$key]['future_scale'], $setting['chartsRate']), 100, 4), 1) : '';
+                    $record[$key]['last_scale'] = !empty($record[$key]['last_scale']) ? round(
+                        bcdiv(bcmul($record[$key]['last_scale'], $setting['chartsRate']), 100, 4), 1
+                    ) : '';
+                    $record[$key]['current_scale'] = !empty($record[$key]['current_scale']) ? round(
+                        bcdiv(bcmul($record[$key]['current_scale'], $setting['chartsRate']), 100, 4), 1
+                    ) : '';
+                    $record[$key]['future_scale'] = !empty($record[$key]['future_scale']) ? round(
+                        bcdiv(bcmul($record[$key]['future_scale'], $setting['chartsRate']), 100, 4), 1
+                    ) : '';
                 }
-
                 // 删除描述
                 unset($record[$key]['description']);
-
             }
             //$record = mb_convert_encoding($record, "UTF-8");
             $data = [
@@ -246,7 +253,7 @@ class ProductsController extends CrudController {
                 'list'        => $record,
                 'headerTitle' => [],
                 'type'        => $type,
-                'setting'     => $setting, 
+                'setting'     => $setting,
             ];
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -663,7 +670,7 @@ class ProductsController extends CrudController {
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->query()->where('id', $request->id)->first();
-            if(!$record){
+            if (!$record) {
                 ReturnJson(false, '报告不存在');
             };
             $year = date('Y', $record['published_date']);
@@ -723,8 +730,8 @@ class ProductsController extends CrudController {
             // DB::connection($currentTenant->getConnectionName())->beginTransaction();
             DB::beginTransaction();
             $model = $this->ModelInstance();
-            $record = $model->query()->where('id', $input['id'])->first(); ;
-            if(!$record){
+            $record = $model->query()->where('id', $input['id'])->first();;
+            if (!$record) {
                 ReturnJson(false, '报告不存在');
             };
             //旧纪录年份
@@ -923,7 +930,53 @@ class ProductsController extends CrudController {
             $data['discount_type'] = (new DictionaryValue())->GetListLabel(
                 $field, false, '', ['code' => 'Discount_Type', 'status' => 1], ['sort' => 'ASC']
             );
-            ReturnJson(true, trans('lang.request_success'), $data);
+            //获取站点出版商版本数据
+            $publisher_id = $request->publisher_id ?? 0;
+            $language_list = Language::query()->where("status", 1)->pluck("name", 'id')->toArray();
+            $publisher_list = \Modules\Site\Http\Models\Publisher::query()->where("status", 1)->pluck("name", 'id')
+                                                                 ->toArray();
+            if (empty($publisher_id)) {
+                //当前站点的出版商
+                $site = getSiteName();
+                $publisher_id_list = Site::query()->where('name', $site)->value('publisher_id');
+                $publisher_id_list = explode(',', $publisher_id_list);
+            } else {
+                $publisher_id_list = [$publisher_id];
+            }
+            $PriceEdition_list = PriceEdition::query()->where("status", 1)
+                                             ->where("is_deleted", 1)
+                                             ->get()->toArray();
+            $edition_list = [];
+            foreach ($PriceEdition_list as $key => $item) {
+                $for_publisher_id_list = explode(',', $item['publisher_id']);
+                foreach ($publisher_id_list as $forpublisher_id) {
+                    if (in_array($forpublisher_id, $for_publisher_id_list)) {
+                        $cnt = PriceEditionValue::query()
+                                                ->where('edition_id', $item['id'])
+                                                ->where("status", 1)
+                                                ->where("is_deleted", 1)
+                                                ->count();
+                        if ($cnt > 0) {
+                            $edition_list[$item['id']] = $publisher_list[$forpublisher_id] ?? '';
+                        }
+                    }
+                }
+            }
+            $edition_id_list = array_keys($edition_list);
+            $PriceEditionValueList = PriceEditionValue::query()->whereIn('edition_id', $edition_id_list)
+                                                      ->where("status", 1)
+                                                      ->where("is_deleted", 1)
+                                                      ->get()->toArray();
+            $publisher_price_value_list = [];
+            foreach ($PriceEditionValueList as $item) {
+                $publisher_price_value_list[] = [
+                    'value' => $item['id'],
+                    'label' => $item['name']."-"
+                               ."{$language_list[$item['language_id']]}(语言)"
+                ];
+            }
+            $data['publisher_price_value_list'] = $publisher_price_value_list;
+            ReturnJson(true, 'ok', $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -935,7 +988,10 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changePrice(Request $request) {
+    public
+    function changePrice(
+        Request $request
+    ) {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
@@ -959,7 +1015,10 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeHot(Request $request) {
+    public
+    function changeHot(
+        Request $request
+    ) {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
@@ -983,7 +1042,10 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeRecommend(Request $request) {
+    public
+    function changeRecommend(
+        Request $request
+    ) {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
@@ -1007,13 +1069,18 @@ class ProductsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function discount(Request $request) {
+    public
+    function discount(
+        Request $request
+    ) {
         try {
             $this->ValidateInstance($request);
             $record = $this->ModelInstance()->findOrFail($request->id);
             $type = $request->discount_type;
             $value = $request->discount_value;
+            $price_values = $request->price_values ?? '';
             $record->discount_type = $type;
+            $record->price_values = $price_values;
             if ($type == 1) {
                 $record->discount = $value;
                 $record->discount_amount = 0;
@@ -1054,7 +1121,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchUpdateParam(Request $request) {
+    public
+    function batchUpdateParam(
+        Request $request
+    ) {
         $field = Products::getBatchUpdateField();
         array_unshift($field, ['name' => '请选择', 'value' => '', 'type' => '']);
         ReturnJson(true, trans('lang.request_success'), $field);
@@ -1065,7 +1135,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchUpdateOption(Request $request) {
+    public
+    function batchUpdateOption(
+        Request $request
+    ) {
         $input = $request->all();
         $keyword = $input['keyword'];
         $data = [];
@@ -1094,6 +1167,7 @@ class ProductsController extends CrudController {
                 $data = (new Publisher())->GetListLabel(['id as value', 'name as label'], false, '',
                                                         ['status' => 1, 'id' => $publisherIdArray]);
             }
+        } elseif ($keyword == 'publisher_id') {
         }
         ReturnJson(true, trans('lang.request_success'), $data);
     }
@@ -1103,7 +1177,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchUpdate(Request $request) {
+    public
+    function batchUpdate(
+        Request $request
+    ) {
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $keyword = $input['keyword'] ?? '';
@@ -1148,7 +1225,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function batchDelete(Request $request) {
+    public
+    function batchDelete(
+        Request $request
+    ) {
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? 1; //1：获取数量;2：执行操作
@@ -1198,7 +1278,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function quickBatchDelete(Request $request) {
+    public
+    function quickBatchDelete(
+        Request $request
+    ) {
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $type = $input['type'] ?? 1; //1：获取数量;2：执行操作
@@ -1247,7 +1330,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function export(Request $request) {
+    public
+    function export(
+        Request $request
+    ) {
         set_time_limit(-1);
         ini_set('memory_limit', -1);
         // return Excel::download(new ProductsExport, 'products.xlsx');
@@ -1367,7 +1453,10 @@ class ProductsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    public function newExport(Request $request) {
+    public
+    function newExport(
+        Request $request
+    ) {
         // return Excel::download(new ProductsExport, 'products.xlsx');
         $input = $request->all();
         $ids = $input['ids'] ?? '';
@@ -1441,7 +1530,10 @@ class ProductsController extends CrudController {
     /**
      *  队列处理导出
      */
-    public function handlerExportByQueue($params) {
+    public
+    function handlerExportByQueue(
+        $params
+    ) {
         set_time_limit(-1);
         ini_set('memory_limit', -1);
         if (empty($params['site'])) {
@@ -1564,7 +1656,8 @@ class ProductsController extends CrudController {
      *
      * @param $params
      */
-    public function handleExportExcel(
+    public
+    function handleExportExcel(
         $params = null
     ) {
         set_time_limit(0);
@@ -2075,7 +2168,10 @@ class ProductsController extends CrudController {
      *
      * @return array[]
      */
-    public function matchTemplateData($description) {
+    public
+    function matchTemplateData(
+        $description
+    ) {
         //测试需求, 模板分类必须所有关键词匹配, 且报告可以匹配多个模板分类
         $rdata = [
             'template_cate_list'    => [],
@@ -2193,7 +2289,10 @@ class ProductsController extends CrudController {
      *
      * @return array[]
      */
-    public function filterTemplateWithNoData($templateData, $templateContentData, $productData) {
+    public
+    function filterTemplateWithNoData(
+        $templateData, $templateContentData, $productData
+    ) {
         $titleTemplateList = $templateData['template_title_list'];
         $contentTemplateList = $templateData['template_content_list'];
         $newTitleTemplateList = [];

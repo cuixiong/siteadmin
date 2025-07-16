@@ -51,6 +51,7 @@ class Products extends Base {
             'discount_type',  //折扣类型
             'discount_time_begin',  //折扣开始时间
             'discount_time_end', //折扣结束时间
+            'price_values', //折扣价格版本
             "have_sample",  //是否有样本
             //各类状态
             'show_home',    //首页显示
