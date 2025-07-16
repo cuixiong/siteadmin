@@ -17,6 +17,7 @@ class PostSubjectLog extends Base
         'error_details', 
         'ingore_details', 
         'post_subject_id', 
+        'post_subject_count', 
         'success_count', 
         'ingore_count', 
         'error_count', 
@@ -73,6 +74,9 @@ class PostSubjectLog extends Base
             $model = $model->where('type', $search->type);
         }
 
+        if (isset($search->post_subject_count) && !empty($search->post_subject_count)) {
+            $model = $model->where('post_subject_count', $search->post_subject_count);
+        }
         // success_count
         if (isset($search->success_count) && !empty($search->success_count)) {
             $model = $model->where('success_count', $search->success_count);

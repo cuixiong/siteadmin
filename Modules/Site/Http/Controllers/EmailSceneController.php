@@ -30,6 +30,7 @@ class EmailSceneController extends CrudController{
             ['value' => 'requestOffer','label' => '委托报价(日)-requestOffer'],
             ['value' => 'payment','label' => 'payment'],
             ['value' => 'placeOrder','label' => 'placeOrder'],
+            ['value' => 'subscribe','label' => 'subscribe'],
         ];
         ReturnJson(TRUE,'', $options);
     }

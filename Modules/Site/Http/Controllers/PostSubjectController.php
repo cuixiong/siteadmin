@@ -1830,6 +1830,7 @@ class PostSubjectController extends CrudController
         $ingoreDetails = [];
         $failDetails = [];
 
+        $subjectCount = 0;  // 课题总数统计
         $subjectSuccess = 0;
         $subjectIngore = 0;
         $subjectFail = 0;
@@ -1987,6 +1988,7 @@ class PostSubjectController extends CrudController
                     // }
 
                     if ($postSubjectData) {
+                        $subjectCount++;
 
                         if (!empty($postSubjectData['accepter']) && $accepter != $postSubjectData['accepter']) {
                             // 存在领取人的情况下，领取人不一致,跳过
@@ -2091,6 +2093,7 @@ class PostSubjectController extends CrudController
                     } else {
                         // 查不到该课题，查询报告存在并新增
                         $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])->where("id", $productId)->first()?->toArray();
+                        $subjectCount++;
                         if ($productData) {
                             $isInsert = false;
                             //新增课题
@@ -2362,12 +2365,14 @@ class PostSubjectController extends CrudController
         $logData['file'] = $uploadFileName;
         $logData['type'] = PostSubjectLog::POST_SUBJECT_LINK_UPLOAD;
         // $logData['post_subject_id'] = ;
+        $logData['post_subject_count'] = $subjectCount;
         $logData['success_count'] = $subjectSuccess;
         $logData['ingore_count'] = $subjectIngore;
         $logData['error_count'] = $subjectFail;
 
         $logData['details'] = '';
         $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】' . "\n";
+        $logData['details'] .= '一共' . $subjectCount . '个课题，' . "\n";
         $logData['details'] .= '成功导入' . $subjectSuccess . '个链接' . "\n";
         $logData['details'] .= implode("\n", $details) . "\n";
 
