@@ -30,6 +30,8 @@ class Invoice extends Base
         'bank_account',         // 银行账户
         'updated_by',           // 修改者
         'created_by',           // 创建者
+        'email',                // 邮箱
+        'department',           // 部门
     ];
 
     /**
@@ -62,6 +64,14 @@ class Invoice extends Base
         // company_address
         if (isset($search->company_address) && !empty($search->company_address)) {
             $model = $model->where('company_address', 'like', '%' . $search->company_address . '%');
+        }
+
+        if (isset($search->department) && !empty($search->department)) {
+            $model = $model->where('department', 'like', '%' . $search->department . '%');
+        }
+        
+        if (isset($search->email) && !empty($search->email)) {
+            $model = $model->where('email', 'like', '%' . $search->email . '%');
         }
 
         // tax_code
