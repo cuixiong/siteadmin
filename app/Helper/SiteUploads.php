@@ -159,11 +159,13 @@ class SiteUploads
         }
         self::$SiteDir = $request->header('Site') ? $request->header('Site') : $request->site;
         $RootPath = public_path() . '/' . self::$DIR . '/' . self::$SiteDir;
-        if (!is_dir($RootPath)) {
-            mkdir($RootPath, 0777, true);
-        }
+
         $path = trim($path, '/');
         $path = $path ? $RootPath . '/' . $path . '/' : $RootPath . '/';
+
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+        }
 
         return $path;
     }
