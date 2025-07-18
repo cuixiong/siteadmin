@@ -64,6 +64,67 @@ class CouponController extends CrudController {
     }
 
     /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get()->toArray();
+            $price_values_list = $this->getPriceListByDB();
+            $handler_price_values_list = [];
+            foreach ($price_values_list as $price_valies_info) {
+                $handler_price_values_list[$price_valies_info['value']] = $price_valies_info['label'];
+            }
+            foreach ($record as &$item) {
+                $price_edition_values = $item['price_edition_values'] ?? '';
+                $price_edition_value_list = explode(',', $price_edition_values);
+                if (empty($price_edition_value_list)) {
+                    $item['price_values_list'] = [];
+                } else {
+                    $for_price_values_list = [];
+                    foreach ($price_edition_value_list as $for_price_edition_value_id) {
+                        $for_price_values_list[] = $handler_price_values_list[$for_price_edition_value_id] ?? '';
+                    }
+                    $item['price_values_list'] = $for_price_values_list;
+                }
+            }
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      * 单个新增
      *
      * @param $request 请求信息
@@ -174,51 +235,62 @@ class CouponController extends CrudController {
     public function getEditionValues(Request $request) {
         try {
             $publisher_id = $request->publisher_id ?? 0;
-            $language_list = Language::query()->where("status", 1)->pluck("name", 'id')->toArray();
-            $publisher_list = Publisher::query()->where("status", 1)->pluck("name", 'id')->toArray();
-            if (empty($publisher_id)) {
-                //当前站点的出版商
-                $site = getSiteName();
-                $publisher_id_list = Site::query()->where('name', $site)->value('publisher_id');
-                $publisher_id_list = explode(',', $publisher_id_list);
-            } else {
-                $publisher_id_list = [$publisher_id];
-            }
-            $PriceEdition_list = PriceEdition::query()->where("status", 1)
-                                             ->where("is_deleted", 1)
-                                             ->get()->toArray();
-            $edition_list = [];
-            foreach ($PriceEdition_list as $key => $item) {
-                $for_publisher_id_list = explode(',', $item['publisher_id']);
-                foreach ($publisher_id_list as $forpublisher_id) {
-                    if (in_array($forpublisher_id, $for_publisher_id_list)) {
-                        $cnt = PriceEditionValue::query()
-                                                ->where('edition_id', $item['id'])
-                                                ->where("status", 1)
-                                                ->where("is_deleted", 1)
-                                                ->count();
-                        if ($cnt > 0) {
-                            $edition_list[$item['id']] = $publisher_list[$forpublisher_id] ?? '';
-                        }
-                    }
-                }
-            }
-            $edition_id_list = array_keys($edition_list);
-            $PriceEditionValueList = PriceEditionValue::query()->whereIn('edition_id', $edition_id_list)
-                                                      ->where("status", 1)
-                                                      ->where("is_deleted", 1)
-                                                      ->get()->toArray();
-            $data = [];
-            foreach ($PriceEditionValueList as $item) {
-                $data['edition_value_list'][] = [
-                    'value' => $item['id'],
-                    'label' => $item['name']."-"
-                               ."{$language_list[$item['language_id']]}(语言)"
-                ];
-            }
+            $data['edition_value_list'] = $this->getPriceListByDB($publisher_id);
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
+    }
+
+    /**
+     *
+     *
+     * @return array
+     */
+    private function getPriceListByDB($publisher_id = 0) {
+        $language_list = Language::query()->where("status", 1)->pluck("name", 'id')->toArray();
+        $publisher_list = Publisher::query()->where("status", 1)->pluck("name", 'id')->toArray();
+        if (empty($publisher_id)) {
+            //当前站点的出版商
+            $site = getSiteName();
+            $publisher_id_list = Site::query()->where('name', $site)->value('publisher_id');
+            $publisher_id_list = explode(',', $publisher_id_list);
+        } else {
+            $publisher_id_list = [$publisher_id];
+        }
+        $PriceEdition_list = PriceEdition::query()->where("status", 1)
+                                         ->where("is_deleted", 1)
+                                         ->get()->toArray();
+        $edition_list = [];
+        foreach ($PriceEdition_list as $key => $item) {
+            $for_publisher_id_list = explode(',', $item['publisher_id']);
+            foreach ($publisher_id_list as $forpublisher_id) {
+                if (in_array($forpublisher_id, $for_publisher_id_list)) {
+                    $cnt = PriceEditionValue::query()
+                                            ->where('edition_id', $item['id'])
+                                            ->where("status", 1)
+                                            ->where("is_deleted", 1)
+                                            ->count();
+                    if ($cnt > 0) {
+                        $edition_list[$item['id']] = $publisher_list[$forpublisher_id] ?? '';
+                    }
+                }
+            }
+        }
+        $edition_id_list = array_keys($edition_list);
+        $PriceEditionValueList = PriceEditionValue::query()->whereIn('edition_id', $edition_id_list)
+                                                  ->where("status", 1)
+                                                  ->where("is_deleted", 1)
+                                                  ->get()->toArray();
+        $data = [];
+        foreach ($PriceEditionValueList as $item) {
+            $data[] = [
+                'value' => $item['id'],
+                'label' => $item['name']."-"
+                           ."{$language_list[$item['language_id']]}(语言)"
+            ];
+        }
+
+        return $data;
     }
 }

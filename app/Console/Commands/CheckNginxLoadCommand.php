@@ -66,6 +66,7 @@ class CheckNginxLoadCommand extends Command {
                 $check_min_load = $sysValList['check_min_load']['value'] ?? 60;
                 $net_usage_rate = $sysValList['net_usage_rate']['value'] ?? 90;
                 $net_usage_val = rtrim($net_usage_val, '%');
+                $this->os_info_str = '';
                 echo "当前时间:".date("Y-m-d H:i:s")
                      ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}"
                      .PHP_EOL;
