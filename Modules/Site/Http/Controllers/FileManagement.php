@@ -89,7 +89,7 @@ class FileManagement extends Controller {
                         : str_replace(public_path(), '', $this->RootPath.$v);
                     $info['orignal_path'] = $path.$v;
                     if ($info['type'] == 'image') {
-                        $ImageSize = getimagesize($filename.'/'.$v);
+                        $ImageSize = @getimagesize($filename.'/'.$v);
                         $info['width'] = $ImageSize[0] ?? 0 .' px';
                         $info['height'] = $ImageSize[1] ?? 0 .' px';
                     }
