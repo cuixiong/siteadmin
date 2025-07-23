@@ -789,7 +789,13 @@ class FileManagement extends Controller {
                 ReturnJson(false, '图片地址错误!');
             }
             //压缩图片业务
-            list($savePath, $file_name) = $this->compressImage($savePath);
+            // 压缩阈值判断（200KB）
+            $threshold = 200 * 1024; // 200KB
+            $originalSize = filesize($savePath);
+            if ($originalSize > $threshold) {
+                list($savePath, $file_name) = $this->compressImage($savePath);
+            }
+
             // 是否使用水印
             $watermark = null;
             if (strpos($savePath, 'news/') !== false) {
