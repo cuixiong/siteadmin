@@ -694,7 +694,7 @@ class ContactUsController extends CrudController {
                     }
                 }
             }
-            if(empty($item['referer_alias_id'] )){
+            if(!empty($item['referer_alias_id'] )){
                 $referer_platform = $platformList[$item['referer_alias_id']] ?? '';
             }else{
                 $referer_platform = $item['referer'] ?? '';
