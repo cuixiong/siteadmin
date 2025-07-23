@@ -126,20 +126,22 @@ class ContactUs extends Base {
         if (!empty($search)) {
             $timeArray = ['created_at', 'updated_at'];
             foreach ($search as $key => $value) {
-                if (in_array($key, ['both_browse_name'])) {
-                    $model = $model->where(function ($query) use ($value) {
-                        $query->orWhere('cu.ua_browser_name', 'like', '%'.trim($value).'%')
-                              ->orWhere('cu.ua_info', 'like', '%'.trim($value).'%');
-                    });
-                } elseif (in_array($key, ['both_referer'])) {
-                    $referer_alias_id_list = PostPlatform::query()->where("name", 'like', '%'.trim($value).'%')
-                                                         ->orWhere("keywords", 'like', '%'.trim($value).'%')
-                                                         ->pluck('id')->toArray();
-                    $model = $model->where(function ($query) use ($value, $referer_alias_id_list) {
-                        $query->orWhereIn('cu.referer_alias_id', $referer_alias_id_list)
-                              ->orWhere('cu.referer', 'like', '%'.trim($value).'%');
-                    });
-                } elseif (in_array($key, ['title', 'phone', 'email', 'company', 'department', 'content', 'address'])) {
+                //测试需求没沟通清楚, 功能废弃
+//                if (in_array($key, ['both_browse_name'])) {
+//                    $model = $model->where(function ($query) use ($value) {
+//                        $query->orWhere('cu.ua_browser_name', 'like', '%'.trim($value).'%')
+//                              ->orWhere('cu.ua_info', 'like', '%'.trim($value).'%');
+//                    });
+//                } elseif (in_array($key, ['both_referer'])) {
+//                    $referer_alias_id_list = PostPlatform::query()->where("name", 'like', '%'.trim($value).'%')
+//                                                         ->orWhere("keywords", 'like', '%'.trim($value).'%')
+//                                                         ->pluck('id')->toArray();
+//                    $model = $model->where(function ($query) use ($value, $referer_alias_id_list) {
+//                        $query->orWhereIn('cu.referer_alias_id', $referer_alias_id_list)
+//                              ->orWhere('cu.referer', 'like', '%'.trim($value).'%');
+//                    });
+//                }
+                if (in_array($key, ['title', 'phone', 'email', 'company', 'department', 'content', 'address'])) {
                     $model = $model->where('cu.'.$key, 'like', '%'.trim($value).'%');
                 } else if (in_array($key, $timeArray)) {
                     if (is_array($value)) {

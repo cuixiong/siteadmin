@@ -1113,11 +1113,26 @@ class FileManagement extends Controller {
     }
 
     private function loadImageResource(string $filePath) {
-        $loader = imagecreatefromstring(file_get_contents($filePath));
-        if (!$loader) {
+        $sourceImage = imagecreatefromstring(file_get_contents($filePath));
+        if (!$sourceImage) {
             throw new Exception("加载图片失败: {$filePath} | GD库可能未启用相关扩展");
         }
 
-        return $loader;
+        // 检查是否为调色板模式
+        if (imageistruecolor($sourceImage) === false) {
+            // 创建真彩色画布
+            $trueColorImage = imagecreatetruecolor(imagesx($sourceImage), imagesy($sourceImage));
+
+            // 复制像素并填充背景（解决透明区域问题）
+            $transparentColor = imagecolorallocatealpha($trueColorImage, 0, 0, 0, 127);
+            imagefill($trueColorImage, 0, 0, $transparentColor);
+            imagecopy($trueColorImage, $sourceImage, 0, 0, 0, 0, imagesx($sourceImage), imagesy($sourceImage));
+
+            // 释放原始图像资源
+            imagedestroy($sourceImage);
+            $sourceImage = $trueColorImage;
+        }
+
+        return $sourceImage;
     }
 }

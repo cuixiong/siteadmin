@@ -233,6 +233,36 @@ class ContactUsController extends CrudController {
         $options['city'] = $provinces;
         // 领取人/发帖用户
         $options['accepter'] = (new TemplateController())->getSitePostUser();
+        //平台列表
+        $options['post_platform'] = (new PostPlatform())->GetListLabel(
+            ['id as value', 'name as label'],
+            false,
+            '',
+            ['status' => 1]
+        );
+        //浏览器下拉列表
+        $broswser_list = [
+            'edge',
+            'chrome',
+            'firefox',
+            'safari',
+            'opr',
+            'opr_legacy',
+            'ie',
+            'qqbrowser',
+            'ucbrowser',
+            'baidubox',
+            'sogoumse',
+            '360',
+            'Unknown',
+        ];
+        foreach ($broswser_list as $for_browser){
+            $real_broswser_list[] = [
+                'label' => $for_browser,
+                'value' => $for_browser,
+            ];
+        }
+        $options['broswser_list'] = $real_broswser_list;
         ReturnJson(true, '', $options);
     }
 
@@ -538,6 +568,8 @@ class ContactUsController extends CrudController {
             '内容',
             '领取人',
             '平台链接',
+            '浏览器',
+            '来源',
         ];
         // 创建 Spreadsheet 对象
         $spreadsheet = new Spreadsheet();
@@ -564,6 +596,8 @@ class ContactUsController extends CrudController {
         $sheet->getColumnDimension('P')->setWidth(60);
         $sheet->getColumnDimension('Q')->setWidth(30);
         $sheet->getColumnDimension('R')->setWidth(60);
+        $sheet->getColumnDimension('S')->setWidth(30);
+        $sheet->getColumnDimension('T')->setWidth(30);
         foreach ($filterData as $item) {
             $keywords = $keywordsData[$item['product_id']] ?? '';
             $sheet->setCellValue([1, $rowIndex + 1], $item['id']); // ID
@@ -660,6 +694,19 @@ class ContactUsController extends CrudController {
                     }
                 }
             }
+            if(empty($item['referer_alias_id'] )){
+                $referer_platform = $platformList[$item['referer_alias_id']] ?? '';
+            }else{
+                $referer_platform = $item['referer'] ?? '';
+            }
+            if($item['ua_browser_name'] == 'Unknown'){
+                $ua_browser = $item['ua_info'] ?? '';
+            }else{
+                $ua_browser = $item['ua_browser_name'] ?? '';
+            }
+
+            $sheet->setCellValue([19, $rowIndex + 1], $ua_browser);
+            $sheet->setCellValue([20, $rowIndex + 1], $referer_platform);
             $rowIndex++;
         }
         // 设置 HTTP 头部并导出文件
