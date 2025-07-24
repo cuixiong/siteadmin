@@ -568,7 +568,9 @@ class SyncThirdProductController extends CrudController {
                 $itemDescription = [];
                 if (!empty($row['description'])) {
                     $descriptionArr = json_decode($row['description'], true);
-                    $row['description'] = $descriptionArr['text'];
+                    if(isset($tablesAndFiguresArr['text'])){
+                        $row['description'] = $descriptionArr['text'];
+                    }
                     $itemDescription['description'] = str_replace('_x000D_', '', $row['description']);
                 } else {
                     $itemDescription['description'] = '';
@@ -592,7 +594,9 @@ class SyncThirdProductController extends CrudController {
                 //英文详情
                 if (!empty($row['description_en'])) {
                     $descriptionEnArr = json_decode($row['description_en'], true);
-                    $row['description_en'] = $descriptionEnArr['text'];
+                    if(isset($descriptionEnArr['text'])){
+                        $row['description_en'] = $descriptionEnArr['text'];
+                    }
                     $itemDescription['description_en'] = str_replace('_x000D_', '', $row['description_en']);
                 } else {
                     $itemDescription['description_en'] = '';
@@ -600,7 +604,9 @@ class SyncThirdProductController extends CrudController {
                 //正文目录
                 if (!empty($row['table_of_content'])) {
                     $tableOfContentArr = json_decode($row['table_of_content'], true);
-                    $row['table_of_content'] = $tableOfContentArr['text'];
+                    if(isset($tableOfContentArr['text'])){
+                        $row['table_of_content'] = $tableOfContentArr['text'];
+                    }
                     $itemDescription['table_of_content'] = str_replace('_x000D_', '', $row['table_of_content']);
                 } else {
                     $itemDescription['table_of_content'] = '';
@@ -608,7 +614,9 @@ class SyncThirdProductController extends CrudController {
                 //英文正文目录
                 if (!empty($row['table_of_content_en'])) {
                     $tableOfContentEnArr = json_decode($row['table_of_content_en'], true);
-                    $row['table_of_content_en'] = $tableOfContentEnArr['text'];
+                    if(isset($tableOfContentEnArr['text'])){
+                        $row['table_of_content_en'] = $tableOfContentEnArr['text'];
+                    }
                     $itemDescription['table_of_content_en'] = str_replace('_x000D_', '', $row['table_of_content_en']);
                 } else {
                     $itemDescription['table_of_content_en'] = '';
@@ -616,7 +624,9 @@ class SyncThirdProductController extends CrudController {
                 //图表
                 if (!empty($row['tables_and_figures'])) {
                     $tablesAndFiguresArr = json_decode($row['tables_and_figures'], true);
-                    $row['tables_and_figures'] = $tablesAndFiguresArr['text'];
+                    if(isset($tablesAndFiguresArr['text'])){
+                        $row['tables_and_figures'] = $tablesAndFiguresArr['text'];
+                    }
                     $itemDescription['tables_and_figures'] = str_replace('_x000D_', '', $row['tables_and_figures']);
                 } else {
                     $itemDescription['tables_and_figures'] = '';
@@ -624,7 +634,9 @@ class SyncThirdProductController extends CrudController {
                 //英文图表
                 if (!empty($row['tables_and_figures_en'])) {
                     $tablesAndFiguresEn = json_decode($row['tables_and_figures_en'], true);
-                    $row['tables_and_figures_en'] = $tablesAndFiguresEn['text'];
+                    if(isset($tablesAndFiguresEn['text'])){
+                        $row['tables_and_figures_en'] = $tablesAndFiguresEn['text'];
+                    }
                     $itemDescription['tables_and_figures_en'] = str_replace(
                         '_x000D_',
                         '',
