@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
 use Illuminate\Support\Facades\File;
+use Mockery\Exception;
 use Modules\Site\Http\Models\System;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\OssFile;
@@ -88,7 +89,7 @@ class FileManagement extends Controller {
                         : str_replace(public_path(), '', $this->RootPath.$v);
                     $info['orignal_path'] = $path.$v;
                     if ($info['type'] == 'image') {
-                        $ImageSize = getimagesize($filename.'/'.$v);
+                        $ImageSize = @getimagesize($filename.'/'.$v);
                         $info['width'] = $ImageSize[0] ?? 0 .' px';
                         $info['height'] = $ImageSize[1] ?? 0 .' px';
                     }
@@ -704,7 +705,6 @@ class FileManagement extends Controller {
                 $file_real_path = '';
                 $file_real_path = public_path("/site/{$site}/");
                 $temp_path = $path;
-
                 $originalName = $file->getClientOriginalName();
                 $name = $originalName;
                 // 是否新建年份文件夹
@@ -717,17 +717,16 @@ class FileManagement extends Controller {
                     //新闻图片需要添加水印
                     $watermarkConfig = !empty($watermarkConfig) ? $watermarkConfig : $this->getWatermarkConfig();
                     $watermark = $watermarkConfig;
-
                     //临时路径
                     if (strpos($temp_path, '-') === false) {
                         //拼接年月日路径
                         $year = date('Y');
                         $shortYear = (int)$year % 100; // 提取年份的最后两位
-                        $temp_path = $temp_path . '/' . $shortYear . '-' . date('m');
+                        $temp_path = $temp_path.'/'.$shortYear.'-'.date('m');
                     }
                 }
                 $file_real_path .= "/".$temp_path."/".$originalName;
-                if(file_exists($file_real_path)){
+                if (file_exists($file_real_path)) {
                     //文件存在,
                     $extension = pathinfo($originalName, PATHINFO_EXTENSION);
                     $file_name = date('YmdHis').rand(100000, 999999);
@@ -743,6 +742,8 @@ class FileManagement extends Controller {
 
     public function uploadsByWebPath(Request $request) {
         try {
+            set_time_limit(0);
+            ini_set('memory_limit', '2048M');
             $webpath = $request->webpath;
             $storepath = $request->storepath;
             if (empty($webpath) || empty($storepath)) {
@@ -771,10 +772,12 @@ class FileManagement extends Controller {
                     mkdir($savePath, 0777, true);
                 }
                 $file_name = basename(parse_url($webpath, PHP_URL_PATH));
-                if (file_exists($savePath . '/'. $file_name)) {
+                if (file_exists($savePath.'/'.$file_name)) {
                     $file_name = date('YmdHis').rand(100000, 999999);
                     $extension = pathinfo($webpath, PATHINFO_EXTENSION);
                     $file_name = $file_name.'.'.$extension;
+                } else {
+                    $file_name = rawurlencode($file_name); //重新编码
                 }
                 $savePath .= '/'.$file_name;
                 // 保存到本地
@@ -785,6 +788,14 @@ class FileManagement extends Controller {
             } else {
                 ReturnJson(false, '图片地址错误!');
             }
+            //压缩图片业务
+            // 压缩阈值判断（200KB）
+            $threshold = 200 * 1024; // 200KB
+            $originalSize = filesize($savePath);
+            if ($originalSize > $threshold) {
+                list($savePath, $file_name) = $this->compressImage($savePath);
+            }
+
             // 是否使用水印
             $watermark = null;
             if (strpos($savePath, 'news/') !== false) {
@@ -1064,10 +1075,70 @@ class FileManagement extends Controller {
             $response = $client->get($url, [
                 'headers' => ['User-Agent' => 'Mozilla/5.0']
             ]);
+            $contentType = $response->getHeaderLine('Content-Type');
+            if (!preg_match('/^image\//', $contentType)) {
+                //不是图片直接返回null
+                return null;
+            }
 
             return $response->getBody()->getContents();
         } catch (\Exception $e) {
-            return null;
+            throw new Exception("获取图片失败".$e->getMessage());
         }
+    }
+
+    private function compressImage(string $savePath) {
+        if (!file_exists($savePath)) {
+            throw new Exception("原文件不存在: {$savePath}");
+        }
+        $originalSize = filesize($savePath);
+        $fileInfo = pathinfo($savePath);
+        $image = $this->loadImageResource($savePath);
+        if (!$image) {
+            throw new Exception("不支持的图片格式或损坏文件");
+        }
+        $fileName = "{$fileInfo['filename']}.webp";
+        $webpPath = "{$fileInfo['dirname']}/{$fileName}";
+        // 压缩阈值判断（200KB）
+        $threshold = 200 * 1024; // 200KB
+        if ($originalSize > $threshold) {
+            $quality = 60; // 压缩质量（70-90为佳）
+        } else {
+            $quality = 100;
+        }
+        $result = imagewebp($image, $webpPath, $quality);
+        // 8. 释放内存
+        imagedestroy($image);
+        if (!$result) {
+            throw new Exception("WebP转换失败");
+        }
+        //删除原文件
+        unlink($savePath);
+
+        return [$webpPath, $fileName];
+    }
+
+    private function loadImageResource(string $filePath) {
+        $sourceImage = imagecreatefromstring(file_get_contents($filePath));
+        if (!$sourceImage) {
+            throw new Exception("加载图片失败: {$filePath} | GD库可能未启用相关扩展");
+        }
+
+        // 检查是否为调色板模式
+        if (imageistruecolor($sourceImage) === false) {
+            // 创建真彩色画布
+            $trueColorImage = imagecreatetruecolor(imagesx($sourceImage), imagesy($sourceImage));
+
+            // 复制像素并填充背景（解决透明区域问题）
+            $transparentColor = imagecolorallocatealpha($trueColorImage, 0, 0, 0, 127);
+            imagefill($trueColorImage, 0, 0, $transparentColor);
+            imagecopy($trueColorImage, $sourceImage, 0, 0, 0, 0, imagesx($sourceImage), imagesy($sourceImage));
+
+            // 释放原始图像资源
+            imagedestroy($sourceImage);
+            $sourceImage = $trueColorImage;
+        }
+
+        return $sourceImage;
     }
 }

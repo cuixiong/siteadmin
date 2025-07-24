@@ -5,12 +5,10 @@ namespace Modules\Site\Http\Controllers;
 use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Rule;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\User;
-use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\ProductsDescription;
@@ -18,6 +16,7 @@ use Modules\Site\Http\Models\System;
 use Modules\Site\Http\Models\SystemValue;
 use Modules\Site\Http\Models\Template;
 use Modules\Site\Http\Models\TemplateCategory;
+use Modules\Site\Http\Models\TemplateCateMapping;
 use Modules\Site\Http\Models\TemplateUse;
 use Modules\Site\Services\SphinxService;
 
@@ -191,6 +190,102 @@ class TemplateController extends CrudController {
     }
 
     /**
+     * 批量修改下拉参数子项
+     *
+     * @param $request 请求信息
+     */
+    public function batchUpdateOption(
+        Request $request
+    ) {
+        $input = $request->all();
+        $keyword = $input['keyword'] ?? '';
+        $data = [];
+        if ($keyword == 'category_id') {
+            //分类
+            $data = (new TemplateCategory)->GetListLabel(['id as value', 'name as label'], false, '',
+                                                         ['status' => 1]);
+        } elseif (in_array($keyword, ['status'])) {
+            if ($request->HeaderLanguage == 'en') {
+                $field = ['english_name as label', 'value'];
+            } else {
+                $field = ['name as label', 'value'];
+            }
+            $data = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Show_Home_State', 'status' => 1], ['sort' => 'ASC']
+            );
+        } elseif ($keyword == 'post_user') {
+            //发帖用户
+            $data = $this->getSitePostUser();
+        }
+        ReturnJson(true, trans('lang.request_success'), $data);
+    }
+
+    /**
+     * 批量修改
+     *
+     * @param $request 请求信息
+     */
+    public
+    function batchUpdate(
+        Request $request
+    ) {
+        $input = $request->all();
+        $ids = $input['temp_ids'] ?? '';
+        $keyword = $input['keyword'] ?? '';
+        $value = $input['value'] ?? '';
+        $type = $input['option_type'] ?? ''; //1：获取数量;2：执行操作
+        $ModelInstance = $this->ModelInstance();
+        $model = $ModelInstance->query();
+        if (!empty($ids)) {
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(true, trans('lang.param_empty').':ids');
+            }
+            $model = $ModelInstance->whereIn('id', $ids);
+        } else {
+            //筛选
+            $model = $ModelInstance->HandleWhere($model, $request);
+        }
+        $data = [];
+        if ($type == 1) {
+            // 总数量
+            $data['count'] = $model->count();
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } else {
+            $newIds = $model->pluck('id')->toArray();
+            foreach ($newIds as $for_temp_id) {
+                $record = $this->ModelInstance()->find($for_temp_id);
+                if ($record) {
+                    if ($keyword == 'status') {
+                        $record->$keyword = $value;
+                        $record->save();
+                    } elseif ($keyword == 'category_id') {
+                        //维护中间表
+                        $cate_id_list = [];
+                        if (!empty($value)) {
+                            $cate_ids = $value;
+                            $cate_id_list = explode(",", $cate_ids);
+                        }
+                        foreach ($cate_id_list as $for_cate_id) {
+                            $cnt = TemplateCateMapping::query()
+                                                      ->where("temp_id", $for_temp_id)
+                                                      ->where("cate_id", $for_cate_id)
+                                                      ->count();
+                            if (empty($cnt)) {
+                                TemplateCateMapping::query()->insert([
+                                                                         "cate_id" => $for_cate_id,
+                                                                         "temp_id" => $for_temp_id,
+                                                                     ]);
+                            }
+                        }
+                    }
+                }
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        }
+    }
+
+    /**
      * 单个新增
      *
      * @param $request 请求信息
@@ -305,8 +400,7 @@ class TemplateController extends CrudController {
             $template_ids = $input['temp_ids'] ?? '';
             $user_ids = $input['user_ids'] ?? '';
             $TemplateUse = new TemplateUse();
-
-            if(empty($template_ids )){
+            if (empty($template_ids)) {
                 $modelInstance = $this->ModelInstance();
                 $model = $modelInstance->query();
                 $model = $modelInstance->HandleWhere($model, $request);
@@ -334,25 +428,25 @@ class TemplateController extends CrudController {
                 }
                 $template_ids = $model->pluck("id")->toArray();
             }
-
-            if(empty($input['is_update'] )){
-                ReturnJson(true, trans('lang.request_success') , ['count' => count($template_ids)]);
+            if (empty($input['is_update'])) {
+                ReturnJson(true, trans('lang.request_success'), ['count' => count($template_ids)]);
             }
-
             if (!empty($template_ids) && !empty($user_ids)) {
-                if(!is_array($template_ids)) {
+                if (!is_array($template_ids)) {
                     $template_ids = explode(",", $template_ids);
                 }
                 $user_ids = explode(",", $user_ids);
                 foreach ($template_ids as $template_id) {
-                    //删除之前模版记录
-                    $TemplateUse->where("temp_id", $template_id)->delete();
                     foreach ($user_ids as $user_id) {
-                        $add_data = [
-                            'user_id' => $user_id,
-                            'temp_id' => $template_id,
-                        ];
-                        $TemplateUse->insert($add_data);
+                        $cnt = TemplateUse::query()->where('temp_id', $template_id)
+                                          ->where('user_id', $user_id)->count();
+                        if (empty($cnt)) {
+                            $add_data = [
+                                'user_id' => $user_id,
+                                'temp_id' => $template_id,
+                            ];
+                            $TemplateUse->insert($add_data);
+                        }
                     }
                 }
             } else {
@@ -401,7 +495,6 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{product_class}}', $product['product_class']);
         $tempContent = $this->writeTempWord($tempContent, '{{segment}}', $product['segment']);
         $tempContent = $this->writeTempWord($tempContent, '{{division}}', $product['division']);
-
         //页数,图表
         $tempContent = $this->writeTempWord($tempContent, '{{pages}}', $product['pages']);
         $tempContent = $this->writeTempWord($tempContent, '{{tables}}', $product['tables']);
@@ -734,6 +827,35 @@ EOF;
         }
 
         return $this->addChangeLineStr($descText);
+    }
+
+    /**
+     * 批量修改下拉参数
+     *
+     * @param $request 请求信息
+     */
+    public function batchUpdateParam(
+        Request $request
+    ) {
+        $field =  [
+            [
+                'name'  => '状态',
+                'value' => 'status',
+                'type'  => '2',
+            ],
+            [
+                'name'  => '模版分类',
+                'value' => 'category_id',
+                'type'  => '2',
+            ],
+            [
+                'name'  => '模版使用者',
+                'value' => 'post_user',
+                'type'  => '2',
+            ],
+        ];
+        array_unshift($field, ['name' => '请选择', 'value' => '', 'type' => '']);
+        ReturnJson(true, trans('lang.request_success'), $field);
     }
 
     /**

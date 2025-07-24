@@ -296,6 +296,10 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\TemplateController::class, 'destroy'])->name('模版管理:删除模版');
         Route::get('copy-word-by-template', [Modules\Site\Http\Controllers\TemplateController::class, 'copyWordByTemplate'])->name('模版管理:根据模板返回文字');
         Route::post('batch-edit-template-use', [Modules\Site\Http\Controllers\TemplateController::class, 'batchEditTemplateUse'])->name('模版管理:批量修改模版使用者');
+        Route::get('batch-option', [Modules\Site\Http\Controllers\TemplateController::class, 'batchUpdateOption'])->name('模版管理:批量修改下拉项');
+        Route::post('batch-option-update', [Modules\Site\Http\Controllers\TemplateController::class, 'batchUpdate'])->name('模版管理:批量修改提交');
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\TemplateController::class, 'batchUpdateParam'])->name('模版管理:批量修改参数');
+
     });
 
     // 敏感词路由
