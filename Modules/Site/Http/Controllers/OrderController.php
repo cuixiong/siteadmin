@@ -194,6 +194,7 @@ class OrderController extends CrudController {
             }
             $record['exchange_coupon_amount'] = bcmul($record['coupon_amount'], $exchange_rate, 2);
             $record['exchange_order_amount'] = bcmul($record['order_amount'], $exchange_rate, 2);
+            $record['exchange_actually_paid'] = bcmul($record['actually_paid'], $exchange_rate, 2);
             $record['order_goods_list'] = (new Order())->getOrderProductInfo($request->id);
             ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {
