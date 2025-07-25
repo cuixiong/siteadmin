@@ -6,7 +6,6 @@ use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Helper\SiteUploads;
-use Illuminate\Support\Facades\File;
 use Mockery\Exception;
 use Modules\Site\Http\Models\System;
 use Modules\Site\Http\Models\SystemValue;
@@ -771,14 +770,21 @@ class FileManagement extends Controller {
                 if (!is_dir($savePath)) {
                     mkdir($savePath, 0777, true);
                 }
-                $file_name = basename(parse_url($webpath, PHP_URL_PATH));
-                if (file_exists($savePath.'/'.$file_name)) {
+//                $file_name = basename(parse_url($webpath, PHP_URL_PATH));
+//                $file_name = preg_replace('/\.[^.]*$/', '', $file_name);
+//                // 清洗非法字符
+//                $file_name = preg_replace('/[^\x{4e00}-\x{9fa5}a-zA-Z0-9_\-.]/u', '_', $file_name);
+//                $extension = pathinfo($webpath, PATHINFO_EXTENSION);
+//                // 转换为拼音
+//                $file_name = (new Pinyin())->permalink($file_name);
+//                $file_name = $file_name.'.'.$extension;
+//                $is_delete = false;
+//                if (file_exists($savePath.'/'.$file_name)) {
                     $file_name = date('YmdHis').rand(100000, 999999);
                     $extension = pathinfo($webpath, PATHINFO_EXTENSION);
                     $file_name = $file_name.'.'.$extension;
-                } else {
-                    $file_name = rawurlencode($file_name); //重新编码
-                }
+//                    $is_delete = true;
+//                }
                 $savePath .= '/'.$file_name;
                 // 保存到本地
                 if (file_put_contents($savePath, $imageData)) {
@@ -795,7 +801,6 @@ class FileManagement extends Controller {
             if ($originalSize > $threshold) {
                 list($savePath, $file_name) = $this->compressImage($savePath);
             }
-
             // 是否使用水印
             $watermark = null;
             if (strpos($savePath, 'news/') !== false) {
@@ -1123,17 +1128,14 @@ class FileManagement extends Controller {
         if (!$sourceImage) {
             throw new Exception("加载图片失败: {$filePath} | GD库可能未启用相关扩展");
         }
-
         // 检查是否为调色板模式
         if (imageistruecolor($sourceImage) === false) {
             // 创建真彩色画布
             $trueColorImage = imagecreatetruecolor(imagesx($sourceImage), imagesy($sourceImage));
-
             // 复制像素并填充背景（解决透明区域问题）
             $transparentColor = imagecolorallocatealpha($trueColorImage, 0, 0, 0, 127);
             imagefill($trueColorImage, 0, 0, $transparentColor);
             imagecopy($trueColorImage, $sourceImage, 0, 0, 0, 0, imagesx($sourceImage), imagesy($sourceImage));
-
             // 释放原始图像资源
             imagedestroy($sourceImage);
             $sourceImage = $trueColorImage;
