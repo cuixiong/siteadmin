@@ -141,7 +141,15 @@ class ContactUs extends Base {
 //                              ->orWhere('cu.referer', 'like', '%'.trim($value).'%');
 //                    });
 //                }
-                if (in_array($key, ['title', 'phone', 'email', 'company', 'department', 'content', 'address'])) {
+                if (in_array($key, ['referer_alias_id'])) {
+                    //测试明确需求
+                    if(!empty($value)){
+                        $model = $model->where('cu.'.$key, $value);
+                    }else{
+                        $model = $model->where('cu.'.$key, 0)->where("cu.referer" , "<>" , '');
+                    }
+                }
+                else if (in_array($key, ['title', 'phone', 'email', 'company', 'department', 'content', 'address'])) {
                     $model = $model->where('cu.'.$key, 'like', '%'.trim($value).'%');
                 } else if (in_array($key, $timeArray)) {
                     if (is_array($value)) {

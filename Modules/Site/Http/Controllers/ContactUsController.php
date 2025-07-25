@@ -240,6 +240,9 @@ class ContactUsController extends CrudController {
             '',
             ['status' => 1]
         );
+        array_unshift($options['post_platform'] , ['label' => '未知', 'value' => 0]);
+
+
         //浏览器下拉列表
         $broswser_list = [
             'edge',
@@ -560,6 +563,7 @@ class ContactUsController extends CrudController {
             '部门',
             '电话',
             '购买时间',
+            '价格版本',
             '语言版本',
             '渠道',
             '地区(国家)',
@@ -624,12 +628,13 @@ class ContactUsController extends CrudController {
                 }
             }
             $sheet->setCellValue([11, $rowIndex + 1], $priceVersionName ?? '');
-            $sheet->setCellValue([12, $rowIndex + 1], $item['channel_name'] ?? '');
+            $sheet->setCellValue([12, $rowIndex + 1], $item['language_version'] ?? '');
+            $sheet->setCellValue([13, $rowIndex + 1], $item['channel_name'] ?? '');
             $countryName = '';
             if (!empty($item['country_id'])) {
                 $countryName = Country::getCountryName($item['country_id']);
             }
-            $sheet->setCellValue([13, $rowIndex + 1], $countryName);
+            $sheet->setCellValue([14, $rowIndex + 1], $countryName);
             $provinceName = '';
             if (!empty($item['province_id'])) {
                 $provinceName = City::query()->where('id', $item['province_id'])->value('name');
@@ -638,9 +643,9 @@ class ContactUsController extends CrudController {
             if (!empty($item['city_id'])) {
                 $cityName = City::query()->where('id', $item['city_id'])->value('name');
             }
-            $sheet->setCellValue([14, $rowIndex + 1], $provinceName.' '.$cityName);
-            $sheet->setCellValue([15, $rowIndex + 1], $item['created_at'] ?? '');
-            $sheet->setCellValue([16, $rowIndex + 1], $item['content'] ?? '');
+            $sheet->setCellValue([15, $rowIndex + 1], $provinceName.' '.$cityName);
+            $sheet->setCellValue([16, $rowIndex + 1], $item['created_at'] ?? '');
+            $sheet->setCellValue([17, $rowIndex + 1], $item['content'] ?? '');
             if (!empty($keywords)) {
                 $recordPostSubjectData = $newPostSubjectData[$keywords] ?? [];
                 foreach ($recordPostSubjectData as $recordPostSubjectKey => $recordPostSubjectItem) {
@@ -675,9 +680,9 @@ class ContactUsController extends CrudController {
                             $subjectUpdateLink = '';
                         }
                         // 添加领取人,链接是课题链接
-                        $sheet->setCellValue([17, $rowIndex + 1], $accepterName);
-                        $sheet->getCell([17, $rowIndex + 1])->getHyperlink()->setUrl($subjectUpdateLink);
-                        $sheet->getStyle([17, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB(
+                        $sheet->setCellValue([18, $rowIndex + 1], $accepterName);
+                        $sheet->getCell([18, $rowIndex + 1])->getHyperlink()->setUrl($subjectUpdateLink);
+                        $sheet->getStyle([18, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB(
                             '0000FF'
                         );
                         // 添加平台,链接是帖子链接
@@ -685,9 +690,9 @@ class ContactUsController extends CrudController {
                             if ($tempUrlKey > 0) {
                                 $rowIndex++;
                             }
-                            $sheet->setCellValue([18, $rowIndex + 1], $tempUrlItem['platform_name']);
-                            $sheet->getCell([18, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
-                            $sheet->getStyle([18, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB(
+                            $sheet->setCellValue([19, $rowIndex + 1], $tempUrlItem['platform_name']);
+                            $sheet->getCell([19, $rowIndex + 1])->getHyperlink()->setUrl($tempUrlItem['link']);
+                            $sheet->getStyle([19, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB(
                                 '0000FF'
                             );
                         }
@@ -705,8 +710,8 @@ class ContactUsController extends CrudController {
                 $ua_browser = $item['ua_browser_name'] ?? '';
             }
 
-            $sheet->setCellValue([19, $rowIndex + 1], $ua_browser);
-            $sheet->setCellValue([20, $rowIndex + 1], $referer_platform);
+            $sheet->setCellValue([20, $rowIndex + 1], $ua_browser);
+            $sheet->setCellValue([21, $rowIndex + 1], $referer_platform);
             $rowIndex++;
         }
         // 设置 HTTP 头部并导出文件
