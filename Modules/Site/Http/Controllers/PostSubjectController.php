@@ -1900,7 +1900,8 @@ class PostSubjectController extends CrudController
                     } elseif (
                         preg_match('/(?:\/reports\/(\d+)(?:\/\$keyword)?)/', $fastLink, $matches) ||
                         preg_match('/[?&]keyword=([^&]+)/', $fastLink, $matches) ||
-                        preg_match('/ProductsSearch%5Bname%5D=([^&]*)/', $fastLink, $matches)
+                        preg_match('/ProductsSearch%5Bname%5D=([^&]*)/', $fastLink, $matches)||
+                        preg_match('/ProductSearch%5Bname%5D=([^&]*)/', $fastLink, $matches)
                     ) {
                         $productId = $matches[1];
                     } else {
