@@ -23,6 +23,11 @@ class CheckDbSlaveCommand extends Command {
 
     public function handle() {
         $slave_info_arr = DB::select('SHOW SLAVE STATUS');
+        $is_overseas = env('is_overseas');
+        if(!in_array($is_overseas, [2 ,3])){
+            echo "当前环境无需检测数据库同步异常".PHP_EOL;
+            return true;
+        }
         if (!empty($slave_info_arr[0])) {
             $slave_info = $slave_info_arr[0];
             if ($slave_info->Slave_IO_Running != 'Yes' || $slave_info->Slave_SQL_Running != 'Yes') {
@@ -33,7 +38,14 @@ class CheckDbSlaveCommand extends Command {
                 $senderEmail = Email::select(['name', 'email', 'host', 'port', 'encryption', 'password'])->find(
                     $scene->email_sender_id
                 );
-                $data['error_message'] = $slave_info->Last_SQL_Error ?? '';
+                $err_msg = '';
+                if($is_overseas == 2){
+                    $err_msg .= "硅谷服务器(IP:47.254.43.120)主从同步异常, 错误信息为:";
+                }elseif ($is_overseas == 3){
+                    $err_msg .= "日本服务器(IP:8.211.148.26)主从同步异常, 错误信息为:";
+                }
+                $err_msg .= $slave_info->Last_SQL_Error ?? '';
+                $data['error_message'] = $err_msg;
                 $data['domain'] = env('APP_DOMAIN', '');
                 // 收件人的数组
                 $emails = explode(',', $scene->email_recipient);
