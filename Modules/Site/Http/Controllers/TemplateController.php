@@ -177,6 +177,11 @@ class TemplateController extends CrudController {
             $data['status'] = (new DictionaryValue())->GetListLabel(
                 $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
             );
+
+            // 是否自动发帖
+            $data['is_auto_post'] = (new DictionaryValue())->GetListLabel(
+                $field, false, '', ['code' => 'Auto_Post_State', 'status' => 1], ['sort' => 'ASC']
+            );
             //发帖用户
             $postUserList = $this->getSitePostUser();
             $data['post_user_list'] = $postUserList;

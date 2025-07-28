@@ -155,8 +155,12 @@ class ProductsController extends CrudController {
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
             $domain = getSiteDomain();
-            $templateContentList = Template::query()->select(['id', 'content'])->where("status", 1)->get();
+            
+            // 判断模板内变量是否空值，界面不显示该按钮
+            // 考虑在beforeMatchTemplateData函数查询并加缓存
+            $templateContentList = Template::query()->select(['id', 'content'])->where("status", 1)->where("is_auto_post", 0)->get();
             $templateContentList = $templateContentList ? array_column($templateContentList->toArray(), 'content', 'id')
+
                 : [];
             // 报告添加一个单位
             $setting = [];
@@ -185,14 +189,16 @@ class ProductsController extends CrudController {
                 //根据描述匹配 模版分类
                 $year = date('Y', $item['published_date']);
                 $desc_info = (new ProductsDescription($year))->where("product_id", $productId)->select(
-                    ['description', 'companies_mentioned']
+                    ['description', 'companies_mentioned', 'definition']
                 )->first();
                 if (empty($desc_info)) {
                     $description = '';
                     $companies_mentioned = '';
+                    $definition = '';
                 } else {
                     $description = $desc_info['description'];
                     $companies_mentioned = $desc_info['companies_mentioned'];
+                    $definition = $desc_info['definition'];
                 }
                 $productFor = $productList[$productId] ?? [];
                 $record[$key]['updated_at'] = $productFor['updated_at'];
@@ -202,6 +208,13 @@ class ProductsController extends CrudController {
                 $record[$key]['application'] = $productFor['application'];
                 $record[$key]['classification'] = $productFor['classification'];
                 $record[$key]['companies_mentioned'] = $companies_mentioned;
+                $record[$key]['definition'] = $definition;
+                // // 用来判断 报告定义 按钮是否隐藏
+                // if($definition){
+                //     $record[$key]['has_definition'] = true;
+                // }else{
+                //     $record[$key]['has_definition'] = false;
+                // }
                 //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
                 if (!request()->user->is_super) {
@@ -2134,6 +2147,7 @@ class ProductsController extends CrudController {
             $templateList = Template::query()
                                     ->select(['id', 'name', 'type', 'btn_color'])
                                     ->where("status", 1)
+                                    ->where("is_auto_post", 0)
                                     ->orderBy('sort', 'ASC')
                                     ->orderBy('id', 'ASC')
                                     ->get()

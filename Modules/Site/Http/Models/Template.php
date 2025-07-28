@@ -8,11 +8,20 @@ use Modules\Admin\Http\Models\User as Admin;
 
 class Template extends Base {
     protected $table = 'template';
-    protected $fillable
-                     = [
-            'name', 'type', 'btn_color', 'content', 'status', 'sort', 'created_by', 'created_at', 'updated_by',
-            'updated_at'
-        ];
+    
+    protected $fillable = [
+        'name',
+        'type',
+        'is_auto_post',
+        'btn_color',
+        'content',
+        'status',
+        'sort',
+        'created_by',
+        'created_at',
+        'updated_by',
+        'updated_at'
+    ];
 
     //模型关联
     public function tempCates() {
