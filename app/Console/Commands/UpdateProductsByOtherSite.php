@@ -76,7 +76,7 @@ class UpdateProductsByOtherSite extends Command
 
         $autoSyncDataVal = SystemValue::query()
             ->where("key", self::$autoSyncDataKey)
-            ->value('hidden');
+            ->value('value');
         //如果没有开启自动同步开关, 那么直接退出
         if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
             echo '未启动网站设置的开关' . "\n";
@@ -167,7 +167,7 @@ class UpdateProductsByOtherSite extends Command
             if (empty($resp) || $resp['code'] != 200) {
                 echo '请求更新关键词接口失败' . "\n" . json_encode($resp) . "\n";
             }
-            $keywordsArray = $resp['data'];
+            $keywordsArray = $resp['data']??[];
             
         }
         // dd($keywordsArray);

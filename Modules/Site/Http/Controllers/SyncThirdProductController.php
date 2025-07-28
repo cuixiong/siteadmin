@@ -568,7 +568,7 @@ class SyncThirdProductController extends CrudController {
                 $itemDescription = [];
                 if (!empty($row['description'])) {
                     $descriptionArr = json_decode($row['description'], true);
-                    if(isset($tablesAndFiguresArr['text'])){
+                    if(isset($descriptionArr['text'])){
                         $row['description'] = $descriptionArr['text'];
                     }
                     $itemDescription['description'] = str_replace('_x000D_', '', $row['description']);
