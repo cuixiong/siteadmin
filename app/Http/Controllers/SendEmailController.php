@@ -19,7 +19,7 @@ use Modules\Admin\Http\Models\User;
 
 class SendEmailController extends Controller {
     // 注册发邮method
-    private $EmailCodes = ['register' => '注册账号', 'password' => '重置密码' , 'active' => '激活账号'];
+    private $EmailCodes = ['register' => '注册账号', 'password' => '重置密码', 'active' => '激活账号', 'db_sync_error' => '主从同步异常'];
 
     /**
      * 动态配置邮箱参数
@@ -162,6 +162,7 @@ class SendEmailController extends Controller {
         if (!$isQueue) {
             //让队列执行, 需要放入队列
             HandlerEmailJob::dispatch($scene, $email, $data, $senderEmail)->onQueue(QueueConst::QUEUE_ADMIN_EMAIL);
+
             return true;
         }
         // 邮箱账号配置信息
@@ -299,7 +300,6 @@ class SendEmailController extends Controller {
             ReturnJson(false, $e->getMessage());
         }
     }
-
 
     /**
      * reset password eamil send
