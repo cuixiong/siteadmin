@@ -158,15 +158,17 @@ class UpdateProductsByOtherSite extends Command
                 'url_data'    => $urlArrayParam,
             ];
             $reqData['sign'] = $this->makeSign($reqData, $this->signKey);
-            $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ])->post($keywordsUrl, $reqData);
+            // $response = Http::withHeaders([
+            //     'Accept' => 'application/json',
+            //     'Content-Type' => 'application/x-www-form-urlencoded',
+            // ])->post($keywordsUrl, $reqData);
+            $response = Http::post($keywordsUrl, $reqData);
             $resp = $response->json();
             if (empty($resp) || $resp['code'] != 200) {
                 echo '请求更新关键词接口失败' . "\n" . json_encode($resp) . "\n";
             }
             $keywordsArray = $resp['data'];
+            
         }
         // dd($keywordsArray);
         // exit;
