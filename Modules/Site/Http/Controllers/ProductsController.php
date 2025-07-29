@@ -493,6 +493,7 @@ class ProductsController extends CrudController {
                     $query->match(['name', 'english_name'], '"' . $val . '"', true);
                 }
             }
+            $isDefaultSort = false;
         }
         // 排序
         if ($isDefaultSort) {
