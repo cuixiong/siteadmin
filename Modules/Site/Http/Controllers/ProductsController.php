@@ -446,23 +446,32 @@ class ProductsController extends CrudController {
             throw new \Exception('参数异常:搜索类型不能为空');
         }
         $conn = (new SphinxService())->getConnection();
+
         $query = (new SphinxQL($conn))->select('*')
-                                      ->from('products_rt')
-                                      ->orderBy('sort', 'asc')
-                                      ->orderBy('published_date', 'desc')
-                                      ->orderBy('id', 'desc');
+            ->from('products_rt');
+
+        $isDefaultSort = true;
         if (!empty($type) && (!isset($keyword) || $keyword == '')) {
             // TODO: cuizhixiong 2024/5/31
-        } elseif (filled($keyword)
-                  && in_array(
-                      $type,
-                      ['id', 'category_id', 'country_id', 'price', 'discount', 'discount_amount', 'show_hot',
-                       'show_recommend', 'status']
-                  )
+        } elseif (
+            filled($keyword)
+            && in_array(
+                $type,
+                [
+                    'id',
+                    'category_id',
+                    'country_id',
+                    'price',
+                    'discount',
+                    'discount_amount',
+                    'show_hot',
+                    'show_recommend',
+                    'status'
+                ]
+            )
         ) {
             $query = $query->where($type, intval($keyword));
-        } elseif (filled($keyword) && in_array($type, ['author'])
-        ) {
+        } elseif (filled($keyword) && in_array($type, ['author'])) {
             $query = $query->where($type, $keyword);
         } else if (!empty($type) && in_array($type, ['created_at', 'published_date']) && $keyword) {
             // 设置搜索排序
@@ -471,16 +480,31 @@ class ProductsController extends CrudController {
             $query = $query->where($type, 'BETWEEN', [intval($start_time), intval($end_time)]);
         } elseif (filled($keyword) && in_array($type, ['keywords'])) {
             //几个国家语言的关键词搜索
-            $query->match(['keywords', 'keywords_cn', 'keywords_en', 'keywords_jp', 'keywords_kr', 'keywords_de'],
-                          '"'.$keyword.'"', true);
+            $query->match(
+                ['keywords', 'keywords_cn', 'keywords_en', 'keywords_jp', 'keywords_kr', 'keywords_de'],
+                '"' . $keyword . '"',
+                true
+            );
         } elseif (in_array($type, ['name'])) {
             //中英文搜索
             $keyWordArraySphinx = explode(" ", $keyword);
             if (count($keyWordArraySphinx) > 0) {
                 foreach ($keyWordArraySphinx as $val) {
-                    $query->match(['name', 'english_name'], '"'.$val.'"', true);
+                    $query->match(['name', 'english_name'], '"' . $val . '"', true);
                 }
             }
+        }
+        // 排序
+        if ($isDefaultSort) {
+            $query->orderBy('sort', 'asc')
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc');
+        } else {
+            $query->orderBy('sort', 'asc')
+                ->orderBy('year', 'desc')
+                ->orderBy('degree_keyword', 'asc')
+                ->orderBy('published_date', 'desc')
+                ->orderBy('id', 'desc');
         }
         if ($type != 'status') {
             $query = $query->where('status', '=', 1);
