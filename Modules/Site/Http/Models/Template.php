@@ -37,7 +37,7 @@ class Template extends Base {
         $search = json_decode($request->input('search'), true);
         if (!empty($search)) {
             $textField = ['name'];
-            $numberField = ['id', 'sort', 'status', 'btn_color'];
+            $numberField = ['id', 'sort', 'status', 'btn_color','is_auto_post'];
             $timeField = ['created_at', 'updated_at'];
             $userField = ['created_by', 'updated_by'];
             foreach ($search as $key => $value) {

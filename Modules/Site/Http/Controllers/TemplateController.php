@@ -381,6 +381,28 @@ class TemplateController extends CrudController {
     }
 
     /**
+     * 修改发帖模板类型
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeAutoStatus(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->is_auto_post = $request->is_auto_post;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      *  根据模板返回拷贝内容
      */
     public function copyWordByTemplate(Request $request) {

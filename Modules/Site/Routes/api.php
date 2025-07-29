@@ -289,6 +289,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\TemplateController::class, 'list'])->name('模版管理:模版列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\TemplateController::class, 'searchDroplist'])->name('模版管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\TemplateController::class, 'changeStatus'])->name('模版管理:状态修改');
+        Route::post('change-auto-status', [Modules\Site\Http\Controllers\TemplateController::class, 'changeAutoStatus'])->name('模版管理:自动发帖状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\TemplateController::class, 'changeSort'])->name('模版管理:排序修改');
 
         Route::post('store', [Modules\Site\Http\Controllers\TemplateController::class, 'store'])->name('模版管理:新增模版');
