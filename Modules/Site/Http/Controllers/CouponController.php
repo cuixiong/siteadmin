@@ -15,7 +15,7 @@ use Modules\Site\Http\Models\Order;
 use Modules\Site\Http\Models\OrderGoods;
 use Modules\Site\Http\Models\PriceEdition;
 use Modules\Site\Http\Models\PriceEditionValue;
-use Modules\Site\Http\Models\Publisher;
+use Modules\Admin\Http\Models\Publisher;
 use Modules\Site\Http\Models\User;
 
 class CouponController extends CrudController {
