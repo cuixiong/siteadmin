@@ -131,8 +131,10 @@ class TemplateController extends CrudController {
     public function checkEditRule($type, $user) {
         if ($type == 1) {
             $rule_perm = 'products:template:normaledit';
-        } else {
+        } elseif($type == 2) {
             $rule_perm = 'products:title:normaledit';
+        }else{
+            $rule_perm = 'products:ai:normaledit';
         }
         $rule_id = Rule::query()->where("perm", $rule_perm)->value("id");
         $role_ids = $user->role_id;

@@ -284,9 +284,20 @@ class CouponController extends CrudController {
                                                   ->get()->toArray();
         $data = [];
         foreach ($PriceEditionValueList as $item) {
+            $for_publisher_name = '';
+            //需求明确 : 站点只有一个版本的就不需要显示出版商了
+            if(count($publisher_id_list) > 1){
+                //取交集
+                $EditionPublisherIds = PriceEdition::query()->where("id" , $item['edition_id'])->value("publisher_id");
+                $EditionPublisherIdList = explode(',', $EditionPublisherIds);
+                $intersect_publisher_id_list = array_intersect($EditionPublisherIdList, $publisher_id_list);
+                foreach ($intersect_publisher_id_list as $temp_for_publisher_id){
+                    $for_publisher_name .= "({$publisher_list[$temp_for_publisher_id]})";
+                }
+            }
             $data[] = [
                 'value' => $item['id'],
-                'label' => $item['name']."-"
+                'label' => $item['name']."-".$for_publisher_name
                            ."{$language_list[$item['language_id']]}(语言)"
             ];
         }

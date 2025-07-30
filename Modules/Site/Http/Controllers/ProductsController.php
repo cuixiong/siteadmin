@@ -155,7 +155,7 @@ class ProductsController extends CrudController {
             $type = '当前查询方式是：'.$data['type'];
             $this->beforeMatchTemplateData();
             $domain = getSiteDomain();
-            
+
             // 判断模板内变量是否空值，界面不显示该按钮
             // 考虑在beforeMatchTemplateData函数查询并加缓存
             $templateContentList = Template::query()->select(['id', 'content'])->where("status", 1)->where("is_auto_post", 0)->get();
@@ -2216,6 +2216,7 @@ class ProductsController extends CrudController {
             'template_cate_list'    => [],
             'template_title_list'   => [],
             'template_content_list' => [],
+            'template_ai_list' => [],
         ];
         $tcWordsList = [];
         $tcNoWordsList = [];
@@ -2290,6 +2291,7 @@ class ProductsController extends CrudController {
 //                                     ->toArray();
         $template_content_list = [];
         $template_title_list = [];
+        $template_ai_list = [];
         //区分标题模板 , 内容模板
         foreach ($matchTempLateList as $forTempInfo) {
             //不是超级管理员, 需要过滤模版
@@ -2308,13 +2310,16 @@ class ProductsController extends CrudController {
             if ($forTempInfo['type'] == 1) {
                 //内容模版
                 $template_content_list[] = $forTempInfo;
-            } else {
+            } elseif($forTempInfo['type'] ==2) {
                 $template_title_list[] = $forTempInfo;
+            }else{
+                $template_ai_list[] = $forTempInfo;
             }
         }
         $rdata['template_cate_list'] = $templateCateList;
         $rdata['template_content_list'] = $template_content_list;
         $rdata['template_title_list'] = $template_title_list;
+        $rdata['template_ai_list'] = $template_ai_list;
 
         return $rdata;
     }
