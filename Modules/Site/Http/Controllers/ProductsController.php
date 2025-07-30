@@ -217,9 +217,9 @@ class ProductsController extends CrudController {
                 // }
                 //$description = $item['description'] ?? '';
                 $templateData = $this->matchTemplateData($description);
-                if (!request()->user->is_super) {
+                // if (!request()->user->is_super) {
                     $templateData = $this->filterTemplateWithNoData($templateData, $templateContentList, $productFor);
-                }
+                // }
                 $record[$key]['template_data'] = $templateData;
                 // 生成趋势柱状图所需数据
                 $record[$key]['cagr'] = $productFor['cagr'];
