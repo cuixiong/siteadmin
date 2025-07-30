@@ -15,6 +15,68 @@ class PostSubjectFilterController extends CrudController
 {
 
     /**
+     * 查询列表页
+     *
+     * @param       $request  请求信息
+     * @param int   $page     页码
+     * @param int   $pageSize 页数
+     * @param Array $where    查询条件数组 默认空数组
+     */
+    protected function list(Request $request)
+    {
+
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '1024M');
+        try {
+            $this->ValidateInstance($request);
+            $ModelInstance = $this->ModelInstance();
+            $model = $ModelInstance->query();
+            $model = $ModelInstance->HandleWhere($model, $request);
+            // 总数量
+            $total = $model->count();
+            // 查询偏移量
+            if (!empty($request->pageNum) && !empty($request->pageSize)) {
+                $model->offset(($request->pageNum - 1) * $request->pageSize);
+            }
+            // 查询条数
+            if (!empty($request->pageSize)) {
+                $model->limit($request->pageSize);
+            }
+            $model = $model->select($ModelInstance->ListSelect);
+            // 数据排序
+            $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
+            if (!empty($request->order)) {
+                $model = $model->orderBy($request->order, $sort);
+            } else {
+                $model = $model->orderBy('sort', $sort)->orderBy('created_at', 'DESC');
+            }
+            $record = $model->get();
+            if ($record) {
+                $record = $record->toArray();
+                $userIds = array_column($record, 'user_id');
+                $userNameData = User::query()->select(['id', 'nickname'])->whereIn('id', $userIds)->get();
+                if ($userNameData) {
+                    $userNameData = $userNameData->toArray();
+                    $userNameData = array_column($userNameData, 'nickname', 'id');
+                } else {
+                    $userNameData = [];
+                }
+                foreach ($record as $key => $item) {
+
+                    $record[$key]['username'] = $userNameData[$item['user_id']] ?? [];
+                }
+            }
+            $data = [
+                'total' => $total,
+                'list'  => $record
+            ];
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      * 获取搜索下拉列表
      * @param $request 请求信息
      */
@@ -67,7 +129,7 @@ class PostSubjectFilterController extends CrudController
             $model = $model->whereIn('id', $ids);
         } else {
             //筛选
-            $search = $request->input('search')??[];
+            $search = $request->input('search') ?? [];
             $model = (new PostSubjectFilter())->HandleSearch($model, $search);
         }
 
@@ -112,12 +174,34 @@ class PostSubjectFilterController extends CrudController
         $sheet->getColumnDimension('C')->setWidth(40);  // 设置 C 列宽度
         $sheet->getColumnDimension('D')->setWidth(30);  // 设置 D 列宽度
 
+        $domain = env('APP_DOMAIN');
+        $site = request()->header("Site");
+
+        $userIds = array_column($filterData, 'user_id');
+        $userNameData = User::query()->select(['id', 'nickname'])->whereIn('id', $userIds)->get();
+        if ($userNameData) {
+            $userNameData = $userNameData->toArray();
+            $userNameData = array_column($userNameData, 'nickname', 'id');
+        } else {
+            $userNameData = [];
+        }
+
         foreach ($filterData as $item) {
 
             $sheet->setCellValue([1, $rowIndex + 1], $item['id']);
-            $username = User::query()->where('id', $item['user_id'])->value('nickname');
+            $username = $userNameData[$item['user_id']] ?? '';
             $sheet->setCellValue([2, $rowIndex + 1], $username);
-            $sheet->setCellValue([3, $rowIndex + 1], $item['keywords']);
+            // keywords 带后台跳转链接
+            $keywordsUrl = '';
+            if (!empty($item['keywords'])) {
+                $keywordsUrl = $domain . '/#/' . $site . '/products/fastList?type=name&keyword=' . $item['keywords'];
+            }
+            if (!empty($keywordsUrl)) {
+                // 设置超链接
+                $sheet->setCellValue([3, $rowIndex + 1], $keywordsUrl);
+                $sheet->getCell([3, $rowIndex + 1])->getHyperlink()->setUrl($keywordsUrl);
+                $sheet->getStyle([3, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
+            }
             $sheet->setCellValue([4, $rowIndex + 1], $item['created_at']);
 
             $rowIndex++;
