@@ -189,14 +189,16 @@ class ProductsController extends CrudController {
                 //根据描述匹配 模版分类
                 $year = date('Y', $item['published_date']);
                 $desc_info = (new ProductsDescription($year))->where("product_id", $productId)->select(
-                    ['description', 'companies_mentioned', 'definition']
+                    ['description', 'description_en', 'companies_mentioned', 'definition']
                 )->first();
                 if (empty($desc_info)) {
                     $description = '';
+                    $descriptionEn = '';
                     $companies_mentioned = '';
                     $definition = '';
                 } else {
                     $description = $desc_info['description'];
+                    $descriptionEn = $desc_info['description_en'];
                     $companies_mentioned = $desc_info['companies_mentioned'];
                     $definition = $desc_info['definition'];
                 }
@@ -208,7 +210,16 @@ class ProductsController extends CrudController {
                 $record[$key]['application'] = $productFor['application'];
                 $record[$key]['classification'] = $productFor['classification'];
                 $record[$key]['companies_mentioned'] = $companies_mentioned;
+
+                // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二段
+                if (in_array($sitename, ['qycojp'])) {
+                    $tempArray = explode("\n",$descriptionEn??'');
+                    if($tempArray && count($tempArray)>= 1){
+                        $definition = $tempArray[1];
+                    }
+                }
                 $record[$key]['definition'] = $definition;
+
                 // // 用来判断 报告定义 按钮是否隐藏
                 // if($definition){
                 //     $record[$key]['has_definition'] = true;
@@ -259,6 +270,7 @@ class ProductsController extends CrudController {
                 }
                 // 删除描述
                 unset($record[$key]['description']);
+                unset($record[$key]['description_en']);
             }
             //$record = mb_convert_encoding($record, "UTF-8");
             $data = [
@@ -485,6 +497,7 @@ class ProductsController extends CrudController {
                 '"' . $keyword . '"',
                 true
             );
+            $isDefaultSort = false;
         } elseif (in_array($type, ['name'])) {
             //中英文搜索
             $keyWordArraySphinx = explode(" ", $keyword);
