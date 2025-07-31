@@ -250,6 +250,7 @@ Route::middleware([
         Route::get('batch-update-param', [Modules\Site\Http\Controllers\NewsController::class, 'batchUpdateParam'])->name('新闻管理:批量修改参数');
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\NewsController::class, 'batchUpdateOption'])->name('新闻管理:批量修改参数子项');
         Route::post('batch-update', [Modules\Site\Http\Controllers\NewsController::class, 'batchUpdate'])->name('新闻管理:批量修改');
+        Route::post('get-category-by-keyword', [Modules\Site\Http\Controllers\NewsController::class, 'getCategoryByKeyword'])->name('资讯管理:根据关键字获取模版分类');
 
     });
 
@@ -588,7 +589,7 @@ Route::middleware([
         Route::get('batch-update-option', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateOption'])->name('联系我们:批量修改参数子项');
         Route::post('batch-update', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdate'])->name('联系我们:批量修改');
         Route::get('again-send-email', [Modules\Site\Http\Controllers\ContactUsController::class, 'againSendEmail'])->name('联系我们:重新发送邮件');
-
+        Route::get('batch-update-referer', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateReferer'])->name('联系我们:批量修改来源');
         Route::post('export', [Modules\Site\Http\Controllers\ContactUsController::class, 'export'])->name('联系我们:导出');
     });
 
