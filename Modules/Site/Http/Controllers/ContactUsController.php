@@ -240,9 +240,7 @@ class ContactUsController extends CrudController {
             '',
             ['status' => 1]
         );
-        array_unshift($options['post_platform'] , ['label' => '未知', 'value' => 0]);
-
-
+        array_unshift($options['post_platform'], ['label' => '未知', 'value' => 0]);
         //浏览器下拉列表
         $broswser_list = [
             'edge',
@@ -259,7 +257,7 @@ class ContactUsController extends CrudController {
             '360',
             'Unknown',
         ];
-        foreach ($broswser_list as $for_browser){
+        foreach ($broswser_list as $for_browser) {
             $real_broswser_list[] = [
                 'label' => $for_browser,
                 'value' => $for_browser,
@@ -393,6 +391,36 @@ class ContactUsController extends CrudController {
                 }
             }
             ReturnJson(true, trans('lang.update_success'));
+        }
+    }
+
+    public function batchUpdateReferer(Request $request) {
+        ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
+        ini_set("memory_limit", '1024M');
+        try {
+            //所有平台
+            $post_platform_list = PostPlatform::query()->where("status", 1)
+                                              ->pluck('keywords', 'id')->toArray();
+            $contact_us_list = ContactUs::query()->select(["id", "referer"])->get()->toArray();
+            foreach ($contact_us_list as $for_contact_us){
+                $for_referer = $for_contact_us['referer'] ?? '';
+                $for_contact_id = $for_contact_us['id'];
+                $aliasId = 0;
+                if(!empty($for_referer )){
+                    foreach ($post_platform_list as $forid => $forKeyword) {
+                        if (strpos($for_referer, $forKeyword) !== false) {
+                            $aliasId = $forid;
+                            break;
+                        }
+                    }
+                }
+                ContactUs::query()->where("id" , $for_contact_id)
+                    ->update(["referer_alias_id" => $aliasId]);
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            \Log::error('返回结果数据:'.$e->getMessage());
+            ReturnJson(false, '未知错误');
         }
     }
 
@@ -699,17 +727,16 @@ class ContactUsController extends CrudController {
                     }
                 }
             }
-            if(!empty($item['referer_alias_id'] )){
+            if (!empty($item['referer_alias_id'])) {
                 $referer_platform = $platformList[$item['referer_alias_id']] ?? '';
-            }else{
+            } else {
                 $referer_platform = $item['referer'] ?? '';
             }
-            if($item['ua_browser_name'] == 'Unknown'){
+            if ($item['ua_browser_name'] == 'Unknown') {
                 $ua_browser = $item['ua_info'] ?? '';
-            }else{
+            } else {
                 $ua_browser = $item['ua_browser_name'] ?? '';
             }
-
             $sheet->setCellValue([20, $rowIndex + 1], $ua_browser);
             $sheet->setCellValue([21, $rowIndex + 1], $referer_platform);
             $rowIndex++;

@@ -144,7 +144,7 @@ class ProductsController extends CrudController {
                     $templateContentField,
                     $templateCommomField,
                     ['classification', 'application', 'updated_at', 'updated_by', 'created_at',
-                     'created_by', 'id',]
+                     'created_by', 'id', 'keywords_en']
                 )
             );
             $productList = Products::query()->whereIn('id', $product_id_list)
@@ -209,6 +209,7 @@ class ProductsController extends CrudController {
                 $record[$key]['updated_by'] = $productFor['updated_by'];
                 $record[$key]['application'] = $productFor['application'];
                 $record[$key]['classification'] = $productFor['classification'];
+                $record[$key]['keywords_en'] = $productFor['keywords_en'];
                 $record[$key]['companies_mentioned'] = $companies_mentioned;
 
                 // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二段
@@ -2352,8 +2353,10 @@ class ProductsController extends CrudController {
     ) {
         $titleTemplateList = $templateData['template_title_list'];
         $contentTemplateList = $templateData['template_content_list'];
+        $aiTemplateList = $templateData['template_ai_list'];
         $newTitleTemplateList = [];
         $newContentTemplateList = [];
+        $newAiTemplateList = [];
         // 定义需要检测的字段，数据字段对应替换字段
         $titleHasField = $this->titleHasField;
         $contentHasField = $this->contentHasField;
@@ -2394,8 +2397,28 @@ class ProductsController extends CrudController {
                 $newContentTemplateList[] = $template;
             }
         }
+
+        // AI模板
+        foreach ($aiTemplateList as $key => $template) {
+            $isShow = true;
+            foreach ($commomHasField as $field => $replaceField) {
+                if (!isset($templateContentData[$template['id']])) {
+                    continue;
+                }
+                if (strpos($templateContentData[$template['id']], $replaceField) !== false
+                    && (!isset($productData[$field]) || empty($productData[$field]))) {
+                    $isShow = false;
+                    break;
+                }
+            }
+            if ($isShow) {
+                $newAiTemplateList[] = $template;
+            }
+        }
+
         $templateData['template_title_list'] = $newTitleTemplateList;
         $templateData['template_content_list'] = $newContentTemplateList;
+        $templateData['template_ai_list'] = $newAiTemplateList;
 
         return $templateData;
     }

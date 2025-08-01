@@ -2,12 +2,14 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use Foolz\SphinxQL\SphinxQL;
 use Illuminate\Http\Request;
 use Modules\Site\Http\Controllers\CrudController;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\NewsCategory;
 use Modules\Site\Http\Models\ProductsCategory;
 use Modules\Site\Http\Models\Region;
+use Modules\Site\Services\SphinxService;
 
 class NewsController extends CrudController {
     /**
@@ -221,4 +223,65 @@ class NewsController extends CrudController {
         }
     }
 
+    public function getCategoryByKeyword(Request $request) {
+        try {
+            $keyword = $request->keyword ?? '';
+            $cate_id = $this->getCateIdByKeyWord($keyword);
+            ReturnJson(true, trans('lang.request_success'), ['cate_id' => $cate_id]);
+        } catch (\Exception $e) {
+            ReturnJson(false, '未知错误');
+        }
+    }
+
+    /**
+     *
+     * @param $keyword
+     * @param $pageSize
+     *
+     */
+    private function getCateIdByKeyWord($keyword) {
+        if (empty($keyword)) {
+            return 0;
+        }
+        $sphinxSrevice = new SphinxService();
+        $conn = $sphinxSrevice->getConnection();
+        //报告昵称,英文昵称匹配查询
+        $query = (new SphinxQL($conn))->select('*')
+                                      ->from('products_rt');
+        $query = $query->where('status', '=', 1);
+        $query = $query->where("published_date", "<", time());
+        //精确搜索, 多字段匹配
+        $query = $query->match(['keywords_cn',
+                                'keywords',
+                                'keywords_en',
+                                'keywords_jp',
+                                'keywords_kr',
+                                'keywords_de'], '"'.$keyword.'"', true);
+        $query = $query->orderBy('degree_keyword', 'asc');
+        $query->setSelect('category_id');
+        $result = $query->execute();
+        $cateId = $result->fetchNum();
+        if (empty($cateId)) {
+            $cateId = 0;
+        }
+        if(is_array($cateId)) {
+            $cateId = current($cateId);
+        }
+        return $cateId;
+    }
+
+    /**
+     *
+     * @param mixed $keyword
+     * @param       $record
+     *
+     */
+    private function matchCateId(mixed $keyword, $id): void {
+        $category_id = $this->getCateIdByKeyWord($keyword);
+        $upd_data = [
+            'category_id' => $category_id,
+        ];
+        $this->ModelInstance()->where("id", $id)
+             ->update($upd_data);
+    }
 }
