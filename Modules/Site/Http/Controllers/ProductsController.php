@@ -222,7 +222,7 @@ class ProductsController extends CrudController {
                 // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二段
                 if (in_array($sitename, ['qycojp'])) {
                     $tempArray = explode("\n",$descriptionEn??'');
-                    if($tempArray && count($tempArray)>= 1){
+                    if($tempArray && count($tempArray)> 1){
                         $definition = $tempArray[1];
                     }
                 }
