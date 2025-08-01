@@ -120,30 +120,30 @@ class SiteUploads
         $watermark = Image::make(public_path($wmImage));
 
 
-        // 设置透明度
-        $watermark->opacity($opacity);
-        if ($location == 'fit') {
-            // 获取目标图片的宽度和高度
-            $imageWidth = $img->width();
-            $imageHeight = $img->height();
-            // 获取水印的宽度和高度
-            $watermarkWidth = $watermark->width();
-            $watermarkHeight = $watermark->height();
-            if($imageWidth>=$imageHeight){
-                //等比例放大
-                $watermarkHeight = $watermarkHeight * ($imageWidth/$watermarkWidth);
-                // 将水印图片调整为与目标图片相同的大小
-                $watermark->resize($imageWidth, $watermarkHeight);
-            }else{
-                //等比例放大
-                $watermarkWidth = $watermarkWidth * ($imageHeight/$watermarkHeight);
-                // 将水印图片调整为与目标图片相同的大小
-                $watermark->resize($watermarkWidth, $imageHeight);
-            }
+        // // 设置透明度
+        // $watermark->opacity($opacity);
+        // if ($location == 'fit') {
+        //     // 获取目标图片的宽度和高度
+        //     $imageWidth = $img->width();
+        //     $imageHeight = $img->height();
+        //     // 获取水印的宽度和高度
+        //     $watermarkWidth = $watermark->width();
+        //     $watermarkHeight = $watermark->height();
+        //     if($imageWidth>=$imageHeight){
+        //         //等比例放大
+        //         $watermarkHeight = $watermarkHeight * ($imageWidth/$watermarkWidth);
+        //         // 将水印图片调整为与目标图片相同的大小
+        //         $watermark->resize($imageWidth, $watermarkHeight);
+        //     }else{
+        //         //等比例放大
+        //         $watermarkWidth = $watermarkWidth * ($imageHeight/$watermarkHeight);
+        //         // 将水印图片调整为与目标图片相同的大小
+        //         $watermark->resize($watermarkWidth, $imageHeight);
+        //     }
 
-            // 位置选择 'center' 或任意位置，因为水印已经铺满
-            $location = 'center';
-        }
+        //     // 位置选择 'center' 或任意位置，因为水印已经铺满
+        //     $location = 'center';
+        // }
         $img->insert($watermark, $location, $offsetWidth, $offsetHeight);
 
         return $img;
