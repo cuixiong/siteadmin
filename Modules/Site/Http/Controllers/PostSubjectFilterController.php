@@ -198,7 +198,7 @@ class PostSubjectFilterController extends CrudController
             }
             if (!empty($keywordsUrl)) {
                 // 设置超链接
-                $sheet->setCellValue([3, $rowIndex + 1], $keywordsUrl);
+                $sheet->setCellValue([3, $rowIndex + 1], $item['keywords']);
                 $sheet->getCell([3, $rowIndex + 1])->getHyperlink()->setUrl($keywordsUrl);
                 $sheet->getStyle([3, $rowIndex + 1])->getFont()->setUnderline(true)->getColor()->setARGB('0000FF');
             }
