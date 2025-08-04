@@ -36,6 +36,10 @@ class FileManagement extends Controller {
         //排序方式
         $sortBy = $request->sort_file ?? 'time'; // 默认按时间排序 name|time
         $orderType = $request->order_type ?? 'desc'; // 默认降序 asc|desc
+        $page = $request->page ?? 1;
+        $pageSize = $request->pageSize ?? 30;
+        $isShowAll = $request->isShowAll ?? 0;
+
         $path = $request->path ?? '';
         $path = ltrim($path, '/');
         $filename = $this->RootPath.$path;
@@ -78,20 +82,10 @@ class FileManagement extends Controller {
                 } else {
                     $info = [];
                     $info['type'] = self::filetype($filename.'/'.$v);
-                    if ($info['type'] == 'dir') {
-                        $info['size'] = "";
-                    } else {
-                        $info['size'] = self::converFileSize(filesize($filename.'/'.$v));
-                    }
                     $info['is_file'] = ['name' => $v];
                     $info['path'] = $path ? str_replace(public_path(), '', $this->RootPath.trim($path, '/').'/'.$v)
                         : str_replace(public_path(), '', $this->RootPath.$v);
                     $info['orignal_path'] = $path.$v;
-                    if ($info['type'] == 'image') {
-                        $ImageSize = @getimagesize($filename.'/'.$v);
-                        $info['width'] = $ImageSize[0] ?? 0 .' px';
-                        $info['height'] = $ImageSize[1] ?? 0 .' px';
-                    }
                     $info['extension'] = pathinfo($filename.'/'.$v, PATHINFO_EXTENSION);
                     clearstatcache();
                     $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename.'/'.$v)) ?? ''; //上次访问时间
@@ -105,29 +99,56 @@ class FileManagement extends Controller {
                         $fileNameFileArray[$v] = $info;
                     }
                 }
-                // 排序规则函数
-                $sortFunction = function ($a, $b) use ($sortBy, $orderType) {
-                    if ($sortBy == 'time') {
-                        // 按修改时间排序
-                        $aTime = strtotime($a['update_time']);
-                        $bTime = strtotime($b['update_time']);
-
-                        return $orderType == 'asc' ? $aTime - $bTime : $bTime - $aTime;
-                    } else {
-                        // 按文件名排序
-                        return $orderType == 'asc'
-                            ? strcmp($a['is_file']['name'], $b['is_file']['name'])
-                            : strcmp(
-                                $b['is_file']['name'], $a['is_file']['name']
-                            );
-                    }
-                };
-                // 对文件夹和文件分别排序
-                uasort($fileNameDirArray, $sortFunction);
-                uasort($fileNameFileArray, $sortFunction);
-                // 合并文件夹和文件结果
-                $fileNameArray = array_merge(array_values($fileNameDirArray), array_values($fileNameFileArray));
             }
+            // 排序规则函数
+            $sortFunction = function ($a, $b) use ($sortBy, $orderType) {
+                if ($sortBy == 'time') {
+                    // 按修改时间排序
+                    $aTime = strtotime($a['update_time']);
+                    $bTime = strtotime($b['update_time']);
+
+                    return $orderType == 'asc' ? $aTime - $bTime : $bTime - $aTime;
+                } else {
+                    // 按文件名排序
+                    return $orderType == 'asc'
+                        ? strcmp($a['is_file']['name'], $b['is_file']['name'])
+                        : strcmp(
+                            $b['is_file']['name'], $a['is_file']['name']
+                        );
+                }
+            };
+            // 对文件夹和文件分别排序
+            uasort($fileNameDirArray, $sortFunction);
+            uasort($fileNameFileArray, $sortFunction);
+            // 合并文件夹和文件结果
+            $fileNameArray = array_merge(array_values($fileNameDirArray), array_values($fileNameFileArray));
+
+            // 分页
+            $result['count'] = count($fileNameArray);
+            $result['pageCount'] = ceil($result['count'] / $pageSize);
+            $result['page'] = $page;
+            $result['pageSize'] = $pageSize;
+            $result['isShowAll'] = $isShowAll;
+            $offset = ($page - 1) * $pageSize;
+            if($isShowAll != 1){
+                $fileNameArray = array_slice($fileNameArray, $offset, $pageSize);
+            }
+
+            foreach ($fileNameArray as $k => $item) {
+                $info = $item;
+                if ($info['type'] == 'dir') {
+                    $info['size'] = "";
+                } else {
+                    $info['size'] = self::converFileSize(filesize($filename.'/'.$info['is_file']['name']));
+                }
+                if ($info['type'] == 'image') {
+                    $ImageSize = @getimagesize($filename.'/'.$info['is_file']['name']);
+                    $info['width'] = $ImageSize[0] ?? 0 .' px';
+                    $info['height'] = $ImageSize[1] ?? 0 .' px';
+                }
+                $fileNameArray[$k] = $info;
+            }
+
         } else {
             $fileNameArray = [];
         }

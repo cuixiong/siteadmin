@@ -17,13 +17,15 @@ class FileManagement extends Controller{
 
     public function FileList(Request $request)
     {
-
         //排序方式
         $sortBy = $request->sort_file ?? 'time'; // 默认按时间排序 name|time
         $orderType = $request->order_type ?? 'desc'; // 默认降序 asc|desc
+        $page = $request->page ?? 1;
+        $pageSize = $request->pageSize ?? 30;
+        $isShowAll = $request->isShowAll ?? 0;
 
         $path = $request->path ?? '';
-        $filename = $this->RootPath.$path;
+        $filename = $this->RootPath . $path;
         if (!is_dir($filename)) {
             mkdir($filename, 0755, true);
             chmod($filename, 0755);
@@ -32,7 +34,7 @@ class FileManagement extends Controller{
             chmod($filename, 0755);
         } elseif ($path == '..') {
             //不能进去基本路径的上层
-            ReturnJson(false,'超过文件管理范围');
+            ReturnJson(false, '超过文件管理范围');
         }
 
         $result = [];
@@ -55,8 +57,8 @@ class FileManagement extends Controller{
         $tempArray = scandir($filename);
         $fileNameArray = [];
         $fileNameDirArray = []; // 存放文件夹数据
-        $fileNameFileArray = [];// 存放其它文件数据
-        $filename = rtrim($filename , '/');
+        $fileNameFileArray = []; // 存放其它文件数据
+        $filename = rtrim($filename, '/');
         if (is_array($tempArray)) {
             foreach ($tempArray as $k => $v) {
                 // 跳过两个特殊目录
@@ -65,34 +67,22 @@ class FileManagement extends Controller{
                 } else {
                     $info = [];
                     $info['type'] = self::filetype($filename . '/' . $v);
-                    if ($info['type'] == 'dir') {
-                        $info['size'] = "";
-                    } else {
-                        $info['size'] = self::converFileSize(@filesize($filename . '/' . $v));
-                    }
                     $info['is_file'] = ['name' => $v];
-                    $info['path'] = $path ? str_replace(public_path(),'',$this->RootPath. trim($path,'/'). '/'. $v) : str_replace(public_path(),'', $this->RootPath. $v);
-                    if($info['type'] == 'image'){
-                        $ImageSize = getimagesize($filename . '/' . $v);
-                        $info['width'] = $ImageSize[0] .' px';
-                        $info['height'] = $ImageSize[1].' px';
-                    }
+                    $info['path'] = $path ? str_replace(public_path(), '', $this->RootPath . trim($path, '/') . '/' . $v)
+                        : str_replace(public_path(), '', $this->RootPath . $v);
+                    $info['orignal_path'] = $path . $v;
                     $info['extension'] = pathinfo($filename . '/' . $v, PATHINFO_EXTENSION);
                     clearstatcache();
-                    $info['active_time'] = date('Y-m-d H:i:s', @fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
+                    $info['active_time'] = date('Y-m-d H:i:s', fileatime($filename . '/' . $v)) ?? ''; //上次访问时间
                     clearstatcache();
-                    $info['create_time'] = date('Y-m-d H:i:s', @filectime($filename . '/' . $v)) ?? ''; //创建时间
+                    $info['create_time'] = date('Y-m-d H:i:s', filectime($filename . '/' . $v)) ?? ''; //创建时间
                     clearstatcache();
-                    $info['update_time'] = date('Y-m-d H:i:s', @filemtime($filename . '/' . $v)) ?? ''; //修改时间
-                    $info['check'] = "";
-
-
-                    if($info['type'] == 'dir'){
+                    $info['update_time'] = date('Y-m-d H:i:s', filemtime($filename . '/' . $v)) ?? ''; //修改时间
+                    if ($info['type'] == 'dir') {
                         $fileNameDirArray[$v] = $info;
-                    }else{
+                    } else {
                         $fileNameFileArray[$v] = $info;
                     }
-
                 }
             }
             // 排序规则函数
@@ -101,24 +91,54 @@ class FileManagement extends Controller{
                     // 按修改时间排序
                     $aTime = strtotime($a['update_time']);
                     $bTime = strtotime($b['update_time']);
+
                     return $orderType == 'asc' ? $aTime - $bTime : $bTime - $aTime;
                 } else {
                     // 按文件名排序
-                    return $orderType == 'asc' ? strcmp($a['is_file']['name'], $b['is_file']['name']) : strcmp($b['is_file']['name'], $a['is_file']['name']);
+                    return $orderType == 'asc'
+                        ? strcmp($a['is_file']['name'], $b['is_file']['name'])
+                        : strcmp(
+                            $b['is_file']['name'],
+                            $a['is_file']['name']
+                        );
                 }
             };
-
             // 对文件夹和文件分别排序
             uasort($fileNameDirArray, $sortFunction);
             uasort($fileNameFileArray, $sortFunction);
-
             // 合并文件夹和文件结果
             $fileNameArray = array_merge(array_values($fileNameDirArray), array_values($fileNameFileArray));
+
+            // 分页
+            $result['count'] = count($fileNameArray);
+            $result['pageCount'] = ceil($result['count'] / $pageSize);
+            $result['page'] = $page;
+            $result['pageSize'] = $pageSize;
+            $result['isShowAll'] = $isShowAll;
+            $offset = ($page - 1) * $pageSize;
+            if ($isShowAll != 1) {
+                $fileNameArray = array_slice($fileNameArray, $offset, $pageSize);
+            }
+
+            foreach ($fileNameArray as $k => $item) {
+                $info = $item;
+                if ($info['type'] == 'dir') {
+                    $info['size'] = "";
+                } else {
+                    $info['size'] = self::converFileSize(filesize($filename . '/' . $info['is_file']['name']));
+                }
+                if ($info['type'] == 'image') {
+                    $ImageSize = @getimagesize($filename . '/' . $info['is_file']['name']);
+                    $info['width'] = $ImageSize[0] ?? 0 . ' px';
+                    $info['height'] = $ImageSize[1] ?? 0 . ' px';
+                }
+                $fileNameArray[$k] = $info;
+            }
         } else {
-            $fileNameArray =  [];
+            $fileNameArray = [];
         }
         $result['data'] = $fileNameArray;
-        ReturnJson(true,trans('lang.request_success'),$result);
+        ReturnJson(true, trans('lang.request_success'), $result);
     }
 
     //文件大小换算
