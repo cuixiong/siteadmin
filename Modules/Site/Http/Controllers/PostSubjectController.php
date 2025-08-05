@@ -154,7 +154,7 @@ class PostSubjectController extends CrudController
         array_push($showData, $temp_filter);
 
         // 关键词
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN,PostSubject::CONDITION_EQUAL);
         $temp_filter = $this->getAdvancedFiltersItem('keywords', '关键词', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
         array_push($showData, $temp_filter);
 

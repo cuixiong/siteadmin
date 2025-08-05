@@ -314,9 +314,22 @@ class SearchProductsListLogController extends CrudController
             if (empty($keywordsArray)) {
                 ReturnJson(false, trans('未传入搜索词'));
             }
+            $type = $request->input('type'); //1：获取数量;2：执行操作
+            
+            $query = SearchProductsListLog::query()->whereIn('keywords', $keywordsArray);
+            if ($type == 1) {
+                $keywordsCount = (clone $query)->groupBy('keywords')->count();
+                $recordCount = $query->count();
+                $data = [
+                    'keywordsCount' => $keywordsCount ?? 0,
+                    'recordCount' => $recordCount ?? 0,
+                ];
+                ReturnJson(true, trans('lang.request_success'), $data);
+            } elseif ($type == 2) {
+                $data = $query->get()->toArray();
+                $this->exportDataHandle($data);
+            }
 
-            $data = SearchProductsListLog::query()->whereIn('keywords', $keywordsArray)->get()->toArray();
-            $this->exportDataHandle($data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -355,6 +368,7 @@ class SearchProductsListLogController extends CrudController
                 }
             }
 
+            $type = $request->input('type'); //1：获取数量;2：执行操作
             $query = SearchProductsListLog::query();
             if ($searchCondition && count($searchCondition) > 0) {
                 $query = $query->where($searchCondition);
@@ -362,8 +376,20 @@ class SearchProductsListLogController extends CrudController
             if ($start_time && $end_time) {
                 $query = $query->whereBetween('created_at', [$start_time, $end_time]);
             }
-            $data = $query->get()->toArray();
-            $this->exportDataHandle($data);
+            
+            
+            if ($type == 1) {
+                $keywordsCount = (clone $query)->groupBy('keywords')->count();
+                $recordCount = $query->count();
+                $data = [
+                    'keywordsCount' => $keywordsCount ?? 0,
+                    'recordCount' => $recordCount ?? 0,
+                ];
+                ReturnJson(true, trans('lang.request_success'), $data);
+            } elseif ($type == 2) {
+                $data = $query->get()->toArray();
+                $this->exportDataHandle($data);
+            }
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
