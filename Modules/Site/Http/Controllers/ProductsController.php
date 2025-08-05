@@ -144,8 +144,8 @@ class ProductsController extends CrudController {
                     $templateContentField,
                     $templateCommomField,
                     ['classification', 'application', 'updated_at', 'updated_by', 'created_at',
-                     'created_by', 'id', 'keywords_en', 'discount','discount_amount', 'discount_type', 
-                     'discount_time_begin', 'discount_time_end', ]
+                     'created_by', 'id', 'keywords_en', 'discount','discount_amount', 'discount_type',
+                     'discount_time_begin', 'discount_time_end', 'price_values']
                 )
             );
             $productList = Products::query()->whereIn('id', $product_id_list)
@@ -212,12 +212,13 @@ class ProductsController extends CrudController {
                 $record[$key]['classification'] = $productFor['classification'];
                 $record[$key]['keywords_en'] = $productFor['keywords_en'];
                 $record[$key]['companies_mentioned'] = $companies_mentioned;
-                
+
                 $record[$key]['discount'] = $productFor['discount'];
                 $record[$key]['discount_amount'] = $productFor['discount_amount'];
                 $record[$key]['discount_type'] = $productFor['discount_type'];
                 $record[$key]['discount_time_begin'] = $productFor['discount_time_begin'];
                 $record[$key]['discount_time_end'] = $productFor['discount_time_end'];
+                $record[$key]['price_values'] = $productFor['price_values'];
 
                 // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二段
                 if (in_array($sitename, ['qycojp'])) {
