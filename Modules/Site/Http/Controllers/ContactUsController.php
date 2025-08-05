@@ -243,6 +243,7 @@ class ContactUsController extends CrudController {
         array_unshift($options['post_platform'], ['label' => '未知', 'value' => 0]);
         //浏览器下拉列表
         $broswser_list = [
+            'ios',
             'edge',
             'chrome',
             'firefox',

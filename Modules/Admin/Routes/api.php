@@ -125,6 +125,7 @@ Route::middleware([
 
     Route::prefix('public')->group(function () {
         Route::any('truncate-table', [Modules\Admin\Http\Controllers\PublicController::class, 'truncateTable'])->name('清空数据表');
+        Route::any('get-page-setting', [Modules\Admin\Http\Controllers\PublicController::class, 'getPageSetting'])->name('获取分页设置');
     });
 
     // Department控制器
