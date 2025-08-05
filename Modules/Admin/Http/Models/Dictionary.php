@@ -20,10 +20,12 @@ class Dictionary extends Base
      * @param $id 要修改数据的标识
      * @param $isAllSite 是否同步所有站点
      * @param $siteIds 站点id
-     * 
+     *
      */
     public static function SaveToSite($type = self::SAVE_TYPE_FULL, $id = null, $isAllSite = false, $siteIds = null)
     {
+        //此方法废弃 , 多个站点在国外, 所以弃用
+        return null;
         $site = null;
         if ($isAllSite) {
             $site = Site::where(['status' => 1])->get()->toArray();
@@ -45,7 +47,7 @@ class Dictionary extends Base
 
         if ($type == self::SAVE_TYPE_FULL) {
             // 查询需要迁移的数据,并整理成sql语句
-            // $dictionaryData = Dictionary::get()->each->setAppends([])->toArray();    
+            // $dictionaryData = Dictionary::get()->each->setAppends([])->toArray();
             // 因为有选择器转换了时间等字段,为了方便所以换一种查询方式
             $dictionaryData = DB::table($dictionaryTableName)->get()->toArray();
             foreach ($dictionaryData as $record) {
