@@ -965,10 +965,10 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'list'])->name('搜索记录:列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'searchDroplist'])->name('搜索记录:筛选数据');
         Route::get('details', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'details'])->name('搜索记录:详情');
-        Route::get('delete', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'delete'])->name('搜索记录:选中删除');
-        Route::get('delete-filter', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'deleteFilter'])->name('搜索记录:批量删除');
-        Route::get('export', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'export'])->name('搜索记录:选中导出');
-        Route::get('export-filter', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'exportFilter'])->name('搜索记录:筛选导出');
+        Route::post('delete', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'delete'])->name('搜索记录:选中删除');
+        Route::post('delete-filter', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'deleteFilter'])->name('搜索记录:批量删除');
+        Route::post('export', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'export'])->name('搜索记录:选中导出');
+        Route::post('export-filter', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'exportFilter'])->name('搜索记录:筛选导出');
     });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
