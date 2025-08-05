@@ -15,8 +15,6 @@ class SearchProductsListLog extends Base
         'status',
         'sort',
         'created_by',
-        'created_at',
         'updated_by',
-        'updated_at',
     ];
 }
