@@ -959,6 +959,16 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
     });
+    
+    // 搜索记录
+    Route::prefix('search-product-list-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'list'])->name('搜索记录:列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'searchDroplist'])->name('搜索记录:筛选数据');
+        Route::get('details', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'details'])->name('搜索记录:详情');
+        Route::get('delete', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'delete'])->name('搜索记录:删除');
+        Route::get('delete-batch', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'deleteBatch'])->name('搜索记录:批量删除');
+        Route::get('export', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'export'])->name('搜索记录:导出纪录');
+    });
 
     Route::get('/test23', [Modules\Site\Http\Controllers\TestController::class, 'test23'])->name('站点端:测试');
 });

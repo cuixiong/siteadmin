@@ -1,4 +1,5 @@
 <?php
+
 namespace Modules\Site\Http\Controllers;
 
 use App\Const\QueueConst;
@@ -24,11 +25,11 @@ use Modules\Site\Http\Models\ViewProductsExportLog;
 use Modules\Site\Http\Models\ViewProductsLog;
 use Modules\Site\Services\IPAddrService;
 
-class SearchProductsListLogController extends CrudController {
-    public $sumCnt = 0;
-    public $total  = 0;
+class SearchProductsListLogController extends CrudController
+{
 
-    public function searchDroplist(Request $request) {
+    public function searchDroplist(Request $request)
+    {
         try {
 
             $timeConst = [
@@ -64,28 +65,28 @@ class SearchProductsListLogController extends CrudController {
         $now = Carbon::now();
         if ($type == 'today') {
             return [
-                'start' => $now->startOfDay(),
-                'end'   => $now->copy()->endOfDay(),
+                'start' => $now->startOfDay()->getTimestamp(),
+                'end'   => $now->copy()->endOfDay()->getTimestamp(),
             ];
         } elseif ($type == 'last_week') {
             return [
-                'start' => $now->copy()->subWeek()->startOfWeek(),
-                'end'   => $now->copy()->subWeek()->endOfWeek(),
+                'start' => $now->copy()->subWeek()->startOfWeek()->getTimestamp(),
+                'end'   => $now->copy()->subWeek()->endOfWeek()->getTimestamp(),
             ];
         } elseif ($type == 'this_week') {
             return [
-                'start' => $now->copy()->startOfWeek(),
-                'end'   => $now,
+                'start' => $now->copy()->startOfWeek()->getTimestamp(),
+                'end'   => $now->getTimestamp(),
             ];
         } elseif ($type == 'last_month') {
             return [
-                'start' => $now->copy()->subMonth()->startOfMonth(),
-                'end'   => $now->copy()->subMonth()->endOfMonth(),
+                'start' => $now->copy()->subMonth()->startOfMonth()->getTimestamp(),
+                'end'   => $now->copy()->subMonth()->endOfMonth()->getTimestamp(),
             ];
         } elseif ($type == 'this_month') {
             return [
-                'start' => $now->copy()->startOfMonth(),
-                'end'   => $now,
+                'start' => $now->copy()->startOfMonth()->getTimestamp(),
+                'end'   => $now->getTimestamp(),
             ];
         }
 
@@ -96,48 +97,43 @@ class SearchProductsListLogController extends CrudController {
      * @param Request $request
      *
      */
-    public function ReportForms(Request $request) {
+    public function list(Request $request)
+    {
         try {
             $searchStr = $request->input('search');
             $search = @json_decode($searchStr, true);
             $searchCondition = [];
             //搜索条件
-            if (!empty($search)) {
-                foreach ($search as $key => $value) {
-                    if ($key == 'ip' && !empty($value)) {
-                        $searchCondition['ip'] = $value;
-                    } elseif ($key == 'keywords' && !empty($value)) {
-                        $searchCondition['keywords'] = $value;
-                    }
-                }
+            if (isset($search['ip']) && !empty($search['ip'])) {
+                $searchCondition['ip'] = $search['ip'];
             }
-            
-            //时间条件
-            $droplistTimeType = $search['time'] ?? '';
-            $selectTime = $search['selectTime'] ?? '';
-            if (!empty($selectTime)) {
-                $start_time = $selectTime[0] ?? '';
-                $end_time = $selectTime[1] ?? '';
+            if (isset($search['keywords']) && !empty($search['keywords'])) {
+                $searchCondition['keywords'] = $search['keywords'];
             }
 
+            //时间条件
+            $droplistTimeType = $search['time_type'] ?? '';
+            $start_time = $search['select_time_start'] ?? '';
+            $end_time = $search['select_time_end'] ?? '';
+            
             $tab = 'keywords';
-            $list = [];
+            $data = [];
             if (!empty($start_time) && !empty($end_time)) {
-                $srartTimeCoon = Carbon::parse($start_time);
-                $endTimeCoon = Carbon::parse($end_time);
-                $list = $this->getCountInTable($srartTimeCoon, $endTimeCoon, $tab, $searchCondition);
+                $startTimestamp = Carbon::parse($start_time)->getTimestamp();
+                $endTimestamp = Carbon::parse($end_time)->getTimestamp();
+                $data = $this->getCountInTable($startTimestamp, $endTimestamp, $tab, $searchCondition);
             } else {
                 $droplistTime = $this->getTimeRange($droplistTimeType);
-                if($droplistTime){
-                    $srartTimeCoon = $droplistTime['start'];
-                    $endTimeCoon = $droplistTime['end'];
-                    $list = $this->getCountInTable($srartTimeCoon, $endTimeCoon, $tab, $searchCondition);
-                }else{
-
+                // ReturnJson(true, trans('lang.request_success'), $droplistTime);
+                if ($droplistTime) {
+                    $startTimestamp = $droplistTime['start'];
+                    $endTimestamp = $droplistTime['end'];
+                    $data = $this->getCountInTable($startTimestamp, $endTimestamp, $tab, $searchCondition);
+                } else {
+                    $data = $this->getCountInTable(null, null, $tab, $searchCondition);
                 }
             }
-            $data['total'] = $this->total;
-            $data['list'] = $list;
+
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -146,230 +142,65 @@ class SearchProductsListLogController extends CrudController {
 
 
     // 查询单表内的记录数
-    public function getCountInTable(Carbon $start, Carbon $end, $field = 'keywords', $condition = []) {
-        $logModel = new SearchProductsListLog();
-        $logModel = $logModel::query()->where($condition);
-        if ($start && $end) {
-            $start_time = $start->getTimestamp();
-            $end_time = $end->getTimestamp();
-            $logModel->whereBetween('created_at', [$start_time, $end_time]);
-        } else {
+    public function getCountInTable($start_time, $end_time, $field = 'keywords', $condition = [])
+    {
+        $logModel = SearchProductsListLog::query();
+        if ($condition && count($condition) > 0) {
+            $logModel = $logModel->where($condition);
         }
-        $list = $logModel->groupBy($field);
-        // 总数据数量
-        $count = $list->selectRaw($field)->get()->count();
-        $this->total = $count;
-        // 分组下数量
-        $sumCnt = $list->selectRaw($field." , count(*) as cnt ")->get()->sum('cnt');
-        $this->sumCnt = $sumCnt;
-        
-        $list = $list->selectRaw($field.' as targetField , count(*) as count, max(created_at) as log_time ')->orderBy('count', 'desc');
+        if ($start_time && $end_time) {
+            $logModel = $logModel->whereBetween('created_at', [$start_time, $end_time]);
+        }
+        $logModel = $logModel->groupBy($field);
+        // 数量
+        $count = (clone $logModel)->selectRaw($field)->get()->count();
+        $logModel->selectRaw($field . ', count(*) as count, max(created_at) as log_time ')->orderBy('count', 'desc');
         // 查询偏移量
         $request = request();
-        if (!empty($request->pageNum) && !empty($request->pageSize)) {
-            $list = $list->offset(($request->pageNum - 1) * $request->pageSize)->limit($request->pageSize);
+        $page = $request->page ?? 1;
+        $pageSize = $request->pageSize ?? 20;
+        if (!empty($page) && !empty($pageSize)) {
+            $logModel->offset(($page - 1) * $pageSize)->limit($pageSize);
         }
-        $list = $list->get()->toArray();
+        $list = $logModel->get()->toArray();
+
         foreach ($list as $key => &$value) {
-            $value['ip_addr'] = (new IPAddrService($value['ip_refer']))->getAddrStrByIp();
             $value['log_time'] = date("Y-m-d H:i:s", $value['log_time']);
         }
 
-        return $list;
+        $data = [
+            'count' => $count,
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'pageCount' => ceil($count / $pageSize),
+            'list' => $list,
+        ];
+        return $data;
     }
 
-    /**
-     * 根据当前条件, 当前ip/引用头 获取访问详情
-     *
-     * @param Request $request
-     *
-     */
-    public function accessDetailList(Request $request) {
+    // 详情
+    public function details(Request $request)
+    {
         try {
-            $searchStr = $request->input('search');
-            $search = @json_decode($searchStr, true);
-            $searchCondition = [];
-            //搜索条件
-            if (!empty($search)) {
-                foreach ($search as $key => $value) {
-                    if ($key == 'ip' && !empty($value)) {
-                        $ipList = explode(".", $value);
-                        $ipCnt = count($ipList);
-                        if ($ipCnt == 2) {
-                            $searchCondition['ip_muti_second'] = $value;
-                        } elseif ($ipCnt == 3) {
-                            $searchCondition['ip_muti_third'] = $value;
-                        } else {
-                            $searchCondition['ip'] = $value;
-                        }
-                    } elseif ($key == 'ip_addr' && !empty($value)) {
-                        $searchCondition['ip_addr'] = $value;
-                    } elseif ($key == 'referer') {
-                        $searchCondition['referer'] = $value;
-                    } elseif ($key == 'ua_info' && !empty($value)) {
-                        $searchCondition['ua_info'] = $value;
-                    }
+            $keywords = $request->keywords;
+            $data = SearchProductsListLog::query()
+                ->select(['id', 'ip', 'ip_addr', 'keywords', 'created_at'])
+                ->where('keywords', $keywords)
+                ->orderBy('id', 'desc')
+                ->get();
+            if ($data) {
+                $data = $data->toArray();
+                foreach ($data as $key => $item) {
+                    # code...
                 }
-            }
-            //时间条件
-            $time = $search['time'] ?? '';
-            $selectTime = $search['SelectTime'] ?? '';
-            if (!empty($selectTime)) {
-                $start_time = $selectTime[0] ?? '';
-                $end_time = $selectTime[1] ?? '';
-            }
-            if (!empty($start_time) && !empty($end_time)) {
-                $srartTimeCoon = Carbon::parse($start_time);
-                $endTimeCoon = Carbon::parse($end_time);
             } else {
-                $endTimeCoon = Carbon::now();
-                if ($time == '1m') {
-                    $srartTimeCoon = Carbon::now()->subMinutes(1);
-                } else if ($time == '5m') {
-                    $srartTimeCoon = Carbon::now()->subMinutes(5);
-                } elseif ($time == '1h') {
-                    $srartTimeCoon = Carbon::now()->subHour();
-                } elseif ($time == 'today') {
-                    $srartTimeCoon = Carbon::today();
-                } elseif ($time == 'yesterday') {
-                    $srartTimeCoon = Carbon::yesterday();
-                } elseif ($time == '7d') {
-                    $srartTimeCoon = Carbon::now()->subDays(7);
-                } elseif ($time == '30d') {
-                    $srartTimeCoon = Carbon::now()->subDays(30);
-                } else {
-                    //默认1分钟
-                    $srartTimeCoon = Carbon::now()->subMinutes(1);
-                }
+                $data = [];
             }
-            //$searchCondition
-            $list = $this->getAcrossTablesDetail($srartTimeCoon, $endTimeCoon, $searchCondition);
-            $sumContentSize = array_column($list , 'content_size');
-            $sumContentSize = array_sum($sumContentSize);
-            $data['sum_size'] = $this->formatBytes($sumContentSize);
-            $data['list'] = $list;
-            $data['count'] = count($list);
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
     }
-
-    public function getAcrossTablesDetail(Carbon $start, Carbon $end, $condition = []) {
-        //直接调用
-        $accessLogModel = new AccessLog();
-        $list_all = $accessLogModel::query()
-                                   ->where($condition)
-                                   ->where('created_at', ">=", $start->getTimestamp())
-                                   ->where('created_at', "<", $end->getTimestamp())
-                                   ->orderBy('log_time', 'desc')
-                                   ->get()->toArray();
-
-        return $list_all;
-    }
-
-    /**
-     * 根据条件去筛选 拷贝ip
-     *
-     * @param Request $request
-     *
-     */
-    public function copyField(Request $request) {
-        try {
-            $searchStr = $request->input('search');
-            $search = @json_decode($searchStr, true);
-            $searchCondition = [];
-            //搜索条件
-            if (!empty($search)) {
-                foreach ($search as $key => $value) {
-                    if ($key == 'ip' && !empty($value)) {
-                        $ipList = explode(".", $value);
-                        $ipCnt = count($ipList);
-                        if ($ipCnt == 2) {
-                            $searchCondition['ip_muti_second'] = $value;
-                        } elseif ($ipCnt == 3) {
-                            $searchCondition['ip_muti_third'] = $value;
-                        } else {
-                            $searchCondition['ip'] = $value;
-                        }
-                    } elseif ($key == 'ip_addr' && !empty($value)) {
-                        $searchCondition['ip_addr'] = $value;
-                    } elseif ($key == 'referer' && !empty($value)) {
-                        $searchCondition['referer'] = $value;
-                    } elseif ($key == 'ua_info' && !empty($value)) {
-                        $searchCondition['ua_info'] = $value;
-                    }
-                }
-            }
-            //时间条件
-            $time = $search['time'] ?? '';
-            $selectTime = $search['SelectTime'] ?? '';
-            if (!empty($selectTime)) {
-                $start_time = $selectTime[0] ?? '';
-                $end_time = $selectTime[1] ?? '';
-            }
-            if (!empty($start_time) && !empty($end_time)) {
-                $srartTimeCoon = Carbon::parse($start_time);
-                $endTimeCoon = Carbon::parse($end_time);
-            } else {
-                $endTimeCoon = Carbon::now();
-                if ($time == '1m') {
-                    $srartTimeCoon = Carbon::now()->subMinutes(1);
-                } else if ($time == '5m') {
-                    $srartTimeCoon = Carbon::now()->subMinutes(5);
-                } elseif ($time == '1h') {
-                    $srartTimeCoon = Carbon::now()->subHour();
-                } elseif ($time == 'today') {
-                    $srartTimeCoon = Carbon::today();
-                } elseif ($time == 'yesterday') {
-                    $srartTimeCoon = Carbon::yesterday();
-                } elseif ($time == '7d') {
-                    $srartTimeCoon = Carbon::now()->subDays(7);
-                } elseif ($time == '30d') {
-                    $srartTimeCoon = Carbon::now()->subDays(30);
-                } else {
-                    //默认1分钟
-                    $srartTimeCoon = Carbon::now()->subMinutes(1);
-                }
-            }
-            $start_time = $srartTimeCoon->getTimestamp();
-            $end_time = $endTimeCoon->getTimestamp();
-            //$searchCondition
-            $ip_muti_str = $search['ip_muti_str'] ?? 'ip_muti_second';
-            if ($ip_muti_str == 'ip_muti_second') {
-                $field = 'ip_muti_second';
-            } elseif ($ip_muti_str == 'ip_muti_third') {
-                $field = 'ip_muti_third';
-            } else {
-                $field = 'ip';
-            }
-            $accessLogModel = new AccessLog();
-            $list = $accessLogModel::query()
-                                   ->where($searchCondition)
-                                   ->whereBetween('created_at', [$start_time, $end_time])
-                                   ->groupBy($field)
-                                   ->selectRaw($field." as target_field , count(*) as count ")
-                                   ->orderBy('count', 'desc')
-                                   ->get()->toArray();
-            $ipList = [];
-            foreach ($list as $info) {
-                if ($ip_muti_str == 'ip_muti_second') {
-                    $ipstr = 'deny '.$info['target_field'].'.0.0/16';
-                } elseif ($ip_muti_str == 'ip_muti_third') {
-                    $ipstr = 'deny '.$info['target_field'].'.0/24';
-                } else {
-                    $ipstr = 'deny '.$info['target_field'];
-                }
-                $ipList[] = $ipstr;
-            }
-            $data['list'] = $ipList;
-            ReturnJson(true, trans('lang.request_success'), $data);
-        } catch (\Exception $e) {
-            ReturnJson(false, $e->getMessage());
-        }
-    }
-
-
 
     /**
      * 选中删除
@@ -377,83 +208,104 @@ class SearchProductsListLogController extends CrudController {
      * @param Request $request
      *
      */
-    public function accessLogDel(Request $request) {
+    public function delete(Request $request)
+    {
         try {
-            $searchStr = $request->input('search');
-            $search = @json_decode($searchStr, true);
-            $ip_muti_str = $search['ip_muti_str'] ?? 'ip_muti_second';
-            $searchCondition = [];
-            //搜索条件
-            $accessLogModel = new AccessLog();
-            if (!empty($search)) {
-                foreach ($search as $key => $value) {
-                    if ($key == 'ip' && is_array($value)) {
-                        if ($ip_muti_str == 'ip_muti_second') {
-                            $searchCondition[] = ['ip_muti_second', 'in', $value];
-                            $accessLogModel = $accessLogModel->whereIn("ip_muti_second", $value);
-                        } elseif ($ip_muti_str == 'ip_muti_third') {
-                            $searchCondition[] = ['ip_muti_third', 'in', $value];
-                            $accessLogModel = $accessLogModel->whereIn("ip_muti_third", $value);
-                        } else {
-                            $searchCondition[] = ['ip', 'in', $value];
-                            $accessLogModel = $accessLogModel->whereIn("ip", $value);
-                        }
-                    } elseif ($key == 'referer' && is_array($value)) {
-                        $searchCondition['referer'] = $value;
-                        $accessLogModel = $accessLogModel->whereIn("referer", $value);
-                    } elseif ($key == 'ua_info' && is_array($value)) {
-                        $searchCondition['ua_info'] = $value;
-                        $accessLogModel = $accessLogModel->whereIn("ua_info", $value);
-                    }
-                }
+            $keywords = $request->input('keywords');
+            $keywordsArray = @json_decode($keywords, true);
+            if (empty($keywordsArray)) {
+                ReturnJson(false, trans('未传入搜索词'));
             }
-            if (empty($searchCondition)) {
-                ReturnJson(false, trans('请选中条件'));
+
+            $type = $request->input('type'); //1：获取数量;2：执行操作
+
+            $query = SearchProductsListLog::query()->where('keywords', $keywords);
+            if ($type == 1) {
+                $recordCount = $query->count();
+                $data = [
+                    'keywordsCount' => count($keywordsArray),
+                    'recordCount' => $recordCount ?? 0,
+                ];
+            } elseif ($type == 2) {
+                $deleteCount = $query->delete();
+                $data = [
+                    'deleteCount' => $deleteCount ?? 0,
+                ];
             }
-            //时间条件
-            $time = $search['time'] ?? '';
-            $selectTime = $search['selectTime'] ?? '';
-            if (!empty($selectTime)) {
-                $start_time = $selectTime[0] ?? '';
-                $end_time = $selectTime[1] ?? '';
-            }
-            if (!empty($start_time) && !empty($end_time)) {
-                $srartTimeCoon = Carbon::parse($start_time);
-                $endTimeCoon = Carbon::parse($end_time);
-            } else {
-                $endTimeCoon = Carbon::now();
-                if ($time == '1m') {
-                    $srartTimeCoon = Carbon::now()->subMinutes(1);
-                } elseif ($time == '5m') {
-                    $srartTimeCoon = Carbon::now()->subMinutes(5);
-                } elseif ($time == '1h') {
-                    $srartTimeCoon = Carbon::now()->subHour();
-                } elseif ($time == 'today') {
-                    $srartTimeCoon = Carbon::today();
-                } elseif ($time == 'yesterday') {
-                    $srartTimeCoon = Carbon::yesterday();
-                } elseif ($time == '7d') {
-                    $srartTimeCoon = Carbon::now()->subDays(7);
-                } elseif ($time == '30d') {
-                    $srartTimeCoon = Carbon::now()->subDays(30);
-                } else {
-                    //默认1分钟
-                    $srartTimeCoon = Carbon::now()->subMinutes(1);
-                }
-            }
-            //$searchCondition
-            $start_time = $srartTimeCoon->getTimestamp();
-            $end_time = $endTimeCoon->getTimestamp();
-            $count = $accessLogModel->whereBetween('created_at', [$start_time, $end_time])->count();
-            if ($count > 0) {
-                $accessLogModel->whereBetween('created_at', [$start_time, $end_time])->delete();
-            }
-            $data['count'] = $count;
+
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
     }
 
+
+    /**
+     * 批量删除
+     */
+    public function deleteBatch(Request $request)
+    {
+        try {
+            $searchStr = $request->input('search');
+            $search = @json_decode($searchStr, true);
+            $searchCondition = [];
+            //搜索条件
+            if (isset($search['ip']) && !empty($search['ip'])) {
+                $searchCondition['ip'] = $search['ip'];
+            }
+            if (isset($search['keywords']) && !empty($search['keywords'])) {
+                $searchCondition['keywords'] = $search['keywords'];
+            }
+
+            //时间条件
+            $droplistTimeType = $search['time_type'] ?? '';
+            $start_time = $search['select_time_start'] ?? '';
+            $end_time = $search['select_time_end'] ?? '';
+            $type = $request->input('type'); //1：获取数量;2：执行操作
+
+            if (!empty($start_time) && !empty($end_time)) {
+                $start_time = Carbon::parse($start_time)->getTimestamp();
+                $end_time = Carbon::parse($end_time)->getTimestamp();
+            } else {
+                $droplistTime = $this->getTimeRange($droplistTimeType);
+                // ReturnJson(true, trans('lang.request_success'), $droplistTime);
+                if ($droplistTime) {
+                    $start_time = $droplistTime['start'];
+                    $end_time = $droplistTime['end'];
+                }
+            }
+            
+            $query = SearchProductsListLog::query();
+            if ($searchCondition && count($searchCondition) > 0) {
+                $query = $query->where($searchCondition);
+            }
+            if ($start_time && $end_time) {
+                $query = $query->whereBetween('created_at', [$start_time, $end_time]);
+            }
+            
+            if ($type == 1) {
+                $keywordsCount = (clone $query)->groupBy('keywords')->count();
+                $recordCount = $query->count();
+                $data = [
+                    'keywordsCount' => $keywordsCount??0,
+                    'recordCount' => $recordCount ?? 0,
+                ];
+            } elseif ($type == 2) {
+                $deleteCount = $query->delete();
+                $data = [
+                    'deleteCount' => $deleteCount ?? 0,
+                ];
+            }
+
+            ReturnJson(true, trans('lang.request_success'), $data);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    public function export(Request $request)
+    {
+
+    }
 
 }
