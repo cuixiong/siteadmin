@@ -155,26 +155,32 @@ class SearchProductsListLogController extends CrudController
         }
         $logModel = $logModel->groupBy($field);
         // 数量
-        $count = (clone $logModel)->selectRaw($field)->get()->count();
-        $logModel->selectRaw($field . ', count(*) as count, max(created_at) as log_time ')->orderBy('count', 'desc');
+        $total = (clone $logModel)->selectRaw($field)->get()->count();
+        $logModel->selectRaw($field . ', count(*) as count, max(id) as id')
+            ->orderBy('count', 'desc')
+            ->orderBy('id', 'desc');
         // 查询偏移量
         $request = request();
-        $page = $request->page ?? 1;
+        $pageNum = $request->pageNum ?? 1;
         $pageSize = $request->pageSize ?? 20;
-        if (!empty($page) && !empty($pageSize)) {
-            $logModel->offset(($page - 1) * $pageSize)->limit($pageSize);
+        if (!empty($pageNum) && !empty($pageSize)) {
+            $logModel->offset(($pageNum - 1) * $pageSize)->limit($pageSize);
         }
         $list = $logModel->get()->toArray();
 
         foreach ($list as $key => &$value) {
-            $value['log_time'] = date("Y-m-d H:i:s", $value['log_time']);
+            $maxLogData = SearchProductsListLog::query()->select(['created_at','ip','ip_addr'])->where('id',$value['id'])->first()->toArray();
+
+            $value['log_time'] = $maxLogData['created_at'];
+            $value['ip'] = $maxLogData['ip'];
+            $value['ip_addr'] = $maxLogData['ip_addr'];
         }
 
         $data = [
-            'count' => $count,
-            'page' => $page,
+            'total' => $total,
+            'pageNum' => $pageNum,
             'pageSize' => $pageSize,
-            'pageCount' => ceil($count / $pageSize),
+            'pageCount' => ceil($total / $pageSize),
             'list' => $list,
         ];
         return $data;
@@ -326,7 +332,7 @@ class SearchProductsListLogController extends CrudController
                 ];
                 ReturnJson(true, trans('lang.request_success'), $data);
             } elseif ($type == 2) {
-                $data = $query->get()->toArray();
+                $data = $query->orderBy('id','desc')->get()->toArray();
                 $this->exportDataHandle($data);
             }
 
@@ -387,7 +393,7 @@ class SearchProductsListLogController extends CrudController
                 ];
                 ReturnJson(true, trans('lang.request_success'), $data);
             } elseif ($type == 2) {
-                $data = $query->get()->toArray();
+                $data = $query->orderBy('id','desc')->get()->toArray();
                 $this->exportDataHandle($data);
             }
         } catch (\Exception $e) {
@@ -414,13 +420,20 @@ class SearchProductsListLogController extends CrudController
         // 
         $data = [];
         foreach ($search_data as $key => $item) {
-            if(!isset($item['keywords'])){
-                $data[$item['keywords']] = [];
+            if(!isset($data[$item['keywords']])){
+                $data[$item['keywords']] = [
+                    'count' => 0,
+                    'data' =>[],
+                ];
             }
-            $data[$item['keywords']][] = $item;
+            
+            $data[$item['keywords']]['count'] += 1;
+            $data[$item['keywords']]['data'][] = $item;
         }
-
-
+        uasort($data, function($a, $b) {
+            return $b['count'] - $a['count'];
+        });
+        
         $spreadsheet = new Spreadsheet();
 
         // 设置文件名
@@ -444,8 +457,8 @@ class SearchProductsListLogController extends CrudController
         $rowIndex = 1;
         foreach ($data as $group) {
             
-            $count = count($group);
-            foreach ($group as $index => $item) {
+            $count = $group['count'];
+            foreach ($group['data'] as $index => $item) {
                 if (!empty($item['keywords'])) {
                     $url = $domain . '/#/' . $site . '/products/fastList?type=name&keyword=' . $item['keywords'];
                 } else {
