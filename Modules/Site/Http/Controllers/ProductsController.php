@@ -220,11 +220,14 @@ class ProductsController extends CrudController {
                 $record[$key]['discount_time_end'] = $productFor['discount_time_end'];
                 $record[$key]['price_values'] = $productFor['price_values'];
 
-                // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第三段
+                // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二、三段
                 if (in_array($sitename, ['qycojp']) && empty($definition)) {
                     $tempArray = explode("\n",$descriptionEn??'');
-                    if($tempArray && count($tempArray)> 2){
-                        $definition = $tempArray[2];
+                    if($tempArray && count($tempArray)> 1){
+                        $definition = $tempArray[1];
+                    }
+                    if($tempArray && count($tempArray) > 2){
+                        $definition .= $tempArray[2];
                     }
                 }
                 $record[$key]['definition'] = $definition;
