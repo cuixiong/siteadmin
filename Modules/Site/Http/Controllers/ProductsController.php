@@ -227,7 +227,7 @@ class ProductsController extends CrudController {
                         $definition = $tempArray[1];
                     }
                     if($tempArray && count($tempArray) > 2){
-                        $definition .= $tempArray[2];
+                        $definition = $definition ."\n".$tempArray[2];
                     }
                 }
                 $record[$key]['definition'] = $definition;
