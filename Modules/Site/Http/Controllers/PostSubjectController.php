@@ -230,8 +230,13 @@ class PostSubjectController extends CrudController
         array_push($hiddenData, $temp_filter);
 
         // 版本
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_CONTAIN, PostSubject::CONDITION_NOT_CONTAIN);
-        $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EQUAL, PostSubject::CONDITION_NOT_EQUAL);
+        $versionData = PostSubject::getVersionList();
+        $options = [];
+        foreach ($versionData as $value) {
+            $options[] = ['label' => $value, 'value' => $value];
+        }
+        $temp_filter = $this->getAdvancedFiltersItem('version', '版本', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, false, $options);
         array_push($hiddenData, $temp_filter);
 
 
@@ -2093,7 +2098,7 @@ class PostSubjectController extends CrudController
                         }
                     } else {
                         // 查不到该课题，查询报告存在并新增
-                        $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])->where("id", $productId)->first()?->toArray();
+                        $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr', 'published_date'])->where("id", $productId)->first()?->toArray();
                         $subjectCount++;
                         if ($productData) {
                             $isInsert = false;
@@ -2107,6 +2112,7 @@ class PostSubjectController extends CrudController
                             $recordInsert['accepter'] = $accepter;
                             $recordInsert['accept_time'] = time();
                             $recordInsert['accept_status'] = 1;
+                            $recordInsert['published_date'] = strtotime($productData['published_date']);
                             $recordInsert['keywords'] = $productData['keywords'];
                             $recordInsert['has_cagr'] = !empty($productData['cagr']) ? 1 : 0;
                             $recordInsert['type'] = PostSubject::TYPE_POST_SUBJECT;
@@ -2668,7 +2674,7 @@ class PostSubjectController extends CrudController
             if ($productIds) {
                 $productIds = array_column($productIds, 'id');
                 // 报告数据
-                $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr'])
+                $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr','published_date'])
                     ->whereIn("id", $productIds)
                     ->get()?->toArray() ?? [];
                 $productData = array_column($productData, null, 'name');
@@ -2794,6 +2800,7 @@ class PostSubjectController extends CrudController
                         $recordInsert['accept_time'] = $postLinkGroup['time'];
                         $recordInsert['accept_status'] = 1;
                         $recordInsert['keywords'] = $product['keywords'];
+                        $recordInsert['published_date'] = strtotime($product['published_date']);
                         $recordInsert['has_cagr'] = !empty($product['cagr']) ? 1 : 0;
                         $postSubjectData = PostSubject::create($recordInsert);
                         $postSubjectId = $postSubjectData['id'];

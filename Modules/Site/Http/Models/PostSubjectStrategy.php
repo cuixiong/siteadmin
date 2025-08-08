@@ -77,11 +77,16 @@ class PostSubjectStrategy extends Base
         }
 
         foreach ($userData as $key => $userItem) {
-            $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->value('nickname') ?? '未知';
-            $userData[$key]['username'] = $nickname;
-            $queryCount += $userItem['num'];
+            $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->where('status', 1)->value('nickname');
+            // 可能被关闭或删除，不参与分配
+            if($nickname){
+                $userData[$key]['username'] = $nickname;
+                $queryCount += $userItem['num'];
+            }else{
+                unset($userData[$key]);
+            }
         }
-
+        $userData = array_values($userData);
 
         if ($type == 1) {
             $count = $baseQuery->count();
@@ -211,11 +216,17 @@ class PostSubjectStrategy extends Base
             ->first();
 
         if (!$userData) {
-            ReturnJson(false, '缺少归档对象');
+            ReturnJson(false, '配置缺少归档用户');
         }
         $userData = $userData->toArray();
-        $userData['nickname'] = User::query()->select(['nickname'])->where('id', $userData['user_id'])->value('nickname') ?? '未知';
-
+        $nickname = User::query()->select(['nickname'])->where('id', $userData['user_id'])->where('status', 1)->value('nickname');
+        
+        // 可能被关闭或删除，不参与分配
+        if($nickname){
+            $userData['nickname'] = $nickname;
+        }else{
+            ReturnJson(false, '归档用户被删除或者关闭');
+        }
 
         // 查询状态关闭(离职)的发帖用户
         $dimissionUserData = (new TemplateController())->getSitePostUser(0);
@@ -262,10 +273,10 @@ class PostSubjectStrategy extends Base
 
             // 已宣传课题进入归档账号
             $updateData = [
-                'accepter' => $userData['id'],
+                'accepter' => $userData['user_id'],
                 'accept_time' => time(),
                 'accept_status' => 1,
-                'updated_by' => $userData['id'],
+                'updated_by' => $userData['user_id'],
             ];
             $propagateCount = (clone $baseQuery)
                 ->whereIn('accepter', array_column($dimissionUserData, 'value'))
@@ -277,7 +288,7 @@ class PostSubjectStrategy extends Base
                 'accepter' => null,
                 'accept_time' => null,
                 'accept_status' => 0,
-                'updated_by' => $userData['id'],
+                'updated_by' => $userData['user_id'],
             ];
             $unPropagateCount = (clone $baseQuery)
                 ->whereIn('accepter', array_column($dimissionUserData, 'value'))
