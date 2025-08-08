@@ -72,20 +72,25 @@ class PostSubjectStrategyController extends CrudController
                         ->where(['strategy_id' => $item['id']])
                         ->orderBy('sort', 'asc')
                         ->get()?->toArray();
-                    $userCount = null;
+                    $userCount = 0;
                     $postMember = array_column((new TemplateController())->getSitePostUser(), 'label', 'value');
-                    foreach ($userData as $userItem) {
-                        $member = $userItem['user_id'];
-                        if (isset($postMember[$userItem['user_id']]) && !empty($postMember[$userItem['user_id']])) {
-                            $member = $postMember[$userItem['user_id']];
-                            $userCount = PostSubject::query()->select(['id'])
-                                ->whereIn('product_category_id', $itemCategoryData)
-                                ->where('type', PostSubject::TYPE_POST_SUBJECT)
-                                ->where('propagate_status', 0)
-                                ->where('accepter', $userItem['user_id'])
-                                ->count();
+                    if($record[$key]['type'] == PostSubjectStrategy::TYPE_ASSIGN){
+
+                        foreach ($userData as $userItem) {
+                            $member = $userItem['user_id'];
+                            if (isset($postMember[$userItem['user_id']]) && !empty($postMember[$userItem['user_id']])) {
+                                $member = $postMember[$userItem['user_id']];
+                                $userCount = PostSubject::query()->select(['id'])
+                                    ->whereIn('product_category_id', $itemCategoryData)
+                                    ->where('type', PostSubject::TYPE_POST_SUBJECT)
+                                    ->where('propagate_status', 0)
+                                    ->where('accepter', $userItem['user_id'])
+                                    ->count();
+                            }
+                            $record[$key]['strategy'][] = ['member' => $member, 'strategy_num' => $userItem['num'] ?? '', 'unpropagate_count' => $userCount ?? '',];
                         }
-                        $record[$key]['strategy'][] = ['member' => $member, 'strategy_num' => $userItem['num'] ?? '', 'unpropagate_count' => $userCount ?? '',];
+                    }elseif($record[$key]['type'] == PostSubjectStrategy::TYPE_DIMISSION){
+                        
                     }
                 }
             }
@@ -326,7 +331,9 @@ class PostSubjectStrategyController extends CrudController
         $config = PostSubjectStrategy::query()->where('id',$id)->first()->toArray();
         if ($config && $config['type'] == PostSubjectStrategy::TYPE_ASSIGN) {
             return (new PostSubjectStrategy())->assignStrategy($type, $config);
-        } else {
+        } elseif($config && $config['type'] == PostSubjectStrategy::TYPE_DIMISSION){
+            return (new PostSubjectStrategy())->dimissionStrategy($type, $config);
+        }else {
             ReturnJson(false, '未知策略');
         }
         

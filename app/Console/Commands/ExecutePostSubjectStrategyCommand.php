@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AutoPostCommand.php UTF-8
  * 自动发帖命令行
@@ -16,7 +17,8 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\Site\Http\Models\PostSubjectStrategy;
 
-class ExecutePostSubjectStrategyCommand extends Command {
+class ExecutePostSubjectStrategyCommand extends Command
+{
 
     /**
      * The name and signature of the console command.
@@ -37,7 +39,8 @@ class ExecutePostSubjectStrategyCommand extends Command {
      *
      * @return int
      */
-    public function handle() {
+    public function handle()
+    {
         //设置日志
         config(['logging.default' => 'cli']);
         $option = $this->option();
@@ -47,13 +50,16 @@ class ExecutePostSubjectStrategyCommand extends Command {
             exit;
         }
         tenancy()->initialize($siteName);
-        
-        $configs = PostSubjectStrategy::query()->where('status',1)->get()->toArray();
+
+        $configs = PostSubjectStrategy::query()->where('status', 1)->get()->toArray();
         foreach ($configs as $config) {
-            $result = (new PostSubjectStrategy())->assignStrategy(2, $config);
+            if ($config && $config['type'] == PostSubjectStrategy::TYPE_ASSIGN) {
+                $result = (new PostSubjectStrategy())->assignStrategy(2, $config);
+            } elseif($config && $config['type'] == PostSubjectStrategy::TYPE_DIMISSION){
+                $result = (new PostSubjectStrategy())->dimissionStrategy(2, $config);
+            }
             echo $result['msg'];
             echo "\r\n";
         }
-
     }
 }

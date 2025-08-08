@@ -19,7 +19,13 @@ use Modules\Admin\Http\Models\User;
 
 class SendEmailController extends Controller {
     // 注册发邮method
-    private $EmailCodes = ['register' => '注册账号', 'password' => '重置密码', 'active' => '激活账号', 'db_sync_error' => '主从同步异常'];
+    private $EmailCodes = [
+        'register' => '注册账号', 
+        'password' => '重置密码', 
+        'active' => '激活账号', 
+        'db_sync_error' => '主从同步异常',
+        'check_queue_status_fatal' => '队列异常'
+    ];
 
     /**
      * 动态配置邮箱参数

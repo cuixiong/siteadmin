@@ -931,7 +931,7 @@ EOF;
         return $tempContent;
     }
 
-    public function getSitePostUser() {
+    public function getSitePostUser($userStatus = 1) {
         //当前站点, 所有的使用者
         $siteName = getSiteName();
         $currentSiteId = Site::query()->where("name", $siteName)->value("id");
@@ -950,7 +950,7 @@ EOF;
         $userList = [];
         if (!empty($afterRoleIdList)) {
             $userList = User::query()
-                            ->where("status", 1)
+                            ->where("status", $userStatus)
                             ->where(function ($query) use ($afterRoleIdList) {
                                 foreach ($afterRoleIdList as $afRoleId) {
                                     $query->orWhere('role_id', 'like', "%{$afRoleId}%");
