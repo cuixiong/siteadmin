@@ -308,7 +308,7 @@ class PostSubjectController extends CrudController
         
         // 出版时间
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
-        $temp_filter = $this->getAdvancedFiltersItem('publicshed_data', '出版时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        $temp_filter = $this->getAdvancedFiltersItem('published_date', '出版时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($hiddenData, $temp_filter);
 
 
