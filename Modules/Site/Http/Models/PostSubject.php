@@ -491,6 +491,16 @@ class PostSubject extends Base
             $query = self::getFiltersConditionQuery($query, $condition,  'ps.last_propagate_time', $searchItem['content']);
         }
 
+        // 出版时间
+        if (!empty($search['published_date']) && isset($search['published_date']['content'])) {
+            $condition = self::CONDITION_TIME_BETWEEN;
+            $searchItem = $search['published_date'];
+            if (isset($searchItem['condition'])) {
+                $condition = $searchItem['condition'];
+            }
+            $query = self::getFiltersConditionQuery($query, $condition,  'ps.published_date', $searchItem['content']);
+        }
+
         // 领取人
         if ($requesterOwn) {
             $query = self::getFiltersConditionQuery($query, self::CONDITION_IN,  'ps.accepter', [$requesterOwn]);

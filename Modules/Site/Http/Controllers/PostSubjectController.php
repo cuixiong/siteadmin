@@ -105,7 +105,7 @@ class PostSubjectController extends CrudController
                     $record[$key]['accepter_name'] = $accepterList[$item['accepter']] ?? '';
                     $record[$key]['last_propagate_time_format'] = !empty($record[$key]['last_propagate_time']) ? date('Y-m-d H:i:s', $record[$key]['last_propagate_time']) : '';
                     $record[$key]['accept_time_format'] = !empty($record[$key]['accept_time']) ? date('Y-m-d H:i:s', $record[$key]['accept_time']) : '';
-                    $record[$key]['published_date_format'] = !empty($record[$key]['published_date']) ? date('Y-m-d H:i:s', $record[$key]['published_date']) : '';
+                    $record[$key]['published_date_format'] = !empty($record[$key]['published_date']) ? date('Y-m-d', $record[$key]['published_date']) : '';
 
                     $urlData = PostSubjectLink::query()->where(['post_subject_id' => $item['id']])->get()->toArray();
                     $urlData = array_map(function ($urlItem) use ($platformList) {
@@ -586,7 +586,7 @@ class PostSubjectController extends CrudController
 
 
             $input['published_date'] = is_numeric($input['published_date']) ? $input['published_date'] : strtotime($input['published_date']);
-            
+
             if ($input['type'] == PostSubject::TYPE_POST_SUBJECT) {
 
                 if (!empty($input['product_id'])) {
