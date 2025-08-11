@@ -444,6 +444,8 @@ class PostSubjectController extends CrudController
             } else {
                 $urlData = [];
             }
+            
+            $input['published_date'] = is_numeric($input['published_date']) ? $input['published_date'] : strtotime($input['published_date']);
 
             if (empty($input['sort'])) {
                 $input['sort'] = 100;
@@ -583,6 +585,8 @@ class PostSubjectController extends CrudController
             $details = '';
 
 
+            $input['published_date'] = is_numeric($input['published_date']) ? $input['published_date'] : strtotime($input['published_date']);
+            
             if ($input['type'] == PostSubject::TYPE_POST_SUBJECT) {
 
                 if (!empty($input['product_id'])) {
