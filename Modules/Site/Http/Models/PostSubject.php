@@ -28,7 +28,8 @@ class PostSubject extends Base
         'created_by',
         'change_status',
         'keywords',
-        'has_cagr'
+        'has_cagr',
+        'published_date',
     ];
 
     protected $attributes = [
@@ -146,6 +147,13 @@ class PostSubject extends Base
             $lastTime = $search->last_propagate_time;
             $model = $model->where('last_propagate_time', '>=', $lastTime[0]);
             $model = $model->where('last_propagate_time', '<=', $lastTime[1]);
+        }
+        
+        //出版时间
+        if (isset($search->published_date) && !empty($search->published_date)) {
+            $publishedDate = $search->published_date;
+            $model = $model->where('published_date', '>=', $publishedDate[0]);
+            $model = $model->where('published_date', '<=', $publishedDate[1]);
         }
         return $model;
     }

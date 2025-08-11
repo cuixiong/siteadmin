@@ -618,7 +618,7 @@ class ProductsController extends CrudController {
             $postSubjectData['version'] = intval($record['price'] ?? 0);
             $postSubjectData['analyst'] = $record['author'];
             $postSubjectData['keywords'] = $record['keywords'];
-            $postSubjectData['published_date'] = strtotime($record['published_date']);
+            $postSubjectData['published_date'] = is_numeric($record['published_date'])?$record['published_date']:strtotime($record['published_date']);
             $postSubjectData['has_cagr'] = !empty($record['cagr']) ? 1 : 0;
             // 没有领取人则自己领取
             $postSubjectData['accepter'] = $request->user->id;
@@ -895,7 +895,7 @@ class ProductsController extends CrudController {
                     $postSubjectUpdate['version'] = intval($record->price ?? 0);
                     $postSubjectUpdate['analyst'] = $record->author;
                     $postSubjectUpdate['keywords'] = $record->keywords;
-                    $postSubjectUpdate['published_date'] = strtotime($record->published_date);
+                    $postSubjectUpdate['published_date'] = is_numeric($record->published_date) ? $record->published_date : strtotime($record->published_date);
                     $postSubjectUpdate['has_cagr'] = !empty($record->cagr) ? 1 : 0;
                     if ($postSubject) {
                         // 需比对类型、应用、企业是否有变化，有则打开修改状态

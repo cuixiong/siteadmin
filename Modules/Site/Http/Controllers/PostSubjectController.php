@@ -82,6 +82,7 @@ class PostSubjectController extends CrudController
                 'change_status',
                 'keywords',
                 'has_cagr',
+                'published_date',
             ];
             $model = $model->select($fields);
             // 数据排序
@@ -104,6 +105,7 @@ class PostSubjectController extends CrudController
                     $record[$key]['accepter_name'] = $accepterList[$item['accepter']] ?? '';
                     $record[$key]['last_propagate_time_format'] = !empty($record[$key]['last_propagate_time']) ? date('Y-m-d H:i:s', $record[$key]['last_propagate_time']) : '';
                     $record[$key]['accept_time_format'] = !empty($record[$key]['accept_time']) ? date('Y-m-d H:i:s', $record[$key]['accept_time']) : '';
+                    $record[$key]['published_date_format'] = !empty($record[$key]['published_date']) ? date('Y-m-d H:i:s', $record[$key]['published_date']) : '';
 
                     $urlData = PostSubjectLink::query()->where(['post_subject_id' => $item['id']])->get()->toArray();
                     $urlData = array_map(function ($urlItem) use ($platformList) {
@@ -303,6 +305,12 @@ class PostSubjectController extends CrudController
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
         $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($hiddenData, $temp_filter);
+        
+        // 出版时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('publicshed_data', '出版时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($hiddenData, $temp_filter);
+
 
 
         foreach ($showData as $key => $value) {
@@ -940,6 +948,7 @@ class PostSubjectController extends CrudController
             $record['accepter_name'] = User::query()->where('id', $record['accepter'])->value('nickname') ?? '';
             $record['last_propagate_time_format'] = !empty($record['last_propagate_time']) ? date('Y-m-d H:i:s', $record['last_propagate_time']) : '';
             $record['accept_time_format'] = !empty($record['accept_time']) ? date('Y-m-d H:i:s', $record['accept_time']) : '';
+            $record['published_date_format'] = !empty($record['published_date']) ? date('Y-m-d H:i:s', $record['published_date']) : '';
 
             $urlData = PostSubjectLink::query()->where(['post_subject_id' => $record['id']])->get()->toArray();
             $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
@@ -2800,7 +2809,7 @@ class PostSubjectController extends CrudController
                         $recordInsert['accept_time'] = $postLinkGroup['time'];
                         $recordInsert['accept_status'] = 1;
                         $recordInsert['keywords'] = $product['keywords'];
-                        $recordInsert['published_date'] = strtotime($product['published_date']);
+                        $recordInsert['published_date'] = is_numeric($product['published_date'])?$product['published_date']:strtotime($product['published_date']);
                         $recordInsert['has_cagr'] = !empty($product['cagr']) ? 1 : 0;
                         $postSubjectData = PostSubject::create($recordInsert);
                         $postSubjectId = $postSubjectData['id'];

@@ -777,7 +777,7 @@ class SyncThirdProductController extends CrudController {
                         $postSubjectUpdate['version'] = intval($item['price'] ?? 0);
                         $postSubjectUpdate['analyst'] = $item['author'];
                         $postSubjectUpdate['keywords'] = $item['keywords'];
-                        $postSubjectUpdate['published_date'] = $item['published_date'];
+                        $postSubjectUpdate['published_date'] = is_numeric($item['published_date'])?$item['published_date']:strtotime($item['published_date']);
                         $postSubjectUpdate['has_cagr'] = !empty($item['cagr']) ? 1 : 0;
                         if ($postSubject) {
                             // 需比对类型、应用、企业是否有变化，有则打开修改状态
