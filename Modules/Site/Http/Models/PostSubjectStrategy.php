@@ -11,7 +11,7 @@ class PostSubjectStrategy extends Base
     protected $table = 'post_subject_strategy';
 
     // 设置允许入库字段,数组形式
-    protected $fillable = ['type', 'category_ids', 'version', 'status', 'sort', 'updated_by', 'created_by'];
+    protected $fillable = ['type', 'category_ids', 'version', 'year', 'status', 'sort', 'updated_by', 'created_by'];
 
     protected $attributes = [
         'status' => 1,
@@ -51,6 +51,11 @@ class PostSubjectStrategy extends Base
             $versionArray =  [];
         }
 
+        $yearTimestamp = strtotime(date('Y-01-01 00:00:00'));
+        if (!empty($config['year'])) {
+            $yearTimestamp = strtotime(date($config['year'] . '-01-01 00:00:00'));
+        }
+
         // 查询用户 
         $userData = PostSubjectStrategyUser::from((new PostSubjectStrategyUser)->getTable() . ' as pssu')
             ->select(['pssu.id', 'pssu.user_id', 'pssu.num',])
@@ -75,14 +80,17 @@ class PostSubjectStrategy extends Base
         if ($versionArray && count($versionArray) > 0) {
             $baseQuery->whereIn('version', $versionArray);
         }
+        if (!empty($yearTimestamp)) {
+            $baseQuery->where('published_date', '>', $yearTimestamp);
+        }
 
         foreach ($userData as $key => $userItem) {
             $nickname = User::query()->select(['nickname'])->where('id', $userItem['user_id'])->where('status', 1)->value('nickname');
             // 可能被关闭或删除，不参与分配
-            if($nickname){
+            if ($nickname) {
                 $userData[$key]['username'] = $nickname;
                 $queryCount += $userItem['num'];
-            }else{
+            } else {
                 unset($userData[$key]);
             }
         }
@@ -220,11 +228,11 @@ class PostSubjectStrategy extends Base
         }
         $userData = $userData->toArray();
         $nickname = User::query()->select(['nickname'])->where('id', $userData['user_id'])->where('status', 1)->value('nickname');
-        
+
         // 可能被关闭或删除，不参与分配
-        if($nickname){
+        if ($nickname) {
             $userData['nickname'] = $nickname;
-        }else{
+        } else {
             ReturnJson(false, '归档用户被删除或者关闭');
         }
 
@@ -294,7 +302,7 @@ class PostSubjectStrategy extends Base
                 ->whereIn('accepter', array_column($dimissionUserData, 'value'))
                 ->where('propagate_status', 0)
                 ->update($updateData);
-    
+
 
             $log = new PostSubjectLog();
             $logData['type'] = PostSubjectLog::POST_SUBJECT_STRATEGY_DIMISSION;
@@ -302,7 +310,7 @@ class PostSubjectStrategy extends Base
             $logData['ingore_count'] = 0;
             $logData['details'] = '';
             $logData['details'] .= date('Y-m-d H:i:s', time()) . ' 策略归档' . "\n";
-            $logData['details'] .= $unPropagateCount . '个课题转入公客, ' . $propagateCount . '个课题转入 【'. $userData['nickname'] .'】'. "\n";
+            $logData['details'] .= $unPropagateCount . '个课题转入公客, ' . $propagateCount . '个课题转入 【' . $userData['nickname'] . '】' . "\n";
             $logData['ingore_details'] = '';
             $log->create($logData);
 

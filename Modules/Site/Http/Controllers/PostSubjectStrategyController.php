@@ -91,6 +91,13 @@ class PostSubjectStrategyController extends CrudController
                         }
                     }elseif($record[$key]['type'] == PostSubjectStrategy::TYPE_DIMISSION){
                         
+                        foreach ($userData as $userItem) {
+                            $member = $userItem['user_id'];
+                            if (isset($postMember[$userItem['user_id']]) && !empty($postMember[$userItem['user_id']])) {
+                                $member = $postMember[$userItem['user_id']];
+                            }
+                            $record[$key]['strategy'][] = ['member' => $member];
+                        }
                     }
                 }
             }
