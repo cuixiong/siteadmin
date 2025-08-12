@@ -219,6 +219,11 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('product_id', '报告ID', PostSubject::ADVANCED_FILTERS_TYPE_TEXT, $condition);
         array_push($showData, $temp_filter);
 
+        // 出版时间
+        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
+        $temp_filter = $this->getAdvancedFiltersItem('published_date', '出版时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
+        array_push($showData, $temp_filter);
+
 
 
         /**
@@ -306,10 +311,6 @@ class PostSubjectController extends CrudController
         $temp_filter = $this->getAdvancedFiltersItem('last_propagate_time', '最后宣传时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
         array_push($hiddenData, $temp_filter);
         
-        // 出版时间
-        $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_TIME_BETWEEN, PostSubject::CONDITION_TIME_NOT_BETWEEN);
-        $temp_filter = $this->getAdvancedFiltersItem('published_date', '出版时间', PostSubject::ADVANCED_FILTERS_TYPE_TIME, $condition);
-        array_push($hiddenData, $temp_filter);
 
 
 
