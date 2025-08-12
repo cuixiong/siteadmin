@@ -7,6 +7,7 @@ use Modules\Admin\Http\Models\Country;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Controllers\CrudController;
+use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\PostSubjectFilter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -219,5 +220,62 @@ class PostSubjectFilterController extends CrudController
         $writer->save('php://output');
 
         exit;
+    }
+
+
+    /**
+     * 单个新增
+     *
+     * @param $request 请求信息
+     */
+    protected function store(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                ReturnJson(false, trans('lang.add_error'));
+            }
+            $this->hiddenSubject($record->user_id, $record->keywords);
+            ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    protected function update(Request $request)
+    {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            $this->hiddenSubject($record->user_id, $record->keywords);
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    // 加入黑名单后，将未宣传课题(该用户)返回公客
+    private function hiddenSubject($accepter, $keywords)
+    {
+        $request = request();
+        $data = PostSubject::query()->select(['id'])->where('accepter', $accepter)->where('propagate_status', 0)->where('keywords', $keywords)->get();
+        if ($data) {
+            $data = $data->toArray();
+            foreach ($data as $key => $item) {
+                $updateData = [
+                    'accepter' => null,
+                    'accept_time' => null,
+                    'accept_status' => 0,
+                    'updated_by' => $request->user->id,
+                ];
+                PostSubject::query()->where("id", $item['id'])->update($updateData);
+            }
+        }
     }
 }
