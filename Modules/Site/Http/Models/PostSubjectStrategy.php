@@ -261,20 +261,28 @@ class PostSubjectStrategy extends Base
             $unPropagateCount = 0;
             $returnData['user'] = [];
             foreach ($dimissionUserData as $key => $userItem) {
-                $tempPropagateCount = (clone $baseQuery)->where('accepter', $userItem['value'])->where('propagate_status', 1)->count();
-                $tempUnPropagateCount = (clone $baseQuery)->where('accepter', $userItem['value'])->where('propagate_status', 0)->count();
+                $tempPropagateCount = (clone $baseQuery)->where('accepter', $userItem['value'])->where('propagate_status', 1)->count()?? 0;
+                $tempUnPropagateCount = (clone $baseQuery)->where('accepter', $userItem['value'])->where('propagate_status', 0)->count()?? 0;
+                if ($tempPropagateCount == 0 && $tempUnPropagateCount == 0) {
+                    // 该离职员工无可归档课题
+                    continue;
+                }
                 $returnData['user'][] = [
                     'user_id' => $userItem['value'],
                     'username' => $userItem['label'],
-                    'propagate_count' => $tempPropagateCount ?? 0,
-                    'unpropagate_count' => $tempUnPropagateCount ?? 0,
+                    'propagate_count' => $tempPropagateCount ,
+                    'unpropagate_count' => $tempUnPropagateCount,
                 ];
                 $propagateCount += $tempPropagateCount ?? 0;
                 $unPropagateCount += $tempUnPropagateCount ?? 0;
             }
 
+            if ($propagateCount == 0 && $unPropagateCount==0) {
+                ReturnJson(false, '没有可归档课题', []);
+            }
             $returnData['propagate_count'] = $propagateCount;
             $returnData['unPropagate_count'] = $unPropagateCount;
+            
 
             ReturnJson(true, '返回数量', $returnData);
         } elseif ($type == 2) {
