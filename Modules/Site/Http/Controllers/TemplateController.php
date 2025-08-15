@@ -585,7 +585,7 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
         $tempContent = $this->handlerMuchLine($tempContent);
         if (!$is_auto_post) {
-            $tempContent = str_replace(' ', '&nbsp;', $tempContent);
+            // $tempContent = str_replace(' ', '&nbsp;', $tempContent);
         }
 
         return $tempContent;
