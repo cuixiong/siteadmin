@@ -51,10 +51,6 @@ class OrderController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_code',
-                           'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at',
-                           'pay_coin_type', 'send_email_time', 'is_mobile_pay'];
-            $model = $model->select($fieldsList);
             // 数据排序. 默认降序
             if (empty($request->sort)) {
                 $request->sort = 'desc';
