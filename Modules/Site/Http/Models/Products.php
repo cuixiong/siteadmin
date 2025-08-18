@@ -606,6 +606,7 @@ class Products extends Base {
                 'keywords_de'     => $data['keywords_de'] ?? '',
                 'year'            => $data['year'] ?? 0,
                 'degree_keyword'  => strlen($data['keywords']),
+                'degree_keywords_en'  => strlen($data['keywords_en']),
                 'sort'            => $data['sort'] ?? 100,
                 'url'             => $data['url'] ?? '',
             ];
@@ -819,6 +820,7 @@ class Products extends Base {
                 'keywords'        => $data['keywords'] ?? '',
                 'year'            => $data['year'] ?? 0,
                 'degree_keyword'  => strlen($data['keywords']),
+                'degree_keywords_en'  => strlen($data['keywords_en']),
                 'publisher_id'    => $data['publisher_id'],
                 'sort'            => $data['sort'] ?? 100,
                 'url'             => $data['url'] ?? '',
