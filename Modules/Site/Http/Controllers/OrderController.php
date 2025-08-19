@@ -76,6 +76,10 @@ class OrderController extends CrudController {
                 }
                 $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
+
+                $value['exchange_coupon_amount'] = bcmul($value['coupon_amount'], $value['exchange_rate'], 2);
+                $value['exchange_order_amount'] = bcmul($value['order_amount'], $value['exchange_rate'], 2);
+                $value['exchange_actually_paid'] = bcmul($value['actually_paid'], $value['exchange_rate'], 2);
             }
             $data = [
                 'total'       => $total,
