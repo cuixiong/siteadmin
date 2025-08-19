@@ -347,6 +347,70 @@ class SyncThirdProductController extends CrudController {
             }
         }
         $uniqueDataList = array_values($uniqueDataList);
+
+        //英文昵称去重
+        $productData = $uniqueDataList;
+        $uniqueDataList = [];
+        $authorCheck = ['已售报告', '完成报告'];
+        foreach ($productData as $forParamsData) {
+            $count++;
+            if (empty($forParamsData['english_name'])) {
+                $details .= "【错误】编号:{$forParamsData['id']}:  ".trans('lang.product_en_name_empty')."\r\n";;
+                $errorCount++;
+                array_push($errIdList, $forParamsData['id']);
+                continue;
+            }
+            //校验报告名称
+            $checkMsg = $this->checkProductName($forParamsData['english_name']);
+            if ($checkMsg) {
+                $details .= "【错误】编号:{$forParamsData['id']}:  ".$checkMsg."\r\n";;
+                $errorCount++;
+                array_push($errIdList, $forParamsData['id']);
+                continue;
+            }
+            //已售报告>完成报告>人名作者
+            if (!empty($uniqueDataList[$forParamsData['english_name']])) {
+                if (
+                    !in_array($uniqueDataList[$forParamsData['english_name']]['author'], $authorCheck)
+                    && in_array($forParamsData['author'], $authorCheck)
+                ) {
+                    $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['english_name']]['id']};【{$forParamsData['english_name']}】"
+                                      .($uniqueDataList[$forParamsData['english_name']]['author']).'-'.trans(
+                                          'lang.author_level'
+                                      )
+                                      .($forParamsData['author'])."\r\n";
+                    $ingoreCount++;
+                    array_push($errIdList, $uniqueDataList[$forParamsData['english_name']]['id']);
+                    $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                } elseif (
+                    in_array($uniqueDataList[$forParamsData['english_name']]['author'], $authorCheck)
+                    && $forParamsData['author'] == '已售报告'
+                ) {
+                    $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['english_name']]['id']};【{$forParamsData['english_name']}】"
+                                      .($uniqueDataList[$forParamsData['english_name']]['author']).'-'.trans(
+                                          'lang.author_level'
+                                      )
+                                      .($forParamsData['author'])."\r\n";
+                    $ingoreCount++;
+                    array_push($errIdList, $uniqueDataList[$forParamsData['english_name']]['id']);
+                    $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                } elseif ($uniqueDataList[$forParamsData['english_name']]['author'] == $forParamsData['author']) {
+                    $ingore_detail .= "【错误】编号:{$uniqueDataList[$forParamsData['english_name']]['id']};【{$forParamsData['english_name']}】"
+                                      .($uniqueDataList[$forParamsData['english_name']]['author']).'-'.trans(
+                                          'lang.author_level'
+                                      )
+                                      .($forParamsData['author'])."\r\n";
+                    $ingoreCount++;
+                    array_push($errIdList, $uniqueDataList[$forParamsData['english_name']]['id']);
+                    $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                }
+            } else {
+                $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+            }
+        }
+        $uniqueDataList = array_values($uniqueDataList);
+
+
         try {
             $pro_name_list = array_column($uniqueDataList, 'name');
             $pro_ename_list = array_column($uniqueDataList, 'english_name');
@@ -584,13 +648,13 @@ class SyncThirdProductController extends CrudController {
                     ];
                     $descReplaceText = '专业团队';
                     $itemDescription['description'] = str_replace($descSearchArray,$descReplaceText,$itemDescription['description']);
-                    
+
                     $descSearchArray2= [
                         'MMG调研团队，',
                     ];
                     $itemDescription['description'] = str_replace($descSearchArray2,'',$itemDescription['description']);
                 }
-                
+
                 //英文详情
                 if (!empty($row['description_en'])) {
                     $descriptionEnArr = json_decode($row['description_en'], true);
