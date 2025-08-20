@@ -548,6 +548,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\PartnerController::class, 'destroy'])->name('合作伙伴:数据删除');
         Route::get('list', [Modules\Site\Http\Controllers\PartnerController::class, 'list'])->name('合作伙伴:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PartnerController::class, 'changeStatus'])->name('合作伙伴:状态修改');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\PartnerController::class, 'searchDroplist'])->name('合作伙伴:搜索下拉列表数据');
     });
 
     // LanguageWebsite控制器
@@ -959,7 +960,7 @@ Route::middleware([
         Route::post('change-status', [Modules\Site\Http\Controllers\CountryController::class, 'changeStatus'])->name('国家管理:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\CountryController::class, 'changeSort'])->name('国家管理:排序修改');
     });
-    
+
     // 搜索记录
     Route::prefix('search-product-list-log')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SearchProductsListLogController::class, 'list'])->name('搜索记录:列表');
