@@ -51,10 +51,6 @@ class OrderController extends CrudController {
             if (!empty($request->pageSize)) {
                 $model->limit($request->pageSize);
             }
-            $fieldsList = ['id', 'order_number', 'out_order_num', 'user_id', 'is_pay', 'pay_time', 'pay_code',
-                           'order_amount', 'actually_paid', 'status', 'username', 'email', 'created_at',
-                           'pay_coin_type', 'send_email_time', 'is_mobile_pay'];
-            $model = $model->select($fieldsList);
             // 数据排序. 默认降序
             if (empty($request->sort)) {
                 $request->sort = 'desc';
@@ -67,9 +63,9 @@ class OrderController extends CrudController {
             }
             $record = $model->get()->toArray();
             $orderModel = new Order();
-            
+
             $paymentData = Pay::query()->get()->toArray();
-            array_column($paymentData,null,'id');
+            $paymentData = array_column($paymentData, null, 'code');
 
             foreach ($record as $key => &$value) {
                 if (!empty($value['send_email_time'])) {
@@ -85,23 +81,26 @@ class OrderController extends CrudController {
                 $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
 
-                
+                $payInfo = $paymentData[$value['pay_code']];
                 $exchange_rate = 1;
                 if (!empty($payInfo)) {
-                    $exchange_rate = $payInfo->pay_exchange_rate;
+                    $exchange_rate = $payInfo['pay_exchange_rate'];
                     if ($exchange_rate <= 0) {
                         $exchange_rate = 1;
                     }
                 }
 
                 // 根据支付方式决定货币单位，根据支付状态决定实时汇率或者订单记录的当时汇率
-                if($value['is_pay'] == 1){
+                if ($value['is_pay'] == 1) {
                     // 未付款返回该支付方式的实时汇率
                     $value['exchange_rate'] = $exchange_rate;
-                }elseif($record['is_pay'] == 2){
+                } elseif ($value['is_pay'] == 2) {
                     // 已支付读取订单记录的汇率
                     $exchange_rate = $value['exchange_rate'];
                 }
+
+                $value['exchange_coupon_amount'] = bcmul($value['coupon_amount'], $exchange_rate, 2);
+                $value['exchange_order_amount'] = bcmul($value['order_amount'], $exchange_rate, 2);
                 $value['exchange_actually_paid'] = bcmul($value['actually_paid'], $exchange_rate, 2);
 
             }

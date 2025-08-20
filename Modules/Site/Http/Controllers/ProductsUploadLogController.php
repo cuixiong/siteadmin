@@ -285,6 +285,35 @@ class ProductsUploadLogController extends CrudController
                     }
                 }
                 $uniqueDataList = array_values($uniqueDataList);
+
+
+                //昵称去重
+                $excelData = $uniqueDataList;
+                $uniqueDataList = [];
+                $authorCheck = ['已售报告', '完成报告'];
+                foreach ($excelData as $forParamsData) {
+                    //已售报告>完成报告>人名作者
+                    if (!empty($uniqueDataList[$forParamsData['english_name']])) {
+                        if (
+                            !in_array($uniqueDataList[$forParamsData['english_name']]['author'], $authorCheck)
+                            && in_array($forParamsData['author'], $authorCheck)
+                        ) {
+                            //作者报告需要被这种报告替换
+                            $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                        } elseif (
+                            in_array($uniqueDataList[$forParamsData['english_name']]['author'], $authorCheck)
+                            && $forParamsData['author'] == '已售报告'
+                        ) {
+                            $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                        } elseif ($uniqueDataList[$forParamsData['english_name']]['author'] == $forParamsData['author']) {
+                            $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                        }
+                    } else {
+                        $uniqueDataList[$forParamsData['english_name']] = $forParamsData;
+                    }
+                }
+                $uniqueDataList = array_values($uniqueDataList);
+
                 //记录任务状态、总数量
                 $logData = [
                     'count' => count($uniqueDataList),
@@ -579,7 +608,7 @@ class ProductsUploadLogController extends CrudController
                     //                    sleep(2);
                     //                }
 
-                    
+
                     // 注：168report负责的中文团队不负责gir、mmg、lpi这几个品牌，存在各种原因需要把详情开头的品牌词替换掉
                     // 例如“据GIR (Global Info Research)调研...” 替换成“据专业团队调研..”
                     if($params['site'] == '168report' && isset($itemDescription['description']) && !empty($itemDescription['description'])){
@@ -589,13 +618,13 @@ class ProductsUploadLogController extends CrudController
                         ];
                         $descReplaceText = '专业团队';
                         $itemDescription['description'] = str_replace($descSearchArray,$descReplaceText,$itemDescription['description']);
-                        
+
                         $descSearchArray2= [
                             'MMG调研团队，',
                         ];
                         $itemDescription['description'] = str_replace($descSearchArray2,'',$itemDescription['description']);
                     }
-                    
+
                     //新纪录年份
                     $newYear = Products::publishedDateFormatYear($item['published_date']);
                     /**
