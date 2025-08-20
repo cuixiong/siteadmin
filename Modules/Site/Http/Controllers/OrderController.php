@@ -67,6 +67,10 @@ class OrderController extends CrudController {
             }
             $record = $model->get()->toArray();
             $orderModel = new Order();
+            
+            $paymentData = Pay::query()->get()->toArray();
+            array_column($paymentData,null,'id');
+
             foreach ($record as $key => &$value) {
                 if (!empty($value['send_email_time'])) {
                     $value['send_email_time_str'] = date('Y-m-d H:i:s', $value['send_email_time']);
@@ -80,6 +84,26 @@ class OrderController extends CrudController {
                 }
                 $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
+
+                
+                $exchange_rate = 1;
+                if (!empty($payInfo)) {
+                    $exchange_rate = $payInfo->pay_exchange_rate;
+                    if ($exchange_rate <= 0) {
+                        $exchange_rate = 1;
+                    }
+                }
+
+                // 根据支付方式决定货币单位，根据支付状态决定实时汇率或者订单记录的当时汇率
+                if($value['is_pay'] == 1){
+                    // 未付款返回该支付方式的实时汇率
+                    $value['exchange_rate'] = $exchange_rate;
+                }elseif($record['is_pay'] == 2){
+                    // 已支付读取订单记录的汇率
+                    $exchange_rate = $value['exchange_rate'];
+                }
+                $value['exchange_actually_paid'] = bcmul($value['actually_paid'], $exchange_rate, 2);
+
             }
             $data = [
                 'total'       => $total,
@@ -184,6 +208,7 @@ class OrderController extends CrudController {
             if (!empty($record['city_id'])) {
                 $record['city_id_str'] = City::query()->where('id', $record['city_id'])->value('name');
             }
+
             $payInfo = Pay::where('code', $record['pay_code'])->first();
             $exchange_rate = 1;
             if (!empty($payInfo)) {
@@ -192,9 +217,20 @@ class OrderController extends CrudController {
                     $exchange_rate = 1;
                 }
             }
+
+            // 根据支付方式决定货币单位，根据支付状态决定实时汇率或者订单记录的当时汇率
+            if($record['is_pay'] == 1){
+                // 未付款返回该支付方式的实时汇率
+                $record['exchange_rate'] = $exchange_rate;
+            }elseif($record['is_pay'] == 2){
+                // 已支付读取订单记录的汇率
+                $exchange_rate = $record['exchange_rate'];
+            }
+
             $record['exchange_coupon_amount'] = bcmul($record['coupon_amount'], $exchange_rate, 2);
             $record['exchange_order_amount'] = bcmul($record['order_amount'], $exchange_rate, 2);
             $record['exchange_actually_paid'] = bcmul($record['actually_paid'], $exchange_rate, 2);
+
             $record['order_goods_list'] = (new Order())->getOrderProductInfo($request->id);
             ReturnJson(true, trans('lang.request_success'), $record);
         } catch (\Exception $e) {

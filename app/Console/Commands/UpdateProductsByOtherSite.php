@@ -136,7 +136,14 @@ class UpdateProductsByOtherSite extends Command
             exit;
         }
         $count = count($productData);
-        $lastUpdateTime = strtotime(end($productData)['updated_at']); // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
+        
+        $isLast = $resp['isLast'];
+        if($isLast){
+            $lastUpdateTime = strtotime(end($productData)['updated_at']); // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
+        }else{
+            // isLast 为false时，代表该修改时间的数据未取尽，下一次还需用这个修改时间去请求，因此只覆盖记录的报告id标识
+            $lastUpdateTime = $startTimestamp; // 记录最后一条数据的更新时间，下一次从此时间戳开始查询
+        }
         $lastProductId = end($productData)['id'];
 
         // 需要去另一个网站上查询缺失的日文关键词
