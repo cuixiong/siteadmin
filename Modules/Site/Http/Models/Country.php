@@ -28,13 +28,13 @@ class Country extends Base {
                     $name = $data['en'] ?? '';
                     break;
                 case 'zh':
-                    $name = $data['zh-cn'];
+                    $name = $data['zh-cn'] ?? '';
                     break;
                 case 'jp':
-                    $name = $data['jp'];
+                    $name = $data['jp'] ?? '';
                     break;
                 default:
-                    $name = $data['en'];
+                    $name = $data['en'] ?? '';
                     break;
             };
         }
