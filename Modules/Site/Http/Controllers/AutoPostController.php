@@ -72,6 +72,8 @@ class AutoPostController extends CrudController
             ->where('status', 1)
             ->whereIn('category_id', $productCategoryIds)
             ->where('id', '>', $autoPostConfig['start_product_id'])
+            ->whereNotNull('cagr')
+            ->where('cagr', '<>', '')
             ->limit($autoPostConfig['post_num'])
             ->orderBy('id', 'asc')
             ->get()->toArray();
