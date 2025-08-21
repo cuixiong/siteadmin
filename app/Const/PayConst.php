@@ -29,6 +29,7 @@ class PayConst {
     const COIN_TYPE_CAD = 'CAD';
     const COIN_TYPE_CHF = 'CHF';
     const COIN_TYPE_DKK = 'DKK';
+    const COIN_TYPE_KRW = 'KRW';
     public static $coinTypeALL
         = [
             self::COIN_TYPE_USD,
@@ -41,6 +42,7 @@ class PayConst {
             self::COIN_TYPE_CAD,
             self::COIN_TYPE_CHF,
             self::COIN_TYPE_DKK,
+            self::COIN_TYPE_KRW,
         ];
     public static $coinTypeMap
         = [
@@ -52,6 +54,7 @@ class PayConst {
             self::COIN_TYPE_JPY => '日元',
             self::COIN_TYPE_AUD => '澳元',
             self::COIN_TYPE_CAD => '加元',
+            self::COIN_TYPE_KRW => '韩元',
         ];
     public static $coinTypeSymbol
         = [
@@ -63,5 +66,6 @@ class PayConst {
             self::COIN_TYPE_JPY => '¥',
             self::COIN_TYPE_AUD => 'AU$',
             self::COIN_TYPE_CAD => 'CA$',
+            self::COIN_TYPE_KRW => '₩',
         ];
 }
