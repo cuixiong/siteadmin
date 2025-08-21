@@ -292,6 +292,10 @@ class ProductsUploadLogController extends CrudController
                 $uniqueDataList = [];
                 $authorCheck = ['已售报告', '完成报告'];
                 foreach ($excelData as $forParamsData) {
+                    if(empty($forParamsData['english_name'] )){
+                        $uniqueDataList[] = $forParamsData;
+                        continue;
+                    }
                     //已售报告>完成报告>人名作者
                     if (!empty($uniqueDataList[$forParamsData['english_name']])) {
                         if (
