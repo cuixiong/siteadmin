@@ -1925,10 +1925,16 @@ class ProductsController extends CrudController {
         // 设置当前租户
         tenancy()->initialize($params['site']);
         try {
-            //读取数据
-            $record = Products::whereIn('id', $params['data'])->select(['id', 'url'])->get()->makeHidden(
-                (new Products())->getAppends()
-            )->toArray();
+            $record = [];
+            // 读取数据
+            // 数据量大，数据库报错 Prepared statement contains too many placeholders ,拆分查询
+            $groupData = array_chunk($params['data'], 1000);
+            foreach ($groupData as $key => $groupItem) {
+                $tempData = Products::whereIn('id', $params['data'])->select(['id', 'url'])->get()->makeHidden((new Products())->getAppends())->toArray();
+                if ($tempData) {
+                    $record = array_merge($record, $tempData);
+                }
+            }
             $urls = [];
             foreach ($record as $key => $item) {
                 $urls[] = $domain.'/reports/'.$item['id'].'/'.$item['url'];
@@ -1944,8 +1950,9 @@ class ProductsController extends CrudController {
             'state' => ProductsExportLog::EXPORT_RUNNING,
         ];
         if (isset($details)) {
-            $logData['error_count'] = $logModel->error_count + count($record);
-            $logData['details'] = $logModel->details.$details;
+            $recordCount = !empty($record)?count($record): count($params['data']);
+            $logData['error_count'] = $logModel->error_count + $recordCount;
+            $logData['details'] = $logModel->details . $details;
         } else {
             $logData['success_count'] = $logModel->success_count + count($record);
         }
