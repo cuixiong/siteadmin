@@ -271,9 +271,12 @@ class SyncThirdProductController extends CrudController {
             foreach ($syncFieldList as $syncFieldItem) {
                 if (isset($respData[$syncFieldItem['name']])) {
                     $temp[$syncFieldItem['as_name']] = $respData[$syncFieldItem['name']] ?? '';
+                }
 
-                    // 后备字段，当一个字段为空值，则取后备字段的值; 日语返回日文和英文两个定义，当日文定义为空，则取英文定义
-                    if (empty($temp[$syncFieldItem['as_name']]) && isset($syncFieldItem['substitute_name']) && !empty($syncFieldItem['substitute_name'])) {
+                // 后备字段，当一个字段为空值，则取后备字段的值; 日语返回日文和英文两个定义，当日文定义为空，则取英文定义
+                if (!isset($temp[$syncFieldItem['as_name']]) || empty($temp[$syncFieldItem['as_name']])) {
+
+                    if (isset($syncFieldItem['substitute_name']) && !empty($syncFieldItem['substitute_name'])) {
                         $temp[$syncFieldItem['as_name']] = $respData[$syncFieldItem['substitute_name']] ?? '';
                     }
                 }
