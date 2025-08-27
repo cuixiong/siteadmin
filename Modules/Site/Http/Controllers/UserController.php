@@ -133,6 +133,7 @@ class UserController extends CrudController {
             $userData['area_id'] = $request->area_id;
             $userData['status'] = $request->status;
             $userData['company'] = $request->company;
+            $userData['department'] = $request->department;
             $userData['address'] = $request->address;
             $userData['province_id'] = $request->province_id;
             $userData['city_id'] = $request->city_id;
