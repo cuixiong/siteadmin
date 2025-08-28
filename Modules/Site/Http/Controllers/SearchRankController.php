@@ -55,4 +55,50 @@ class SearchRankController extends CrudController
         }
     }
 
+    
+    /**
+     * 单个新增
+     *
+     * @param $request 请求信息
+     */
+    protected function store(Request $request) {
+        try {
+            $input = $request->all();
+            if(empty($input['hits']) || (!empty($input['hits'])&& !is_numeric($input['hits']))){
+                $input['hits'] = 0;
+                $request->merge(['hits' => 0]); // 修改 Request 对象的值
+            }
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->create($input);
+            if (!$record) {
+                ReturnJson(false, trans('lang.add_error'));
+            }
+            ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+    
+    /**
+     * AJax单个更新
+     *
+     * @param $request 请求信息
+     */
+    protected function update(Request $request) {
+        try {
+            $input = $request->all();
+            if(empty($input['hits']) || (!empty($input['hits'])&& !is_numeric($input['hits']))){
+                $input['hits'] = 0;
+                $request->merge(['hits' => 0]); // 修改 Request 对象的值
+            }
+            $this->ValidateInstance($request);
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
 }

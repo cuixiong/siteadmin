@@ -37,7 +37,7 @@ class SearchRankRequest extends BaseRequest {
                 \Illuminate\Validation\Rule::unique('search_ranks')->ignore($request->input('id')),
             ],
             'sort' => 'numeric|between:0,127',
-            'hits' => 'numeric|between:1,999999999',
+            'hits' => 'numeric|between:0,999999999',
         ];
         $message = [
             'id.required'   => 'ID不能为空',
