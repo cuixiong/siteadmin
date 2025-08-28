@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class SiteUser extends Authenticatable implements JWTSubject {
     // 设置允许入库字段,数组形式
     protected $fillable
-        = ['name', 'username', 'email', 'phone', 'area_id', 'status', 'company', 'check_email', 'login_time',
+        = ['name', 'username', 'email', 'phone', 'area_id', 'status', 'company', 'department', 'check_email', 'login_time',
            'updated_by', 'created_by', 'password', 'token', 'province_id', 'city_id', 'address'];
     protected $table = 'users';
     // 把自动维护的时间字段修改为时间戳格式保存
