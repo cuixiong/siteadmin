@@ -17,6 +17,8 @@ class TeamMember extends Base
         'show_product',
         'region_name',
         'language',
+        'working_time',
+        'time_zone',
         'img2',
         'phone',
         'icon', //区域小图标
