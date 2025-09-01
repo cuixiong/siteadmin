@@ -1910,7 +1910,7 @@ class PostSubjectController extends CrudController
                 // 过滤-链接没填的
                 if (empty($postLink)) {
                     $subjectFail++;
-                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . $rowKey . '行】发帖链接未填写';
+                    $failDetails[] = '【工作簿：' . $sheetName . ' - 第' . ($rowKey + 1) . '行】发帖链接未填写';
                     continue;
                 }
 
@@ -2131,7 +2131,7 @@ class PostSubjectController extends CrudController
                             $recordInsert['accepter'] = $accepter;
                             $recordInsert['accept_time'] = time();
                             $recordInsert['accept_status'] = 1;
-                            $recordInsert['published_date'] = strtotime($productData['published_date']);
+                            $recordInsert['published_date'] = is_numeric($productData['published_date'])?$productData['published_date']:strtotime($productData['published_date']);
                             $recordInsert['keywords'] = $productData['keywords'];
                             $recordInsert['has_cagr'] = !empty($productData['cagr']) ? 1 : 0;
                             $recordInsert['type'] = PostSubject::TYPE_POST_SUBJECT;
