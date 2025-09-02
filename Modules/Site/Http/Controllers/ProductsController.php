@@ -221,7 +221,7 @@ class ProductsController extends CrudController {
                 $record[$key]['price_values'] = $productFor['price_values'];
 
                 // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二、三段
-                if (in_array($sitename, ['qycojp']) && empty($definition)) {
+                if (in_array($sitename, ['qycojp','yhcojp']) && empty($definition)) {
                     $tempArray = explode("\n",$descriptionEn??'');
                     if($tempArray && count($tempArray)> 1){
                         $definition = $tempArray[1];
