@@ -16,6 +16,22 @@ class NginxBanList extends Base {
     // 设置允许入库字段,数组形式
     protected $fillable = ['id', 'ban_type', 'ban_str', 'content', 'status', 'unban_time', 'service_type'];
 
+    public static $statusList = [
+        0 => '手动解封',
+        1 => '正常封禁',
+        2 => '程序解封',
+    ];
+
+    public $appends = ['status_str' , 'unban_time_str'];
+
+    public function getStatusStrAttribute() {
+        return self::$statusList[$this->status] ?? '';
+    }
+
+    public function getUnbanTimeStrAttribute() {
+        return $this->unban_time ? date('Y-m-d H:i:s', $this->unban_time) : '';
+    }
+
     /**
      * 处理查询列表条件数组
      *
