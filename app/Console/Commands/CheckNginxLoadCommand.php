@@ -345,11 +345,20 @@ class CheckNginxLoadCommand extends Command {
                                       ->pluck('ban_str')->toArray();
         foreach ($cntBlackIpList as $for_db_ban_str_list_val) {
             if (!in_array($for_db_ban_str_list_val, $black_ban_str_list)) {
-                NginxBanList::query()
+                $forbanlist = NginxBanList::query()
                             ->where("service_type", 1)
                             ->where("status", 1)
                             ->where("ban_str", 'like', "%{$for_db_ban_str_list_val}%")
-                            ->update(['real_ban_status' => 0, 'unban_time' => time()]);
+                            ->get()->toArray();
+                foreach ($forbanlist as $forbanlist_info){
+                    $upd_data = [];
+                    $upd_data['real_ban_status'] = 0;
+                    if(empty($forbanlist_info['unban_time'])){
+                        $upd_data['unban_time'] = time();
+                    }
+                    NginxBanList::query()->where("id", $forbanlist_info['id'])
+                        ->update($upd_data);
+                }
             }
         }
     }
