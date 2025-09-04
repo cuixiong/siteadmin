@@ -190,18 +190,20 @@ class ProductsController extends CrudController {
                 //根据描述匹配 模版分类
                 $year = date('Y', $item['published_date']);
                 $desc_info = (new ProductsDescription($year))->where("product_id", $productId)->select(
-                    ['description', 'description_en', 'companies_mentioned', 'definition']
+                    ['description', 'description_en', 'companies_mentioned', 'definition','definition_en']
                 )->first();
                 if (empty($desc_info)) {
                     $description = '';
                     $descriptionEn = '';
                     $companies_mentioned = '';
                     $definition = '';
+                    $definition_en = '';
                 } else {
                     $description = $desc_info['description'];
                     $descriptionEn = $desc_info['description_en'];
                     $companies_mentioned = $desc_info['companies_mentioned'];
                     $definition = $desc_info['definition'];
+                    $definition_en = $desc_info['definition_en'];
                 }
                 $productFor = $productList[$productId] ?? [];
                 $record[$key]['updated_at'] = $productFor['updated_at'];
@@ -221,16 +223,18 @@ class ProductsController extends CrudController {
                 $record[$key]['price_values'] = $productFor['price_values'];
 
                 // qycojp的拥有定义的数据极少，业务人员反馈如果没有定义需要截取英文描述的第二、三段
-                if (in_array($sitename, ['qycojp','yhcojp']) && empty($definition)) {
+                // 新增英文定义字段，日文定义(definition字段)维持原样，英文定义(definition_en)为空返回描述的第二、三段
+                if (in_array($sitename, ['qycojp','yhcojp']) && empty($definition_en)) {
                     $tempArray = explode("\n",$descriptionEn??'');
                     if($tempArray && count($tempArray)> 1){
-                        $definition = $tempArray[1];
+                        $definition_en = $tempArray[1];
                     }
                     if($tempArray && count($tempArray) > 2){
-                        $definition = $definition ."\n".$tempArray[2];
+                        $definition_en = $definition_en ."\n".$tempArray[2];
                     }
                 }
                 $record[$key]['definition'] = $definition;
+                $record[$key]['definition_en'] = $definition_en;
 
                 // // 用来判断 报告定义 按钮是否隐藏
                 // if($definition){

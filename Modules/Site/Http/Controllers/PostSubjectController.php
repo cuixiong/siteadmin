@@ -421,11 +421,13 @@ class PostSubjectController extends CrudController
             if ($exportSetting) {
                 $data['export_setting'][$exportSettingKey]['value'] = $exportSetting;
             }else{
+                $personalSettingDefault = 2;
                 $personalSettingInsert = [];
                 $personalSettingInsert['key'] = $exportSettingKey;
                 $personalSettingInsert['user_id'] = 0;
-                $personalSettingInsert['value'] = 2;
+                $personalSettingInsert['value'] = $personalSettingDefault;
                 PersonalSetting::create($personalSettingInsert);
+                $data['export_setting'][$exportSettingKey]['value'] = $personalSettingDefault;
             }
             $data['export_setting'] = array_values($data['export_setting']);
 

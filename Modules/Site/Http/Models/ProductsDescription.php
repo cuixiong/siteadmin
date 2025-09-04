@@ -20,6 +20,7 @@ class ProductsDescription extends Base {
             'tables_and_figures_en',
             'companies_mentioned',
             'definition',        //定义
+            'definition_en',    // 定义(英)
             'overview',         //概述
         ];
 
