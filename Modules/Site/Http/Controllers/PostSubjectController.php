@@ -190,7 +190,7 @@ class PostSubjectController extends CrudController
 
         // 宣传平台
         $condition = PostSubject::getFiltersCondition(PostSubject::CONDITION_EXISTS_IN, PostSubject::CONDITION_EXISTS_NOT_IN);
-        $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->get()->toArray();
+        $options = PostPlatform::query()->select(['id as value', 'name as label'])->where('status', 1)->orderBy('name', 'asc')->get()->toArray();
         $temp_filter = $this->getAdvancedFiltersItem('post_platform_id', '宣传平台', PostSubject::ADVANCED_FILTERS_TYPE_DROPDOWNLIST, $condition, true, $options);
         array_push($showData, $temp_filter);
 
@@ -416,10 +416,16 @@ class PostSubjectController extends CrudController
             ];
             $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $exportSettingKey])->value('value');
             if (!$exportSetting) {
-                $exportSetting = PersonalSetting::query()->select('value')->where(['key' => $exportSettingKey])->value('value');
+                $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => 0,'key' => $exportSettingKey])->value('value');
             }
             if ($exportSetting) {
                 $data['export_setting'][$exportSettingKey]['value'] = $exportSetting;
+            }else{
+                $personalSettingInsert = [];
+                $personalSettingInsert['key'] = $exportSettingKey;
+                $personalSettingInsert['user_id'] = 0;
+                $personalSettingInsert['value'] = 2;
+                PersonalSetting::create($personalSettingInsert);
             }
             $data['export_setting'] = array_values($data['export_setting']);
 
