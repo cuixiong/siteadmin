@@ -32,6 +32,8 @@ class BanWhiteListController extends CrudController {
             $ModelInstance = $this->ModelInstance();
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
+            $type = $request->type ?? 1;
+            $model = $model->where("type" , $type);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -91,11 +93,12 @@ class BanWhiteListController extends CrudController {
             $remark = $input['remark'];
             $status = $input['status'] ?? 1;
             $sort = $input['sort'] ?? 100;
+            $type = $input['type'] ?? 1;
             $banWhiteId = BanWhiteList::query()->where('remark', $remark)->value('id');
             $whiteIpList = @json_decode($input['ban_str'], true);
             if (empty($banWhiteId)) {
                 $addWhiteData = [
-                    'type'    => 1,
+                    'type'    => $type,
                     'status'    => $status,
                     'sort'    => $sort,
                     'ban_str' => json_encode($whiteIpList),
