@@ -752,6 +752,7 @@ class ProductsController extends CrudController {
                 $record['tables_and_figures_en'] = $descriptionData['tables_and_figures_en'] ?? '';
                 $record['companies_mentioned'] = $descriptionData['companies_mentioned'] ?? '';
                 $record['definition'] = $descriptionData['definition'] ?? '';
+                $record['definition_en'] = $descriptionData['definition_en'] ?? '';;
                 $record['overview'] = $descriptionData['overview'] ?? '';
             } else {
                 $record['description'] = '';
@@ -762,6 +763,7 @@ class ProductsController extends CrudController {
                 $record['tables_and_figures_en'] = '';
                 $record['companies_mentioned'] = '';
                 $record['definition'] = '';
+                $record['definition_en'] = '';
                 $record['overview'] = '';
             }
             ReturnJson(true, trans('lang.request_success'), $record);
