@@ -38,8 +38,8 @@ class NginxBanListController extends CrudController {
                 $request->service_type = 1;
             }
             //过滤业务类型
-            $model = $model->where("service_type", $request->service_type)
-                           ->where("status", 1);
+            $model = $model->where("service_type", $request->service_type);
+                           //->where("status", 1);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -97,10 +97,15 @@ class NginxBanListController extends CrudController {
             '2' => 'UA封禁',
         ];
         // 状态开关
-        $field = ['name as label', 'value'];
-        $data['status'] = (new DictionaryValue())->GetListLabel(
-            $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
-        );
+//        $field = ['name as label', 'value'];
+//        $data['status'] = (new DictionaryValue())->GetListLabel(
+//            $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
+//        );
+        $status_list = NginxBanList::$statusList;
+        foreach ($status_list as $key => $item) {
+            $data['status'][] = ['label' => $item, 'value' => $key];
+        }
+
         ReturnJson(true, trans('lang.request_success'), $data);
     }
 
