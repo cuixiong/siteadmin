@@ -30,9 +30,9 @@ class CheckNginxLoadCommand extends Command {
      *
      * @var string
      */
-    protected $signature   = 'task:check_nginx_load';
+    protected $signature   = 'task:check_nginx_load {--debug=}';
     public    $os_info_str = '';
-
+    public $is_debug = false;
     public function handle() {
         try {
             //设置日志
@@ -70,7 +70,7 @@ class CheckNginxLoadCommand extends Command {
                 echo "当前时间:".date("Y-m-d H:i:s")
                      ."  服务器负载:{$load_os_val}  最大负载:{$check_max_load}  最小负载:{$check_min_load}   网络使用率:{$net_usage_val}  网络最高使用率:{$net_usage_rate}"
                      .PHP_EOL;
-                if ($load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
+                if ($this->is_debug || $load_os_val >= $check_max_load || $net_usage_val >= $net_usage_rate) {
                     if ($load_os_val >= $check_max_load) {
                         $this->os_info_str .= "当前服务器负载:{$load_os_val}已超过配置最大负载:{$check_max_load} ";
                     }
@@ -134,6 +134,9 @@ class CheckNginxLoadCommand extends Command {
         }
         $nowtime = time();
         $start_time = $nowtime - $beforeIpTime * 60;
+        if($this->is_debug){
+            $start_time = 0;
+        }
         $accessIpLogList = AccessLog::query()
                                     ->whereBetween('created_at', [$start_time, $nowtime])
                                     ->groupBy($tab)
@@ -205,6 +208,9 @@ class CheckNginxLoadCommand extends Command {
         $UaMaxCnt = $sysValList['uaMaxReqCnt']['value'] ?? 100; //默认100次
         $beforeUaTime = $sysValList['beforeUaTime']['value'] ?? 5; //默认5分钟
         $ua_start_time = $nowtime - $beforeUaTime * 60;
+        if($this->is_debug){
+            $ua_start_time = 0;
+        }
         $accessUaLogList = AccessLog::query()->where("created_at", ">", $ua_start_time)
                                     ->groupBy('ua_info')
                                     ->selectRaw("count(*) as cnt, ua_info")
@@ -330,7 +336,7 @@ class CheckNginxLoadCommand extends Command {
 
     public function handleTempStatus($black_ban_str_list) {
         if (empty($black_ban_str_list) || !is_array($black_ban_str_list)) {
-            return true;
+            //return true;
         }
         $black_ban_str_list = array_unique($black_ban_str_list);
         $cntBlackIpList = NginxBanList::query()->where("status", 1)
@@ -339,11 +345,20 @@ class CheckNginxLoadCommand extends Command {
                                       ->pluck('ban_str')->toArray();
         foreach ($cntBlackIpList as $for_db_ban_str_list_val) {
             if (!in_array($for_db_ban_str_list_val, $black_ban_str_list)) {
-                NginxBanList::query()
+                $forbanlist = NginxBanList::query()
                             ->where("service_type", 1)
                             ->where("status", 1)
                             ->where("ban_str", 'like', "%{$for_db_ban_str_list_val}%")
-                            ->update(['status' => 2, 'unban_time' => time()]);
+                            ->get()->toArray();
+                foreach ($forbanlist as $forbanlist_info){
+                    $upd_data = [];
+                    $upd_data['real_ban_status'] = 0;
+                    if(empty($forbanlist_info['unban_time'])){
+                        $upd_data['unban_time'] = time();
+                    }
+                    NginxBanList::query()->where("id", $forbanlist_info['id'])
+                        ->update($upd_data);
+                }
             }
         }
     }
