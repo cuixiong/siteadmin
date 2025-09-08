@@ -797,6 +797,7 @@ Route::middleware([
         Route::get('list', [Modules\Site\Http\Controllers\PostPlatformController::class, 'list'])->name('发帖平台:数据列表');
         Route::post('change-status', [Modules\Site\Http\Controllers\PostPlatformController::class, 'changeStatus'])->name('发帖平台:状态修改');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\PostPlatformController::class, 'searchDroplist'])->name('发帖平台:搜索下拉列表数据');
+        Route::post('export', [Modules\Site\Http\Controllers\PostPlatformController::class, 'export'])->name('发帖平台:批量导出');
     });
 
     // PostSubject 发帖课题
