@@ -36,8 +36,12 @@ class BanWhiteList extends Base {
         if(!empty($search)){
             $timeArray = ['created_at','updated_at'];
             foreach ($search as $key => $value) {
-                if(in_array($key,['name','ban_str','remark'])){
+                if(in_array($key,['name','remark'])){
                     $model = $model->where($key,'like','%'.trim($value).'%');
+                }else if(in_array($key,['ban_str'])){
+                    // 转义特殊字符
+                    $value = str_replace('\\', '\\\\', str_replace('/', '\/', $value));
+                    $model = $model->where($key,'like', "%{$value}%");
                 } else if (in_array($key,$timeArray)){
                     if(is_array($value)){
                         $model = $model->whereBetween($key,$value);

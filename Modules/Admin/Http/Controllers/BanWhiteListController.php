@@ -37,7 +37,7 @@ class BanWhiteListController extends CrudController {
             $model = $ModelInstance->query();
             $model = $ModelInstance->HandleWhere($model, $request);
             $type = $request->type ?? 1;
-            $model = $model->where("type" , $type);
+            $model = $model->where("type", $type);
             // 总数量
             $total = $model->count();
             // 查询偏移量
@@ -104,12 +104,14 @@ class BanWhiteListController extends CrudController {
             $status = $input['status'] ?? 1;
             $sort = $input['sort'] ?? 100;
             $type = $input['type'] ?? 1;
-            $banWhiteId = BanWhiteList::query()->where('remark', $remark)->value('id');
+            $banWhiteId = BanWhiteList::query()
+                                      ->where("type", $type)
+                                      ->where('remark', $remark)->value('id');
             $whiteIpList = @json_decode($input['ban_str'], true);
             if (empty($banWhiteId)) {
                 $addWhiteData = [
                     'type'    => $type,
-                    'status'    => $status,
+                    'status'  => $status,
                     'sort'    => $sort,
                     'ban_str' => json_encode($whiteIpList),
                     'remark'  => $remark,
@@ -148,6 +150,26 @@ class BanWhiteListController extends CrudController {
         }
     }
 
-
+    /**
+     * AJax单个更新
+     *
+     * @param $request 请求信息
+     */
+    protected function update(Request $request) {
+        try {
+            $this->ValidateInstance($request);
+            $input = $request->all();
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $ban_str = $input['ban_str'];
+            $ban_info = json_decode($ban_str, true);
+            $input['ban_str'] = json_encode($ban_info);
+            if (!$record->update($input)) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
 
 }
