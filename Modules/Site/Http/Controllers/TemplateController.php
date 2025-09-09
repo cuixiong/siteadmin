@@ -609,6 +609,9 @@ class TemplateController extends CrudController {
             if (empty($replaceWords)) {
                 return str_replace($templateVar, '', $sourceContent);
             }
+
+            // keywords中含有‘<’,‘>’会当成标签去解析，造成内容缺失
+            $replaceWords = htmlspecialchars($replaceWords, ENT_QUOTES, 'UTF-8');
         }
 
         return preg_replace($pattern, $replaceWords, $sourceContent);

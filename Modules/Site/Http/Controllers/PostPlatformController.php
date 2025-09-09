@@ -154,7 +154,7 @@ class PostPlatformController extends CrudController
 
             $sheet->setCellValue([1, $rowIndex + 1], $item['id']);
             $sheet->setCellValue([2, $rowIndex + 1], $item['name']);
-            $sheet->setCellValue([2, $rowIndex + 1], $item['keywords']);
+            $sheet->setCellValue([3, $rowIndex + 1], $item['keywords']);
             $sheet->setCellValue([4, $rowIndex + 1], $item['created_at']);
 
             $rowIndex++;
@@ -162,7 +162,7 @@ class PostPlatformController extends CrudController
 
         // 设置 HTTP 头部并导出文件
         $date = date('Ymd');
-        $filename = 'export-filter-' . count($filterData) . '-' . $date . '.xlsx';
+        $filename = 'export-platform-' . count($filterData) . '-' . $date . '.xlsx';
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment; filename=\"$filename\"");
