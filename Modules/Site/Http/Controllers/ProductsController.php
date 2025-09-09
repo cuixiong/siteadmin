@@ -185,7 +185,7 @@ class ProductsController extends CrudController {
                 $productId = $item['id'];
                 $record[$key]['report_url'] = $domain."/reports/{$item['id']}/".$item['url'];
                 $record[$key]['published_date'] = date('Y-m-d', $item['published_date']);
-                $record[$key]['category_name'] = $this->categpryName[$item['category_id']];
+                $record[$key]['category_name'] = $this->categpryName[$item['category_id']]??'';
                 //$descriptionData = $productsModel->findDescCache($item['id']);
                 //根据描述匹配 模版分类
                 $year = date('Y', $item['published_date']);
