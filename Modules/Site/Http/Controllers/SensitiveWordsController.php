@@ -7,8 +7,11 @@ use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\SensitiveWordsLog;
 use Modules\Site\Services\SenWordsService;
 
-class SensitiveWordsController extends CrudController {
-    public function searchDroplist(Request $request) {
+class SensitiveWordsController extends CrudController
+{
+
+    public function searchDroplist(Request $request)
+    {
         try {
             if ($request->HeaderLanguage == 'en') {
                 $field = ['english_name as label', 'value'];
@@ -17,7 +20,11 @@ class SensitiveWordsController extends CrudController {
             }
             // 状态开关
             $data['status'] = (new DictionaryValue())->GetListLabel(
-                $field, false, '', ['code' => 'Switch_State', 'status' => 1], ['sort' => 'ASC']
+                $field,
+                false,
+                '',
+                ['code' => 'Switch_State', 'status' => 1],
+                ['sort' => 'ASC']
             );
             ReturnJson(true, trans('lang.request_success'), $data);
         } catch (\Exception $e) {
@@ -30,15 +37,28 @@ class SensitiveWordsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    protected function store(Request $request) {
+    protected function store(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
-            $record = $this->ModelInstance()->create($input);
-            if (!$record) {
-                ReturnJson(false, trans('lang.add_error'));
-            }
-            (new SenWordsService())->handlerBanByIdList($record->id);
+
+            // $type = $input['is_count'] ?? 0;
+            // $site = $request->header('Site');
+            
+            // if($type == 1){
+
+            // }elseif($type == 2){
+                $record = $this->ModelInstance()->create($input);
+                if (!$record) {
+                    ReturnJson(false, trans('lang.add_error'));
+                }
+                (new SenWordsService())->handlerBanByIdList($record->id);
+
+            // }else{
+            //     ReturnJson(false, '未传入is_count');
+            // }
+
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
@@ -50,7 +70,8 @@ class SensitiveWordsController extends CrudController {
      *
      * @param $request 请求信息
      */
-    protected function update(Request $request) {
+    protected function update(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $input = $request->all();
@@ -77,7 +98,8 @@ class SensitiveWordsController extends CrudController {
      *
      * @param $ids 主键ID
      */
-    protected function destroy(Request $request) {
+    protected function destroy(Request $request)
+    {
         try {
             $this->ValidateInstance($request);
             $ids = $request->ids;
@@ -103,7 +125,8 @@ class SensitiveWordsController extends CrudController {
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeStatus(Request $request) {
+    public function changeStatus(Request $request)
+    {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
@@ -124,7 +147,8 @@ class SensitiveWordsController extends CrudController {
         }
     }
 
-    public function banLogList(Request $request) {
+    public function banLogList(Request $request)
+    {
         try {
             if (empty($request->id)) {
                 ReturnJson(false, 'id is empty');
