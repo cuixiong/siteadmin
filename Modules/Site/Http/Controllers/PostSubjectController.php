@@ -414,13 +414,13 @@ class PostSubjectController extends CrudController
                 'key' => $exportSettingKey,
                 'value' => 0,
             ];
-            $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $exportSettingKey])->value('value');
+            $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $exportSettingKey])->first();
             if (!$exportSetting) {
-                $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => 0,'key' => $exportSettingKey])->value('value');
+                $exportSetting = PersonalSetting::query()->select('value')->where(['user_id' => 0, 'key' => $exportSettingKey])->first();
             }
             if ($exportSetting) {
-                $data['export_setting'][$exportSettingKey]['value'] = $exportSetting;
-            }else{
+                $data['export_setting'][$exportSettingKey]['value'] = $exportSetting->value ?? 0;
+            } else {
                 $personalSettingDefault = 2;
                 $personalSettingInsert = [];
                 $personalSettingInsert['key'] = $exportSettingKey;
