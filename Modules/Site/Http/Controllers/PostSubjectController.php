@@ -1376,7 +1376,7 @@ class PostSubjectController extends CrudController
         $key = 'export_subject_extra_line';
         $user_id = $request->user->id;
         $extraLine = PersonalSetting::query()->select('value')->where(['user_id' => $user_id, 'key' => $key])->value('value');
-        if (!$extraLine) {
+        if ($extraLine === null) {
             $extraLine = PersonalSetting::query()->select('value')->where(['key' => $key, 'user_id' => 0])->value('value');
         }
 
