@@ -289,8 +289,14 @@ class UpdateProductsByOtherSite extends Command
             $newProductName = $templateTitle;
             $newProductName = str_replace('@@@@', $item['keywords_jp'], $newProductName);
             $newProductName = str_replace('{{keywords}}', $item['keywords_jp'], $newProductName);
-            $newProductName = str_replace('{{year}}', Products::publishedDateFormatYear($item['published_date']), $newProductName);
-            $newProductName = $this->replaceYearCalculations($newProductName,Products::publishedDateFormatYear($item['published_date']));
+            $publishedYear = Products::publishedDateFormatYear($item['published_date']);
+            if(!$publishedYear){
+                $ingoreCount++;
+                $ingore_detail .= "【忽略】报告名:{$item['name']};出版时间转化年份失败" . "\r\n";
+                continue;
+            }
+            $newProductName = str_replace('{{published_year}}', $publishedYear, $newProductName);
+            $newProductName = $this->replaceYearCalculations($newProductName,$publishedYear);
             // dd($newProductName);
             // exit;
             // 基础数据
@@ -515,7 +521,7 @@ class UpdateProductsByOtherSite extends Command
 
     function replaceYearCalculations($text, $baseYear) {
         return preg_replace_callback(
-            '/{{year([+-])(\d+)}}/',
+            '/{{published_year([+-])(\d+)}}/',
             function ($matches) use ($baseYear) {
                 $operator = $matches[1];
                 $number = (int)$matches[2];
