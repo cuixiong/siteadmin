@@ -81,14 +81,19 @@ class OrderController extends CrudController {
                 $value['order_goods_list'] = $orderModel->getOrderProductInfo($value['id']);
                 $value['pay_coin_type_str'] = PayConst::$coinTypeSymbol[$value['pay_coin_type']] ?? '';
 
-                $payInfo = $paymentData[$value['pay_code']];
-                $exchange_rate = 1;
-                if (!empty($payInfo)) {
-                    $exchange_rate = $payInfo['pay_exchange_rate'];
-                    if ($exchange_rate <= 0) {
-                        $exchange_rate = 1;
+                if(!empty($value['pay_code'] )){
+                    $payInfo = $paymentData[$value['pay_code']];
+                    $exchange_rate = 1;
+                    if (!empty($payInfo)) {
+                        $exchange_rate = $payInfo['pay_exchange_rate'];
+                        if ($exchange_rate <= 0) {
+                            $exchange_rate = 1;
+                        }
                     }
+                }else{
+                    $exchange_rate = 1;
                 }
+
 
                 // 根据支付方式决定货币单位，根据支付状态决定实时汇率或者订单记录的当时汇率
                 if ($value['is_pay'] == 1) {
