@@ -199,9 +199,13 @@ class UpdateProductsByOtherSite extends Command
 
 
         // 去重
-        $existData = Products::query()->select(['id', 'english_name as name', 'published_date'])->whereIn('english_name', $productNameArray)->get()?->toArray() ?? [];
+        $existData = Products::query()
+        ->select(['id', 'english_name as name', 'published_date','keywords'])
+        ->whereIn('english_name', $productNameArray)
+        ->get()?->toArray() ?? [];
         $existNameArray = array_column($existData, 'name');
         $existData = array_column($existData, null, 'name');
+
         foreach ($productData as $key => $item) {
             if (empty($item['name'])) {
                 $ingoreCount++;
@@ -285,6 +289,8 @@ class UpdateProductsByOtherSite extends Command
             $newProductName = $templateTitle;
             $newProductName = str_replace('@@@@', $item['keywords_jp'], $newProductName);
             $newProductName = str_replace('{{keywords}}', $item['keywords_jp'], $newProductName);
+            $newProductName = str_replace('{{year}}', Products::publishedDateFormatYear($item['published_date']), $newProductName);
+            $newProductName = $this->replaceYearCalculations($newProductName,Products::publishedDateFormatYear($item['published_date']));
             // dd($newProductName);
             // exit;
             // 基础数据
@@ -329,9 +335,23 @@ class UpdateProductsByOtherSite extends Command
             $product_id = 0;
             $productChange = false; // 报告的类型、应用、企业等数据是否有变化
             if (in_array($item['name'], $existNameArray)) {
+                
                 // 修改
                 $existProduct = $existData[$item['name']];
                 $product_id =  $existProduct['id'];
+
+                // 修改时查询是否存在 有一条关键词且年份一致的数据
+                $newYear = Products::publishedDateFormatYear($productItem['published_date']);
+                $nameExist2 = Products::query()
+                ->where('keywords',$productItem['keywords'])
+                ->whereRaw('FROM_UNIXTIME(published_date,"%Y") = '.$newYear)
+                ->first();
+                if($nameExist2 && $nameExist2->id != $product_id){
+                    $ingoreCount++;
+                    $ingore_detail .= "【忽略-修改】报告名:{$item['name']};存在".$newYear.'年并且关键词为'.$productItem['keywords'].'的数据' . "\r\n";
+                    continue;
+                }
+
                 $productDescriptionItem['product_id'] = $product_id;
                 $productModel = new Products();
                 $productModel->where('id', $product_id)->first();
@@ -398,6 +418,14 @@ class UpdateProductsByOtherSite extends Command
                 $updateDetail .= "报告id:{$product_id};【{$item['name']}】" . "\r\n";
                 array_push($succIdList, $product_id);
             } else {
+                // 新增时查询是否存在 有一条关键词且年份一致的数据
+                $newYear = Products::publishedDateFormatYear($productItem['published_date']);
+                $nameExist2 = Products::query()->where('keywords',$productItem['keywords'])->whereRaw('FROM_UNIXTIME(published_date,"%Y") = '.$newYear)->first();
+                if($nameExist2){
+                    $ingoreCount++;
+                    $ingore_detail .= "【忽略-新增】报告名:{$item['name']};存在".$newYear.'年并且关键词为'.$productItem['keywords'].'的数据' . "\r\n";
+                    continue;
+                }
                 // 新增
                 $product = Products::create($productItem);
                 $product_id = $product['id'];
@@ -483,5 +511,25 @@ class UpdateProductsByOtherSite extends Command
 
         //dump($signStr);
         return md5($signStr);
+    }
+
+    function replaceYearCalculations($text, $baseYear) {
+        return preg_replace_callback(
+            '/{{year([+-])(\d+)}}/',
+            function ($matches) use ($baseYear) {
+                $operator = $matches[1];
+                $number = (int)$matches[2];
+                
+                switch ($operator) {
+                    case '+':
+                        return $baseYear + $number;
+                    case '-':
+                        return $baseYear - $number;
+                    default:
+                        return $baseYear;
+                }
+            },
+            $text
+        );
     }
 }
