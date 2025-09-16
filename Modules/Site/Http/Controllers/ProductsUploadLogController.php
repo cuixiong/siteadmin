@@ -145,7 +145,93 @@ class ProductsUploadLogController extends CrudController
     }
 
     /**
-     * 批量上传报告
+     * 批量上传报告(本地上传+上传报告)
+     *
+     * @param $request 请求信息
+     */
+    public function uploadProductsLocal(Request $request)
+    {
+        ini_set('max_execution_time', '0');
+        ini_set("memory_limit", '-1'); 
+
+        $file_temp_name = $_POST['file_temp_name'] ?? null; //随机数，用于建立临时文件夹
+        $chunks = $_POST['fileTotalNo'] ?? null; //切片总数
+        $currentChunk = $_POST['fileNo'] ?? null; //当前切片
+        $file_real_name = $_POST['fileName'] ?? null; //文件名
+
+        $blob = $_FILES['file'] ?? null; //二进制数据
+
+        if ($file_temp_name === null) {
+            ReturnJson(true, trans('lang.param_empty'),'缺少随机数');
+        } elseif ($chunks === null) {
+            ReturnJson(true, trans('lang.param_empty'),'缺少切片总数');
+        } elseif ($currentChunk === null) {
+            ReturnJson(true, trans('lang.param_empty'),'缺少当前切片序号');
+        } elseif ($file_real_name === null) {
+            ReturnJson(true, trans('lang.param_empty'),'缺少文件名');
+        } elseif ($blob === null) {
+            ReturnJson(true, trans('lang.param_empty'),'缺少blob数据');
+        }
+
+        $blob = $_FILES['file'];
+
+        $basePath = public_path() . '/site';
+        $basePath .= '/' . $request->header('Site') . '/products/upload/'.date('y-m',time());
+        //检验目录是否存在
+        if (!is_dir($basePath)) {
+            @mkdir($basePath, 0777, true);
+        }
+
+        // 临时文件夹
+        $dirtempfile = $basePath .'/'. $file_temp_name;
+        if (!is_dir($dirtempfile)) {
+            mkdir($dirtempfile, 0777, true);
+        }
+        $baseFileName = $dirtempfile . '/' . $file_real_name;
+        // 切片上传
+        move_uploaded_file($blob['tmp_name'], $baseFileName . '_' . $currentChunk);
+
+        sleep(mt_rand(1, 3)); // 随机暂停，方式上传速度过快无法合并文件
+
+        if (count(glob($baseFileName . '_*')) != $chunks) {
+            ReturnJson(true, trans('lang.request_success'),'切片上传成功,当前统计个数：'.count(glob($baseFileName . '_*')));
+            // return 'success';
+        }
+        // 合并文件
+        $file_real_name = $file_real_name . '-' . time();
+        $excelPath = $basePath . '/' . $file_real_name;
+        $butffer = '';
+        for ($i = 1; $i <= $chunks; $i++) {
+            $sliceFileName = $baseFileName . '_' . $i;
+            if (!is_file($sliceFileName)) {
+                ReturnJson(false, '切片文件缺失导致合并失败');
+            }
+            // $butffer = file_get_contents($sliceFileName); // 这种每次读取后就立即写入文件，速度慢一点，但内存消耗更少
+            // file_put_contents($excelPath, $butffer, FILE_APPEND);
+            $butffer .= file_get_contents($sliceFileName); // 这种一次读取完然后再写入文件速度快一点，但更消耗内存
+        }
+        file_put_contents($excelPath, $butffer); // 这种一次读取完然后再写入文件速度快一点，但更消耗内存
+        // 删除分片文件和文件夹
+        array_map('unlink', glob($dirtempfile . '/*'));
+        rmdir($dirtempfile);
+
+        // return $this->echoData(ApiCode::SUCCESS, $excelPath);
+        // $excelPath =  'D:\\phpstudy_pro\\WWW\\admin-catalogue\\api\\runtime/upload-subject_excel/subject.xlsx-1693536663';
+        // return ['code' => 1, 'msg' => $excelPath];
+        if (!is_file($excelPath)) {
+            ReturnJson(false, '合并文件不存在');
+            // throw new \yii\web\BadRequestHttpException($excelPath . '_' . $cachekey);
+        }
+
+        // 调用上传接口
+        $request->merge(['path' => $excelPath]);
+        $request->files->remove('file');
+        $this->uploadProducts($request);
+    }
+
+
+    /**
+     * 批量上传报告(文件管理器选择文件)
      *
      * @param $request 请求信息
      */

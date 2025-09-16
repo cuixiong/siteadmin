@@ -114,6 +114,7 @@ Route::middleware([
         Route::post('upload-products', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProducts'])->name('上传记录:上传报告');
         Route::post('upload-process', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProcess'])->name('上传记录:上传进度');
         Route::get('example-file', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'exampleFile'])->name('上传记录:示例文件');
+        Route::post('upload-products-local', [Modules\Site\Http\Controllers\ProductsUploadLogController::class, 'uploadProductsLocal'])->name('上传记录:本地上传报告');
 
     });
 
