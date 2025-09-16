@@ -176,7 +176,8 @@ class ProductsUploadLogController extends CrudController
         $blob = $_FILES['file'];
 
         $basePath = public_path() . '/site';
-        $basePath .= '/' . $request->header('Site') . '/products/upload/'.date('y-m',time());
+        $dateDir = '/products/upload/'.date('y-m',time());
+        $basePath .= '/' . $request->header('Site') . $dateDir;
         //检验目录是否存在
         if (!is_dir($basePath)) {
             @mkdir($basePath, 0777, true);
@@ -198,7 +199,7 @@ class ProductsUploadLogController extends CrudController
             // return 'success';
         }
         // 合并文件
-        $file_real_name = $file_real_name . '-' . time();
+        $file_real_name = time() . '-' . $file_real_name;
         $excelPath = $basePath . '/' . $file_real_name;
         $butffer = '';
         for ($i = 1; $i <= $chunks; $i++) {
@@ -224,7 +225,7 @@ class ProductsUploadLogController extends CrudController
         }
 
         // 调用上传接口
-        $request->merge(['path' => $excelPath]);
+        $request->merge(['path' => $dateDir.'/'.$file_real_name]);
         $request->files->remove('file');
         $this->uploadProducts($request);
     }
