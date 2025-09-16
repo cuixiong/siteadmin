@@ -349,10 +349,11 @@ class UpdateProductsByOtherSite extends Command
                 // 修改时查询是否存在 有一条关键词且年份一致的数据
                 $newYear = Products::publishedDateFormatYear($productItem['published_date']);
                 $nameExist2 = Products::query()
-                ->where('keywords',$productItem['keywords'])
-                ->whereRaw('FROM_UNIXTIME(published_date,"%Y") = '.$newYear)
-                ->first();
-                if($nameExist2 && $nameExist2->id != $product_id){
+                    ->where('keywords', $productItem['keywords'])
+                    ->where('id', '<>', $product_id)
+                    ->whereRaw('FROM_UNIXTIME(published_date,"%Y") = ' . $newYear)
+                    ->first();
+                if ($nameExist2) {
                     $ingoreCount++;
                     $ingore_detail .= "【忽略-修改】报告名:{$item['name']};存在".$newYear.'年并且关键词为'.$productItem['keywords'].'的数据' . "\r\n";
                     continue;
