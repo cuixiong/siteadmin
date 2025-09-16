@@ -910,7 +910,17 @@ EOF;
                                               ->orderBy('published_date', 'desc')
                                               ->orderBy('id', 'desc');
                 $query = $query->where('status', '=', 1);
-                $query = $query->where("published_date", "<", time());
+                //$query = $query->where("published_date", "<", time());
+                $published_date= $productArrData['published_date'];
+                // 获取当前年份
+                $currentYear = date("Y" , $published_date);
+                // 生成今年年初起始时间戳（2025-01-01 00:00:00）
+                $start_year_time = mktime(0, 0, 0, 1, 1, $currentYear);
+                // 生成今年年初结束时间戳（2025-12-31 23:59:59）
+                $end_year_time = mktime(23, 59, 59, 12, 31, $currentYear);
+                $query = $query->where('published_date', '>=', $start_year_time);
+                $query = $query->where('published_date', '<=', $end_year_time);
+
                 $query = $query->where("id", "<>", $productArrData['id']);
                 $query = $query->match('name', $productArrData['keywords'], true);
                 $query = $query->limit(0, 20);
