@@ -3,12 +3,11 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Address;
 
 /**
  * 动态发邮类
@@ -23,9 +22,7 @@ class TrendsEmail extends Mailable
     public $title;
     public $EmailUser;
     public $templetFile;
-
     public $sendUserName;
-
     /**
      * Create a new message instance.
      * @param string $templet
@@ -63,7 +60,7 @@ class TrendsEmail extends Mailable
     public function envelope()
     {
         return new Envelope(
-            //from: $this->EmailUser,
+        //from: $this->EmailUser,
             from: new Address($this->EmailUser , $this->sendUserName),
             subject: $this->title,
         );
@@ -76,8 +73,8 @@ class TrendsEmail extends Mailable
      */
     public function content()
     {
-        $name = 'email_'.time();// 文件名
-        //$this->templetFile = '../resources/views/emails/'.$name.'.blade.php';// 文件路径+文件名
+        //$name = 'email_'.time();// 文件名      宝哥埋大坑啊
+        $name = 'email_'.time().uniqid(); // 生成唯一ID
         $this->templetFile = resource_path('views/emails/'.$name.'.blade.php');
         $view = 'emails.'.$name;// 渲染模板名称
         file_put_contents($this->templetFile,$this->templet);
