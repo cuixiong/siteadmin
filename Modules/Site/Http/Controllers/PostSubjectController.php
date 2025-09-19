@@ -2691,7 +2691,7 @@ class PostSubjectController extends CrudController
             // }
 
             $productIds = Products::query()->select(['id'])
-                ->whereIn("name", $subjectNameArray)
+                ->whereIn("english_name", $subjectNameArray)
                 ->get()?->toArray() ?? [];
 
             // return $productIds;
@@ -2701,10 +2701,10 @@ class PostSubjectController extends CrudController
             if ($productIds) {
                 $productIds = array_column($productIds, 'id');
                 // 报告数据
-                $productData = Products::query()->select(['id', 'name', 'category_id', 'price', 'author', 'keywords', 'cagr','published_date'])
+                $productData = Products::query()->select(['id', 'name','english_name', 'category_id', 'price', 'author', 'keywords', 'cagr','published_date'])
                     ->whereIn("id", $productIds)
                     ->get()?->toArray() ?? [];
-                $productData = array_column($productData, null, 'name');
+                $productData = array_column($productData, null, 'english_name');
                 $productIds = array_column($productData, 'id');
 
                 // 课题数据
@@ -2818,7 +2818,7 @@ class PostSubjectController extends CrudController
                         $isInsert = false;
                         $recordInsert = [];
                         $recordInsert['product_id'] = $productId;
-                        $recordInsert['name'] = $subjectNameKey;
+                        $recordInsert['name'] = !empty($product['name'])?$product['name']:$subjectNameKey;
                         $recordInsert['type'] = $subjectType;
                         $recordInsert['product_category_id'] = $product['category_id'];
                         $recordInsert['version'] =  intval($product['price'] ?? 0);

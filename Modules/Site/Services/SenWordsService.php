@@ -75,28 +75,47 @@ class SenWordsService
 
     /**
      * 处理涉及文本的报告以及课题
-     * @param string|array $word 过滤的文本
+     * @param string|array $words 敏感词 
      * @param $type ; type = 1 返回需要处理的报告数量、课题数量; type = 2 执行处理报告、课题
      * @param $site 站点，用于判断需要过滤是哪个字段
      * 
      */
-    public function hiddenData($word, $type, $site, $oldWords = []) {
-        
+    public function hiddenData($type, $words, $site, $oldWords = [])
+    {
+
+
+        // $ids = [];
+        // if (!empty($id) && is_array($id) && count($id) > 0) {
+        //     $ids = $id;
+        // } elseif (!empty($word)) {
+        //     $ids = [$id];
+        // }
+
         $wordsArray = [];
-        if(!empty($word) && is_array($word) && count($word)>0){
-            $wordsArray = $word;
-        }elseif(!empty($word)){
-            $wordsArray = [$word];
+        if (!empty($words) && is_array($words) && count($words) > 0) {
+            $wordsArray = $words;
+        } elseif (!empty($word)) {
+            $wordsArray = [$words];
         }else{
-            return false;
+            // return ['res' => false, 'msg' => '未传入敏感词'];
         }
-        
-        if(!empty($oldWords) && !is_array($oldWords)){
-            $wordsArray = [$oldWords];
+
+
+        // $sensitiveWordsData = SensitiveWords::query()->select(['id', 'word'])->whereIn('id', $ids)->get();
+        // if ($sensitiveWordsData) {
+        //     $sensitiveWordsData = $sensitiveWordsData->toArray();
+        //     $wordsArray = array_column($sensitiveWordsData, 'word');
+        //     $sensitiveWordsData = array_column($sensitiveWordsData, null, 'id');
+        // } else {
+        //     return ['res' => false, 'msg' => '查询数据缺少敏感词'];
+        // }
+
+        if (!empty($oldWords) && !is_array($oldWords)) {
+            $oldWordsArray = [$oldWords];
         }
 
         $field = 'english_name';
-        if(in_array($site,['qycojp','yhcojp','lpijp','girjp','qyjp'])) {
+        if (in_array($site, ['qycojp', 'yhcojp', 'lpijp', 'girjp', 'qyjp'])) {
             $field = 'name';
         }
 
@@ -110,12 +129,12 @@ class SenWordsService
             });
         // 恢复报告状态基本查询
         $oldproductBaseQuery = Products::query()->where("status", 0)
-        ->where(function ($query) use ($wordsArray, $field) {
-            foreach ($wordsArray as $value) {
-                $query->orWhere($field, 'like', "%{$value}%");
-                $query->orWhere('url', 'like', "%{$value}%");
-            }
-        });
+            ->where(function ($query) use ($oldWordsArray, $field) {
+                foreach ($oldWordsArray as $value) {
+                    $query->orWhere($field, 'like', "%{$value}%");
+                    $query->orWhere('url', 'like', "%{$value}%");
+                }
+            });
 
         // 课题基本查询
         $subjectBaseQuery =  PostSubject::query()
@@ -127,24 +146,36 @@ class SenWordsService
         if ($type == 1) {
             $productCount = $productBaseQuery->count();
             $subjectCount = $subjectBaseQuery->count();
-            return ['product_count' => $productCount, 'subject_count' => $subjectCount];
+            $oldProductCount = 0;
+            if (count($oldWords) > 0) {
+                $oldProductCount = $oldproductBaseQuery->count();
+            }
+            return [
+                'product_count' => $productCount,
+                'old_product_count' => $oldProductCount,
+                'subject_count' => $subjectCount
+            ];
         } elseif ($type == 2) {
             // 将报告状态关闭
             $productIds = $productBaseQuery->select(['id'])->pluck('id');
             if ($productIds) {
                 Products::query()->where('id', $productIds)->update(['status' => 0]);
+                //删除sphinx的索引
+                (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 0);
             }
             // 若是修改场景，将原有报告状态开启
             if (count($oldWords) > 0) {
                 $oldProductIds = $oldproductBaseQuery->select(['id'])->pluck('id');
                 if ($oldProductIds) {
                     Products::query()->where('id', $oldProductIds)->update(['status' => 1]);
+                    (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 1);
                 }
             }
+
             // 涉及课题需要全删，包括已宣传
             $subjectBaseQuery->delete();
 
-            
+            return true;
         } else {
             return false;
         }

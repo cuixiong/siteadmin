@@ -3,7 +3,9 @@
 namespace Modules\Site\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
+use Modules\Site\Http\Models\SensitiveWords;
 use Modules\Site\Http\Models\SensitiveWordsLog;
 use Modules\Site\Services\SenWordsService;
 
@@ -43,21 +45,24 @@ class SensitiveWordsController extends CrudController
             $this->ValidateInstance($request);
             $input = $request->all();
 
-            // $type = $input['is_count'] ?? 0;
-            // $site = $request->header('Site');
-            
-            // if($type == 1){
-
-            // }elseif($type == 2){
+            $type = $input['is_count'] ?? 0;
+            $site = $request->header('Site');
+            $word = $input['word'] ?? '';
+            if ($type == 1) {
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site);
+                ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
+            } elseif ($type == 2) {
+                DB::beginTransaction();
                 $record = $this->ModelInstance()->create($input);
-                if (!$record) {
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site);
+                if (!$record || !$handleSensitiveRes) {
+                    DB::rollBack();
                     ReturnJson(false, trans('lang.add_error'));
                 }
-                (new SenWordsService())->handlerBanByIdList($record->id);
-
-            // }else{
-            //     ReturnJson(false, '未传入is_count');
-            // }
+                DB::commit();
+            } else {
+                ReturnJson(false, '未传入is_count');
+            }
 
             ReturnJson(true, trans('lang.add_success'), ['id' => $record->id]);
         } catch (\Exception $e) {
@@ -80,14 +85,30 @@ class SensitiveWordsController extends CrudController
             if ($record->word != $input['word'] || $record->status != $input['status']) {
                 $is_update_word = true;
             }
-            if (!$record->update($input)) {
-                ReturnJson(false, trans('lang.update_error'));
+
+            $type = $input['is_count'] ?? 0;
+            $site = $request->header('Site');
+            $word = $input['word'] ?? '';
+            $oldWord = $record->word;
+            if ($type == 1) {
+
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type,$word, $site, $is_update_word ? [] : $oldWord);
+                ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
+            } elseif ($type == 2) {
+                DB::beginTransaction();
+                $record->update($input);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site, $is_update_word ? [] : $oldWord);
+                if (!$record || !$handleSensitiveRes) {
+                    DB::rollBack();
+                    ReturnJson(false, trans('lang.update_error'));
+                }
+                DB::commit();
+            } else {
+                ReturnJson(false, '未传入is_count');
             }
-            if ($is_update_word) {
-                (new SenWordsService())->handlerUnBanByIdList($record->id);
-                (new SenWordsService())->handlerBanByIdList($record->id);
-            }
+
             ReturnJson(true, trans('lang.update_success'));
+            
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
@@ -106,16 +127,71 @@ class SensitiveWordsController extends CrudController
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
             }
-            foreach ($ids as $id) {
-                $record = $this->ModelInstance()->find($id);
-                if ($record) {
-                    $record->delete();
-                    (new SenWordsService())->handlerUnBanByIdList($id);
+            
+            $type = $input['is_count'] ?? 0;
+            $site = $request->header('Site');
+            $words = SensitiveWords::query()->select(['word'])->whereIn('id', $ids)->pluck('word')->toArray();
+            if ($type == 1) {
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, [] , $site, $words);
+                ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
+            } elseif ($type == 2) {
+                DB::beginTransaction();
+                $res = SensitiveWords::whereIn('id', $ids)->delete();
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, [] , $site, $words);
+                if (!$res || !$handleSensitiveRes) {
+                    DB::rollBack();
+                    ReturnJson(false, trans('lang.update_error'));
                 }
+                DB::commit();
+            } else {
+                ReturnJson(false, '未传入is_count');
             }
+
+
             ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
+     * 批量隐藏敏感报告数据
+     *
+     */
+    protected function hiddenSenProduct(Request $request){
+        
+        $ids = $input['ids'] ?? '';
+        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+        $site = $request->header('Site');
+        
+        $model = SensitiveWords::from('post_subject as ps');
+        if ($ids) {
+            //选中
+            $ids = explode(',', $ids);
+            if (!(count($ids) > 0)) {
+                ReturnJson(true, trans('lang.param_empty') . ':ids');
+            }
+            $model = $model->whereIn('ps.id', $ids);
+        } else {
+            //筛选
+            $searchJson = $request->input('search');
+
+            $subjectOwnId = NULL;
+            if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
+                $subjectOwnId = -1;
+            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
+                $subjectOwnId = $request->user->id;
+            }
+            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
+        }
+
+        $wordsArray = $model->select(['word'])->whereIn('id', $ids)->pluck('word')->toArray();
+        if ($type == 1) {
+            $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $wordsArray , $site, []);
+            ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
+        } elseif ($type == 2){
+            $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $wordsArray , $site, []);
+            ReturnJson(true, trans('lang.request_success'),);
         }
     }
 
@@ -136,11 +212,11 @@ class SensitiveWordsController extends CrudController
             if (!$record->save()) {
                 ReturnJson(false, trans('lang.update_error'));
             }
-            if ($record->status == 1) {
-                (new SenWordsService())->handlerBanByIdList($record->id);
-            } else {
-                (new SenWordsService())->handlerUnBanByIdList($record->id);
-            }
+            // if ($record->status == 1) {
+            //     (new SenWordsService())->handlerBanByIdList($record->id);
+            // } else {
+            //     (new SenWordsService())->handlerUnBanByIdList($record->id);
+            // }
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());

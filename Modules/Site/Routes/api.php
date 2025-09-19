@@ -315,6 +315,7 @@ Route::middleware([
         Route::post('store', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'store'])->name('敏感词管理:新增模版');
         Route::post('update', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'update'])->name('敏感词管理:修改模版');
         Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'destroy'])->name('敏感词管理:删除模版');
+        Route::post('hidden-sen-product', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'hiddenSenProduct'])->name('敏感词管理:批量隐藏');
     });
 
     // SearchRank 控制器

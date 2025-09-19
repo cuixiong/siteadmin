@@ -68,12 +68,24 @@ class SphinxService {
      * @param array $productIdList
      *
      */
-    public function delSphinxIndexByProductIdList(array $productIdList) {
+    public function delSphinxIndexByProductIdList(array $productIdList)
+    {
         $conn = $this->getConnection();
         $res = (new SphinxQL($conn))->delete()
-                                    ->from('products_rt')
-                                    ->where("id", 'in', $productIdList)
-                                    ->execute();
+            ->from('products_rt')
+            ->where("id", 'in', $productIdList)
+            ->execute();
+
+        return $res;
+    }
+
+    public function updateSphinxStatusByProductIdList(array $productIdList,$statusValue = 1)
+    {
+        $conn = $this->getConnection();
+        $res = (new SphinxQL($conn))->update('products_rt')
+            ->where("id", 'in', $productIdList)
+            ->set(['status' => $statusValue])
+            ->execute();
 
         return $res;
     }
