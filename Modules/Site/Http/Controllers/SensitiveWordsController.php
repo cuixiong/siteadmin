@@ -179,7 +179,7 @@ class SensitiveWordsController extends CrudController
             $model = $this->ModelInstance()->HandleSearch($model, $request->search);
         }
 
-        $wordsArray = $model->select(['word'])->whereIn('id', $ids)->pluck('word')->toArray();
+        $wordsArray = $model->select(['word'])->pluck('word')->toArray();
         if ($type == 1) {
             $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $wordsArray , $site, []);
             ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);

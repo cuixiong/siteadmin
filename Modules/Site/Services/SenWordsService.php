@@ -174,7 +174,7 @@ class SenWordsService
             // 将报告状态关闭
             if($productBaseQuery){
                 $productIds = $productBaseQuery->select(['id'])->pluck('id');
-                if ($productIds) {
+                if ($productIds && count($productIds)>0) {
                     $productIds = $productIds->toArray();
                     Products::query()->whereIn('id', $productIds)->update(['status' => 0]);
                     //删除sphinx的索引
@@ -184,7 +184,7 @@ class SenWordsService
             // 若是修改场景，将原有报告状态开启
             if (count($oldWordsArray) > 0 && $oldProductBaseQuery) {
                 $oldProductIds = $oldProductBaseQuery->select(['id'])->pluck('id');
-                if ($oldProductIds) {
+                if ($oldProductIds && count($oldProductIds)>0) {
                     $oldProductIds = $oldProductIds->toArray();
                     Products::query()->whereIn('id', $oldProductIds)->update(['status' => 1]);
                     (new SphinxService())->updateSphinxStatusByProductIdList($oldProductIds, 1);
