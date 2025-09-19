@@ -173,7 +173,7 @@ class SensitiveWordsController extends CrudController
             if (!(count($ids) > 0)) {
                 ReturnJson(true, trans('lang.param_empty') . ':ids');
             }
-            $model = $model->whereIn('ps.id', $ids);
+            $model = $model->whereIn('sw.id', $ids);
         } else {
             //筛选
             $model = $this->ModelInstance()->HandleSearch($model, $request->search);
