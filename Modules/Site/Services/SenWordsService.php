@@ -94,9 +94,9 @@ class SenWordsService
         $wordsArray = [];
         if (!empty($words) && is_array($words) && count($words) > 0) {
             $wordsArray = $words;
-        } elseif (!empty($word)) {
+        } elseif (!empty($words)) {
             $wordsArray = [$words];
-        }else{
+        } else{
             // return ['res' => false, 'msg' => '未传入敏感词'];
         }
 
@@ -110,8 +110,13 @@ class SenWordsService
         //     return ['res' => false, 'msg' => '查询数据缺少敏感词'];
         // }
 
-        if (!empty($oldWords) && !is_array($oldWords)) {
+        $oldWordsArray = [];
+        if (!empty($oldWords) && is_array($oldWords) && count($oldWords) > 0) {
+            $oldWordsArray = $oldWords;
+        } elseif (!empty($oldWords)) {
             $oldWordsArray = [$oldWords];
+        } else{
+            // return ['res' => false, 'msg' => '未传入敏感词'];
         }
 
         $field = 'english_name';
@@ -120,35 +125,45 @@ class SenWordsService
         }
 
         // 报告基本查询
-        $productBaseQuery =  Products::query()->where("status", 1)
-            ->where(function ($query) use ($wordsArray, $field) {
-                foreach ($wordsArray as $value) {
-                    $query->orWhere($field, 'like', "%{$value}%");
-                    $query->orWhere('url', 'like', "%{$value}%");
-                }
-            });
-        // 恢复报告状态基本查询
-        $oldproductBaseQuery = Products::query()->where("status", 0)
-            ->where(function ($query) use ($oldWordsArray, $field) {
-                foreach ($oldWordsArray as $value) {
-                    $query->orWhere($field, 'like', "%{$value}%");
-                    $query->orWhere('url', 'like', "%{$value}%");
-                }
-            });
+        $productBaseQuery = null;
+        if (count($wordsArray) > 0) {
+            $productBaseQuery =  Products::query()->where("status", 1)
+                ->where(function ($query) use ($wordsArray, $field) {
+                    foreach ($wordsArray as $value) {
+                        $query->orWhere($field, 'like', "%{$value}%");
+                        $query->orWhere('url', 'like', "%{$value}%");
+                    }
+                });
+        }
 
+        // 恢复报告状态基本查询
+        $oldProductBaseQuery = null;
+        if (count($oldWordsArray) > 0) {
+            $oldProductBaseQuery = Products::query()->where("status", 0)
+                ->where(function ($query) use ($oldWordsArray, $field) {
+                    foreach ($oldWordsArray as $value) {
+                        $query->orWhere($field, 'like', "%{$value}%");
+                        $query->orWhere('url', 'like', "%{$value}%");
+                    }
+                });
+        }
         // 课题基本查询
-        $subjectBaseQuery =  PostSubject::query()
-            ->where(function ($query) use ($wordsArray, $field) {
-                foreach ($wordsArray as $value) {
-                    $query->orWhere('name', 'like', "%{$value}%");
-                }
-            });
+        $subjectBaseQuery = null;
+        if (count($wordsArray) > 0) {
+            $subjectBaseQuery =  PostSubject::query()
+                ->where(function ($query) use ($wordsArray, $field) {
+                    foreach ($wordsArray as $value) {
+                        $query->orWhere('name', 'like', "%{$value}%");
+                    }
+                });
+        }
+
         if ($type == 1) {
-            $productCount = $productBaseQuery->count();
-            $subjectCount = $subjectBaseQuery->count();
+            $productCount = $productBaseQuery ? $productBaseQuery->count() :0;
+            $subjectCount =  $subjectBaseQuery ? $subjectBaseQuery->count() :0;
             $oldProductCount = 0;
-            if (count($oldWords) > 0) {
-                $oldProductCount = $oldproductBaseQuery->count();
+            if (count($oldWordsArray) > 0 && $oldProductBaseQuery) {
+                $oldProductCount = $oldProductBaseQuery->count();
             }
             return [
                 'product_count' => $productCount,
@@ -157,23 +172,29 @@ class SenWordsService
             ];
         } elseif ($type == 2) {
             // 将报告状态关闭
-            $productIds = $productBaseQuery->select(['id'])->pluck('id');
-            if ($productIds) {
-                Products::query()->where('id', $productIds)->update(['status' => 0]);
-                //删除sphinx的索引
-                (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 0);
+            if($productBaseQuery){
+                $productIds = $productBaseQuery->select(['id'])->pluck('id');
+                if ($productIds) {
+                    $productIds = $productIds->toArray();
+                    Products::query()->whereIn('id', $productIds)->update(['status' => 0]);
+                    //删除sphinx的索引
+                    (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 0);
+                }
             }
             // 若是修改场景，将原有报告状态开启
-            if (count($oldWords) > 0) {
-                $oldProductIds = $oldproductBaseQuery->select(['id'])->pluck('id');
+            if (count($oldWordsArray) > 0 && $oldProductBaseQuery) {
+                $oldProductIds = $oldProductBaseQuery->select(['id'])->pluck('id');
                 if ($oldProductIds) {
-                    Products::query()->where('id', $oldProductIds)->update(['status' => 1]);
-                    (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 1);
+                    $oldProductIds = $oldProductIds->toArray();
+                    Products::query()->whereIn('id', $oldProductIds)->update(['status' => 1]);
+                    (new SphinxService())->updateSphinxStatusByProductIdList($oldProductIds, 1);
                 }
             }
 
             // 涉及课题需要全删，包括已宣传
-            $subjectBaseQuery->delete();
+            if($subjectBaseQuery){
+                $subjectBaseQuery->delete();
+            }
 
             return true;
         } else {

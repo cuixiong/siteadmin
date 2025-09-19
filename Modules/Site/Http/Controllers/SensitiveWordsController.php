@@ -82,7 +82,7 @@ class SensitiveWordsController extends CrudController
             $input = $request->all();
             $record = $this->ModelInstance()->findOrFail($request->id);
             $is_update_word = false;
-            if ($record->word != $input['word'] || $record->status != $input['status']) {
+            if ($record->word != $input['word']) {
                 $is_update_word = true;
             }
 
@@ -92,12 +92,12 @@ class SensitiveWordsController extends CrudController
             $oldWord = $record->word;
             if ($type == 1) {
 
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type,$word, $site, $is_update_word ? [] : $oldWord);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type,$word, $site, $is_update_word ? $oldWord : []);
                 ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $record->update($input);
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site, $is_update_word ? [] : $oldWord);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site, $is_update_word ? $oldWord : []);
                 if (!$record || !$handleSensitiveRes) {
                     DB::rollBack();
                     ReturnJson(false, trans('lang.update_error'));
@@ -123,6 +123,7 @@ class SensitiveWordsController extends CrudController
     {
         try {
             $this->ValidateInstance($request);
+            $input = $request->all();
             $ids = $request->ids;
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
@@ -160,11 +161,12 @@ class SensitiveWordsController extends CrudController
      */
     protected function hiddenSenProduct(Request $request){
         
+        $input = $request->all();
         $ids = $input['ids'] ?? '';
-        $type = $input['type'] ?? ''; //1：获取数量;2：执行操作
+        $type = $input['is_count'] ?? ''; //1：获取数量;2：执行操作
         $site = $request->header('Site');
         
-        $model = SensitiveWords::from('post_subject as ps');
+        $model = SensitiveWords::from('sensitive_words as sw');
         if ($ids) {
             //选中
             $ids = explode(',', $ids);
@@ -174,15 +176,7 @@ class SensitiveWordsController extends CrudController
             $model = $model->whereIn('ps.id', $ids);
         } else {
             //筛选
-            $searchJson = $request->input('search');
-
-            $subjectOwnId = NULL;
-            if (isset($request->subjectOwn) && $request->subjectOwn == 1) {
-                $subjectOwnId = -1;
-            } elseif (isset($request->subjectOwn) && $request->subjectOwn == 2) {
-                $subjectOwnId = $request->user->id;
-            }
-            $model = $this->ModelInstance()->getFiltersQuery($model, $searchJson, $subjectOwnId);
+            $model = $this->ModelInstance()->HandleSearch($model, $request->search);
         }
 
         $wordsArray = $model->select(['word'])->whereIn('id', $ids)->pluck('word')->toArray();
