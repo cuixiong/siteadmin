@@ -390,7 +390,8 @@ class ProductsController extends CrudController {
         } else if ($type == 'name') {
             //中文搜索, 测试明确 需要精确搜索
             //$queryWords = 'name:"'.$keyword.'"';
-            $splitKeyword = implode(' ', preg_split('//u', $keyword, null, PREG_SPLIT_NO_EMPTY));
+            //$splitKeyword = implode(' ', preg_split('//u', $keyword, null, PREG_SPLIT_NO_EMPTY));
+            $splitKeyword = implode(' ', preg_split('/(?<!^)(?!$)/u', $keyword));
             $queryWords = "name:{$splitKeyword}";
             $search->setQuery($queryWords);
         } elseif ($type == 'english_name') {
