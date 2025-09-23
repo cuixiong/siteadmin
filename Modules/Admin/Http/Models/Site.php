@@ -30,6 +30,7 @@ class Site extends Base
         'sort',
         'is_local',
         'third_domain',
+        'site_logo',
         // 'db_host',
         // 'db_port',
         // 'db_database',

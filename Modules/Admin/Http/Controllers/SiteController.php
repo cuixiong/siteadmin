@@ -772,11 +772,18 @@ class SiteController extends CrudController {
             : ['name as value', 'name as label'];
         $res = [];
         if ($is_super > 0) {
-            $res = (new Site)->GetListLabel($field, false, '', ['status' => 1], ['sort' => 'asc']);
+            // 超管：返回 value/label 同时追加 logo
+            $labelColumn = $request->HeaderLanguage == 'en' ? 'english_name' : 'name';
+            $res = Site::query()
+                ->where('status', 1)
+                ->orderBy('sort', 'asc')
+                ->get(['name as value', $labelColumn.' as label', 'site_logo'])
+                ->toArray();
         } else {
+            // 非超管：限定 id 范围，同时追加 logo
             $res = Site::query()->whereIn('id', $site_ids)
                        ->where("status", 1)
-                       ->selectRaw('name as value , name as label')
+                       ->selectRaw('name as value, name as label, site_logo')
                        ->orderBy('sort', 'asc')
                        ->get()
                        ->toArray();
