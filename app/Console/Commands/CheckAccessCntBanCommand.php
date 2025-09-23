@@ -89,7 +89,13 @@ class CheckAccessCntBanCommand extends Command {
             $tab = 'ip';
         }
         //获取是否封禁4段ip的配置
-        $ban_full_ip_status = $sysValList['ban_full_ip_status']['hidden'];
+        $ban_full_ip_status_info = $sysValList['ban_full_ip_status'] ?? [];
+        if(empty($ban_full_ip_status_info )){
+            $ban_full_ip_status = false;
+        }else{
+            $ban_full_ip_status = $ban_full_ip_status_info['hidden'];
+        }
+
         $ban_full_ip_cnt = $sysValList['ban_full_ip_cnt']['value'] ?? 50;
         if (!empty($ban_full_ip_status) && $tab != 'ip') {
             $use_full_ip_status = true;
