@@ -2516,6 +2516,42 @@ class ProductsController extends CrudController {
     }
 
     /**
+     * 修改状态+删除相关课题
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeStatusWithDelSubject(Request $request)
+    {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->status = $request->status;
+
+
+            $type = $input['is_count'] ?? 0;
+            if ($type == 1) {
+                $subjectCount =  PostSubject::query()->where('id', $record->id)->count() ?? 0;
+                ReturnJson(true, trans('lang.request_success'), ['subject_count' => $subjectCount]);
+            } elseif ($type == 2) {
+                if (!$record->save()) {
+                    ReturnJson(false, trans('lang.update_error'));
+                }
+                PostSubject::query()->where('id', $record->id)->delete();
+                // 更新完成后同步到xunsearch
+                $this->ModelInstance()->syncSearchIndex($record->id, 'update');
+                ReturnJson(true, trans('lang.update_success'));
+            } else {
+                ReturnJson(false, '未传入is_count');
+            }
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+    /**
      * 修改排序
      *
      * @param $request 请求信息

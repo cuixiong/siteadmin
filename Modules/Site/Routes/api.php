@@ -72,6 +72,7 @@ Route::middleware([
         Route::get('option', [Modules\Site\Http\Controllers\ProductsController::class, 'option'])->name('报告管理:下拉列表数据');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\ProductsController::class, 'searchDroplist'])->name('报告管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\ProductsController::class, 'changeStatus'])->name('报告管理:状态修改');
+        Route::post('change-status-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'changeStatusWithDelSubject'])->name('报告管理:状态修改');
         Route::post('change-hot', [Modules\Site\Http\Controllers\ProductsController::class, 'changeHot'])->name('报告管理:热门状态修改');
         Route::post('change-recommend', [Modules\Site\Http\Controllers\ProductsController::class, 'changeRecommend'])->name('报告管理:推荐状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\ProductsController::class, 'changeSort'])->name('报告管理:排序修改');
@@ -308,7 +309,6 @@ Route::middleware([
     // 敏感词路由
     Route::prefix('senwords')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'list'])->name('敏感词管理:模版列表');
-        Route::get('ban-log-list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'banLogList'])->name('敏感词管理:封禁报告列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'searchDroplist'])->name('敏感词管理:搜索下拉列表数据');
         Route::post('change-status', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeStatus'])->name('敏感词管理:状态修改');
         Route::post('change-sort', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'changeSort'])->name('敏感词管理:排序修改');
@@ -316,6 +316,12 @@ Route::middleware([
         Route::post('update', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'update'])->name('敏感词管理:修改模版');
         Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'destroy'])->name('敏感词管理:删除模版');
         Route::post('hidden-sen-product', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'hiddenSenProduct'])->name('敏感词管理:批量隐藏');
+    });
+    
+    Route::prefix('senwords-log')->group(function () {
+        Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'list'])->name('敏感词日志:模版列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'searchDroplist'])->name('敏感词日志:搜索下拉列表数据');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'destroy'])->name('敏感词日志:删除模版');
     });
 
     // SearchRank 控制器

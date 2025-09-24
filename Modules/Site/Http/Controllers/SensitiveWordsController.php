@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\SensitiveWords;
+use Modules\Site\Http\Models\SensitiveWordsHandleLog;
 use Modules\Site\Http\Models\SensitiveWordsLog;
 use Modules\Site\Services\SenWordsService;
 
@@ -49,12 +50,12 @@ class SensitiveWordsController extends CrudController
             $site = $request->header('Site');
             $word = $input['word'] ?? '';
             if ($type == 1) {
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_STORE, $type, $word, $site);
                 ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $record = $this->ModelInstance()->create($input);
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_STORE, $type, $word, $site);
                 if (!$record || !$handleSensitiveRes) {
                     DB::rollBack();
                     ReturnJson(false, trans('lang.add_error'));
@@ -92,12 +93,12 @@ class SensitiveWordsController extends CrudController
             $oldWord = $record->word;
             if ($type == 1) {
 
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type,$word, $site, $is_update_word ? $oldWord : []);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_UPDATE, $type,$word, $site, $is_update_word ? $oldWord : []);
                 ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $record->update($input);
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $word, $site, $is_update_word ? $oldWord : []);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_UPDATE, $type, $word, $site, $is_update_word ? $oldWord : []);
                 if (!$record || !$handleSensitiveRes) {
                     DB::rollBack();
                     ReturnJson(false, trans('lang.update_error'));
@@ -133,12 +134,12 @@ class SensitiveWordsController extends CrudController
             $site = $request->header('Site');
             $words = SensitiveWords::query()->select(['word'])->whereIn('id', $ids)->pluck('word')->toArray();
             if ($type == 1) {
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, [] , $site, $words);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_DESTORY,$type, [] , $site, $words);
                 ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $res = SensitiveWords::whereIn('id', $ids)->delete();
-                $handleSensitiveRes = (new SenWordsService())->hiddenData($type, [] , $site, $words);
+                $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_DESTORY,$type, [] , $site, $words);
                 if (!$res || !$handleSensitiveRes) {
                     DB::rollBack();
                     ReturnJson(false, trans('lang.update_error'));
@@ -181,10 +182,10 @@ class SensitiveWordsController extends CrudController
 
         $wordsArray = $model->select(['word'])->pluck('word')->toArray();
         if ($type == 1) {
-            $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $wordsArray , $site, []);
+            $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_BATCH,$type, $wordsArray , $site, []);
             ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
         } elseif ($type == 2){
-            $handleSensitiveRes = (new SenWordsService())->hiddenData($type, $wordsArray , $site, []);
+            $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_BATCH,$type, $wordsArray , $site, []);
             ReturnJson(true, trans('lang.request_success'),);
         }
     }
@@ -203,31 +204,39 @@ class SensitiveWordsController extends CrudController
             }
             $record = $this->ModelInstance()->findOrFail($request->id);
             $record->status = $request->status;
-            if (!$record->save()) {
-                ReturnJson(false, trans('lang.update_error'));
+
+            
+            $type = $input['is_count'] ?? 0;
+            $site = $request->header('Site');
+            $word = $record->word;
+            if ($type == 1) {
+                if ($record->status == 1){
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS,$type,$word, $site, []);
+                }else{
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS,$type,[], $site, $word);
+                }
+                ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
+            } elseif ($type == 2) {
+                DB::beginTransaction();
+                $record->save();
+                if ($record->status == 1){
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type,$word, $site, []);
+                }else{
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type,[], $site, $word);
+                }
+                if (!$record || !$handleSensitiveRes) {
+                    DB::rollBack();
+                    ReturnJson(false, trans('lang.update_error'));
+                }
+                DB::commit();
+            } else {
+                ReturnJson(false, '未传入is_count');
             }
-            // if ($record->status == 1) {
-            //     (new SenWordsService())->handlerBanByIdList($record->id);
-            // } else {
-            //     (new SenWordsService())->handlerUnBanByIdList($record->id);
-            // }
+
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }
     }
 
-    public function banLogList(Request $request)
-    {
-        try {
-            if (empty($request->id)) {
-                ReturnJson(false, 'id is empty');
-            }
-            $data['info'] = $this->ModelInstance()->findOrFail($request->id);
-            $data['ban_log_list'] = SensitiveWordsLog::query()->where('word_id', $request->id)->get()->toArray();
-            ReturnJson(true, trans('lang.request_success'), $data);
-        } catch (\Exception $e) {
-            ReturnJson(false, $e->getMessage());
-        }
-    }
 }

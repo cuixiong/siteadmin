@@ -16,6 +16,7 @@ namespace Modules\Site\Services;
 use Modules\Site\Http\Models\PostSubject;
 use Modules\Site\Http\Models\Products;
 use Modules\Site\Http\Models\SensitiveWords;
+use Modules\Site\Http\Models\SensitiveWordsHandleLog;
 use Modules\Site\Http\Models\SensitiveWordsLog;
 
 class SenWordsService
@@ -80,7 +81,7 @@ class SenWordsService
      * @param $site 站点，用于判断需要过滤是哪个字段
      * 
      */
-    public function hiddenData($type, $words, $site, $oldWords = [])
+    public function hiddenData($sence, $type, $words, $site, $oldWords = [])
     {
 
 
@@ -96,7 +97,7 @@ class SenWordsService
             $wordsArray = $words;
         } elseif (!empty($words)) {
             $wordsArray = [$words];
-        } else{
+        } else {
             // return ['res' => false, 'msg' => '未传入敏感词'];
         }
 
@@ -115,7 +116,7 @@ class SenWordsService
             $oldWordsArray = $oldWords;
         } elseif (!empty($oldWords)) {
             $oldWordsArray = [$oldWords];
-        } else{
+        } else {
             // return ['res' => false, 'msg' => '未传入敏感词'];
         }
 
@@ -159,8 +160,8 @@ class SenWordsService
         }
 
         if ($type == 1) {
-            $productCount = $productBaseQuery ? $productBaseQuery->count() :0;
-            $subjectCount =  $subjectBaseQuery ? $subjectBaseQuery->count() :0;
+            $productCount = $productBaseQuery ? $productBaseQuery->count() : 0;
+            $subjectCount =  $subjectBaseQuery ? $subjectBaseQuery->count() : 0;
             $oldProductCount = 0;
             if (count($oldWordsArray) > 0 && $oldProductBaseQuery) {
                 $oldProductCount = $oldProductBaseQuery->count();
@@ -171,31 +172,68 @@ class SenWordsService
                 'subject_count' => $subjectCount
             ];
         } elseif ($type == 2) {
+            $productHiddenCount = 0;
+            $productShowCount = 0;
+            $subjectDeleteCount = 0;
+            $productHiddenDetails = '';
+            $productShowDetails = '';
+            $subjectDeleteDetails = '';
             // 将报告状态关闭
-            if($productBaseQuery){
-                $productIds = $productBaseQuery->select(['id'])->pluck('id');
-                if ($productIds && count($productIds)>0) {
-                    $productIds = $productIds->toArray();
+            if ($productBaseQuery) {
+                $productData = $productBaseQuery->select(['id', 'name'])->get();
+                if ($productData && count($productData) > 0) {
+                    $productHiddenCount = count($productData);
+                    $productData = $productData->toArray();
+                    $productIds = array_column($productData, 'id');
                     Products::query()->whereIn('id', $productIds)->update(['status' => 0]);
                     //删除sphinx的索引
                     (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 0);
+                    foreach ($productData as $key => $item) {
+                        $productHiddenDetails .= "【报告id" . $item['id'] . "】" . $item['name'] . "\n";
+                    }
                 }
             }
             // 若是修改场景，将原有报告状态开启
             if (count($oldWordsArray) > 0 && $oldProductBaseQuery) {
-                $oldProductIds = $oldProductBaseQuery->select(['id'])->pluck('id');
-                if ($oldProductIds && count($oldProductIds)>0) {
-                    $oldProductIds = $oldProductIds->toArray();
+                $oldProductData = $oldProductBaseQuery->select(['id', 'name'])->get();
+                if ($oldProductData && count($oldProductData) > 0) {
+                    $productShowCount = count($oldProductData);
+                    $oldProductData = $oldProductData->toArray();
+                    $oldProductIds = array_column($oldProductData, 'id');
                     Products::query()->whereIn('id', $oldProductIds)->update(['status' => 1]);
                     (new SphinxService())->updateSphinxStatusByProductIdList($oldProductIds, 1);
+
+                    foreach ($oldProductData as $key => $item) {
+                        $productShowDetails .= "【报告id" . $item['id'] . "】" . $item['name'] . "\n";
+                    }
                 }
             }
 
             // 涉及课题需要全删，包括已宣传
-            if($subjectBaseQuery){
-                $subjectBaseQuery->delete();
+            if ($subjectBaseQuery) {
+                $subjectDeleteData = $subjectBaseQuery->select(['id', 'name'])->get();
+                if ($subjectDeleteData && count($subjectDeleteData) > 0) {
+                    $subjectDeleteCount = count($subjectDeleteData);
+                    $subjectDeleteData = $subjectDeleteData->toArray();
+                    $subjectDeleteIds = array_column($subjectDeleteData, 'id');
+                    $subjectDeleteCount = PostSubject::whereIn('id', $subjectDeleteIds)->delete();
+                    foreach ($subjectDeleteData as $key => $item) {
+                        $subjectDeleteDetails .= "【编号" . $item['id'] . "】" . $item['name'] . "\n";
+                    }
+                }
             }
-
+            // 加入日志
+            $logData = [];
+            $logData['log_type'] = $sence;
+            $logData['words'] = implode("\n", $wordsArray);
+            $logData['old_words'] = implode("\n", $oldWordsArray);
+            $logData['product_hidden_count'] = $productHiddenCount;
+            $logData['product_show_count'] = $productShowCount;
+            $logData['subject_delete_count'] = $subjectDeleteCount;
+            $logData['product_hidden_details'] = $productHiddenDetails;
+            $logData['product_show_details'] = $productShowDetails;
+            $logData['subject_delete_details'] = $subjectDeleteDetails;
+            SensitiveWordsHandleLog::create($logData);
             return true;
         } else {
             return false;
