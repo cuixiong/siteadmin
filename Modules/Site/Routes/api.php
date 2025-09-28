@@ -319,9 +319,9 @@ Route::middleware([
     });
     
     Route::prefix('senwords-log')->group(function () {
-        Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'list'])->name('敏感词日志:模版列表');
-        Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'searchDroplist'])->name('敏感词日志:搜索下拉列表数据');
-        Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'destroy'])->name('敏感词日志:删除模版');
+        Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsHandleLogController::class, 'list'])->name('敏感词日志:模版列表');
+        Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsHandleLogController::class, 'searchDroplist'])->name('敏感词日志:搜索下拉列表数据');
+        Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsHandleLogController::class, 'destroy'])->name('敏感词日志:删除模版');
     });
 
     // SearchRank 控制器

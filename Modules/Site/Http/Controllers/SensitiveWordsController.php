@@ -205,24 +205,24 @@ class SensitiveWordsController extends CrudController
             $record = $this->ModelInstance()->findOrFail($request->id);
             $record->status = $request->status;
 
-            
+            $input = $request->all();
             $type = $input['is_count'] ?? 0;
             $site = $request->header('Site');
             $word = $record->word;
             if ($type == 1) {
-                if ($record->status == 1){
-                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS,$type,$word, $site, []);
-                }else{
-                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS,$type,[], $site, $word);
+                if ($record->status == 1) {
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
+                } else {
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, $word, $site, []);
                 }
                 ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $record->save();
-                if ($record->status == 1){
-                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type,$word, $site, []);
-                }else{
-                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type,[], $site, $word);
+                if ($record->status == 1) {
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
+                } else {
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, $word, $site, []);
                 }
                 if (!$record || !$handleSensitiveRes) {
                     DB::rollBack();

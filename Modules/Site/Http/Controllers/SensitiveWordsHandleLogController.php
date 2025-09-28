@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Admin\Http\Models\DictionaryValue;
 use Modules\Site\Http\Models\SensitiveWords;
-use Modules\Site\Http\Models\SensitiveWordsLog;
+use Modules\Site\Http\Models\SensitiveWordsHandleLog;
 use Modules\Site\Services\SenWordsService;
 
-class SensitiveWordsController extends CrudController
+class SensitiveWordsHandleLogController extends CrudController
 {
 
     public function searchDroplist(Request $request)
@@ -18,7 +18,7 @@ class SensitiveWordsController extends CrudController
             
             $data = [];
             $data['log_type'] = [];
-            $logType = SensitiveWordsLog::getLogTypeList();
+            $logType = SensitiveWordsHandleLog::getLogTypeList();
             foreach ($logType as $key => $value) {
                 $data['type'][] = ['label' => $value, 'value' => $key];
             }

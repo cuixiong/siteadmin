@@ -189,7 +189,7 @@ class SenWordsService
                     //删除sphinx的索引
                     (new SphinxService())->updateSphinxStatusByProductIdList($productIds, 0);
                     foreach ($productData as $key => $item) {
-                        $productHiddenDetails .= "【报告id" . $item['id'] . "】" . $item['name'] . "\n";
+                        $productHiddenDetails .= "【报告id-" . $item['id'] . "】" . $item['name'] . "\n";
                     }
                 }
             }
@@ -204,7 +204,7 @@ class SenWordsService
                     (new SphinxService())->updateSphinxStatusByProductIdList($oldProductIds, 1);
 
                     foreach ($oldProductData as $key => $item) {
-                        $productShowDetails .= "【报告id" . $item['id'] . "】" . $item['name'] . "\n";
+                        $productShowDetails .= "【报告id-" . $item['id'] . "】" . $item['name'] . "\n";
                     }
                 }
             }
@@ -218,7 +218,7 @@ class SenWordsService
                     $subjectDeleteIds = array_column($subjectDeleteData, 'id');
                     $subjectDeleteCount = PostSubject::whereIn('id', $subjectDeleteIds)->delete();
                     foreach ($subjectDeleteData as $key => $item) {
-                        $subjectDeleteDetails .= "【编号" . $item['id'] . "】" . $item['name'] . "\n";
+                        $subjectDeleteDetails .= "【课题id-" . $item['id'] . "】" . $item['name'] . "\n";
                     }
                 }
             }
