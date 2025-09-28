@@ -950,6 +950,9 @@ class ProductsController extends CrudController {
                     $record->delete();
                     // 删除完成后同步到xunsearch
                     $this->ModelInstance()->syncSearchIndex($id, 'delete');
+
+                    // 删除未宣传课题
+                    PostSubject::where('propagate_status', 0)->where('product_id', $id)->delete();
                 }
             }
             ReturnJson(true, trans('lang.delete_success'));
