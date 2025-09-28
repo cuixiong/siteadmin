@@ -567,19 +567,26 @@ class TemplateController extends CrudController {
         $tempContent = $this->writeTempWord($tempContent, '{{definition}}', $pdArrData['definition']);
         // 处理模板变量  {{overview}}
         $tempContent = $this->writeTempWord($tempContent, '{{overview}}', $pdArrData['overview']);
-        // 处理模板变量  {{type}}   换行
-        $replaceWords = $productArrData['classification'];
+        // 对 classification / application 先做 HTML 转义，避免被当作标签解析
+        $classificationRaw = $productArrData['classification'] ?? '';
+        $classificationEsc = htmlspecialchars($classificationRaw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $applicationRaw = $productArrData['application'] ?? '';
+        $applicationEsc = htmlspecialchars($applicationRaw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        // 处理模板变量  {{type}}   换行（使用已转义内容）
+        $replaceWords = $classificationEsc;
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{type}}', $replaceWords);
-        // 处理模板变量  {{type_str}}  不换行
-        $tempClassification = $this->handlerLineSymbol($productArrData['classification']);
+        // 处理模板变量  {{type_str}}  不换行（使用已转义内容）
+        $tempClassification = $this->handlerLineSymbol($classificationEsc);
         $tempContent = $this->writeTempWord($tempContent, '{{type_str}}', $tempClassification);
-        // 处理模板变量  {{application}}   换行
-        $replaceWords = $productArrData['application'];
+        // 处理模板变量  {{application}}   换行（使用已转义内容）
+        $replaceWords = $applicationEsc;
         $replaceWords = $this->addChangeLineStr($replaceWords);
         $tempContent = $this->writeTempWord($tempContent, '{{application}}', $replaceWords);
-        // 处理模板变量  {{application_str}} 不换行
-        $tempApplication = $this->handlerLineSymbol($productArrData['application']);
+        // 处理模板变量  {{application_str}} 不换行（使用已转义内容）
+        $tempApplication = $this->handlerLineSymbol($applicationEsc);
         $tempContent = $this->writeTempWord($tempContent, '{{application_str}}', $tempApplication);
         // 处理模板变量  {{link}}
         $tempContent = $this->writeTempWord($tempContent, '{{link}}', $productArrData['url']);
