@@ -412,22 +412,22 @@ class SyncThirdProductController extends CrudController {
         try {
             $pro_name_list = array_column($uniqueDataList, 'name');
             $pro_ename_list = array_column($uniqueDataList, 'english_name');
-            // 分别按中文名和英文名建立映射
-            $productListByCName = [];
-            $productListByEName = [];
-            if (!empty($pro_name_list)) {
-                $productListByCName = Products::whereIn('name', array_filter(array_unique($pro_name_list)))
-                    ->select(['id', 'name', 'english_name', 'author', 'published_date'])
-                    ->get()
-                    ->keyBy('name')
-                    ->toArray();
+            $handler_name_list = array_merge($pro_name_list, $pro_ename_list);
+            $handler_after_name_list = [];
+            if (!empty($handler_name_list)) {
+                $handler_name_list = array_unique($handler_name_list);
+                foreach ($handler_name_list as $forName) {
+                    if (!empty($forName)) {
+                        $handler_after_name_list[] = $forName;
+                    }
+                }
             }
-            if (!empty($pro_ename_list)) {
-                $productListByEName = Products::whereIn('english_name', array_filter(array_unique($pro_ename_list)))
-                    ->select(['id', 'name', 'english_name', 'author', 'published_date'])
-                    ->get()
-                    ->keyBy('english_name')
-                    ->toArray();
+            if (!empty($handler_after_name_list)) {
+                $productList = Products::whereIn('name', $handler_after_name_list)->select(
+                    ['id', 'name', 'author', 'published_date']
+                )->get()->keyBy('name')->toArray();
+            } else {
+                $productList = [];
             }
             $product_model = new Products();
             foreach ($uniqueDataList as &$row) {
@@ -448,20 +448,16 @@ class SyncThirdProductController extends CrudController {
                 $item['third_sync_id'] = $row['id'];
                 $item['created_by'] = $userID;
                 $item['updated_by'] = $userID;
-                // 先按中文名命中，否则按英文名命中
+                //报告名称
                 $product = [];
-                if (!empty($row['name']) && !empty($productListByCName[$row['name']])) {
-                    $product = $productListByCName[$row['name']];
-                } elseif (!empty($row['english_name']) && !empty($productListByEName[$row['english_name']])) {
-                    $product = $productListByEName[$row['english_name']];
-                }
-                if (!empty($product)) {
+                if (!empty($productList[$row['name']])) {
+                    $product = $productList[$row['name']];
                     if (($product['author'] == '已售报告' && $row['author'] != '已售报告')
                         || ($product['author'] == '完成报告'
                             && ($row['author'] != '已售报告'
                                 && $row['author'] != '完成报告'))
                     ) {
-                        $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product['id']};【".($row['name'] ?? $row['english_name'])."】"
+                        $ingore_detail .= "【错误】编号:{$item['third_sync_id']};报告id:{$product['id']};【{$row['name']}】"
                                           .($row['author']).'-'.trans('lang.author_level')
                                           .($product['author'])."\r\n";
                         $ingoreCount++;
@@ -1041,7 +1037,7 @@ class SyncThirdProductController extends CrudController {
                                               ->where("key", $this->autoSyncDataKey)
                                               ->value('value');
                 //如果没有开启自动同步开关, 那么直接退出
-                    if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
+                if (empty($autoSyncDataVal) && $autoSyncDataVal != self::$openAutoSyncData) {
                     throw new \Exception("no open auto sync data config");
 
                     return false;
