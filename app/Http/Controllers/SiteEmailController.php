@@ -15,6 +15,7 @@ use Modules\Admin\Http\Models\City;
 use Modules\Admin\Http\Models\Language;
 use Modules\Admin\Http\Models\PriceEditionValue;
 use Modules\Admin\Http\Models\Site;
+use Modules\Site\Http\Controllers\OperationLogController;
 use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\Email;
 use Modules\Site\Http\Models\EmailLog;
@@ -453,6 +454,8 @@ class SiteEmailController extends Controller {
                 $resp = $response->json();
                 if (!empty($resp) && $resp['code'] == 200) {
                     $sucCnt++;
+                    //添加日志：复用与 SiteOperationLog 一致的通道，type 使用 'email'
+                    OperationLogController::AddLog($record, 'email');
                 } else {
                     $errMsg[] = $resp;
                 }

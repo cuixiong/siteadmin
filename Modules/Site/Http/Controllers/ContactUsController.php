@@ -2,6 +2,7 @@
 
 namespace Modules\Site\Http\Controllers;
 
+use App\Observers\OperationLog;
 use Illuminate\Support\Facades\Http;
 use Modules\Admin\Http\Models\Publisher;
 use Modules\Admin\Http\Models\Site;
@@ -26,8 +27,7 @@ use Modules\Site\Http\Models\PostSubjectLink;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class ContactUsController extends CrudController
-{
+class ContactUsController extends CrudController {
     public $signKey = '62d9048a8a2ee148cf142a0e6696ab26';
 
     /**
@@ -38,8 +38,7 @@ class ContactUsController extends CrudController
      * @param int   $pageSize 页数
      * @param Array $where    查询条件数组 默认空数组
      */
-    protected function list(Request $request)
-    {
+    protected function list(Request $request) {
         try {
             $this->ValidateInstance($request);
             $ModelInstance = $this->ModelInstance();
@@ -59,9 +58,9 @@ class ContactUsController extends CrudController
             // 数据排序
             $sort = (strtoupper($request->sort) == 'DESC') ? 'DESC' : 'ASC';
             if (!empty($request->order)) {
-                $model = $model->orderBy('cu.' . $request->order, $sort);
+                $model = $model->orderBy('cu.'.$request->order, $sort);
             } else {
-                $model = $model->orderBy('cu.' . 'sort', $sort)->orderBy('cu.' . 'created_at', 'DESC');
+                $model = $model->orderBy('cu.'.'sort', $sort)->orderBy('cu.'.'created_at', 'DESC');
             }
             $record = $model->get()->toArray();
             foreach ($record as &$value) {
@@ -85,8 +84,8 @@ class ContactUsController extends CrudController
                     if ($priceEditionRecord) {
                         $priceEditionData = $priceEditionRecord->toArray();
                         $languageName = Language::where('id', $priceEditionData['language_id'])->value('name');
-                        $priceVersionName = (!empty($languageName) ? $languageName : '') . ' '
-                            . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                        $priceVersionName = (!empty($languageName) ? $languageName : '').' '
+                                            .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                     }
                 }
                 $value['price_edition_name'] = $priceVersionName;
@@ -96,7 +95,7 @@ class ContactUsController extends CrudController
             // 查询留言是否与课题有关联 (关键词关联、已宣传、留言创建时间大于任一帖子宣传时间)
             $productIdsArray = array_column($record, 'product_id');
             $productsData = Products::query()->select(['id', 'keywords', 'url'])->whereIn('id', $productIdsArray)->get()
-                ?->toArray() ?? [];
+                                    ?->toArray() ?? [];
             $keywordsData = array_column($productsData, 'keywords', 'id');
             $keywordsData = array_filter($keywordsData, function ($item) {
                 return $item !== "" && $item !== null;
@@ -109,18 +108,18 @@ class ContactUsController extends CrudController
             if ($keywordsData && count($keywordsData) > 0) {
                 // 查询课题
                 $postSubjectData = PostSubject::query()->select(['id', 'keywords', 'accepter'])
-                    ->whereIn('keywords', $keywordsData)
-                    ->where('propagate_status', 1)
-                    ->get()?->toArray() ?? [];
+                                              ->whereIn('keywords', $keywordsData)
+                                              ->where('propagate_status', 1)
+                                              ->get()?->toArray() ?? [];
             }
             $urlData = [];
             if ($postSubjectData && count($postSubjectData) > 0) {
                 // 课题查询帖子链接
                 $postSubjecIdsArray = array_column($postSubjectData, 'id');
                 $urlData = PostSubjectLink::query()
-                    ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
-                    ->whereIn('post_subject_id', $postSubjecIdsArray)
-                    ->get()->toArray();
+                                          ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
+                                          ->whereIn('post_subject_id', $postSubjecIdsArray)
+                                          ->get()->toArray();
                 $urlData = array_map(function ($urlItem) use ($platformList) {
                     $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
 
@@ -163,8 +162,8 @@ class ContactUsController extends CrudController
                     foreach ($recordPostSubjectUrlData as $recordPostSubjectUrlItem) {
                         // 需要帖子时间早于留言时间才能算中标,新增判断:有效期为一年
                         if (
-                            strtotime($recordPostSubjectUrlItem['created_at']) > $validStartTime &&
-                            strtotime($recordPostSubjectUrlItem['created_at']) < $validEndTime
+                            strtotime($recordPostSubjectUrlItem['created_at']) > $validStartTime
+                            && strtotime($recordPostSubjectUrlItem['created_at']) < $validEndTime
                         ) {
                             $tempUrlData[] = [
                                 // 'id' => $recordPostSubjectUrlItem['id'],
@@ -182,8 +181,8 @@ class ContactUsController extends CrudController
                             'post_subject_id' => $recordPostSubjectItem['id'],
                             'accepter'        => $recordPostSubjectItem['accepter'],
                             'accepter_name'   => User::query()->where('id', $recordPostSubjectItem['accepter'])->value(
-                                'nickname'
-                            ) ?? '未知',
+                                    'nickname'
+                                ) ?? '未知',
                             'keywords'        => $recordPostSubjectItem['keywords'],
                         ];
                     }
@@ -199,13 +198,12 @@ class ContactUsController extends CrudController
         }
     }
 
-    public function options(Request $request)
-    {
+    public function options(Request $request) {
         $options = [];
         $codes = ['Switch_State', 'Channel_Type', 'Buy_Time', 'Message_Is_Bidding'];
         $NameField = $request->HeaderLanguage == 'en' ? 'english_name as label' : 'name as label';
         $data = DictionaryValue::whereIn('code', $codes)->where('status', 1)->select('code', 'value', $NameField)
-            ->orderBy('sort', 'asc')->get()->toArray();
+                               ->orderBy('sort', 'asc')->get()->toArray();
         if (!empty($data)) {
             foreach ($data as $map) {
                 $options[$map['code']][] = ['label' => $map['label'], 'value' => intval($map['value'])];
@@ -282,8 +280,7 @@ class ContactUsController extends CrudController
      * @param $request 请求信息
      * @param $id      主键ID
      */
-    public function changeStatus(Request $request)
-    {
+    public function changeStatus(Request $request) {
         try {
             $ids = $request->ids;
             if (empty($ids)) {
@@ -314,8 +311,7 @@ class ContactUsController extends CrudController
      *
      * @param $request 请求信息
      */
-    public function batchUpdateParam(Request $request)
-    {
+    public function batchUpdateParam(Request $request) {
         $field = [
             [
                 'name'  => '状态',
@@ -332,8 +328,7 @@ class ContactUsController extends CrudController
      *
      * @param $request 请求信息
      */
-    public function batchUpdateOption(Request $request)
-    {
+    public function batchUpdateOption(Request $request) {
         $input = $request->all();
         $keyword = $input['keyword'];
         $data = [];
@@ -367,8 +362,7 @@ class ContactUsController extends CrudController
      *
      * @param $request 请求信息
      */
-    public function batchUpdate(Request $request)
-    {
+    public function batchUpdate(Request $request) {
         $input = $request->all();
         $ids = $input['ids'] ?? '';
         $keyword = $input['keyword'] ?? '';
@@ -380,7 +374,7 @@ class ContactUsController extends CrudController
             //选中
             $ids = explode(',', $ids);
             if (!(count($ids) > 0)) {
-                ReturnJson(true, trans('lang.param_empty') . ':ids');
+                ReturnJson(true, trans('lang.param_empty').':ids');
             }
             $model = $ModelInstance->whereIn('id', $ids);
         } else {
@@ -407,14 +401,13 @@ class ContactUsController extends CrudController
         }
     }
 
-    public function batchUpdateReferer(Request $request)
-    {
+    public function batchUpdateReferer(Request $request) {
         ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
         ini_set("memory_limit", '1024M');
         try {
             //所有平台
             $post_platform_list = PostPlatform::query()->where("status", 1)
-                ->pluck('keywords', 'id')->toArray();
+                                              ->pluck('keywords', 'id')->toArray();
             $contact_us_list = ContactUs::query()->select(["id", "referer"])->get()->toArray();
             foreach ($contact_us_list as $for_contact_us) {
                 $for_referer = $for_contact_us['referer'] ?? '';
@@ -429,11 +422,11 @@ class ContactUsController extends CrudController
                     }
                 }
                 ContactUs::query()->where("id", $for_contact_id)
-                    ->update(["referer_alias_id" => $aliasId]);
+                         ->update(["referer_alias_id" => $aliasId]);
             }
             ReturnJson(true, trans('lang.update_success'));
         } catch (\Exception $e) {
-            \Log::error('返回结果数据:' . $e->getMessage());
+            \Log::error('返回结果数据:'.$e->getMessage());
             ReturnJson(false, '未知错误');
         }
     }
@@ -441,8 +434,7 @@ class ContactUsController extends CrudController
     /**
      *  重新发送邮件
      */
-    public function againSendEmail(Request $request)
-    {
+    public function againSendEmail(Request $request) {
         try {
             $ids = [];
             if (!empty($request->ids)) {
@@ -460,9 +452,9 @@ class ContactUsController extends CrudController
                 ReturnJson(false, '站点配置异常');
             }
             if (strpos($domain, '://') === false) {
-                $domain = 'https://' . $domain;
+                $domain = 'https://'.$domain;
             }
-            $url = $domain . '/api/third/send-email';
+            $url = $domain.'/api/third/send-email';
             $sucCnt = 0;
             $errMsg = [];
             $mcate_list = MessageCategory::query()->pluck('code', 'id')->toArray();
@@ -483,6 +475,8 @@ class ContactUsController extends CrudController
                 $resp = $response->json();
                 if (!empty($resp) && $resp['code'] == 200) {
                     $sucCnt++;
+                    //添加日志：复用与 SiteOperationLog 一致的通道，type 使用 'email'
+                    OperationLogController::AddLog($record, 'email');
                 } else {
                     $errMsg[] = $resp;
                 }
@@ -490,7 +484,7 @@ class ContactUsController extends CrudController
             if (empty($errMsg)) {
                 ReturnJson(true, "发送成功:{$sucCnt}次");
             } else {
-                \Log::error('返回结果数据:' . json_encode($errMsg));
+                \Log::error('返回结果数据:'.json_encode($errMsg));
                 ReturnJson(false, '发送失败,未知错误');
             }
         } catch (\Exception $e) {
@@ -498,13 +492,12 @@ class ContactUsController extends CrudController
         }
     }
 
-    public function makeSign($data, $signkey)
-    {
+    public function makeSign($data, $signkey) {
         unset($data['sign']);
         $signStr = '';
         ksort($data);
         foreach ($data as $key => $value) {
-            $signStr .= $key . '=' . $value . '&';
+            $signStr .= $key.'='.$value.'&';
         }
         $signStr .= "key={$signkey}";
 
@@ -515,8 +508,7 @@ class ContactUsController extends CrudController
     /**
      * 导出留言
      */
-    public function export(Request $request)
-    {
+    public function export(Request $request) {
         ini_set('max_execution_time', '0'); // no time limit，不设置超时时间（根据实际情况使用）
         ini_set("memory_limit", '-1'); // 不限制内存
         $input = $request->all();
@@ -527,7 +519,7 @@ class ContactUsController extends CrudController
             //选中
             $ids = explode(',', $ids);
             if (!(count($ids) > 0)) {
-                ReturnJson(true, trans('lang.param_empty') . ':ids');
+                ReturnJson(true, trans('lang.param_empty').':ids');
             }
             $model = $model->whereIn('id', $ids);
         } else {
@@ -551,7 +543,7 @@ class ContactUsController extends CrudController
             $platformList = PostPlatform::query()->pluck("name", "id")->toArray();
             $productIdsArray = array_unique(array_column($filterData, 'product_id'));
             $productsData = Products::query()->select(['id', 'keywords'])->whereIn('id', $productIdsArray)->get()
-                ?->toArray() ?? [];
+                                    ?->toArray() ?? [];
             $keywordsData = array_column($productsData, 'keywords', 'id');
             $keywordsData = array_filter($keywordsData, function ($item) {
                 return $item !== "" && $item !== null;
@@ -560,18 +552,18 @@ class ContactUsController extends CrudController
             if ($keywordsData && count($keywordsData) > 0) {
                 // 查询课题
                 $postSubjectData = PostSubject::query()->select(['id', 'keywords', 'accepter'])
-                    ->whereIn('keywords', $keywordsData)
-                    ->where('propagate_status', 1)
-                    ->get()?->toArray() ?? [];
+                                              ->whereIn('keywords', $keywordsData)
+                                              ->where('propagate_status', 1)
+                                              ->get()?->toArray() ?? [];
             }
             $urlData = [];
             if ($postSubjectData && count($postSubjectData) > 0) {
                 // 课题查询帖子链接
                 $postSubjecIdsArray = array_column($postSubjectData, 'id');
                 $urlData = PostSubjectLink::query()
-                    ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
-                    ->whereIn('post_subject_id', $postSubjecIdsArray)
-                    ->get()->toArray();
+                                          ->select(['id', 'link', 'post_subject_id', 'post_platform_id', 'created_at'])
+                                          ->whereIn('post_subject_id', $postSubjecIdsArray)
+                                          ->get()->toArray();
                 $urlData = array_map(function ($urlItem) use ($platformList) {
                     $urlItem['platform_name'] = $platformList[$urlItem['post_platform_id']] ?? '';
 
@@ -669,8 +661,8 @@ class ContactUsController extends CrudController
                 if ($priceEditionRecord) {
                     $priceEditionData = $priceEditionRecord->toArray();
                     $languageName = Language::where('id', $priceEditionData['language_id'])->value('name');
-                    $priceVersionName = (!empty($languageName) ? $languageName : '') . ' '
-                        . (!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
+                    $priceVersionName = (!empty($languageName) ? $languageName : '').' '
+                                        .(!empty($priceEditionRecord['name']) ? $priceEditionRecord['name'] : '');
                 }
             }
             $sheet->setCellValue([11, $rowIndex + 1], $priceVersionName ?? '');
@@ -689,7 +681,7 @@ class ContactUsController extends CrudController
             if (!empty($item['city_id'])) {
                 $cityName = City::query()->where('id', $item['city_id'])->value('name');
             }
-            $sheet->setCellValue([15, $rowIndex + 1], $provinceName . ' ' . $cityName);
+            $sheet->setCellValue([15, $rowIndex + 1], $provinceName.' '.$cityName);
             $sheet->setCellValue([16, $rowIndex + 1], $item['created_at'] ?? '');
             $sheet->setCellValue([17, $rowIndex + 1], $item['content'] ?? '');
             if (!empty($keywords)) {
@@ -703,8 +695,8 @@ class ContactUsController extends CrudController
                     foreach ($recordPostSubjectUrlData as $recordPostSubjectUrlItem) {
                         // 需要帖子时间早于留言时间才能算中标,新增判断:有效期为一年
                         if (
-                            strtotime($recordPostSubjectUrlItem['created_at']) > $validStartTime &&
-                            strtotime($recordPostSubjectUrlItem['created_at']) < $validEndTime
+                            strtotime($recordPostSubjectUrlItem['created_at']) > $validStartTime
+                            && strtotime($recordPostSubjectUrlItem['created_at']) < $validEndTime
                         ) {
                             $tempUrlData[] = [
                                 // 'id' => $recordPostSubjectUrlItem['id'],
@@ -716,7 +708,6 @@ class ContactUsController extends CrudController
                             ];
                         }
                     }
-
                     if (count($tempUrlData) > 0) {
                         if ($recordPostSubjectKey > 0) {
                             $rowIndex++;
@@ -725,8 +716,8 @@ class ContactUsController extends CrudController
                             'nickname'
                         ) ?? '未知';
                         if (!empty($recordPostSubjectItem['id'])) {
-                            $subjectUpdateLink = $domain . '/#/' . $site . '/postTopicList/EditPostTopic?id='
-                                . $recordPostSubjectItem['id'];
+                            $subjectUpdateLink = $domain.'/#/'.$site.'/postTopicList/EditPostTopic?id='
+                                                 .$recordPostSubjectItem['id'];
                         } else {
                             $subjectUpdateLink = '';
                         }
@@ -766,7 +757,7 @@ class ContactUsController extends CrudController
         }
         // 设置 HTTP 头部并导出文件
         $date = date('Ymd');
-        $filename = 'export-messages-' . count($filterData) . '-' . $date . '.xlsx';
+        $filename = 'export-messages-'.count($filterData).'-'.$date.'.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment; filename=\"$filename\"");
         header('Cache-Control: max-age=0');

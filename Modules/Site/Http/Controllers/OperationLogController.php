@@ -11,6 +11,7 @@ use Modules\Admin\Http\Models\Role;
 use Modules\Admin\Http\Models\Site;
 use Modules\Admin\Http\Models\User;
 use Modules\Site\Http\Models\Authority;
+use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\Information;
 use Modules\Site\Http\Models\Menu;
 use Modules\Site\Http\Models\News;
@@ -83,6 +84,8 @@ class OperationLogController extends CrudController {
             $content = "新增了ID=".$model->id;
         } else if ($type == 'delete') {
             $content = '删除了ID='.$model->id.'的数据行。';
+        }elseif($type == 'email'){
+            $content = '补发了ID='.$model->id.'的邮件。';
         }
         //如果没有内容,直接不添加
         if (empty($content)) {
@@ -220,6 +223,10 @@ class OperationLogController extends CrudController {
         $options['OperationLogModule'][] = $addData;
         $addData['value'] = strtolower(class_basename(ProductsExportLog::class));
         $addData['label'] = '导出记录模块';
+        $options['OperationLogModule'][] = $addData;
+
+        $addData['value'] = strtolower(class_basename(ContactUs::class));
+        $addData['label'] = '留言列表模块';
         $options['OperationLogModule'][] = $addData;
         //$options['site'] = (new Site)->GetListLabel(['name as value', $NameField], false, '', ['status' => '1']);
 //

@@ -6,6 +6,7 @@ use App\Observers\SiteOperationLog;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
 use Modules\Site\Http\Models\Authority;
+use Modules\Site\Http\Models\ContactUs;
 use Modules\Site\Http\Models\Information;
 use Modules\Site\Http\Models\Menu;
 use Modules\Site\Http\Models\News;
@@ -52,6 +53,7 @@ class SiteServiceProvider extends ServiceProvider
         Authority::observe(SiteOperationLog::class);
         SystemValue::observe(SiteOperationLog::class);
         System::observe(SiteOperationLog::class);
+        ContactUs::observe(SiteOperationLog::class);
 
     }
 
