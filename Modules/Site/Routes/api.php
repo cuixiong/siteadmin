@@ -104,9 +104,9 @@ Route::middleware([
         Route::post('quick-search', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearch'])->name('报告管理:快速搜索');
         Route::post('quick-batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'quickBatchDelete'])->name('报告管理:批量删除');
         Route::get('quick-search-dictionary', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearchDictionary'])->name('报告管理:快速搜索-字典数据');
-        
+
         Route::post('change-status-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'changeStatusWithDelSubject'])->name('报告管理:状态修改(删除课题)');
-        Route::post('destroy-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'destoryWithDelSubject'])->name('报告管理:删除报告(删除课题)');
+        Route::post('destory-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'destoryWithDelSubject'])->name('报告管理:删除报告(删除课题)');
 
     });
 

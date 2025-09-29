@@ -1360,6 +1360,7 @@ class ProductsController extends CrudController {
                         $deletePostSubjectData = [];
                     }
                     foreach ($deletePostSubjectData as $item) {
+                        PostSubject::where('id',$item['id'])->delete();
                         $subjectLogDetail .= '【删除】'. 'id - ' .$item['id'] .' - '.$item['name'] . "\n";
                     }
                     if(!empty($subjectLogDetail)){
@@ -2610,7 +2611,9 @@ class ProductsController extends CrudController {
                     } else {
                         $deletePostSubjectData = [];
                     }
+
                     foreach ($deletePostSubjectData as $item) {
+                        PostSubject::where('id',$item['id'])->delete();
                         $subjectLogDetail .= '【删除】' . 'id - ' . $item['id'] . ' - ' . $item['name'] . "\n";
                     }
                     if (!empty($subjectLogDetail)) {
@@ -2680,6 +2683,7 @@ class ProductsController extends CrudController {
                         $deletePostSubjectData = [];
                     }
                     foreach ($deletePostSubjectData as $item) {
+                        PostSubject::where('id',$item['id'])->delete();
                         $subjectLogDetail .= '【删除】'. 'id - ' .$item['id'] .' - '.$item['name'] . "\n";
                     }
                     if(!empty($subjectLogDetail)){
