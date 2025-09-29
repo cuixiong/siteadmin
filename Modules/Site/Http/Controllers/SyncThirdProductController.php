@@ -1098,6 +1098,7 @@ class SyncThirdProductController extends CrudController {
             $respData = json_decode($responseBody, true);
             if (!empty($respData) && $statusCode == 200) {
                 $respDataList = $respData['data']['data'];
+                // $respDataList = array_splice($respDataList,0,1); // 调试
                 $this->newHandlerRespData($respDataList, $site);
                 \Log::error('同步完成');
             } else {

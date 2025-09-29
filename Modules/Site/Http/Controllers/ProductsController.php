@@ -951,79 +951,7 @@ class ProductsController extends CrudController {
                     $record->delete();
                     // 删除完成后同步到xunsearch
                     $this->ModelInstance()->syncSearchIndex($id, 'delete');
-
-                    // 删除未宣传课题
-                    PostSubject::where('propagate_status', 0)->where('product_id', $id)->delete();
                 }
-            }
-            ReturnJson(true, trans('lang.delete_success'));
-        } catch (\Exception $e) {
-            ReturnJson(false, $e->getMessage());
-        }
-    }
-    
-    /**
-     * AJax单行删除
-     * 
-     * @param $ids      主键ID
-     */
-    public function destroyWithDelSubject(Request $request)
-    {
-        try {
-            $this->ValidateInstance($request);
-            $ids = $request->ids;
-            if (!is_array($ids)) {
-                $ids = explode(",", $ids);
-            }
-            $input = $request->all();
-            $type = $input['is_count'] ?? 0;
-            if ($type == 1) {
-                $subjectCount =  PostSubject::query()->whereIn('id', $ids)->count() ?? 0;
-                ReturnJson(true, trans('lang.request_success'), ['subject_count' => $subjectCount]);
-            } elseif ($type == 2) {
-                $subjectLogDetail = '';
-                $deleteProductIds = [];
-                foreach ($ids as $id) {
-                    $record = $this->ModelInstance()->find($id);
-                    if (!empty($record)) {
-                        $year = Products::publishedDateFormatYear($record->published_date);
-                        if ($year) {
-                            $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
-                        }
-                        if ($recordDescription) {
-                            $recordDescription->delete();
-                        }
-                        $record->delete();
-                        // 删除完成后同步到xunsearch
-                        $this->ModelInstance()->syncSearchIndex($id, 'delete');
-                        $deleteProductIds[] = $id;
-                    }
-                }
-
-                // 删除未宣传课题
-                if($deleteProductIds && count($deleteProductIds) > 0){
-                    $deletePostSubjectData = PostSubject::query()
-                        ->select(['id','product_id','name'])
-                        ->where('propagate_status', 0)
-                        ->whereIn('product_id', $deleteProductIds)
-                        ->get();
-                    if($deletePostSubjectData){
-                        $deletePostSubjectData = $deletePostSubjectData->toArray();
-                    }else{
-                        $deletePostSubjectData = [];
-                    }
-                    foreach ($deletePostSubjectData as $item) {
-                        $subjectLogDetail .= '【删除】'. 'id - ' .$item['id'] .' - '.$item['name'] . "\n";
-                    }
-                    if(!empty($subjectLogDetail)){
-                        $log = new PostSubjectLog();
-                        $logData['type'] = PostSubjectLog::POST_SUBJECT_DELETE;
-                        $logData['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】-' . "\n" . $subjectLogDetail;
-                        $log->create($logData);
-                    }
-                }
-                
-
             }
             ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
@@ -1394,8 +1322,11 @@ class ProductsController extends CrudController {
         if ($type == 1) {
             // 总数量
             $data['count'] = $model->count();
+            $data['subject_count'] =  PostSubject::query()->whereIn('product_id', $ids)->where('propagate_status', 0)->count() ?? 0;
             ReturnJson(true, trans('lang.request_success'), $data);
         } elseif ($type == 2) {
+            $subjectLogDetail = '';
+            $deleteProductIds = [];
             // $data['result_count'] = $model->delete();
             // 批量操作无法触发添加日志的功能，但我领导要求有日志
             $newIds = $model->pluck('id');
@@ -1412,8 +1343,33 @@ class ProductsController extends CrudController {
                     $record->delete();
                     // 删除完成后同步到xunsearch
                     $this->ModelInstance()->syncSearchIndex($record->id, 'delete');
+                    $deleteProductIds[] = $id;
                 }
             }
+            
+                // 删除未宣传课题
+                if($deleteProductIds && count($deleteProductIds) > 0){
+                    $deletePostSubjectData = PostSubject::query()
+                        ->select(['id','product_id','name'])
+                        ->where('propagate_status', 0)
+                        ->whereIn('product_id', $deleteProductIds)
+                        ->get();
+                    if($deletePostSubjectData){
+                        $deletePostSubjectData = $deletePostSubjectData->toArray();
+                    }else{
+                        $deletePostSubjectData = [];
+                    }
+                    foreach ($deletePostSubjectData as $item) {
+                        $subjectLogDetail .= '【删除】'. 'id - ' .$item['id'] .' - '.$item['name'] . "\n";
+                    }
+                    if(!empty($subjectLogDetail)){
+                        $log = new PostSubjectLog();
+                        $logData['type'] = PostSubjectLog::POST_SUBJECT_DELETE;
+                        $logData['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】-' . "\n" . $subjectLogDetail;
+                        $log->create($logData);
+                    }
+                }
+
             ReturnJson(true, trans('lang.delete_success'));
         }
     }
@@ -2586,6 +2542,32 @@ class ProductsController extends CrudController {
     }
 
     /**
+     * 修改排序
+     *
+     * @param $request 请求信息
+     * @param $id      主键ID
+     */
+    public function changeSort(Request $request) {
+        try {
+            if (empty($request->id)) {
+                ReturnJson(false, 'id is empty');
+            }
+            $record = $this->ModelInstance()->findOrFail($request->id);
+            $record->sort = $request->sort;
+            if (!$record->save()) {
+                ReturnJson(false, trans('lang.update_error'));
+            }
+            // 更新完成后同步到xunsearch
+            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
+            ReturnJson(true, trans('lang.update_success'));
+        } catch (\Exception $e) {
+            ReturnJson(false, $e->getMessage());
+        }
+    }
+
+
+    
+    /**
      * 修改状态+删除相关课题
      *
      * @param $request 请求信息
@@ -2603,7 +2585,7 @@ class ProductsController extends CrudController {
             $input = $request->all();
             $type = $input['is_count'] ?? 0;
             if ($type == 1) {
-                $subjectCount =  PostSubject::query()->where('id', $record->id)->count() ?? 0;
+                $subjectCount =  PostSubject::query()->where('product_id', $record->id)->where('propagate_status', 0)->count() ?? 0;
                 ReturnJson(true, trans('lang.request_success'), ['subject_count' => $subjectCount]);
             } elseif ($type == 2) {
                 if (!$record->save()) {
@@ -2647,26 +2629,70 @@ class ProductsController extends CrudController {
             ReturnJson(false, $e->getMessage());
         }
     }
-
     /**
-     * 修改排序
-     *
-     * @param $request 请求信息
-     * @param $id      主键ID
+     * AJax单行删除
+     * 
+     * @param $ids      主键ID
      */
-    public function changeSort(Request $request) {
+    public function destoryWithDelSubject(Request $request)
+    {
         try {
-            if (empty($request->id)) {
-                ReturnJson(false, 'id is empty');
+            $this->ValidateInstance($request);
+            $ids = $request->ids;
+            if (!is_array($ids)) {
+                $ids = explode(",", $ids);
             }
-            $record = $this->ModelInstance()->findOrFail($request->id);
-            $record->sort = $request->sort;
-            if (!$record->save()) {
-                ReturnJson(false, trans('lang.update_error'));
+            $input = $request->all();
+            $type = $input['is_count'] ?? 0;
+            if ($type == 1) {
+                $subjectCount =  PostSubject::query()->whereIn('product_id', $ids)->where('propagate_status', 0)->count() ?? 0;
+                ReturnJson(true, trans('lang.request_success'), ['subject_count' => $subjectCount]);
+            } elseif ($type == 2) {
+                $subjectLogDetail = '';
+                $deleteProductIds = [];
+                foreach ($ids as $id) {
+                    $record = $this->ModelInstance()->find($id);
+                    if (!empty($record)) {
+                        $year = Products::publishedDateFormatYear($record->published_date);
+                        if ($year) {
+                            $recordDescription = (new ProductsDescription($year))->where('product_id', $record->id);
+                        }
+                        if ($recordDescription) {
+                            $recordDescription->delete();
+                        }
+                        $record->delete();
+                        // 删除完成后同步到xunsearch
+                        $this->ModelInstance()->syncSearchIndex($id, 'delete');
+                        $deleteProductIds[] = $id;
+                    }
+                }
+
+                // 删除未宣传课题
+                if($deleteProductIds && count($deleteProductIds) > 0){
+                    $deletePostSubjectData = PostSubject::query()
+                        ->select(['id','product_id','name'])
+                        ->where('propagate_status', 0)
+                        ->whereIn('product_id', $deleteProductIds)
+                        ->get();
+                    if($deletePostSubjectData){
+                        $deletePostSubjectData = $deletePostSubjectData->toArray();
+                    }else{
+                        $deletePostSubjectData = [];
+                    }
+                    foreach ($deletePostSubjectData as $item) {
+                        $subjectLogDetail .= '【删除】'. 'id - ' .$item['id'] .' - '.$item['name'] . "\n";
+                    }
+                    if(!empty($subjectLogDetail)){
+                        $log = new PostSubjectLog();
+                        $logData['type'] = PostSubjectLog::POST_SUBJECT_DELETE;
+                        $logData['details'] = date('Y-m-d H:i:s', time()) . ' 操作人【' . $request->user->nickname . '】-' . "\n" . $subjectLogDetail;
+                        $log->create($logData);
+                    }
+                }
+                
+
             }
-            // 更新完成后同步到xunsearch
-            $this->ModelInstance()->syncSearchIndex($record->id, 'update');
-            ReturnJson(true, trans('lang.update_success'));
+            ReturnJson(true, trans('lang.delete_success'));
         } catch (\Exception $e) {
             ReturnJson(false, $e->getMessage());
         }

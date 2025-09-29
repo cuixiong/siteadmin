@@ -73,7 +73,6 @@ Route::middleware([
         Route::get('search-droplist', [Modules\Site\Http\Controllers\ProductsController::class, 'searchDroplist'])->name('报告管理:搜索下拉列表数据');
 
         Route::post('change-status', [Modules\Site\Http\Controllers\ProductsController::class, 'changeStatus'])->name('报告管理:状态修改');
-        Route::post('change-status-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'changeStatusWithDelSubject'])->name('报告管理:状态修改(删除课题)');
 
         Route::post('change-hot', [Modules\Site\Http\Controllers\ProductsController::class, 'changeHot'])->name('报告管理:热门状态修改');
         Route::post('change-recommend', [Modules\Site\Http\Controllers\ProductsController::class, 'changeRecommend'])->name('报告管理:推荐状态修改');
@@ -91,7 +90,6 @@ Route::middleware([
         Route::get('form/{id}', [Modules\Site\Http\Controllers\ProductsController::class, 'form'])->name('报告管理:报告单查');
         Route::post('update', [Modules\Site\Http\Controllers\ProductsController::class, 'update'])->name('报告管理:修改报告');
         Route::post('destroy', [Modules\Site\Http\Controllers\ProductsController::class, 'destroy'])->name('报告管理:删除报告');
-        Route::post('destroy-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'destroyWithDelSubject'])->name('报告管理:删除报告(删除课题)');
         Route::post('discount', [Modules\Site\Http\Controllers\ProductsController::class, 'discount'])->name('报告管理:设置折扣');
         Route::post('export', [Modules\Site\Http\Controllers\ProductsController::class, 'export'])->name('报告管理:批量导出');
         Route::post('newExport', [Modules\Site\Http\Controllers\ProductsController::class, 'newExport'])->name('报告管理:新批量导出');
@@ -106,6 +104,9 @@ Route::middleware([
         Route::post('quick-search', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearch'])->name('报告管理:快速搜索');
         Route::post('quick-batch-delete', [Modules\Site\Http\Controllers\ProductsController::class, 'quickBatchDelete'])->name('报告管理:批量删除');
         Route::get('quick-search-dictionary', [Modules\Site\Http\Controllers\ProductsController::class, 'QuickSearchDictionary'])->name('报告管理:快速搜索-字典数据');
+        
+        Route::post('change-status-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'changeStatusWithDelSubject'])->name('报告管理:状态修改(删除课题)');
+        Route::post('destroy-with-del-subject', [Modules\Site\Http\Controllers\ProductsController::class, 'destoryWithDelSubject'])->name('报告管理:删除报告(删除课题)');
 
     });
 
