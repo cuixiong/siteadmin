@@ -2640,7 +2640,6 @@ class ProductsController extends CrudController {
     public function destoryWithDelSubject(Request $request)
     {
         try {
-            $this->ValidateInstance($request);
             $ids = $request->ids;
             if (!is_array($ids)) {
                 $ids = explode(",", $ids);
