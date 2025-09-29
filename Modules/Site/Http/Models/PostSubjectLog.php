@@ -39,6 +39,7 @@ class PostSubjectLog extends Base
     const POST_SUBJECT_LINK_UPLOAD_OLD = 6; // 旧课题上传
     const POST_SUBJECT_STRATEGY_ACCEPT = 7; // 策略分配
     const POST_SUBJECT_STRATEGY_DIMISSION = 8; // 策略归档
+    const POST_SUBJECT_DELETE = 9; // 删除
 
     public static function getLogTypeList()
     {
@@ -51,6 +52,7 @@ class PostSubjectLog extends Base
             self::POST_SUBJECT_LINK_UPLOAD_OLD => '旧课题上传',
             self::POST_SUBJECT_STRATEGY_ACCEPT => '策略分配',
             self::POST_SUBJECT_STRATEGY_DIMISSION => '策略归档',
+            self::POST_SUBJECT_DELETE => '删除',
         ];
     }
 

@@ -74,7 +74,7 @@ class SensitiveWordsHandleLogController extends CrudController
             $data['log_type'] = [];
             $logType = SensitiveWordsHandleLog::getLogTypeList();
             foreach ($logType as $key => $value) {
-                $data['type'][] = ['label' => $value, 'value' => $key];
+                $data['log_type'][] = ['label' => $value, 'value' => $key];
             }
 
             ReturnJson(true, trans('lang.request_success'), $data);
