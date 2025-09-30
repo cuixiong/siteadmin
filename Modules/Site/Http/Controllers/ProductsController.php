@@ -2630,7 +2630,10 @@ class ProductsController extends CrudController {
             $input = $request->all();
             $type = $input['is_count'] ?? 0;
             if ($type == 1) {
-                $subjectCount =  PostSubject::query()->where('product_id', $record->id)->where('propagate_status', 0)->count() ?? 0;
+                $subjectCount = 0;
+                if($request->status == 0){
+                    $subjectCount =  PostSubject::query()->where('product_id', $record->id)->where('propagate_status', 0)->count() ?? 0;
+                }
                 ReturnJson(true, trans('lang.request_success'), ['subject_count' => $subjectCount]);
             } elseif ($type == 2) {
                 if (!$record->save()) {
@@ -2642,9 +2645,9 @@ class ProductsController extends CrudController {
                 $subjectLogDetail = '';
                 $deleteProductIds = [];
                 $deleteProductIds[] = $record->id;
-
+                
                 // 删除未宣传课题
-                if ($deleteProductIds && count($deleteProductIds) > 0) {
+                if ($request->status == 0 && $deleteProductIds && count($deleteProductIds) > 0) {
                     $deletePostSubjectData = PostSubject::query()
                         ->select(['id', 'product_id', 'name'])
                         ->where('propagate_status', 0)
