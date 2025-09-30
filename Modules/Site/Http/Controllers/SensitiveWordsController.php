@@ -210,7 +210,7 @@ class SensitiveWordsController extends CrudController
             $site = $request->header('Site');
             $word = $record->word;
             if ($type == 1) {
-                if ($record->status == 1) {
+                if ($request->status == 1) {
                     $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
                 } else {
                     $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, $word, $site, []);
@@ -219,7 +219,7 @@ class SensitiveWordsController extends CrudController
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $record->save();
-                if ($record->status == 1) {
+                if ($request->status == 1) {
                     $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
                 } else {
                     $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, $word, $site, []);

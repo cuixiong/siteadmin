@@ -572,10 +572,19 @@ class ProductsController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             //校验敏感词
-            $checkRs = SenWordsService::checkNewFitter($input['english_name']);
-            if (!empty($checkRs)) {
-                throw new \Exception('英文报告名称包含敏感词:'.$checkRs);
+            $site = $request->header('Site');
+            if (in_array($site, ['qycojp', 'yhcojp', 'lpijp', 'girjp', 'qyjp'])) {
+                $checkRs = SenWordsService::checkNewFitter($input['name']);
+                if (!empty($checkRs)) {
+                    throw new \Exception('报告日文名称包含敏感词:'.$checkRs);
+                }
+            }else{
+                $checkRs = SenWordsService::checkNewFitter($input['english_name']);
+                if (!empty($checkRs)) {
+                    throw new \Exception('英文报告名称包含敏感词:'.$checkRs);
+                }
             }
+
             $checkRs = SenWordsService::checkNewFitter($input['url']);
             if (!empty($checkRs)) {
                 throw new \Exception('报告链接包含敏感词:'.$checkRs);
@@ -784,9 +793,17 @@ class ProductsController extends CrudController {
             $this->ValidateInstance($request);
             $input = $request->all();
             //校验敏感词
-            $checkRs = SenWordsService::checkNewFitter($input['english_name']);
-            if (!empty($checkRs)) {
-                throw new \Exception('英文报告名称包含敏感词:'.$checkRs);
+            $site = $request->header('Site');
+            if (in_array($site, ['qycojp', 'yhcojp', 'lpijp', 'girjp', 'qyjp'])) {
+                $checkRs = SenWordsService::checkNewFitter($input['name']);
+                if (!empty($checkRs)) {
+                    throw new \Exception('报告日文名称包含敏感词:'.$checkRs);
+                }
+            }else{
+                $checkRs = SenWordsService::checkNewFitter($input['english_name']);
+                if (!empty($checkRs)) {
+                    throw new \Exception('英文报告名称包含敏感词:'.$checkRs);
+                }
             }
             $checkRs = SenWordsService::checkNewFitter($input['url']);
             if (!empty($checkRs)) {
