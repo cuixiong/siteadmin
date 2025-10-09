@@ -211,18 +211,18 @@ class SensitiveWordsController extends CrudController
             $word = $record->word;
             if ($type == 1) {
                 if ($request->status == 1) {
-                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
-                } else {
                     $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, $word, $site, []);
+                } else {
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
                 }
                 ReturnJson(true, trans('lang.request_success'), $handleSensitiveRes);
             } elseif ($type == 2) {
                 DB::beginTransaction();
                 $record->save();
                 if ($request->status == 1) {
-                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
-                } else {
                     $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, $word, $site, []);
+                } else {
+                    $handleSensitiveRes = (new SenWordsService())->hiddenData(SensitiveWordsHandleLog::SENSITIVE_WORDS_CHANGE_STATUS, $type, [], $site, $word);
                 }
                 if (!$record || !$handleSensitiveRes) {
                     DB::rollBack();
