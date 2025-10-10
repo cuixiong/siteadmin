@@ -321,7 +321,7 @@ Route::middleware([
         Route::post('destroy', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'destroy'])->name('敏感词管理:删除模版');
         Route::post('hidden-sen-product', [Modules\Site\Http\Controllers\SensitiveWordsController::class, 'hiddenSenProduct'])->name('敏感词管理:批量隐藏');
     });
-    
+
     Route::prefix('senwords-log')->group(function () {
         Route::get('list', [Modules\Site\Http\Controllers\SensitiveWordsHandleLogController::class, 'list'])->name('敏感词日志:模版列表');
         Route::get('search-droplist', [Modules\Site\Http\Controllers\SensitiveWordsHandleLogController::class, 'searchDroplist'])->name('敏感词日志:搜索下拉列表数据');
@@ -591,19 +591,19 @@ Route::middleware([
     });
     // ContactUs控制器
     Route::prefix('contact-us')->group(function () {
-        Route::post('store', [Modules\Site\Http\Controllers\ContactUsController::class, 'store'])->name('联系我们:数据新增');
-        Route::post('update', [Modules\Site\Http\Controllers\ContactUsController::class, 'update'])->name('联系我们:数据更新');
-        Route::post('destroy', [Modules\Site\Http\Controllers\ContactUsController::class, 'destroy'])->name('联系我们:数据删除');
-        Route::get('list', [Modules\Site\Http\Controllers\ContactUsController::class, 'list'])->name('联系我们:数据列表');
-        Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('联系我们:状态修改');
-        Route::get('options', [Modules\Site\Http\Controllers\ContactUsController::class, 'options'])->name('联系我们:字典数据');
+        Route::post('store', [Modules\Site\Http\Controllers\ContactUsController::class, 'store'])->name('留言列表:数据新增');
+        Route::post('update', [Modules\Site\Http\Controllers\ContactUsController::class, 'update'])->name('留言列表:数据更新');
+        Route::post('destroy', [Modules\Site\Http\Controllers\ContactUsController::class, 'destroy'])->name('留言列表:数据删除');
+        Route::get('list', [Modules\Site\Http\Controllers\ContactUsController::class, 'list'])->name('留言列表:数据列表');
+        Route::post('change-status', [Modules\Site\Http\Controllers\ContactUsController::class, 'changeStatus'])->name('留言列表:状态修改');
+        Route::get('options', [Modules\Site\Http\Controllers\ContactUsController::class, 'options'])->name('留言列表:字典数据');
 
-        Route::get('batch-update-param', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateParam'])->name('联系我们:批量修改参数');
-        Route::get('batch-update-option', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateOption'])->name('联系我们:批量修改参数子项');
-        Route::post('batch-update', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdate'])->name('联系我们:批量修改');
-        Route::get('again-send-email', [Modules\Site\Http\Controllers\ContactUsController::class, 'againSendEmail'])->name('联系我们:重新发送邮件');
-        Route::get('batch-update-referer', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateReferer'])->name('联系我们:批量修改来源');
-        Route::post('export', [Modules\Site\Http\Controllers\ContactUsController::class, 'export'])->name('联系我们:导出');
+        Route::get('batch-update-param', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateParam'])->name('留言列表:批量修改参数');
+        Route::get('batch-update-option', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateOption'])->name('留言列表:批量修改参数子项');
+        Route::post('batch-update', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdate'])->name('留言列表:批量修改');
+        Route::get('again-send-email', [Modules\Site\Http\Controllers\ContactUsController::class, 'againSendEmail'])->name('留言列表:重新发送邮件');
+        Route::get('batch-update-referer', [Modules\Site\Http\Controllers\ContactUsController::class, 'batchUpdateReferer'])->name('留言列表:批量修改来源');
+        Route::post('export', [Modules\Site\Http\Controllers\ContactUsController::class, 'export'])->name('留言列表:导出');
     });
 
     Route::prefix('message-language-version')->group(function () {

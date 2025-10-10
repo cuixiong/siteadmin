@@ -111,7 +111,7 @@ class SiteEmailController extends Controller {
             ReturnJson(true, '发送成功');
         } else {
             \Log::error('返回结果数据:'.json_encode($resp));
-            ReturnJson(false, '发送失败,未知错误');
+            ReturnJson(false, '发送失败,未知错误'.json_encode($resp));
         }
     }
 
