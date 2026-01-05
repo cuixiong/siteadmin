@@ -7,6 +7,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk add --no-cache \
     $PHPIZE_DEPS \
     libpng-dev \
+    git \
     libjpeg-turbo-dev \
     libwebp-dev \
     freetype-dev \
@@ -22,6 +23,10 @@ RUN docker-php-ext-install -j$(nproc) pdo_mysql bcmath zip pcntl opcache
 
 # 5. 通过 pecl 安装 redis 并启用
 RUN pecl install redis && docker-php-ext-enable redis
+
+# 6. 安装composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 
 # 设置工作目录
 WORKDIR /var/www/html
