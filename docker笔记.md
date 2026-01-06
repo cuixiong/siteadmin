@@ -33,3 +33,4 @@
 
 
 > docker exec my_app_php php -m | grep redis
+docker compose up -d --build
